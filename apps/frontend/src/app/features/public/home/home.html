@@ -1,0 +1,232 @@
+<!-- Portada: la fecha del examen organiza la página -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__text field-accent">
+    <div class="hero__inner">
+      <h1 id="hero-title">Admisión UNSCH 2027-I</h1>
+      <p class="lead">
+        Examen de exonerados el domingo 15 y examen ordinario el domingo 22 de noviembre de 2026, en la Ciudad Universitaria de Ayacucho.
+        {{ totalVacancies() || 1803 }} vacantes en 34 programas (40 opciones, contando especialidades).
+      </p>
+      <div class="hero__actions">
+        <a [routerLink]="quick[primary()].route" class="btn btn--light">{{ quick[primary()].cta }}</a>
+        <a routerLink="/cronograma" class="link-arrow">Ver el cronograma</a>
+      </div>
+      @if (milestone(); as m) {
+        <div class="hero__count">
+          <p class="hero__count-label">Faltan para el {{ examLabel(m.name) }}</p>
+          <app-countdown [target]="m.startsAt" [serverNow]="store.call()!.now" [label]="m.name" />
+        </div>
+      }
+    </div>
+  </div>
+  <figure class="hero__media">
+    <img [src]="img.src('portada.fachada', 'img/campus-fachada-1280.webp')" [attr.srcset]="img.srcset('portada.fachada', 'img/campus-fachada-640.webp 640w, img/campus-fachada-1280.webp 1280w')" sizes="(max-width: 900px) 100vw, 50vw" [alt]="img.alt('portada.fachada', 'Fachada del edificio de la UNSCH con el escudo y el año 1677')" width="1280" height="720" fetchpriority="high">
+  </figure>
+</section>
+
+<!-- Ahora: la etapa en curso y lo que puedes hacer -->
+<section class="now field-stone" aria-labelledby="now-title">
+  <div class="frame now__grid">
+    <div>
+      <h2 id="now-title" class="now__title">Ahora en curso</h2>
+      @if (store.unavailable()) {
+        <p>Próximamente se publicará la nueva convocatoria.</p>
+      }
+      <ul class="now__stages">
+        @for (s of nowStages(); track s.code) {
+          <li><strong>{{ s.name }}</strong><span>hasta el {{ longDate(s.endsAt) }}</span></li>
+        }
+      </ul>
+    </div>
+    <nav aria-label="Accesos rápidos" class="quick">
+      <ul>
+        @for (q of otherQuick(); track q.key) {
+          <li>
+            @if (q.enabled) {
+              <a class="quick__item is-on" [routerLink]="quick[q.key].route">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></a>
+            } @else {
+              <span class="quick__item" aria-disabled="true">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></span>
+            }
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+</section>
+
+<!-- La parte interactiva: tu postulación en tres respuestas -->
+<section class="section" aria-labelledby="finder-title">
+  <div class="frame stack-lg">
+    <div class="intro" appReveal>
+      <h2 id="finder-title">Tu postulación en tres respuestas</h2>
+      <p class="lead">Elige tu carrera y tu modalidad: te decimos cuántas vacantes hay y cuánto pagas hoy, según el prospecto oficial.</p>
+    </div>
+    <div appReveal="80"><app-application-finder [callCode]="store.code()" /></div>
+  </div>
+</section>
+
+<!-- Cronograma resumido -->
+<section class="section field-stone" aria-labelledby="dates-title">
+  <div class="frame">
+    <div class="split">
+      <div class="stack" appReveal>
+        <h2 id="dates-title">Las fechas que importan</h2>
+        <p>Cada etapa se abre y se cierra sola, en hora de Lima. Fuera de plazo, la inscripción paga un recargo de S/ 65.00.</p>
+        <a routerLink="/cronograma" class="link-arrow">Cronograma completo</a>
+      </div>
+      <ol class="timeline" appReveal="80">
+        @for (s of keyStages(); track s.code) {
+          <li [class.is-now]="s.status === 'IN_PROGRESS'" [class.is-past]="s.status === 'FINISHED'">
+            <span class="timeline__date">{{ dateRange(s.startsAt, s.endsAt) }}</span>
+            <span class="timeline__name">{{ s.name }}</span>
+            <span class="status status--{{ s.status }}">{{ s.status === 'IN_PROGRESS' ? 'En curso' : s.status === 'UPCOMING' ? 'Próxima' : 'Finalizada' }}</span>
+          </li>
+        }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- Programas por área -->
+<section class="section" aria-labelledby="areas-title">
+  <div class="frame stack-lg">
+    <div class="areas-head">
+      <h2 id="areas-title" appReveal>34 programas en tres áreas</h2>
+      <p class="areas-note">Algunos programas se eligen por especialidad (por ejemplo, Biología o Educación Secundaria), por eso la lista tiene 40 opciones.</p>
+      <a routerLink="/programas" class="link-arrow" appReveal="60">Buscar programa y vacantes</a>
+    </div>
+    @switch (optionsState()) {
+      @case ('loading') { <p class="load-note" role="status">Cargando los programas de estudio…</p> }
+      @case ('error') { <p class="load-note" role="status">No pudimos cargar los programas ahora. Consulta la lista completa en <a routerLink="/programas">Programas de estudios</a>.</p> }
+    }
+    @if (optionsState() === 'ok') {
+    <div class="areas">
+      @for (a of byArea(); track a.code; let i = $index) {
+        <div class="area" [appReveal]="i * 80">
+          <p class="area__count"><span>{{ a.options.length }}</span> {{ a.name }} <small>opciones</small></p>
+          <ul>
+            @for (o of a.options; track o.internalCode) {
+              <li><a [routerLink]="['/programas', o.internalCode]">{{ o.displayName }}</a></li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+    }
+  </div>
+</section>
+
+<!-- La universidad: misión y principios oficiales (PEI) con la Ciudad Universitaria en fotos -->
+<section class="section field-accent mision" aria-labelledby="mision-title">
+  <div class="frame stack-lg">
+    <div class="mision__grid">
+      <div class="mision__main" appReveal>
+        <h2 id="mision-title" class="mision__title">Misión</h2>
+        <blockquote class="mision__quote">
+          <p>Brindar formación universitaria a los estudiantes con énfasis en la investigación científica, tecnológica y humanística con principios éticos, responsabilidad social que contribuya al desarrollo sostenible de la región y el país.</p>
+        </blockquote>
+        <p class="mision__source">Plan Estratégico Institucional de la UNSCH</p>
+      </div>
+      <div class="mision__principles" appReveal="80">
+        <h3>Principios</h3>
+        <ul>
+          @for (p of principles; track p) { <li>{{ p }}</li> }
+        </ul>
+      </div>
+    </div>
+
+    <ul class="campus" aria-label="Pabellones de la Ciudad Universitaria de Ayacucho">
+      @for (c of campus; track c.src) {
+        <li><img [src]="c.src" [alt]="c.alt" [attr.width]="c.w" [attr.height]="c.h" loading="lazy" decoding="async"></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Cómo te inscribes: las infografías oficiales de cada modalidad -->
+<section class="section" aria-labelledby="steps-title">
+  <div class="frame stack-lg">
+    <div class="areas-head">
+      <h2 id="steps-title" appReveal>Cómo te inscribes</h2>
+      <a routerLink="/pasos" class="link-arrow" appReveal="60">Ver los pasos con detalle</a>
+    </div>
+    <div class="steps">
+      <a class="steps__card" routerLink="/pasos" fragment="ordinario" appReveal="60">
+        <h3>Ordinario, en 4 pasos</h3>
+        <img [src]="img.src('portada.ordinario', 'img/pasos-ordinario-1040.webp')" [attr.srcset]="img.srcset('portada.ordinario', 'img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" loading="lazy" decoding="async"
+          [alt]="img.alt('portada.ordinario', 'Infografía del proceso de inscripción en la modalidad Ordinario: registro de datos y orden de pago, pago por admisión, impresión de la ficha de inscripción y publicación de estudiantes aptos')">
+      </a>
+      <a class="steps__card" routerLink="/pasos" fragment="exonerados" appReveal="120">
+        <h3>Exonerados, en 5 pasos</h3>
+        <img [src]="img.src('portada.exonerado', 'img/pasos-exonerado-1040.webp')" [attr.srcset]="img.srcset('portada.exonerado', 'img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
+          [alt]="img.alt('portada.exonerado', 'Infografía del proceso de inscripción en la modalidad Exonerado: obtención de autorización, registro de datos, pago por admisión, impresión de la ficha y publicación de estudiantes aptos')">
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- El día del examen -->
+<section class="section field-accent exam" aria-labelledby="exam-title">
+  <div class="frame exam__grid">
+    <div class="stack-lg">
+      <h2 id="exam-title" appReveal>El día del examen</h2>
+      <div class="md md--light" appReveal="60" [innerHTML]="content()?.blocks?.['exam_day'] | md"></div>
+    </div>
+    <div class="exam__score" appReveal="120">
+      <p><span class="exam__num">450</span> de 1000 puntos es el mínimo para alcanzar vacante.</p>
+      <p>100 preguntas de conocimientos, 10 de aptitud vocacional y 10 de actitud personal. Las respuestas incorrectas no restan.</p>
+      <img src="img/escudo-unsch-240.webp" alt="Escudo de la UNSCH: San Cristóbal cruzando el río con el Niño" width="120" height="146" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- La autoridad que conduce la universidad -->
+<section class="section rector" aria-labelledby="rector-title">
+  <div class="frame rector__grid">
+    <figure class="rector__photo" appReveal>
+      <img [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')" [attr.srcset]="img.srcset('portada.rector', 'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w')" sizes="(max-width: 760px) 100vw, 40vw" [alt]="img.alt('portada.rector', 'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad')"
+        width="709" height="768" loading="lazy" decoding="async">
+    </figure>
+    <div class="rector__text">
+      <h2 id="rector-title" appReveal="60">Dr. Emilio Germán Ramírez Roca</h2>
+      <p class="rector__role" appReveal="120">Rector de la Universidad Nacional de San Cristóbal de Huamanga</p>
+      <p appReveal="180">Fundada en 1677 y reabierta en 1959, la UNSCH conduce el Concurso de Admisión 2027-I por medio de su Dirección de Admisión: 1803 vacantes en 34 programas de estudio para los jóvenes de Ayacucho y de todo el país.</p>
+      <dl class="rector__facts" appReveal="240">
+        <div><dt>1677</dt><dd>año de fundación</dd></div>
+        <div><dt>34</dt><dd>programas de estudio</dd></div>
+        <div><dt>1803</dt><dd>vacantes en 2027-I</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- Comunicados y palabra institucional -->
+<section class="section field-stone" aria-labelledby="news-title">
+  <div class="frame news">
+    <div class="stack-lg">
+      <h2 id="news-title" appReveal>Comunicados</h2>
+      <ul class="news__list">
+        @for (n of news(); track n.id) {
+          <li appReveal="60">
+            <p class="note">{{ longDate(n.publishedAt) }}</p>
+            <h3>{{ n.title }}</h3>
+            <p>{{ n.bodyMarkdown }}</p>
+          </li>
+        } @empty {
+          @switch (newsState()) {
+            @case ('loading') { <li><p role="status">Cargando comunicados…</p></li> }
+            @case ('error') { <li><p role="status">No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.</p></li> }
+            @default { <li><p>No hay comunicados publicados.</p></li> }
+          }
+        }
+      </ul>
+      <a routerLink="/comunicados" class="link-arrow">Todos los comunicados</a>
+    </div>
+    @if (content()?.authorities?.[0]; as a) {
+      <blockquote class="quote" appReveal="120">
+        <p>{{ a.message }}</p>
+        <footer><strong>{{ a.name }}</strong>, {{ a.position }}</footer>
+      </blockquote>
+    }
+  </div>
+</section>

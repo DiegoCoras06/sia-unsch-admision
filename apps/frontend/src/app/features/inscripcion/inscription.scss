@@ -1,0 +1,165 @@
+/*
+ * Formulario de inscripción: la identidad del formulario oficial (campo guinda, bandas de sección con filete dorado,
+ * etiqueta a la izquierda) con el sistema de diseño del portal y un resumen en vivo a la derecha.
+ */
+.page { padding-block: clamp(2rem, 5vw, 4rem) clamp(4rem, 8vw, 7rem); }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; min-width: 0; }
+.head { display: grid; gap: 1.25rem; }
+.head h1 { font-size: clamp(2.5rem, 5.5vw, 5rem); }
+.head__links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+
+.card { background: var(--accent); color: var(--accent-ink); padding: clamp(1.25rem, 3.5vw, 3rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+.block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.block__title {
+  font-size: 1.125rem; letter-spacing: 0; line-height: 1.3; background: var(--accent-press);
+  padding: 0.9rem 1.25rem; border-left: 6px solid var(--gold); margin-bottom: 0.5rem;
+}
+
+.row { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 0.5rem 1.5rem; align-items: start; }
+.row__label { font-weight: 600; text-align: right; padding-top: 0.85rem; }
+.row__label small { display: block; font-weight: 400; font-size: var(--size-note); opacity: 0.85; }
+.req { color: var(--gold); }
+.sub { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 1.25rem; }
+.sub + .sub { margin-top: 1.25rem; }
+.sub__title { padding: 0 0 0.5rem; width: 100%; font-size: 1.0625rem; font-weight: 700; color: var(--gold); border-bottom: 1px solid rgb(255 255 255 / 0.3); }
+.sub__hint { margin: 0; max-width: 62ch; font-size: var(--size-note); opacity: 0.9; }
+.field { display: grid; gap: 0.4rem; min-width: 0; }
+/* Buscador de programa: filtra el selector nativo mientras se escribe. */
+.card .prog-search .prog-search__input { padding-left: 2.75rem; background-color: #fff; background-repeat: no-repeat; background-position: 0.9rem center; background-size: 1.1rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b4f50' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E"); }
+
+.card :is(.input, .select) { background: #fff; border-color: #fff; }
+.card :is(.input, .select):focus { border-color: var(--gold); }
+.card :is(.input, .select)[readonly] { background: #f1ebe6; border-color: #f1ebe6; }
+.card .input[aria-invalid='true'], .card .select[aria-invalid='true'] { border-color: #ffb4b4; }
+.card .hint { color: var(--accent-ink); opacity: 0.85; font-size: var(--size-note); }
+.card .field-error { color: #ffd2d2; }
+.card a { color: var(--gold); font-weight: 700; }
+.card ::ng-deep app-ubigeo-select label, .card ::ng-deep app-ubigeo-select .field label { color: var(--accent-ink); opacity: 0.9; }
+.card ::ng-deep app-ubigeo-select .select { background: #fff; border-color: #fff; }
+.card ::ng-deep app-ubigeo-select .field-error { color: #ffd2d2; }
+.card ::ng-deep .photo__actions .note { color: var(--accent-ink); }
+.card ::ng-deep .photo__rules { background: var(--accent-press); outline: 2px solid var(--gold); }
+.card ::ng-deep .photo__frame { background: #f1ebe6; }
+.card ::ng-deep .photo__actions .btn:not(.btn--quiet) { background: var(--gold); color: var(--ink); }
+.card ::ng-deep .photo__actions .btn:not(.btn--quiet):hover { background: var(--gold-hover); }
+
+.input--doc { font-size: 1.375rem; font-weight: 700; letter-spacing: 0.04em; max-width: 22rem; }
+.input--short { max-width: 10rem; }
+.choices { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; padding-top: 0.7rem; }
+.check input { accent-color: var(--gold); }
+.doc-state { min-height: 1.5em; font-size: var(--size-note); }
+.doc-state .ok { color: #c9f2d6; font-weight: 600; }
+.doc-state .bad { color: #ffd2d2; font-weight: 600; }
+.link-btn { justify-self: start; background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--gold); text-decoration: underline; cursor: pointer; }
+
+.declaration { background: var(--accent-press); padding: 1.25rem 1.5rem; display: grid; gap: 0.5rem; }
+.consent summary { cursor: pointer; font-weight: 600; color: var(--gold); }
+.consent__text { margin-top: 0.75rem; max-height: 14rem; overflow-y: auto; padding: 1rem 1.25rem; background: var(--ground); color: var(--ink); white-space: pre-line; font-size: var(--size-note); line-height: 1.55; }
+/* Pasos: avance arriba, navegación abajo (misma paleta del formulario oficial) */
+.steps { display: grid; gap: 0.75rem; }
+.steps__count { font-size: var(--size-note); font-weight: 700; color: var(--gold); letter-spacing: 0.02em; }
+.steps__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.35rem; }
+.steps__list button {
+  width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.75rem; min-height: 3rem;
+  font: inherit; font-size: var(--size-note); font-weight: 600; text-align: left; color: var(--accent-ink);
+  background: var(--accent-press); border: 0; border-bottom: 3px solid transparent; cursor: pointer;
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.steps__list button:hover:not(:disabled) { background: #4f1015; }
+.steps__list button:disabled { cursor: default; opacity: 0.6; }
+.steps__num {
+  flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
+  border: 2px solid rgb(255 255 255 / 0.55); font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.is-done .steps__num { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.is-now button { border-bottom-color: var(--gold); opacity: 1; }
+.is-now .steps__num { background: #fff; border-color: #fff; color: var(--accent); }
+.block__title:focus { outline: none; }
+.block__title:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.step__intro { max-width: 62ch; }
+.step__error { background: #fff; color: #8a1116; padding: 0.95rem 1.25rem; display: grid; gap: 0.5rem; }
+.step__error ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.25rem; }
+.step__error a { color: #8a1116; font-weight: 700; text-decoration: underline; text-underline-offset: 0.2em; }
+.step__error:focus { outline: none; }
+.step__error:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.step__nav { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: center; }
+.step__nav .btn--gold { margin-left: auto; }
+.btn--back { background: transparent; color: var(--accent-ink); box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.7); }
+.btn--back:hover { background: var(--accent-press); }
+
+/* Revisión antes de guardar */
+.review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.review__group { background: var(--accent-press); padding: 1.1rem 1.25rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+.review__group--key, .review__fee { grid-column: 1 / -1; }
+.review__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.review h3 { font-size: 1rem; color: var(--gold); }
+.review dl { margin: 0; display: grid; gap: 0.6rem; }
+.review dt { font-size: var(--size-note); opacity: 0.85; }
+.review dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.review__program { font-size: 1.25rem; }
+.review__group--photo img { width: 120px; height: 160px; object-fit: cover; background: #f1ebe6; }
+.review__fee { background: var(--ground); color: var(--ink); }
+.review__fee h3 { color: var(--ink-soft); }
+.review__total { font-size: clamp(2.25rem, 4vw, 3rem); font-weight: 800; color: var(--accent); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* Celular: paso y monto a la vista (el resumen lateral queda al final) */
+.mobilebar { display: none; }
+.btn--gold { min-width: 16rem; font-size: 1.125rem; }
+
+/* Resumen en vivo */
+.summary { position: sticky; top: 6rem; background: var(--stone); padding: 1.75rem; display: grid; gap: 1.25rem; }
+.summary__title { font-size: 1.5rem; }
+.summary dl { margin: 0; display: grid; gap: 0.85rem; }
+.summary dt { font-size: var(--size-note); color: var(--ink-soft); font-weight: 600; }
+.summary dd { margin: 0; font-weight: 700; }
+.summary__fee { background: var(--accent); color: var(--accent-ink); padding: 1.25rem; display: grid; gap: 0.25rem; }
+.summary__total { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 800; color: var(--gold); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.summary__line { font-size: var(--size-note); opacity: 0.9; }
+.demo { font-size: var(--size-note); }
+.demo summary { font-weight: 700; cursor: pointer; }
+.demo p { margin: 0.5rem 0; }
+.demo__list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.demo__list button { font: inherit; font-weight: 700; padding: 0.4rem 0.6rem; border: 0; background: var(--ground); cursor: pointer; font-variant-numeric: tabular-nums; }
+.demo__list button:hover { background: var(--accent); color: var(--accent-ink); }
+
+/* Constancia */
+.done { display: grid; gap: 2rem; max-width: 60rem; }
+.done__head { display: grid; gap: 1rem; }
+.done__head h1 { font-size: clamp(2.5rem, 5.5vw, 4.5rem); }
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .summary { position: static; }
+  .summary dl, .demo { display: none; }
+  .page { padding-bottom: calc(clamp(4rem, 8vw, 7rem) + 4rem); }
+  .mobilebar {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    padding: 0.75rem max(1rem, env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    background: var(--accent-press); color: var(--accent-ink); font-size: var(--size-note); font-weight: 600;
+  }
+  .mobilebar strong { color: var(--gold); font-size: 1.25rem; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .mobilebar__help { min-height: 2.75rem; padding: 0 0.9rem; font: inherit; font-weight: 700; color: var(--accent-ink); background: transparent; border: 0; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.6); cursor: pointer; }
+}
+@media (max-width: 760px) {
+  .row { grid-template-columns: 1fr; }
+  .row__label { text-align: left; padding-top: 0; }
+  /* En el celular la barra muestra solo números (el nombre del paso está en el título de abajo);
+     los nombres quedan para el lector de pantalla. Seis botones iguales: nada se sale de la pantalla. */
+  .steps__name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .steps__list { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .steps__list button { justify-content: center; padding-inline: 0.25rem; }
+  .review { grid-template-columns: 1fr; }
+  .step__nav .btn { flex: 1; }
+  .step__nav .btn--gold { min-width: 0; white-space: normal; }
+}
+
+/* Borrador en el dispositivo (RF-03.06) */
+.draft { background: #fbf1d9; color: #6b4a00; padding: 1.25rem 1.5rem; display: grid; gap: 1rem; }
+.draft p { max-width: 62ch; }
+.draft__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.draft-note { font-size: var(--size-note); color: var(--ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
+.draft-note p { margin: 0; }
+.draft-note__x { min-height: 2.75rem; padding: 0; font: inherit; font-weight: 700; color: var(--accent); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; text-align: left; }

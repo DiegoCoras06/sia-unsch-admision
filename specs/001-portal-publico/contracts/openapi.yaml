@@ -1,0 +1,607 @@
+openapi: 3.1.0
+info:
+  title: SIA-UNSCH — API pública del portal (001)
+  version: 1.0.0
+  description: |
+    Endpoints públicos de solo lectura del portal de admisión y formulario de contacto.
+    Todas las respuestas exitosas usan el sobre `{ data, meta }`; los errores, `{ error }`.
+    Proyecto académico: no es el portal oficial de la UNSCH.
+servers:
+  - url: /api/v1
+tags:
+  - name: Convocatoria
+  - name: Programas y vacantes
+  - name: Tasas
+  - name: Contenido
+  - name: Atención
+  - name: Sistema
+
+paths:
+  /health:
+    get:
+      tags: [Sistema]
+      summary: Estado del servicio (usado por la comprobación sintética, ADR-013)
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [ok] }
+                      database: { type: string, enum: [ok, degraded] }
+                      time: { type: string, format: date-time }
+
+  /calls/current:
+    get:
+      tags: [Convocatoria]
+      summary: Convocatoria vigente, etapas con estado calculado y siguiente hito
+      description: FR-001, FR-002, FR-003. Historia 1.
+      responses:
+        '200':
+          description: Convocatoria vigente
+          headers:
+            Cache-Control: { $ref: '#/components/headers/PublicCache' }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CurrentCall' }
+              example:
+                data:
+                  code: 2027-I
+                  name: Concurso de Admisión 2027-I
+                  status: PUBLISHED
+                  now: '2026-10-25T10:00:00-05:00'
+                  stages:
+                    - code: ORD_REGULAR
+                      name: Inscripción regular — Ordinario
+                      scope: ORD
+                      kind: REGULAR
+                      startsAt: '2026-09-07T00:00:00-05:00'
+                      endsAt: '2026-11-06T23:59:59-05:00'
+                      status: IN_PROGRESS
+                      highlight: false
+                  nextMilestone:
+                    code: EXAM_EXO
+                    name: Examen modalidad Exonerados
+                    startsAt: '2026-11-15T07:00:00-05:00'
+                    secondsRemaining: 1803600
+        '404':
+          description: No hay convocatoria publicada ("Próximamente")
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /calls/{callCode}/areas:
+    get:
+      tags: [Programas y vacantes]
+      summary: Áreas académicas con número de opciones
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Áreas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { type: string, enum: [I, II, III] }
+                        name: { type: string, example: Ciencias }
+                        optionCount: { type: integer, example: 18 }
+
+  /calls/{callCode}/quota-categories:
+    get:
+      tags: [Programas y vacantes]
+      summary: Categorías de vacante (modalidad / submodalidad / variante)
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Categorías
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/QuotaCategory' }
+
+  /calls/{callCode}/submodalities:
+    get:
+      tags: [Programas y vacantes]
+      summary: Modalidades y submodalidades (incluye ORD y CEPRE) para simulador y requisitos
+      description: Agregado durante la implementación (T042/T050) para alimentar los selectores del simulador y de requisitos.
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Submodalidades
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { type: string, example: EXO-DEP }
+                        name: { type: string, example: Deportista calificado de alto nivel }
+                        modality: { type: string, enum: [ORD, EXO, CEPRE] }
+                        legalBasis: { type: string, example: Ley 28036 · Art. 8.4 }
+
+  /calls/{callCode}/options:
+    get:
+      tags: [Programas y vacantes]
+      summary: Buscar opciones de postulación con sus vacantes
+      description: FR-004. Historia 2. Búsqueda insensible a tildes y mayúsculas.
+      parameters:
+        - $ref: '#/components/parameters/CallCode'
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 60 }
+          example: sistemas
+        - name: area
+          in: query
+          schema: { type: string, enum: [I, II, III] }
+        - name: category
+          in: query
+          description: Código de categoría de vacante; incluye `available` por opción
+          schema: { type: string, example: AND }
+      responses:
+        '200':
+          description: Opciones agrupadas por programa
+          headers:
+            Cache-Control: { $ref: '#/components/headers/PublicCache' }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/OptionSummary' }
+                  meta:
+                    type: object
+                    properties:
+                      totalOptions: { type: integer, example: 40 }
+                      totalVacancies: { type: integer, example: 1803 }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /calls/{callCode}/options/{internalCode}:
+    get:
+      tags: [Programas y vacantes]
+      summary: Ficha de una opción de postulación
+      description: FR-005. Historia 2, escenario 4.
+      parameters:
+        - $ref: '#/components/parameters/CallCode'
+        - name: internalCode
+          in: path
+          required: true
+          schema: { type: string, pattern: '^P\d{2}$' }
+          example: P34
+      responses:
+        '200':
+          description: Detalle
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/OptionDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /calls/{callCode}/fees:
+    get:
+      tags: [Tasas]
+      summary: Tabla de tasas vigente (Tabla N.° 3)
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Tasas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Fee' }
+
+  /calls/{callCode}/fee-quote:
+    get:
+      tags: [Tasas]
+      summary: Simulador de tasa
+      description: |
+        FR-006. Historia 3. Calcula el monto con desglose y cita legal.
+        `at` permite simular otra fecha solo para mostrar el recargo; por defecto, ahora.
+      parameters:
+        - $ref: '#/components/parameters/CallCode'
+        - { name: modality, in: query, required: true, schema: { type: string, enum: [ORD, EXO, CEPRE] } }
+        - { name: submodality, in: query, schema: { type: string, example: EXO-GRA } }
+        - { name: schoolType, in: query, schema: { type: string, enum: [ESTATAL, PARTICULAR] } }
+        - { name: militaryCondition, in: query, schema: { type: string, enum: [NONE, ACTIVE, DISCHARGED], default: NONE } }
+        - { name: familyLink, in: query, schema: { type: boolean, default: false } }
+        - { name: at, in: query, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: Cotización
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/FeeQuote' }
+              example:
+                data:
+                  total: '315.00'
+                  currency: PEN
+                  lines:
+                    - { code: T-1.1E, concept: Ordinario — colegio estatal, amount: '250.00', legalNote: Tabla N.° 3, ítem 1.1 }
+                    - { code: T-4, concept: Recargo por inscripción extemporánea, amount: '65.00', legalNote: Tabla N.° 3, ítem 4 }
+                  warnings: []
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '422':
+          description: Combinación sin tasa definida (p. ej. EXO sin submodalidad)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /calls/{callCode}/requirements:
+    get:
+      tags: [Contenido]
+      summary: Documentos requeridos por submodalidad
+      description: FR-007. Historia 4.
+      parameters:
+        - $ref: '#/components/parameters/CallCode'
+        - { name: submodality, in: query, schema: { type: string, example: EXO-DEP } }
+      responses:
+        '200':
+          description: Requisitos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Requirement' }
+
+  /calls/{callCode}/syllabus:
+    get:
+      tags: [Contenido]
+      summary: Temario en árbol; con `q` devuelve coincidencias con su ruta
+      parameters:
+        - $ref: '#/components/parameters/CallCode'
+        - { name: q, in: query, schema: { type: string, maxLength: 60 }, example: trigonometria }
+      responses:
+        '200':
+          description: Árbol o resultados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/SyllabusNode' }
+
+  /calls/{callCode}/documents:
+    get:
+      tags: [Contenido]
+      summary: Documentos oficiales descargables (PDF)
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Documentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type: { type: string, enum: [REGLAMENTO, CRONOGRAMA, TASAS, VACANTES, REQUISITOS, TEMARIO, PROGRAMAS, OTRO] }
+                        title: { type: string }
+                        url: { type: string, format: uri }
+                        publishedAt: { type: string, format: date-time }
+                        sizeBytes: { type: integer }
+
+  /calls/{callCode}/stats:
+    get:
+      tags: [Contenido]
+      summary: Inscritos por modalidad (agregado, sin datos personales)
+      description: FR-011. Hasta la spec 003, `source = pending` (research R-09).
+      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      responses:
+        '200':
+          description: Estadísticas
+          headers:
+            Cache-Control:
+              schema: { type: string, example: 'public, max-age=3600' }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      ordinary: { type: integer }
+                      exempted: { type: integer }
+                      total: { type: integer }
+                      source: { type: string, enum: [live, pending] }
+                      updatedAt: { type: string, format: date-time }
+
+  /announcements:
+    get:
+      tags: [Contenido]
+      summary: Comunicados y fe de erratas
+      description: FR-008. Historia 5.
+      parameters:
+        - { name: callCode, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string, enum: [COMUNICADO, FE_ERRATAS, RESULTADO] } }
+        - { name: section, in: query, description: Solo los que afectan una sección, schema: { type: string, example: TASAS } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200':
+          description: Lista paginada, del más reciente al más antiguo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Announcement' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+
+  /content/home:
+    get:
+      tags: [Contenido]
+      summary: Bloques de la página de inicio (carrusel, autoridades, misión, accesos habilitados)
+      description: FR-010, FR-013.
+      responses:
+        '200':
+          description: Contenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      heroSlides: { type: array, items: { type: object } }
+                      authorities: { type: array, items: { type: object } }
+                      blocks:
+                        type: object
+                        additionalProperties: { type: string, description: Markdown }
+                      quickAccess:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            key: { type: string, enum: [INSCRIPCION, REINSCRIPCION, BUSCAR_AULA, VER_PUNTAJE, IMPRIMIR_DOCUMENTOS] }
+                            enabled: { type: boolean }
+                            reason: { type: string, example: Disponible del 16 al 17/11/2026 }
+
+  /support/contact:
+    post:
+      tags: [Atención]
+      summary: Enviar mensaje de contacto (crea caso con número)
+      description: FR-012. Historia 6. Límite de 5 por hora por origen.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, message]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 120 }
+                email: { type: string, format: email, maxLength: 160 }
+                phone: { type: string, pattern: '^9\d{8}$' }
+                message: { type: string, minLength: 10, maxLength: 2000 }
+                website: { type: string, description: Campo trampa; debe ir vacío }
+      responses:
+        '201':
+          description: Caso creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      caseNumber: { type: string, example: C-2027I-000123 }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+components:
+  parameters:
+    CallCode:
+      name: callCode
+      in: path
+      required: true
+      schema: { type: string, pattern: '^\d{4}-(I|II)$' }
+      example: 2027-I
+  headers:
+    PublicCache:
+      schema: { type: string, example: 'public, max-age=300' }
+  responses:
+    ValidationError:
+      description: Datos inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Límite excedido
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: { type: string, example: VALIDATION_ERROR }
+            message: { type: string, example: El campo email no es válido }
+            requestId: { type: string, example: 01JB8Z9X7Q2M }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  issue: { type: string }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    Stage:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        scope: { type: string, enum: [ORD, EXO, CEPRE, REINS, ALL] }
+        kind: { type: string, enum: [REGULAR, EXTEMPORANEOUS, EXAM, PUBLICATION, DELIVERY, OTHER] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        status: { type: string, enum: [UPCOMING, IN_PROGRESS, FINISHED] }
+        highlight: { type: boolean }
+    CurrentCall:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [PUBLISHED, CLOSED] }
+        now: { type: string, format: date-time }
+        stages: { type: array, items: { $ref: '#/components/schemas/Stage' } }
+        nextMilestone:
+          type: [object, 'null']
+          properties:
+            code: { type: string }
+            name: { type: string }
+            startsAt: { type: string, format: date-time }
+            secondsRemaining: { type: integer }
+    QuotaCategory:
+      type: object
+      properties:
+        code: { type: string, example: PS-R }
+        name: { type: string, example: 1.º y 2.º puesto — Rural }
+        modality: { type: string, enum: [ORD, EXO, CEPRE] }
+        submodality: { type: [string, 'null'], example: EXO-PSP }
+        variant: { type: [string, 'null'], example: RURAL }
+    OptionSummary:
+      type: object
+      properties:
+        internalCode: { type: string, example: P34 }
+        displayName: { type: string, example: Ingeniería de Sistemas }
+        program: { type: string }
+        specialty: { type: [string, 'null'] }
+        area: { type: string, enum: [I, II, III] }
+        ordinaryVacancies: { type: integer, example: 20 }
+        totalVacancies: { type: integer, example: 50 }
+        categoryVacancies:
+          type: [integer, 'null']
+          description: Presente si se filtró por `category`; 0 significa "Sin vacantes en esta modalidad"
+    OptionDetail:
+      allOf:
+        - $ref: '#/components/schemas/OptionSummary'
+        - type: object
+          properties:
+            faculty: { type: string }
+            durationYears: { type: integer, example: 5 }
+            degree: { type: string }
+            professionalTitle: { type: string }
+            profileMarkdown: { type: string }
+            vacanciesByCategory:
+              type: array
+              items:
+                type: object
+                properties:
+                  category: { type: string }
+                  name: { type: string }
+                  quantity: { type: integer }
+    Fee:
+      type: object
+      properties:
+        code: { type: string, example: T-2.8 }
+        concept: { type: string }
+        amount: { type: string, pattern: '^\d+\.\d{2}$', example: '485.00' }
+        kind: { type: string, enum: [BASE, SURCHARGE, OTHER] }
+        legalNote: { type: string }
+    FeeQuote:
+      type: object
+      properties:
+        total: { type: string, pattern: '^\d+\.\d{2}$' }
+        currency: { type: string, enum: [PEN] }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              concept: { type: string }
+              amount: { type: string }
+              legalNote: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+          example: [El beneficio por vínculo familiar se usa por única vez (Art. 15)]
+    Requirement:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: string }
+        article: { type: string, example: Art. 40 }
+        isBase: { type: boolean }
+        mandatory: { type: boolean }
+        acceptedFormats: { type: array, items: { type: string } }
+    SyllabusNode:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        level: { type: string, enum: [AREA, COURSE, SECTION, TOPIC] }
+        title: { type: string }
+        path: { type: array, items: { type: string }, example: [II. Matemática, Trigonometría] }
+        children: { type: array, items: { $ref: '#/components/schemas/SyllabusNode' } }
+    Announcement:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [COMUNICADO, FE_ERRATAS, RESULTADO] }
+        title: { type: string }
+        bodyMarkdown: { type: string }
+        affectsSection: { type: [string, 'null'] }
+        publishedAt: { type: string, format: date-time }

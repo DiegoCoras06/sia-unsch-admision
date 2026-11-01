@@ -1,0 +1,465 @@
+openapi: 3.1.0
+info:
+  title: SIA-UNSCH — Cuentas e identidad (002)
+  version: 1.0.0
+  description: |
+    Registro con verificación de identidad (simulada), verificación de correo, sesiones y perfil del postulante.
+    Respuestas en sobre `{ data, meta }`; errores `{ error }` (ver contrato 001).
+servers:
+  - url: /api/v1
+tags:
+  - name: Registro
+  - name: Sesión
+  - name: Contraseña
+  - name: Perfil
+
+paths:
+  /legal/consent/current:
+    get:
+      tags: [Registro]
+      summary: Texto vigente de tratamiento de datos personales
+      responses:
+        '200':
+          description: Texto y versión
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      version: { type: string, example: 2026-10-v1 }
+                      textMarkdown: { type: string }
+
+  /auth/identity/lookup:
+    post:
+      tags: [Registro]
+      summary: Paso 1 — Verificar documento y obtener nombres
+      description: FR-001, FR-002, FR-003. Historia 1, escenarios 1, 3 y 4. Límite 10/h por IP y 3 fallos/h por documento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentType, documentNumber]
+              properties:
+                documentType: { type: string, enum: [DNI, CE, PASAPORTE] }
+                documentNumber: { type: string, example: '99900001' }
+                checkDigit: { type: string, pattern: '^[0-9A-K]$', description: Obligatorio para DNI }
+      responses:
+        '200':
+          description: Identidad verificada o pendiente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      identityStatus: { type: string, enum: [VERIFIED, PENDING] }
+                      firstNames: { type: [string, 'null'], example: MARÍA ELENA }
+                      paternalSurname: { type: [string, 'null'], example: QUISPE }
+                      maternalSurname: { type: [string, 'null'], example: HUAMÁN }
+                      isMinor: { type: boolean }
+                      simulated: { type: boolean, description: true con MockIdentityProvider }
+                      identityToken: { type: string, description: JWT de 10 min para /auth/register }
+        '409':
+          description: Documento ya registrado (incluye `maskedEmail`)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: object
+                    properties:
+                      error:
+                        type: object
+                        properties:
+                          code: { const: DOCUMENT_ALREADY_REGISTERED }
+                          maskedEmail: { type: string, example: 'd•••••@u•••.edu.pe' }
+        '422':
+          description: |
+            `IDENTITY_NOT_MATCHED` (documento o dígito incorrecto), `DOCUMENT_EXPIRED`
+            o `REGISTRATION_NOT_ALLOWED` (padrón de inhabilitados; sin detallar motivo).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/register:
+    post:
+      tags: [Registro]
+      summary: Paso 2 — Crear cuenta
+      description: FR-001, FR-004, FR-005, FR-009, FR-010. Historia 1, escenario 2.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identityToken, email, phone, password, consentVersion]
+              properties:
+                identityToken: { type: string }
+                manualNames:
+                  type: object
+                  description: Solo si identityStatus = PENDING
+                  properties:
+                    firstNames: { type: string, maxLength: 80 }
+                    paternalSurname: { type: string, maxLength: 80 }
+                    maternalSurname: { type: string, maxLength: 80 }
+                email: { type: string, format: email, maxLength: 160 }
+                phone: { type: string, pattern: '^9\d{8}$' }
+                password: { type: string, minLength: 10, maxLength: 128 }
+                consentVersion: { type: string }
+      responses:
+        '201':
+          description: Cuenta creada en PENDING_EMAIL; se envía código
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      userId: { type: string, format: uuid }
+                      status: { const: PENDING_EMAIL }
+                      applicantCode: { type: string, example: '27000017' }
+                      maskedEmail: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: '`EMAIL_ALREADY_USED` o `DOCUMENT_ALREADY_REGISTERED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: '`WEAK_PASSWORD`, `CONSENT_OUTDATED` o `IDENTITY_TOKEN_EXPIRED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/email/verify:
+    post:
+      tags: [Registro]
+      summary: Verificar correo con código de 6 dígitos
+      description: FR-006. Historia 2.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string, pattern: '^\d{6}$' }
+      responses:
+        '200':
+          description: Cuenta ACTIVE (o correo nuevo confirmado)
+        '422':
+          description: '`CODE_INVALID` (con `attemptsLeft`), `CODE_EXPIRED` o `CODE_LOCKED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/email/resend:
+    post:
+      tags: [Registro]
+      summary: Reenviar código
+      description: Espera de 60 s entre envíos; máximo 5 por hora.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '202': { description: Si la cuenta existe y está pendiente, se envía un código }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/login:
+    post:
+      tags: [Sesión]
+      summary: Iniciar sesión con DNI o correo
+      description: FR-007, FR-008. Historia 3.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string, description: DNI, documento o correo }
+                password: { type: string }
+      responses:
+        '200':
+          description: Sesión iniciada; refresh token en cookie
+          headers:
+            Set-Cookie:
+              schema: { type: string, example: '__Host-sia_rt=…; HttpOnly; Secure; SameSite=Strict; Path=/' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401':
+          description: '`INVALID_CREDENTIALS` (mismo mensaje si la cuenta no existe)'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '423':
+          description: '`ACCOUNT_LOCKED` con `lockedUntil`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/refresh:
+    post:
+      tags: [Sesión]
+      summary: Renovar token de acceso (rota el refresh token)
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: Nuevo token de acceso y nueva cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401':
+          description: '`SESSION_EXPIRED`, `SESSION_IDLE` (inactividad > 30 min) o `SESSION_REVOKED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/logout:
+    post:
+      tags: [Sesión]
+      summary: Cerrar la sesión actual
+      parameters: [ { $ref: '#/components/parameters/ClientHeader' } ]
+      responses:
+        '204': { description: Sesión revocada y cookie eliminada }
+
+  /auth/logout-all:
+    post:
+      tags: [Sesión]
+      summary: Cerrar todas las sesiones del usuario
+      description: FR-013.
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '204': { description: Todas las sesiones revocadas }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/password/forgot:
+    post:
+      tags: [Contraseña]
+      summary: Solicitar enlace de recuperación
+      description: Historia 4, escenario 1. Respuesta idéntica exista o no la cuenta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier]
+              properties:
+                identifier: { type: string }
+      responses:
+        '202': { description: Si existe, se envió un enlace }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/password/reset:
+    post:
+      tags: [Contraseña]
+      summary: Definir nueva contraseña con el token del enlace
+      description: Historia 4, escenario 2. Revoca todas las sesiones.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 10, maxLength: 128 }
+      responses:
+        '204': { description: Contraseña cambiada }
+        '422':
+          description: '`TOKEN_INVALID_OR_EXPIRED` o `WEAK_PASSWORD`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me:
+    get:
+      tags: [Perfil]
+      summary: Mi perfil
+      description: Historia 5, escenario 3.
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: Perfil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Profile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Perfil]
+      summary: Actualizar datos de contacto
+      description: |
+        FR-011. Solo `phone`, `ubigeo`, `addressLine`, `guardianName` y `email`.
+        Cambiar `email` envía un código al correo nuevo; el cambio se aplica al verificarlo.
+        Enviar campos de identidad devuelve 422 `IDENTITY_FIELDS_NOT_EDITABLE`.
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                phone: { type: string, pattern: '^9\d{8}$' }
+                ubigeo: { type: string, pattern: '^\d{6}$' }
+                addressLine: { type: string, maxLength: 200 }
+                guardianName: { type: string, maxLength: 160 }
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Profile' }
+                  meta:
+                    type: object
+                    properties:
+                      pendingEmailVerification: { type: boolean }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: '`EMAIL_ALREADY_USED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: '`IDENTITY_FIELDS_NOT_EDITABLE`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /me/activity:
+    get:
+      tags: [Perfil]
+      summary: Actividad de mi cuenta
+      description: FR-012. Historia 6.
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200':
+          description: Eventos propios, del más reciente al más antiguo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        occurredAt: { type: string, format: date-time }
+                        action: { type: string, example: auth.login }
+                        description: { type: string, example: Iniciaste sesión desde un celular }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ClientHeader:
+      name: X-SIA-Client
+      in: header
+      required: true
+      description: Protección CSRF para rutas que usan la cookie
+      schema: { const: web }
+  responses:
+    ValidationError:
+      description: Datos inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Sin sesión o token vencido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Límite excedido
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }
+    TokenResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            accessToken: { type: string }
+            expiresIn: { type: integer, example: 900 }
+            user:
+              type: object
+              properties:
+                id: { type: string, format: uuid }
+                type: { type: string, enum: [APPLICANT, STAFF] }
+                status: { type: string, enum: [PENDING_EMAIL, ACTIVE] }
+                roles: { type: array, items: { type: string } }
+    Profile:
+      type: object
+      properties:
+        applicantCode: { type: string, example: '27000017' }
+        documentType: { type: string, enum: [DNI, CE, PASAPORTE] }
+        documentNumber: { type: string }
+        firstNames: { type: string }
+        paternalSurname: { type: string }
+        maternalSurname: { type: string }
+        birthDate: { type: string, format: date }
+        identityStatus: { type: string, enum: [VERIFIED, PENDING, REJECTED] }
+        identitySimulated: { type: boolean }
+        email: { type: string, format: email }
+        phone: { type: string }
+        ubigeo: { type: [string, 'null'] }
+        addressLine: { type: [string, 'null'] }
+        guardianName: { type: [string, 'null'] }
+        editableFields:
+          type: array
+          items: { type: string }
+          example: [email, phone, ubigeo, addressLine, guardianName]

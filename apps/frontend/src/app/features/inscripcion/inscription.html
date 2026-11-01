@@ -1,0 +1,501 @@
+@if (result(); as r) {
+  <!-- Inscripción registrada: constancia y orden de pago -->
+  <section class="page field-stone">
+    <div class="frame done">
+      <div class="done__head" role="status">
+        <h1>Inscripción registrada</h1>
+        <p class="lead">Guarda tu código de postulante: lo necesitas para pagar y para imprimir tu ficha.</p>
+      </div>
+      <app-inscription-receipt [summary]="r" [documentNumber]="form.controls.documentNumber.value.trim()" (updated)="result.set($event)" />
+    </div>
+  </section>
+} @else {
+  <section class="page">
+    <div class="frame layout">
+      <div class="main">
+        <header class="head">
+          <h1>Inscripción 2027-I</h1>
+          <p class="lead">Llena tus datos como figuran en tu DNI. Con tu número de DNI completamos tus apellidos y nombres. No necesitas crear una cuenta.</p>
+          <div class="head__links">
+            <a routerLink="/pasos" class="link-arrow">Ver los pasos de inscripción</a>
+            <a routerLink="/documentos/reglamento" class="link-arrow">Leer el reglamento</a>
+            <a routerLink="/mi-inscripcion" class="link-arrow">Ya me inscribí</a>
+          </div>
+        </header>
+
+        @if (draft(); as d) {
+          <div class="draft" role="region" aria-label="Borrador guardado">
+            <p><strong>Tienes una inscripción sin terminar</strong>, guardada en este dispositivo el {{ when(d.savedAt) }}. La foto no se guarda: tómala de nuevo al final.</p>
+            <div class="draft__actions">
+              <button type="button" class="btn" (click)="resumeDraft()">Continuar donde me quedé</button>
+              <button type="button" class="btn btn--quiet" (click)="discardDraft()">Empezar de nuevo</button>
+            </div>
+          </div>
+        } @else if (draftSavedAt(); as at) {
+          <div class="draft-note">
+            <p aria-live="polite">Borrador guardado en este dispositivo · {{ when(at) }} · se borra solo a los 7 días</p>
+            <button type="button" class="draft-note__x" (click)="forgetDevice()">¿Equipo compartido o cabina? Borrar mis datos de este equipo</button>
+          </div>
+        } @else if (draftOff()) {
+          <p class="draft-note" role="status">Tus datos ya no se guardan en este equipo. Si cierras la página, tendrás que empezar de nuevo.</p>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="card">
+          <!-- Avance: pasos del formulario -->
+          <nav class="steps" aria-label="Pasos de la inscripción">
+            <p class="steps__count">Paso {{ step() + 1 }} de {{ steps.length }}</p>
+            <ol class="steps__list">
+              @for (s of steps; track s.title; let i = $index) {
+                <li [class.is-done]="i < step()" [class.is-now]="i === step()">
+                  <button type="button" (click)="goTo(i)" [disabled]="!canOpen(i)" [attr.aria-current]="i === step() ? 'step' : null">
+                    <span class="steps__num" aria-hidden="true">{{ i + 1 }}</span>
+                    <span class="steps__name">{{ s.title }}</span>
+                  </button>
+                </li>
+              }
+            </ol>
+          </nav>
+
+          <section class="block step" aria-labelledby="step-title">
+            <h2 id="step-title" class="block__title" tabindex="-1" #stepHeading>{{ steps[step()].title }}</h2>
+
+            <!-- Resumen de errores arriba del paso: recibe el foco y lleva a cada dato pendiente. -->
+            @if (stepError(); as e) {
+              <div class="step__error" role="alert" tabindex="-1" #errorBox>
+                <p><strong>{{ e }}</strong></p>
+                @if (stepMissing().length) {
+                  <ul>
+                    @for (m of stepMissing(); track m.target) { <li><a [href]="href(m.target)" (click)="focusField($event, m.target)">{{ m.label }}</a></li> }
+                  </ul>
+                }
+              </div>
+            }
+
+            @switch (step()) {
+              @case (0) {
+                <fieldset class="sub" aria-describedby="sub-mod-hint">
+                  <legend class="sub__title">Modalidad</legend>
+                  <p id="sub-mod-hint" class="sub__hint">Elígela primero: de ella dependen los requisitos, el plazo y el monto.</p>
+
+                <div class="row">
+                  <label class="row__label" for="f-mod">¿Por qué modalidad postulas? <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-mod" class="select" formControlName="modality" [attr.aria-describedby]="modality() && !modality()!.open ? 'e-modality f-mod-hint' : 'f-mod-hint'">
+                      @for (m of options()?.modalities ?? []; track m.code) {
+                        <option [value]="m.code">{{ m.name }}{{ m.open ? '' : ' - inscripción cerrada por ahora' }}</option>
+                      }
+                    </select>
+                    <span id="f-mod-hint" class="hint">{{ modalityNote() }}</span>
+                    @if (modality(); as m) { @if (!m.open) { <p class="field-error" id="e-modality">La inscripción de esta modalidad no está abierta hoy. Revisa el <a routerLink="/cronograma">cronograma</a>.</p> } }
+                  </div>
+                </div>
+                </fieldset>
+
+                <fieldset class="sub" aria-describedby="sub-id-hint">
+                  <legend class="sub__title">Identidad</legend>
+                  <p id="sub-id-hint" class="sub__hint">Tal como figura en tu documento. Con tu DNI completamos tus nombres desde RENIEC.</p>
+
+                <div class="row">
+                  <span class="row__label" id="lbl-doctype">Tipo de documento de identidad <span class="req">*</span></span>
+                  <div class="choices" role="radiogroup" aria-labelledby="lbl-doctype">
+                    <label class="check"><input type="radio" formControlName="documentType" value="DNI"> DNI</label>
+                    <label class="check"><input type="radio" formControlName="documentType" value="CE"> Carné de extranjería</label>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <label class="row__label" for="f-doc">Número de documento <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-doc" class="input input--doc" formControlName="documentNumber" [attr.aria-describedby]="err('documentNumber') ? 'f-doc-state e-documentNumber' : 'f-doc-state'" [attr.inputmode]="form.controls.documentType.value === 'DNI' ? 'numeric' : 'text'"
+                      [attr.maxlength]="form.controls.documentType.value === 'DNI' ? 8 : 12" autocomplete="off"
+                      [placeholder]="form.controls.documentType.value === 'DNI' ? 'Ingresa tu DNI para buscar' : 'Número de carné'"
+                      [attr.aria-invalid]="!!err('documentNumber')">
+                    <p id="f-doc-state" class="doc-state" aria-live="polite">
+                      @switch (lookupState()) {
+                        @case ('loading') { <span>Buscando tus datos…</span> }
+                        @case ('found') { <span class="ok">Datos encontrados@if (simulated()) { (verificación simulada con DNI de prueba)}. Revisa que sean correctos.</span> }
+                        @case ('unavailable') { <span>No pudimos consultar RENIEC en este momento: escribe tus apellidos y nombres tal como figuran en tu DNI.</span> }
+                        @case ('manual') { <span>No encontramos el documento en el registro: escribe tus apellidos y nombres tal como figuran en tu documento.</span> }
+                        @case ('registered') { <span class="bad">Este documento ya tiene una inscripción. <a routerLink="/mi-inscripcion">Consúltala aquí</a>.</span> }
+                      }
+                    </p>
+                    @if (err('documentNumber'); as e) { <p class="field-error" id="e-documentNumber">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <label class="row__label" for="f-ap">Apellido paterno <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-ap" class="input" formControlName="paternalSurname" [attr.aria-describedby]="err('paternalSurname') ? 'e-paternalSurname' : null" [readonly]="namesLocked()" [attr.aria-invalid]="!!err('paternalSurname')" autocomplete="family-name">
+                    @if (err('paternalSurname'); as e) { <p class="field-error" id="e-paternalSurname">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-am">Apellido materno <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-am" class="input" formControlName="maternalSurname" [attr.aria-describedby]="err('maternalSurname') ? 'e-maternalSurname' : null" [readonly]="namesLocked()" [attr.aria-invalid]="!!err('maternalSurname')">
+                    @if (err('maternalSurname'); as e) { <p class="field-error" id="e-maternalSurname">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-nom">Nombres <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-nom" class="input" formControlName="firstNames" [attr.aria-describedby]="err('firstNames') ? 'e-firstNames' : null" [readonly]="namesLocked()" [attr.aria-invalid]="!!err('firstNames')" autocomplete="given-name">
+                    @if (err('firstNames'); as e) { <p class="field-error" id="e-firstNames">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <span class="row__label" id="lbl-sex">Sexo <span class="req">*</span></span>
+                  <div class="field">
+                    <div class="choices" role="radiogroup" [attr.aria-describedby]="err('sex') ? 'e-sex' : null" aria-labelledby="lbl-sex">
+                      <label class="check"><input type="radio" formControlName="sex" value="M"> Masculino</label>
+                      <label class="check"><input type="radio" formControlName="sex" value="F"> Femenino</label>
+                    </div>
+                    @if (err('sex'); as e) { <p class="field-error" id="e-sex">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <label class="row__label" for="f-fnac">Fecha de nacimiento <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-fnac" class="input" type="date" formControlName="birthDate" [attr.aria-describedby]="err('birthDate') ? 'e-birthDate' : null" [attr.aria-invalid]="!!err('birthDate')" autocomplete="bday">
+                    @if (err('birthDate'); as e) { <p class="field-error" id="e-birthDate">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <span class="row__label">Lugar de nacimiento <span class="req">*</span></span>
+                  <app-ubigeo-select [hideLegend]="true" id="nac" label="Lugar de nacimiento" [value]="form.controls.birthUbigeo.value"
+                    (valueChange)="form.controls.birthUbigeo.setValue($event)" [error]="err('birthUbigeo')" />
+                </div>
+
+                <div class="row">
+                  <label class="row__label" for="f-civil">Estado civil <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-civil" class="select" formControlName="maritalStatus" [attr.aria-describedby]="err('maritalStatus') ? 'e-maritalStatus' : null" [attr.aria-invalid]="!!err('maritalStatus')">
+                      <option value="">Seleccione</option>
+                      @for (o of entries(options()?.maritalStatus ?? {}); track o[0]) { <option [value]="o[0]">{{ o[1] }}</option> }
+                    </select>
+                    @if (err('maritalStatus'); as e) { <p class="field-error" id="e-maritalStatus">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <label class="row__label" for="f-dep">Dependencia económica <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-dep" class="select" formControlName="economicDependency" [attr.aria-describedby]="err('economicDependency') ? 'e-economicDependency' : null" [attr.aria-invalid]="!!err('economicDependency')">
+                      <option value="">Seleccione</option>
+                      @for (o of entries(options()?.economicDependency ?? {}); track o[0]) { <option [value]="o[0]">{{ o[1] }}</option> }
+                    </select>
+                    @if (err('economicDependency'); as e) { <p class="field-error" id="e-economicDependency">{{ e }}</p> }
+                  </div>
+                </div>
+                </fieldset>
+              }
+              @case (1) {
+                <fieldset class="sub" aria-describedby="sub-dom-hint">
+                  <legend class="sub__title">Dónde vives</legend>
+                  <p id="sub-dom-hint" class="sub__hint">Tu domicilio actual, para el registro de la Dirección de Admisión.</p>
+
+                <div class="row">
+                  <label class="row__label" for="f-dir">Dirección actual <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-dir" class="input" formControlName="address" [attr.aria-describedby]="err('address') ? 'e-address' : null" autocomplete="street-address" [attr.aria-invalid]="!!err('address')">
+                    @if (err('address'); as e) { <p class="field-error" id="e-address">{{ e }}</p> }
+                  </div>
+                </div>
+
+                <div class="row">
+                  <span class="row__label">Lugar de residencia actual <span class="req">*</span></span>
+                  <div class="field">
+                    <app-ubigeo-select [hideLegend]="true" id="res" label="Lugar de residencia actual" [value]="form.controls.residenceUbigeo.value"
+                      (valueChange)="form.controls.residenceUbigeo.setValue($event)" [error]="err('residenceUbigeo')" />
+                    @if (form.controls.birthUbigeo.value) {
+                      <button type="button" class="link-btn" (click)="copyBirthToResidence()">Es el mismo que mi lugar de nacimiento</button>
+                    }
+                  </div>
+                </div>
+                </fieldset>
+
+                <fieldset class="sub" aria-describedby="sub-con-hint">
+                  <legend class="sub__title">Cómo te contactamos</legend>
+                  <p id="sub-con-hint" class="sub__hint">A este correo y celular llegan tu código de postulante y los avisos del proceso.</p>
+
+                <div class="row">
+                  <label class="row__label" for="f-tel">Teléfono</label>
+                  <div class="field">
+                    <input id="f-tel" class="input" formControlName="phone" [attr.aria-describedby]="err('phone') ? 'e-phone' : null" inputmode="numeric" maxlength="9" autocomplete="tel">
+                    @if (err('phone'); as e) { <p class="field-error" id="e-phone">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-cel">Celular <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-cel" class="input" formControlName="mobile" [attr.aria-describedby]="err('mobile') ? 'e-mobile' : null" inputmode="numeric" maxlength="9" autocomplete="tel" [attr.aria-invalid]="!!err('mobile')">
+                    @if (err('mobile'); as e) { <p class="field-error" id="e-mobile">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-mail">Correo electrónico <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-mail" class="input" type="email" formControlName="email" autocomplete="email" [attr.aria-invalid]="!!err('email')" [attr.aria-describedby]="err('email') ? 'f-mail-hint e-email' : 'f-mail-hint'">
+                    <span id="f-mail-hint" class="hint">Te enviaremos tu código de postulante y tu orden de pago.</span>
+                    @if (err('email'); as e) { <p class="field-error" id="e-email">{{ e }}</p> }
+                  </div>
+                </div>
+                </fieldset>
+              }
+              @case (2) {
+                <p class="step__intro">Tu foto aparece en la ficha y en el control de ingreso al examen. Fondo blanco, de frente y sin lentes oscuros.</p>
+                <div class="row">
+                  <span class="row__label">Fotografía del postulante <span class="req">*</span></span>
+                  <app-photo-capture id="foto" [value]="form.controls.photo.value" (valueChange)="form.controls.photo.setValue($event)" [error]="err('photo')" />
+                </div>
+              }
+              @case (3) {
+                <div class="row">
+                  <span class="row__label">Lugar del colegio de egreso <span class="req">*</span></span>
+                  <app-ubigeo-select [hideLegend]="true" id="col" label="Lugar del colegio de egreso" [value]="form.controls.schoolUbigeo.value"
+                    (valueChange)="form.controls.schoolUbigeo.setValue($event)" [error]="err('schoolUbigeo')" />
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-col">Nombre del colegio <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-col" class="input" formControlName="schoolName" [attr.aria-describedby]="err('schoolName') ? 'e-schoolName' : null" [attr.aria-invalid]="!!err('schoolName')" placeholder="Por ejemplo: IE Mariscal Cáceres">
+                    @if (err('schoolName'); as e) { <p class="field-error" id="e-schoolName">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <span class="row__label" id="lbl-gest">Gestión del colegio <span class="req">*</span></span>
+                  <div class="field">
+                    <div class="choices" role="radiogroup" [attr.aria-describedby]="err('schoolType') ? 'e-schoolType' : null" aria-labelledby="lbl-gest">
+                      <label class="check"><input type="radio" formControlName="schoolType" value="ESTATAL"> Estatal</label>
+                      <label class="check"><input type="radio" formControlName="schoolType" value="PARTICULAR"> Particular</label>
+                    </div>
+                    <span class="hint">Define tu tasa de inscripción (Tabla N.° 3).</span>
+                    @if (err('schoolType'); as e) { <p class="field-error" id="e-schoolType">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-anio">Año en que culminó el colegio <span class="req">*</span><small>Si aún cursas el colegio, el año en que culminarás.</small></label>
+                  <div class="field">
+                    <input id="f-anio" class="input input--short" formControlName="graduationYear" [attr.aria-describedby]="err('graduationYear') ? 'e-graduationYear' : null" inputmode="numeric" maxlength="4" [placeholder]="'' + thisYear" [attr.aria-invalid]="!!err('graduationYear')">
+                    @if (err('graduationYear'); as e) { <p class="field-error" id="e-graduationYear">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-cuarto">¿Cursas 4.º grado de secundaria o inferior? <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-cuarto" class="select" formControlName="inFourthOrBelow" [attr.aria-describedby]="err('inFourthOrBelow') ? 'e-inFourthOrBelow' : null" [attr.aria-invalid]="!!err('inFourthOrBelow')">
+                      <option value="">Seleccione</option>
+                      <option value="NO">No</option>
+                      <option value="SI">Sí - rendiré el examen sin derecho a vacante</option>
+                    </select>
+                    @if (err('inFourthOrBelow'); as e) { <p class="field-error" id="e-inFourthOrBelow">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-prep">Tipo de preparación <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-prep" class="select" formControlName="preparation" [attr.aria-describedby]="err('preparation') ? 'e-preparation' : null" [attr.aria-invalid]="!!err('preparation')">
+                      <option value="">Seleccione</option>
+                      @for (o of entries(options()?.preparation ?? {}); track o[0]) { <option [value]="o[0]">{{ o[1] }}</option> }
+                    </select>
+                    @if (err('preparation'); as e) { <p class="field-error" id="e-preparation">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-veces">Número de veces que postula <span class="req">*</span></label>
+                  <div class="field">
+                    <input id="f-veces" class="input input--short" type="number" min="1" max="20" formControlName="attempts" [attr.aria-describedby]="err('attempts') ? 'e-attempts' : null" [attr.aria-invalid]="!!err('attempts')">
+                    @if (err('attempts'); as e) { <p class="field-error" id="e-attempts">{{ e }}</p> }
+                  </div>
+                </div>
+              }
+              @case (4) {
+                <div class="row">
+                  <label class="row__label" for="f-tipo">Tipo <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-tipo" class="select" formControlName="quotaCategory">
+                      @for (c of modality()?.categories ?? []; track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+                    </select>
+                    @if (form.controls.modality.value === 'EXO') { <span class="hint">Tus requisitos se validan en la Dirección de Admisión antes del pago (Art. 9).</span> }
+                  </div>
+                </div>
+                @if (form.controls.modality.value === 'ORD') {
+                  <div class="row">
+                    <label class="row__label" for="f-mil">Servicio militar acuartelado</label>
+                    <div class="field">
+                      <select id="f-mil" class="select" formControlName="militaryCondition">
+                        <option value="NONE">No</option>
+                        <option value="ACTIVE">Sí, estoy en servicio (50 % de descuento)</option>
+                        <option value="DISCHARGED">Sí, soy licenciado (25 % de descuento)</option>
+                      </select>
+                    </div>
+                  </div>
+                }
+                <div class="row">
+                  <label class="row__label" for="f-sede">Sede <span class="req">*</span></label>
+                  <div class="field">
+                    <select id="f-sede" class="select" formControlName="campus">
+                      @for (o of entries(options()?.campuses ?? {}); track o[0]) { <option [value]="o[0]">{{ o[1] }}</option> }
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-area">Área</label>
+                  <div class="field">
+                    <select id="f-area" class="select" formControlName="area">
+                      <option value="">Todas las áreas</option>
+                      @for (a of entries(areaNames); track a[0]) { <option [value]="a[0]">{{ a[0] }}. {{ a[1] }}</option> }
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <label class="row__label" for="f-prog">Programa de estudio <span class="req">*</span></label>
+                  <div class="field">
+                    <div class="prog-search">
+                      <label class="sr-only" for="f-prog-q">Buscar programa por nombre</label>
+                      <input id="f-prog-q" class="input prog-search__input" type="search" placeholder="Escribe para buscar: sistemas, medicina, educación…"
+                        [value]="programQuery()" (input)="programQuery.set($any($event.target).value)" autocomplete="off" aria-controls="f-prog" aria-describedby="f-prog-count">
+                    </div>
+                    <span id="f-prog-count" class="hint" aria-live="polite">{{ programQuery() ? visiblePrograms().length + (visiblePrograms().length === 1 ? ' programa coincide' : ' programas coinciden') : visiblePrograms().length + ' programas con vacantes' }}</span>
+                    <select id="f-prog" class="select" formControlName="optionCode" [attr.aria-describedby]="err('optionCode') ? 'e-optionCode' : null" [attr.aria-invalid]="!!err('optionCode')">
+                      <option value="">Seleccione ({{ visiblePrograms().length }} con vacantes)</option>
+                      @for (p of visiblePrograms(); track p.internalCode) {
+                        <option [value]="p.internalCode">{{ p.displayName }} - {{ p.categoryVacancies }} {{ p.categoryVacancies === 1 ? 'vacante' : 'vacantes' }}</option>
+                      }
+                    </select>
+                    @if (err('optionCode'); as e) { <p class="field-error" id="e-optionCode">{{ e }}</p> }
+                  </div>
+                </div>
+                <div class="row">
+                  <span class="row__label">Beneficio</span>
+                  <label class="check"><input type="checkbox" formControlName="familyLink"> Soy hijo(a) o cónyuge de un docente o servidor de la UNSCH y es la primera vez que uso este beneficio (Art. 15)</label>
+                </div>
+              }
+              @case (5) {
+                <p class="step__intro">Revisa tus datos. Después de guardar no podrás cambiar de programa ni de modalidad.</p>
+                <div class="review">
+                  <section class="review__group">
+                    <div class="review__head"><h3>Tus datos</h3><button type="button" class="link-btn" (click)="goTo(0)">Cambiar</button></div>
+                    <dl>
+                      <div><dt>Postulante</dt><dd>{{ fullName() }}</dd></div>
+                      <div><dt>{{ form.controls.documentType.value === 'DNI' ? 'DNI' : 'Carné de extranjería' }}</dt><dd>{{ form.controls.documentNumber.value }}</dd></div>
+                      <div><dt>Fecha de nacimiento</dt><dd>{{ form.controls.birthDate.value }}</dd></div>
+                      <div><dt>Estado civil</dt><dd>{{ label('maritalStatus', form.controls.maritalStatus.value) }}</dd></div>
+                    </dl>
+                  </section>
+                  <section class="review__group">
+                    <div class="review__head"><h3>Domicilio y contacto</h3><button type="button" class="link-btn" (click)="goTo(1)">Cambiar</button></div>
+                    <dl>
+                      <div><dt>Dirección</dt><dd>{{ form.controls.address.value }}</dd></div>
+                      <div><dt>Celular</dt><dd>{{ form.controls.mobile.value }}</dd></div>
+                      <div><dt>Correo</dt><dd>{{ form.controls.email.value }}</dd></div>
+                    </dl>
+                  </section>
+                  <section class="review__group review__group--photo">
+                    <div class="review__head"><h3>Fotografía</h3><button type="button" class="link-btn" (click)="goTo(2)">Cambiar</button></div>
+                    @if (form.controls.photo.value) { <img [src]="form.controls.photo.value" alt="Tu fotografía" width="120" height="160"> }
+                  </section>
+                  <section class="review__group">
+                    <div class="review__head"><h3>Colegio</h3><button type="button" class="link-btn" (click)="goTo(3)">Cambiar</button></div>
+                    <dl>
+                      <div><dt>Colegio</dt><dd>{{ form.controls.schoolName.value }} ({{ form.controls.schoolType.value === 'ESTATAL' ? 'estatal' : 'particular' }})</dd></div>
+                      <div><dt>Año en que culminó</dt><dd>{{ form.controls.graduationYear.value }}</dd></div>
+                      <div><dt>Preparación</dt><dd>{{ label('preparation', form.controls.preparation.value) }}</dd></div>
+                    </dl>
+                  </section>
+                  <section class="review__group review__group--key">
+                    <div class="review__head"><h3>Postulación</h3><button type="button" class="link-btn" (click)="goTo(4)">Cambiar</button></div>
+                    <dl>
+                      <div><dt>Modalidad</dt><dd>{{ category()?.name ?? '-' }}</dd></div>
+                      <div><dt>Programa de estudio</dt><dd class="review__program">{{ selectedProgram()?.displayName ?? '-' }}</dd></div>
+                      <div><dt>Sede</dt><dd>{{ label('campuses', form.controls.campus.value) }}</dd></div>
+                      @if (selectedProgram(); as p) { <div><dt>Vacantes en tu modalidad</dt><dd>{{ p.categoryVacancies }}</dd></div> }
+                    </dl>
+                  </section>
+                  <section class="review__group review__fee" aria-live="polite">
+                    <h3>Pagarás</h3>
+                    <p class="review__total">{{ quote() ? money(quote()!.total) : 'S/ -' }}</p>
+                    @if (quote(); as q) { @for (l of q.lines; track l.code) { <p class="summary__line">{{ l.concept }}: {{ money(l.amount) }}</p> } }
+                  </section>
+                </div>
+                <div class="declaration">
+                  <label class="check">
+                    <input type="checkbox" formControlName="declarationAccepted" [attr.aria-describedby]="err('declarationAccepted') ? 'e-declarationAccepted' : null" [attr.aria-invalid]="!!err('declarationAccepted')">
+                    <span><strong>Declaración jurada.</strong> Declaro que los datos son verdaderos y que conozco y acepto el Reglamento del Concurso de Admisión 2027-I. Sé que después de guardar no podré cambiar de programa ni de modalidad, y que los pagos no se devuelven (Art. 17 y 18).</span>
+                  </label>
+                  @if (err('declarationAccepted'); as e) { <p class="field-error" id="e-declarationAccepted">Debes aceptar la declaración jurada.</p> }
+                </div>
+                <div class="declaration">
+                  @if (consent(); as c) {
+                    <details class="consent">
+                      <summary>Leer el texto de tratamiento de datos personales (versión {{ c.version }})</summary>
+                      <div class="consent__text">{{ c.textMarkdown }}</div>
+                    </details>
+                  }
+                  <label class="check">
+                    <input type="checkbox" formControlName="consentAccepted" [attr.aria-describedby]="err('consentAccepted') ? 'e-consentAccepted' : null" [attr.aria-invalid]="!!err('consentAccepted')">
+                    <span><strong>Datos personales.</strong> Autorizo a la UNSCH a tratar mis datos solo para el concurso de admisión, según la Ley N.° 29733. Se conservan 5 años después de cerrar la convocatoria y luego se anonimizan.</span>
+                  </label>
+                  @if (err('consentAccepted'); as e) { <p class="field-error" id="e-consentAccepted">Debes autorizar el tratamiento de tus datos para inscribirte.</p> }
+                </div>
+              }
+            }
+
+          </section>
+
+          @if (serverError()) { <p class="alert alert--error" role="alert">{{ serverError() }}</p> }
+          <div class="step__nav">
+            @if (step() > 0) { <button type="button" class="btn btn--back" (click)="back()">Atrás</button> }
+            @if (isLast()) {
+              <button class="btn btn--gold" type="submit" [disabled]="submitting()">{{ submitting() ? 'Guardando…' : 'Guardar inscripción' }}</button>
+            } @else {
+              <button class="btn btn--gold" type="button" (click)="next()">Siguiente: {{ steps[step() + 1].title }}</button>
+            }
+          </div>
+        </form>
+
+        <!-- Celular: el resumen lateral no se ve; paso y monto quedan a la vista -->
+        <div class="mobilebar">
+          <span aria-hidden="true">Paso {{ step() + 1 }} de {{ steps.length }}: {{ steps[step()].title }}</span>
+          <strong aria-hidden="true">{{ quote() ? money(quote()!.total) : 'S/ -' }}</strong>
+          <button type="button" class="mobilebar__help" (click)="openAssistant()" aria-haspopup="dialog">Ayuda</button>
+        </div>
+      </div>
+
+      <!-- Resumen en vivo (mejora sobre el formulario oficial) -->
+      <aside class="summary" aria-label="Resumen de tu inscripción">
+        <h2 class="summary__title">Tu inscripción</h2>
+        <dl>
+          <div><dt>Postulante</dt><dd>{{ fullName() || '-' }}</dd></div>
+          <div><dt>Modalidad</dt><dd>{{ category()?.name ?? '-' }}</dd></div>
+          <div><dt>Programa</dt><dd>{{ selectedProgram()?.displayName ?? '-' }}</dd></div>
+          @if (selectedProgram(); as p) {
+            <div><dt>Vacantes en tu modalidad</dt><dd>{{ p.categoryVacancies }}</dd></div>
+          }
+        </dl>
+        <div class="summary__fee" aria-live="polite">
+          <p>Pagarás</p>
+          <p class="summary__total">{{ quote() ? money(quote()!.total) : 'S/ -' }}</p>
+          @if (quote(); as q) {
+            @for (l of q.lines; track l.code) { <p class="summary__line">{{ l.concept }}: {{ money(l.amount) }}</p> }
+          } @else {
+            <p class="summary__line">Elige la gestión de tu colegio para calcularlo.</p>
+          }
+        </div>
+        @if (options()?.identitySimulated) {
+        <details class="demo">
+          <summary>DNI de prueba (verificación simulada)</summary>
+          <p>Esta versión académica no consulta a RENIEC. Toca uno para probar el autocompletado:</p>
+          <div class="demo__list">
+            @for (d of demoDnis; track d) { <button type="button" (click)="useDemo(d)">{{ d }}</button> }
+          </div>
+        </details>
+        }
+      </aside>
+    </div>
+  </section>
+}

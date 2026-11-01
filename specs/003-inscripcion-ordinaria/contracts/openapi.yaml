@@ -1,0 +1,169 @@
+openapi: 3.1.0
+info:
+  title: SIA-UNSCH — Inscripción pública (003, iteración 1)
+  version: 1.0.0
+  description: Inscripción sin cuenta (ADR-015). Sobre `{ data, meta }` / `{ error }` como en 001.
+servers:
+  - url: /api/v1
+paths:
+  /identity/lookup:
+    post:
+      summary: Autocompletar apellidos y nombres a partir del DNI
+      description: Límite de 20 consultas por hora por IP. Si el proveedor no encuentra el DNI, `found = false` y el postulante escribe sus datos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentType, documentNumber]
+              properties:
+                documentType: { type: string, enum: [DNI, CE] }
+                documentNumber: { type: string, example: '99900020' }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      found: { type: boolean }
+                      paternalSurname: { type: [string, 'null'] }
+                      maternalSurname: { type: [string, 'null'] }
+                      firstNames: { type: [string, 'null'] }
+                      birthDate: { type: [string, 'null'], format: date }
+                      simulated: { type: boolean }
+                      alreadyRegistered: { type: boolean }
+        '422': { description: '`DOCUMENT_EXPIRED`' }
+        '429': { description: Límite excedido }
+
+  /inscriptions/options:
+    get:
+      summary: Catálogos del formulario (estado civil, dependencia, preparación, sedes, modalidades y tipos)
+      responses:
+        '200': { description: Catálogos }
+
+  /inscriptions:
+    post:
+      summary: Registrar la inscripción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentType, documentNumber, paternalSurname, maternalSurname, firstNames, sex, maritalStatus, birthUbigeo, birthDate, address, residenceUbigeo, economicDependency, mobile, email, photo, schoolUbigeo, schoolName, schoolType, graduationYear, inFourthOrBelow, preparation, attempts, modality, quotaCategory, campus, optionCode, declarationAccepted]
+              properties:
+                documentType: { type: string, enum: [DNI, CE] }
+                documentNumber: { type: string }
+                paternalSurname: { type: string }
+                maternalSurname: { type: string }
+                firstNames: { type: string }
+                sex: { type: string, enum: [M, F] }
+                maritalStatus: { type: string, enum: [SOLTERO, CASADO, CONVIVIENTE, DIVORCIADO, VIUDO] }
+                birthUbigeo: { type: string, pattern: '^\d{6}$' }
+                birthDate: { type: string, format: date }
+                address: { type: string, maxLength: 200 }
+                residenceUbigeo: { type: string, pattern: '^\d{6}$' }
+                economicDependency: { type: string, enum: [PADRES, PROPIA, OTROS_FAMILIARES, OTROS] }
+                phone: { type: string }
+                mobile: { type: string, pattern: '^9\d{8}$' }
+                email: { type: string, format: email }
+                photo: { type: string, description: 'data:image/jpeg;base64,… — 240 × 320 px, ≤ 2 MB' }
+                schoolUbigeo: { type: string, pattern: '^\d{6}$' }
+                schoolName: { type: string }
+                schoolType: { type: string, enum: [ESTATAL, PARTICULAR] }
+                graduationYear: { type: integer }
+                inFourthOrBelow: { type: boolean }
+                preparation: { type: string, enum: [ACADEMIA, CEPRE_UNSCH, COLEGIO, AUTODIDACTA, OTRA] }
+                attempts: { type: integer, minimum: 1, maximum: 20 }
+                modality: { type: string, enum: [ORD, EXO, CEPRE] }
+                quotaCategory: { type: string, example: ORD }
+                campus: { type: string, enum: [HUAMANGA] }
+                optionCode: { type: string, pattern: '^P\d{2}$' }
+                militaryCondition: { type: string, enum: [NONE, ACTIVE, DISCHARGED] }
+                familyLink: { type: boolean }
+                declarationAccepted: { type: boolean, const: true }
+      responses:
+        '201':
+          description: Inscripción registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/InscriptionSummary' }
+        '400': { description: Datos inválidos (incluye foto) }
+        '409': { description: '`ALREADY_REGISTERED`' }
+        '422': { description: '`STAGE_CLOSED`, `REGISTRATION_NOT_ALLOWED`, `NO_VACANCIES`, `INVALID_UBIGEO`' }
+
+  /inscriptions/status:
+    get:
+      summary: Consultar la inscripción con documento y código de postulante
+      parameters:
+        - { name: documentNumber, in: query, required: true, schema: { type: string } }
+        - { name: applicantCode, in: query, required: true, schema: { type: string, pattern: '^\d{8}$' } }
+      responses:
+        '200':
+          description: Estado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/InscriptionSummary' }
+        '404': { description: Datos no encontrados (sin indicar cuál falló) }
+        '429': { description: Límite excedido }
+
+  /inscriptions/code-reminder:
+    post:
+      summary: Reenviar el código de postulante al correo registrado («¿No encuentras tu código?»)
+      description: La respuesta es la misma exista o no una inscripción con ese documento. Límite de 5 por hora por IP y 3 por día por documento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentNumber]
+              properties:
+                documentNumber: { type: string, minLength: 6, maxLength: 12 }
+      responses:
+        '202':
+          description: Solicitud aceptada (mensaje genérico)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: object, properties: { message: { type: string } } }
+        '400': { description: Documento con formato inválido }
+        '429': { description: Límite excedido }
+
+components:
+  schemas:
+    InscriptionSummary:
+      type: object
+      properties:
+        applicantCode: { type: string, example: '27000033' }
+        fullName: { type: string }
+        maskedDocument: { type: string, example: '9990••20' }
+        maskedEmail: { type: string }
+        modality: { type: string }
+        quotaCategoryName: { type: string }
+        program: { type: string }
+        status: { type: string, enum: [PENDIENTE_PAGO, PENDIENTE_VALIDACION, APTA, OBSERVADA, ANULADA] }
+        statusLabel: { type: string }
+        noVacancyRight: { type: boolean }
+        fee:
+          type: object
+          properties:
+            total: { type: string }
+            lines: { type: array, items: { type: object } }
+        paymentEntities: { type: array, items: { type: string } }
+        examDate: { type: string }
+        createdAt: { type: string, format: date-time }

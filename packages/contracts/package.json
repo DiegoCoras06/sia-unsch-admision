@@ -1,0 +1,22 @@
+{
+  "name": "@sia/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tipos de los DTO de la API /api/v1 compartidos por backend y frontend (fuente: specs/*/contracts/openapi.yaml)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

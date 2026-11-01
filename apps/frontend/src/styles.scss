@@ -1,0 +1,198 @@
+/*
+ * Sistema de diseño SIA-UNSCH (Constitución VI, ADR-003).
+ * Una familia (Archivo), cuatro tamaños visibles, un fondo, una tinta, un acento (guinda),
+ * el dorado del escudo solo sobre campos guinda. Sin degradados, sombras en reposo, líneas finas ni etiquetas en versalitas.
+ */
+
+:root {
+  /* Color */
+  --ground: #ffffff;
+  --stone: #f3efea;          /* piedra de Huamanga: paso de tono entre superficies */
+  --stone-deep: #e7e0d8;
+  --field-line: #857a72;     /* borde de campos: ≥ 3:1 sobre blanco y sobre piedra (WCAG 1.4.11) */
+  --radius: 6px;             /* controles: botones y campos */
+  --radius-lg: 10px;         /* paneles y avisos */
+  --ink: #1d1415;
+  --ink-soft: #5b4f50;       /* solo notas secundarias */
+  --accent: #7a1c22;         /* guinda institucional: acción y campos */
+  --accent-press: #5e1419;
+  --accent-ink: #ffffff;
+  --gold-hover: #e6c35e;     /* dorado más claro al pasar el puntero */
+  --gold: #d9b44a;           /* dorado del escudo, sobre guinda */
+  --ok: #1f6b3a;
+  --warn: #8a5a00;
+  --danger: #a01b1b;
+  --focus: #d9b44a;
+
+  /* Tipografía: cuatro tamaños */
+  --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --size-display: clamp(2.75rem, 7.6vw, 7.25rem);
+  --size-title: clamp(1.875rem, 3.6vw, 3.25rem);
+  --size-body: 1.125rem;
+  --size-note: 0.9375rem;
+
+  /* Espacio */
+  --margin: clamp(1rem, 3.2vw, 2.5rem);
+  --max: 1440px;
+  --gap: clamp(1rem, 2vw, 2rem);
+  --section: clamp(5rem, 11vw, 10rem);
+
+  /* Movimiento */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --fast: 160ms;
+  --slow: 640ms;
+
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--size-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; display: block; }
+
+h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.03em; line-height: 0.98; text-wrap: balance; }
+h1 { font-size: var(--size-display); }
+h2 { font-size: var(--size-title); }
+h3 { font-size: 1.375rem; letter-spacing: -0.015em; line-height: 1.2; }
+p { margin: 0; max-width: 68ch; text-wrap: pretty; }
+a { color: inherit; text-underline-offset: 0.18em; text-decoration-thickness: 0.08em; }
+strong { font-weight: 700; }
+
+:focus-visible {
+  /* Anillo de dos tonos: la línea interior en tinta se ve sobre fondos claros (≥ 3:1) y la exterior dorada sobre guinda. */
+  outline: 3px solid var(--focus); outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+.skip-link {
+  position: absolute; left: var(--margin); top: -100px; z-index: 100;
+  background: var(--ink); color: #fff; padding: 0.75rem 1rem; font-weight: 700;
+}
+.skip-link:focus { top: 0.75rem; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ── Marco: un par de márgenes iguales en todo el sitio ─────────────── */
+.frame { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--margin); }
+.section { padding-block: var(--section); }
+.section--tight { padding-block: clamp(3rem, 6vw, 5rem); }
+.field-accent { background: var(--accent); color: var(--accent-ink); }
+.field-stone { background: var(--stone); }
+.lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.45; max-width: 46ch; }
+.note { font-size: var(--size-note); color: var(--ink-soft); }
+.stack > * + * { margin-top: 1rem; }
+.stack-lg > * + * { margin-top: 2rem; }
+.page-head { padding-block: clamp(3rem, 8vw, 7rem) clamp(2rem, 5vw, 4rem); }
+.page-head p { margin-top: 1.5rem; }
+
+/* ── Botones: sobrios, esquinas suaves, un color de relleno ─────────── */
+/* Acción principal: guinda sobre fondo claro (.btn), dorada sobre campo guinda (.btn--gold).
+   Blanco (.btn--light) solo sobre la portada guinda; .btn--quiet para acciones secundarias. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 3rem; padding: 0.7rem 1.6rem; border: 1px solid var(--accent-press); border-radius: var(--radius);
+  font: inherit; font-weight: 600; font-size: 1rem; letter-spacing: 0.01em; line-height: 1.25; text-decoration: none; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.btn:hover { background: var(--accent-press); }
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { background: var(--stone-deep); border-color: var(--stone-deep); color: var(--ink-soft); cursor: not-allowed; transform: none; }
+.btn--gold { background: var(--gold); border-color: #b8952f; color: var(--ink); }
+.btn--gold:hover { background: var(--gold-hover); }
+.btn--light { background: var(--ground); border-color: var(--ground); color: var(--accent); }
+.btn--light:hover { background: var(--stone); border-color: var(--stone); }
+/* Secundario: contorno fino del color de la acción, sin relleno. */
+.btn--quiet { background: transparent; border-color: var(--field-line); color: var(--ink); }
+.btn--quiet:hover { background: var(--stone); border-color: var(--ink-soft); }
+/* Enlace de acción: subrayado discreto que se afirma al pasar el puntero. */
+.link-arrow {
+  font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color var(--fast) var(--ease);
+}
+.link-arrow:hover { text-decoration-color: currentColor; text-decoration-thickness: 2px; }
+
+/* ── Formularios ────────────────────────────────────────────────────── */
+.field { display: grid; gap: 0.4rem; }
+.field label { font-weight: 600; }
+.field .hint { font-size: var(--size-note); color: var(--ink-soft); }
+.input, .select {
+  width: 100%; min-height: 3.25rem; padding: 0.75rem 1rem; font: inherit; color: var(--ink);
+  background: var(--ground); border: 1px solid var(--field-line); border-radius: var(--radius);
+  transition: border-color var(--fast) var(--ease), background-color var(--fast) var(--ease);
+}
+.input:hover, .select:hover { border-color: var(--ink-soft); }
+/* El foco conserva el anillo global de dos tonos (dorado + tinta): se ve sobre blanco y sobre guinda. */
+.input:focus, .select:focus { border-color: var(--accent); background: var(--ground); }
+.input[aria-invalid='true'] { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.field-error { color: var(--danger); font-size: var(--size-note); font-weight: 600; display: flex; gap: 0.4rem; align-items: flex-start; }
+/* Ícono dibujado delante de cada error: el error no depende solo del color; el lector de pantalla oye «Error:». */
+.field-error::before {
+  content: "" / "Error:"; flex: none; width: 1.05em; height: 1.05em; margin-top: 0.12em; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5h2v7h-2V7Zm0 9h2v2h-2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5h2v7h-2V7Zm0 9h2v2h-2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.check { display: flex; gap: 0.75rem; align-items: flex-start; }
+.check input { width: 1.375rem; height: 1.375rem; margin-top: 0.15rem; accent-color: var(--accent); flex: none; }
+
+.alert { padding: 1rem 1.25rem; background: var(--stone); font-weight: 500; border-radius: var(--radius); }
+.alert--error { background: #f7e3e3; color: #6d1212; }
+.alert--ok { background: #e3f1e8; color: #164d2a; }
+.alert--info { background: var(--stone); }
+
+/* ── Estado de etapa: cuadrado de color + texto (no es una píldora) ── */
+.status { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: var(--size-note); }
+.status::before { content: ''; width: 0.625rem; height: 0.625rem; border-radius: 50%; background: currentColor; }
+.status--IN_PROGRESS { color: var(--ok); }
+.status--UPCOMING { color: var(--warn); }
+.status--FINISHED { color: var(--ink-soft); }
+
+/* ── Tablas reales ─────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--stone-deep); border-radius: var(--radius-lg); }
+table.data { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.data th { text-align: left; font-size: var(--size-note); font-weight: 700; padding: 0.75rem 1rem; background: var(--stone); }
+table.data td { padding: 0.875rem 1rem; vertical-align: top; }
+table.data tbody tr:nth-child(even) td { background: #faf8f6; }
+table.data .num { text-align: right; white-space: nowrap; font-weight: 700; }
+
+/* ── Paneles: una sola esquina para cajas, tarjetas y avisos del sitio ── */
+:where(.card, .box, .draft, .step__error, .review__group, .review__fee, .summary, .pay__cta, .pay__ok, .pay__mock,
+  .receipt__pay, .receipt__ficha, .receipt__status, .receipt__counter, .receipt__confirm, .quick__item, .pubdates,
+  .remind[open], .steps__card img, .mod__info img, .area, .ubi .select) { border-radius: var(--radius-lg); }
+:where(.steps__list button, .mobilebar__help, .notice, .info) { border-radius: var(--radius); }
+
+/* Lo que recibe el foco no queda debajo de la cabecera fija ni de la barra fija de la inscripción. */
+html { scroll-padding-top: 6.5rem; }
+@media (max-width: 1100px) { html:has(.mobilebar) { scroll-padding-bottom: 5.5rem; } }
+
+/* Celular y tableta: el asistente no tapa texto. Con el menú abierto se oculta; en la inscripción el botón
+   flotante cede su lugar a «Ayuda» en la barra fija (el panel, si se abre, se muestra igual). */
+@media (max-width: 1100px) {
+  body:has(.nav.is-open) app-assistant { display: none; }
+}
+/* Con la ventana de pago abierta, el asistente no se superpone. */
+body:has(dialog.ck[open]) app-assistant { display: none; }
+@media (max-width: 1100px) {
+  body:has(.mobilebar) app-assistant .launcher { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}

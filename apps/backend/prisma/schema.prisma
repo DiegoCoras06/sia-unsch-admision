@@ -1,0 +1,1543 @@
+// SIA-UNSCH — modelo de datos de 001-portal-publico y 002-cuentas-identidad.
+// Un esquema de PostgreSQL por módulo (ADR-005). Sin relaciones entre esquemas de módulos distintos:
+// los módulos se comunican por su index.ts, no por claves foráneas (ADR-001, ADR-002).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["convocatorias", "configuracion", "usuarios", "seguridad", "inscripciones", "pagos", "expedientes", "examenes", "resultados", "notificaciones", "asistente", "shared"]
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M01 Convocatorias — esquema "convocatorias"
+// ════════════════════════════════════════════════════════════════════
+
+enum CallStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+
+  @@schema("convocatorias")
+}
+
+enum StageScope {
+  ORD
+  EXO
+  CEPRE
+  REINS
+  ALL
+
+  @@schema("convocatorias")
+}
+
+enum StageKind {
+  REGULAR
+  EXTEMPORANEOUS
+  EXAM
+  PUBLICATION
+  DELIVERY
+  OTHER
+
+  @@schema("convocatorias")
+}
+
+enum FeeKind {
+  BASE
+  SURCHARGE
+  OTHER
+
+  @@schema("convocatorias")
+}
+
+enum SchoolType {
+  ESTATAL
+  PARTICULAR
+
+  @@schema("convocatorias")
+}
+
+enum MilitaryCondition {
+  NONE
+  ACTIVE
+  DISCHARGED
+
+  @@schema("convocatorias")
+}
+
+enum SyllabusLevel {
+  AREA
+  COURSE
+  SECTION
+  TOPIC
+
+  @@schema("convocatorias")
+}
+
+model AdmissionCall {
+  id          String     @id @default(uuid()) @db.Uuid
+  code        String     @unique @db.VarChar(10)
+  name        String     @db.VarChar(120)
+  year        Int
+  period      String     @db.VarChar(3)
+  status      CallStatus @default(DRAFT)
+  publishedAt DateTime?  @map("published_at") @db.Timestamptz(3)
+  version     Int        @default(1)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  stages         ScheduleStage[]
+  vacancies      Vacancy[]
+  fees           Fee[]
+  feeRules       FeeRule[]
+  surchargeRules SurchargeRule[]
+  requirements   RequirementDocument[]
+  syllabus       SyllabusNode[]
+  documents      OfficialDocument[]
+
+  @@map("admission_calls")
+  @@schema("convocatorias")
+}
+
+model ScheduleStage {
+  id        String     @id @default(uuid()) @db.Uuid
+  callId    String     @map("call_id") @db.Uuid
+  code      String     @db.VarChar(40)
+  name      String     @db.VarChar(200)
+  scope     StageScope
+  kind      StageKind
+  startsAt  DateTime   @map("starts_at") @db.Timestamptz(3)
+  endsAt    DateTime   @map("ends_at") @db.Timestamptz(3)
+  highlight Boolean    @default(false)
+  sortOrder Int        @map("sort_order")
+  call      AdmissionCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, code])
+  @@map("schedule_stages")
+  @@schema("convocatorias")
+}
+
+model AcademicArea {
+  id       String    @id @default(uuid()) @db.Uuid
+  code     String    @unique @db.VarChar(3)
+  name     String    @db.VarChar(60)
+  programs Program[]
+
+  @@map("academic_areas")
+  @@schema("convocatorias")
+}
+
+model Faculty {
+  id       String    @id @default(uuid()) @db.Uuid
+  name     String    @unique @db.VarChar(160)
+  programs Program[]
+
+  @@map("faculties")
+  @@schema("convocatorias")
+}
+
+model Program {
+  id                String              @id @default(uuid()) @db.Uuid
+  name              String              @unique @db.VarChar(160)
+  facultyId         String              @map("faculty_id") @db.Uuid
+  areaId            String              @map("area_id") @db.Uuid
+  scheduleNumber    Int                 @map("schedule_number")
+  faculty           Faculty             @relation(fields: [facultyId], references: [id])
+  area              AcademicArea        @relation(fields: [areaId], references: [id])
+  options           ApplicationOption[]
+
+  @@map("programs")
+  @@schema("convocatorias")
+}
+
+model ApplicationOption {
+  id                  String    @id @default(uuid()) @db.Uuid
+  programId           String    @map("program_id") @db.Uuid
+  internalCode        String    @unique @map("internal_code") @db.Char(3)
+  specialty           String?   @db.VarChar(160)
+  officialVacancyCode String    @map("official_vacancy_code") @db.VarChar(4)
+  displayName         String    @map("display_name") @db.VarChar(200)
+  searchText          String    @map("search_text") @db.VarChar(400)
+  durationYears       Int       @map("duration_years")
+  degree              String    @db.VarChar(200)
+  professionalTitle   String    @map("professional_title") @db.VarChar(300)
+  profilePage         Int       @map("profile_page") // página del perfil de ingreso en programas.pdf
+  sortOrder           Int       @map("sort_order")
+  program             Program   @relation(fields: [programId], references: [id])
+  vacancies           Vacancy[]
+
+  @@map("application_options")
+  @@schema("convocatorias")
+}
+
+model Modality {
+  id              String          @id @default(uuid()) @db.Uuid
+  code            String          @unique @db.VarChar(6)
+  name            String          @db.VarChar(80)
+  submodalities   Submodality[]
+  quotaCategories QuotaCategory[]
+
+  @@map("modalities")
+  @@schema("convocatorias")
+}
+
+model Submodality {
+  id                String                    @id @default(uuid()) @db.Uuid
+  code              String                    @unique @db.VarChar(10)
+  modalityId        String                    @map("modality_id") @db.Uuid
+  name              String                    @db.VarChar(160)
+  legalBasis        String                    @map("legal_basis") @db.VarChar(200)
+  usesBaseDocuments Boolean                   @map("uses_base_documents")
+  /// RF-04.11: criterios de evaluación específicos de la submodalidad (editables en el panel).
+  evaluationCriteria String?                  @map("evaluation_criteria")
+  sortOrder         Int                       @map("sort_order")
+  modality          Modality                  @relation(fields: [modalityId], references: [id])
+  quotaCategories   QuotaCategory[]
+  requirements      SubmodalityRequirement[]
+
+  @@map("submodalities")
+  @@schema("convocatorias")
+}
+
+model QuotaCategory {
+  id            String       @id @default(uuid()) @db.Uuid
+  code          String       @unique @db.VarChar(6)
+  name          String       @db.VarChar(160)
+  modalityId    String       @map("modality_id") @db.Uuid
+  submodalityId String?      @map("submodality_id") @db.Uuid
+  variant       String?      @db.VarChar(20)
+  sortOrder     Int          @map("sort_order")
+  modality      Modality     @relation(fields: [modalityId], references: [id])
+  submodality   Submodality? @relation(fields: [submodalityId], references: [id])
+  vacancies     Vacancy[]
+
+  @@map("quota_categories")
+  @@schema("convocatorias")
+}
+
+model Vacancy {
+  id              String            @id @default(uuid()) @db.Uuid
+  callId          String            @map("call_id") @db.Uuid
+  optionId        String            @map("option_id") @db.Uuid
+  quotaCategoryId String            @map("quota_category_id") @db.Uuid
+  quantity        Int
+  call            AdmissionCall     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  option          ApplicationOption @relation(fields: [optionId], references: [id])
+  quotaCategory   QuotaCategory     @relation(fields: [quotaCategoryId], references: [id])
+
+  @@unique([callId, optionId, quotaCategoryId])
+  @@map("vacancies")
+  @@schema("convocatorias")
+}
+
+model Fee {
+  id             String          @id @default(uuid()) @db.Uuid
+  callId         String          @map("call_id") @db.Uuid
+  code           String          @db.VarChar(16)
+  concept        String          @db.VarChar(200)
+  amount         Decimal         @db.Decimal(10, 2)
+  kind           FeeKind
+  legalNote      String          @map("legal_note") @db.VarChar(200)
+  sortOrder      Int             @map("sort_order")
+  call           AdmissionCall   @relation(fields: [callId], references: [id], onDelete: Cascade)
+  rules          FeeRule[]
+  surchargeRules SurchargeRule[]
+
+  @@unique([callId, code])
+  @@map("fees")
+  @@schema("convocatorias")
+}
+
+model FeeRule {
+  id                String             @id @default(uuid()) @db.Uuid
+  callId            String             @map("call_id") @db.Uuid
+  feeId             String             @map("fee_id") @db.Uuid
+  modalityCode      String             @map("modality_code") @db.VarChar(6)
+  submodalityCode   String?            @map("submodality_code") @db.VarChar(10)
+  schoolType        SchoolType?        @map("school_type")
+  militaryCondition MilitaryCondition? @map("military_condition")
+  familyLink        Boolean?           @map("family_link")
+  priority          Int
+  call              AdmissionCall      @relation(fields: [callId], references: [id], onDelete: Cascade)
+  fee               Fee                @relation(fields: [feeId], references: [id], onDelete: Cascade)
+
+  @@map("fee_rules")
+  @@schema("convocatorias")
+}
+
+model SurchargeRule {
+  id             String        @id @default(uuid()) @db.Uuid
+  callId         String        @map("call_id") @db.Uuid
+  feeId          String        @map("fee_id") @db.Uuid
+  appliesToScope StageScope    @map("applies_to_scope")
+  stageKind      StageKind     @map("stage_kind")
+  priority       Int
+  call           AdmissionCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  fee            Fee           @relation(fields: [feeId], references: [id], onDelete: Cascade)
+
+  @@map("surcharge_rules")
+  @@schema("convocatorias")
+}
+
+model RequirementDocument {
+  id              String                   @id @default(uuid()) @db.Uuid
+  callId          String                   @map("call_id") @db.Uuid
+  code            String                   @db.VarChar(30)
+  name            String                   @db.VarChar(300)
+  description     String
+  article         String                   @db.VarChar(20)
+  acceptedFormats String[]                 @map("accepted_formats")
+  isBase          Boolean                  @map("is_base")
+  call            AdmissionCall            @relation(fields: [callId], references: [id], onDelete: Cascade)
+  submodalities   SubmodalityRequirement[]
+
+  @@unique([callId, code])
+  @@map("requirement_documents")
+  @@schema("convocatorias")
+}
+
+model SubmodalityRequirement {
+  id            String              @id @default(uuid()) @db.Uuid
+  submodalityId String              @map("submodality_id") @db.Uuid
+  requirementId String              @map("requirement_id") @db.Uuid
+  mandatory     Boolean             @default(true)
+  sortOrder     Int                 @map("sort_order")
+  submodality   Submodality         @relation(fields: [submodalityId], references: [id])
+  requirement   RequirementDocument @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([submodalityId, requirementId])
+  @@map("submodality_requirements")
+  @@schema("convocatorias")
+}
+
+model SyllabusNode {
+  id         String         @id @default(uuid()) @db.Uuid
+  callId     String         @map("call_id") @db.Uuid
+  parentId   String?        @map("parent_id") @db.Uuid
+  level      SyllabusLevel
+  title      String         @db.VarChar(400)
+  searchText String         @map("search_text") @db.VarChar(400)
+  sortOrder  Int            @map("sort_order")
+  call       AdmissionCall  @relation(fields: [callId], references: [id], onDelete: Cascade)
+  parent     SyllabusNode?  @relation("SyllabusTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children   SyllabusNode[] @relation("SyllabusTree")
+
+  @@index([callId, searchText])
+  @@map("syllabus_nodes")
+  @@schema("convocatorias")
+}
+
+model OfficialDocument {
+  id          String        @id @default(uuid()) @db.Uuid
+  callId      String        @map("call_id") @db.Uuid
+  type        String        @db.VarChar(20)
+  title       String        @db.VarChar(200)
+  publicUrl   String        @map("public_url") @db.VarChar(400)
+  publishedAt DateTime      @map("published_at") @db.Timestamptz(3)
+  sizeBytes   Int           @map("size_bytes")
+  call        AdmissionCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@map("official_documents")
+  @@schema("convocatorias")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M14 Configuración / contenido — esquema "configuracion"
+// ════════════════════════════════════════════════════════════════════
+
+enum AnnouncementType {
+  COMUNICADO
+  FE_ERRATAS
+  RESULTADO
+
+  @@schema("configuracion")
+}
+
+model Announcement {
+  id             String           @id @default(uuid()) @db.Uuid
+  callCode       String?          @map("call_code") @db.VarChar(10)
+  type           AnnouncementType
+  title          String           @db.VarChar(200)
+  bodyMd         String           @map("body_md")
+  affectsSection String?          @map("affects_section") @db.VarChar(30)
+  publishedAt    DateTime         @map("published_at") @db.Timestamptz(3)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([publishedAt])
+  @@map("announcements")
+  @@schema("configuracion")
+}
+
+model ContentBlock {
+  key       String   @id @db.VarChar(40)
+  bodyMd    String   @map("body_md")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("content_blocks")
+  @@schema("configuracion")
+}
+
+model HeroSlide {
+  id        String  @id @default(uuid()) @db.Uuid
+  title     String  @db.VarChar(120)
+  subtitle  String  @db.VarChar(200)
+  imageUrl  String  @map("image_url") @db.VarChar(400)
+  ctaLabel  String? @map("cta_label") @db.VarChar(40)
+  ctaRoute  String? @map("cta_route") @db.VarChar(120)
+  sortOrder Int     @map("sort_order")
+  active    Boolean @default(true)
+
+  @@map("hero_slides")
+  @@schema("configuracion")
+}
+
+model AuthorityMessage {
+  id        String @id @default(uuid()) @db.Uuid
+  name      String @db.VarChar(160)
+  position  String @db.VarChar(160)
+  message   String
+  photoUrl  String @map("photo_url") @db.VarChar(400)
+  sortOrder Int    @map("sort_order")
+
+  @@map("authority_messages")
+  @@schema("configuracion")
+}
+
+/// Parámetros operativos editables desde el panel (RF-13.10 retención, RF-14.10 respaldos).
+model SystemParameter {
+  key       String   @id @db.VarChar(60)
+  value     String   @db.VarChar(400)
+  label     String   @db.VarChar(160)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  @@map("system_parameters")
+  @@schema("configuracion")
+}
+
+model FeatureFlag {
+  key             String  @id @db.VarChar(40)
+  label           String  @db.VarChar(60)
+  route           String  @db.VarChar(120)
+  enabled         Boolean @default(true)
+  linkedStageCodes String[] @map("linked_stage_codes") // habilitado si alguna de estas etapas está en curso
+  sortOrder       Int     @map("sort_order")
+
+  @@map("feature_flags")
+  @@schema("configuracion")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M02 Usuarios e identidad — esquema "usuarios"
+// ════════════════════════════════════════════════════════════════════
+
+enum UserType {
+  APPLICANT
+  STAFF
+
+  @@schema("usuarios")
+}
+
+enum UserStatus {
+  PENDING_EMAIL
+  ACTIVE
+  SUSPENDED
+  DISABLED
+
+  @@schema("usuarios")
+}
+
+enum DocumentType {
+  DNI
+  CE
+  PASAPORTE
+
+  @@schema("usuarios")
+}
+
+enum IdentityStatus {
+  VERIFIED
+  PENDING
+  REJECTED
+
+  @@schema("usuarios")
+}
+
+model User {
+  id               String     @id @default(uuid()) @db.Uuid
+  email            String     @unique @db.VarChar(160) // normalizado en minúsculas
+  passwordHash     String     @map("password_hash")
+  type             UserType
+  status           UserStatus @default(PENDING_EMAIL)
+  failedLoginCount Int        @default(0) @map("failed_login_count")
+  failedLoginSince DateTime?  @map("failed_login_since") @db.Timestamptz(3)
+  lockedUntil      DateTime?  @map("locked_until") @db.Timestamptz(3)
+  emailVerifiedAt  DateTime?  @map("email_verified_at") @db.Timestamptz(3)
+  lastLoginAt      DateTime?  @map("last_login_at") @db.Timestamptz(3)
+  version          Int        @default(1)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  applicant          Applicant?
+  staff              StaffProfile?
+  emailCodes         EmailVerificationCode[]
+  passwordResets     PasswordResetToken[]
+  consents           Consent[]
+
+  @@map("users")
+  @@schema("usuarios")
+}
+
+model Applicant {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @unique @map("user_id") @db.Uuid
+  documentType    DocumentType   @map("document_type")
+  documentNumber  String         @map("document_number") @db.VarChar(12)
+  applicantCode   String         @unique @map("applicant_code") @db.Char(8)
+  firstNames      String         @map("first_names") @db.VarChar(80)
+  paternalSurname String         @map("paternal_surname") @db.VarChar(80)
+  maternalSurname String         @map("maternal_surname") @db.VarChar(80)
+  birthDate       DateTime?      @map("birth_date") @db.Date
+  phone           String         @db.VarChar(9)
+  ubigeo          String?        @db.Char(6)
+  addressLine     String?        @map("address_line") @db.VarChar(200)
+  guardianName    String?        @map("guardian_name") @db.VarChar(160)
+  identityStatus  IdentityStatus @map("identity_status")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifications   IdentityVerification[]
+
+  @@unique([documentType, documentNumber])
+  @@map("applicants")
+  @@schema("usuarios")
+}
+
+model IdentityVerification {
+  id           String    @id @default(uuid()) @db.Uuid
+  applicantId  String    @map("applicant_id") @db.Uuid
+  provider     String    @db.VarChar(10)
+  result       String    @db.VarChar(20)
+  checkedAt    DateTime  @default(now()) @map("checked_at") @db.Timestamptz(3)
+  checkedBy    String?   @map("checked_by") @db.Uuid
+  applicant    Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@map("identity_verifications")
+  @@schema("usuarios")
+}
+
+model EmailVerificationCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  email      String    @db.VarChar(160)
+  codeHmac   String    @map("code_hmac") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(3)
+  sentAt     DateTime  @default(now()) @map("sent_at") @db.Timestamptz(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
+  @@map("email_verification_codes")
+  @@schema("usuarios")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+  @@schema("usuarios")
+}
+
+model ConsentDocument {
+  version     String    @id @db.VarChar(20)
+  textMd      String    @map("text_md")
+  textHash    String    @map("text_hash") @db.VarChar(64)
+  publishedAt DateTime  @map("published_at") @db.Timestamptz(3)
+  consents    Consent[]
+
+  @@map("consent_documents")
+  @@schema("usuarios")
+}
+
+model Consent {
+  id         String          @id @default(uuid()) @db.Uuid
+  userId     String          @map("user_id") @db.Uuid
+  version    String          @db.VarChar(20)
+  textHash   String          @map("text_hash") @db.VarChar(64)
+  acceptedAt DateTime        @default(now()) @map("accepted_at") @db.Timestamptz(3)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   ConsentDocument @relation(fields: [version], references: [version])
+
+  @@unique([userId, version])
+  @@map("consents")
+  @@schema("usuarios")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M13 Seguridad — esquema "seguridad"
+// ════════════════════════════════════════════════════════════════════
+
+/// Personal de la Dirección de Admisión (ADR-018): segundo factor TOTP cifrado y cambio de contraseña obligatorio.
+model StaffProfile {
+  userId             String    @id @map("user_id") @db.Uuid
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String    @map("full_name") @db.VarChar(120)
+  documentNumber     String?   @map("document_number") @db.VarChar(12)
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  mfaSecretEnc       String?   @map("mfa_secret_enc") @db.VarChar(200)
+  mfaEnabledAt       DateTime? @map("mfa_enabled_at") @db.Timestamptz(3)
+  mfaLastStep        Int?      @map("mfa_last_step")
+  createdBy          String?   @map("created_by") @db.Uuid
+
+  @@map("staff_profiles")
+  @@schema("usuarios")
+}
+
+model Session {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  familyId        String    @map("family_id") @db.Uuid
+  refreshTokenHash String   @unique @map("refresh_token_hash") @db.VarChar(64)
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(3)
+  lastRefreshedAt DateTime  @map("last_refreshed_at") @db.Timestamptz(3)
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz(3)
+  revokeReason    String?   @map("revoke_reason") @db.VarChar(20)
+  replacedBy      String?   @map("replaced_by") @db.Uuid
+  userAgent       String?   @map("user_agent") @db.VarChar(300)
+  ipHash          String?   @map("ip_hash") @db.VarChar(64)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("sessions")
+  @@schema("seguridad")
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique @db.VarChar(40)
+  name        String           @db.VarChar(80)
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("roles")
+  @@schema("seguridad")
+}
+
+model Permission {
+  id    String           @id @default(uuid()) @db.Uuid
+  code  String           @unique @db.VarChar(60)
+  roles RolePermission[]
+
+  @@map("permissions")
+  @@schema("seguridad")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+  @@schema("seguridad")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+  @@schema("seguridad")
+}
+
+model DisqualifiedPerson {
+  id             String    @id @default(uuid()) @db.Uuid
+  documentType   String    @map("document_type") @db.VarChar(10)
+  documentNumber String    @map("document_number") @db.VarChar(12)
+  reason         String    @db.VarChar(300)
+  resolution     String    @db.VarChar(120)
+  validFrom      DateTime  @map("valid_from") @db.Date
+  validUntil     DateTime? @map("valid_until") @db.Date
+
+  @@index([documentType, documentNumber])
+  @@map("disqualified_persons")
+  @@schema("seguridad")
+}
+
+model AuditEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  occurredAt   DateTime @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  actorUserId  String?  @map("actor_user_id") @db.Uuid
+  action       String   @db.VarChar(60)
+  resourceType String   @map("resource_type") @db.VarChar(40)
+  resourceId   String?  @map("resource_id") @db.VarChar(60)
+  before       Json?
+  after        Json?
+  requestId    String?  @map("request_id") @db.VarChar(40)
+  ipHash       String?  @map("ip_hash") @db.VarChar(64)
+  userAgent    String?  @map("user_agent") @db.VarChar(300)
+
+  @@index([actorUserId, occurredAt(sort: Desc)])
+  @@map("audit_events")
+  @@schema("seguridad")
+}
+
+enum SupportCaseType {
+  CONTACT
+  COMPLAINT
+  CHATBOT_ESCALATION
+  RESULT_REVIEW
+
+  @@schema("seguridad")
+}
+
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+
+  @@schema("seguridad")
+}
+
+model SupportCase {
+  id         String            @id @default(uuid()) @db.Uuid
+  caseNumber String            @unique @map("case_number") @db.VarChar(20)
+  type       SupportCaseType
+  name       String            @db.VarChar(120)
+  email      String            @db.VarChar(160)
+  phone      String?           @db.VarChar(9)
+  message    String            @db.VarChar(2000)
+  status     SupportCaseStatus @default(OPEN)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("support_cases")
+  @@schema("seguridad")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M03 Inscripción pública sin cuenta (ADR-015) — esquema "inscripciones"
+// ════════════════════════════════════════════════════════════════════
+
+enum ApplicationStatus {
+  PENDIENTE_PAGO
+  PENDIENTE_VALIDACION
+  APTA
+  OBSERVADA
+  ANULADA
+
+  @@schema("inscripciones")
+}
+
+model Application {
+  id                    String            @id @default(uuid()) @db.Uuid
+  callCode              String            @map("call_code") @db.VarChar(10)
+  applicantCode         String            @unique @map("applicant_code") @db.Char(8)
+  documentType          String            @map("document_type") @db.VarChar(4)
+  documentNumber        String            @map("document_number") @db.VarChar(12)
+  identityStatus        String            @map("identity_status") @db.VarChar(10)
+  paternalSurname       String            @map("paternal_surname") @db.VarChar(80)
+  maternalSurname       String            @map("maternal_surname") @db.VarChar(80)
+  firstNames            String            @map("first_names") @db.VarChar(80)
+  sex                   String            @db.Char(1)
+  maritalStatus         String            @map("marital_status") @db.VarChar(12)
+  birthUbigeo           String            @map("birth_ubigeo") @db.Char(6)
+  birthDate             DateTime          @map("birth_date") @db.Date
+  address               String            @db.VarChar(200)
+  residenceUbigeo       String            @map("residence_ubigeo") @db.Char(6)
+  economicDependency    String            @map("economic_dependency") @db.VarChar(20)
+  phone                 String?           @db.VarChar(15)
+  mobile                String            @db.Char(9)
+  email                 String            @db.VarChar(160)
+  photoKey              String            @map("photo_key") @db.VarChar(200)
+  schoolUbigeo          String            @map("school_ubigeo") @db.Char(6)
+  schoolName            String            @map("school_name") @db.VarChar(200)
+  schoolType            String            @map("school_type") @db.VarChar(10)
+  graduationYear        Int               @map("graduation_year")
+  inFourthOrBelow       Boolean           @map("in_fourth_or_below")
+  preparation           String            @db.VarChar(20)
+  attempts              Int
+  modality              String            @db.VarChar(6)
+  quotaCategory         String            @map("quota_category") @db.VarChar(6)
+  campus                String            @db.VarChar(20)
+  area                  String            @db.VarChar(3)
+  optionCode            String            @map("option_code") @db.Char(3)
+  militaryCondition     String            @map("military_condition") @db.VarChar(12)
+  familyLink            Boolean           @map("family_link")
+  noVacancyRight        Boolean           @map("no_vacancy_right")
+  feeTotal              Decimal           @map("fee_total") @db.Decimal(10, 2)
+  feeLines              Json              @map("fee_lines")
+  status                ApplicationStatus
+  declarationAcceptedAt DateTime          @map("declaration_accepted_at") @db.Timestamptz(3)
+  /// RF-13.09: versión y huella del texto de tratamiento de datos aceptado al inscribirse.
+  consentVersion        String?           @map("consent_version") @db.VarChar(20)
+  consentTextHash       String?           @map("consent_text_hash") @db.VarChar(64)
+  /// RF-13.10: fecha en que se borraron los datos personales al vencer la retención.
+  anonymizedAt          DateTime?         @map("anonymized_at") @db.Timestamptz(3)
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([callCode, documentType, documentNumber])
+  @@index([callCode, optionCode])
+  @@map("applications")
+  @@schema("inscripciones")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M05 Pagos con Izipay (ADR-016) — esquema "pagos"
+// ════════════════════════════════════════════════════════════════════
+
+enum PaymentOrderStatus {
+  PENDIENTE
+  PAGADA
+
+  @@schema("pagos")
+}
+
+enum PaymentAttemptStatus {
+  INICIADO
+  AUTORIZADO
+  RECHAZADO
+  VENCIDO
+  DUPLICADO
+
+  @@schema("pagos")
+}
+
+/// Una orden por inscripción; el monto se fija al inscribirse (FR-001, FR-002).
+model PaymentOrder {
+  id            String             @id @default(uuid()) @db.Uuid
+  callCode      String             @map("call_code") @db.VarChar(10)
+  applicantCode String             @unique @map("applicant_code") @db.Char(8)
+  concept       String             @db.VarChar(20)
+  amount        Decimal            @db.Decimal(10, 2)
+  currency      String             @default("PEN") @db.Char(3)
+  status        PaymentOrderStatus @default(PENDIENTE)
+  paidAt        DateTime?          @map("paid_at") @db.Timestamptz(3)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  attempts      PaymentAttempt[]
+
+  @@map("payment_orders")
+  @@schema("pagos")
+}
+
+/// Cada apertura del formulario de pago (RF-05.07). Sin datos de tarjeta salvo la máscara de Izipay.
+model PaymentAttempt {
+  id                String               @id @default(uuid()) @db.Uuid
+  orderId           String               @map("order_id") @db.Uuid
+  order             PaymentOrder         @relation(fields: [orderId], references: [id])
+  provider          String               @db.VarChar(20)
+  transactionId     String               @unique @map("transaction_id") @db.VarChar(40)
+  orderNumber       String               @unique @map("order_number") @db.VarChar(15)
+  amount            Decimal              @db.Decimal(10, 2)
+  status            PaymentAttemptStatus @default(INICIADO)
+  providerCode      String?              @map("provider_code") @db.VarChar(30)
+  providerMessage   String?              @map("provider_message") @db.VarChar(120)
+  payMethod         String?              @map("pay_method") @db.VarChar(20)
+  authorizationCode String?              @map("authorization_code") @db.VarChar(20)
+  operationNumber   String?              @map("operation_number") @db.VarChar(40)
+  referenceNumber   String?              @map("reference_number") @db.VarChar(40)
+  cardMasked        String?              @map("card_masked") @db.VarChar(30)
+  confirmedVia      String?              @map("confirmed_via") @db.VarChar(10)
+  confirmedAt       DateTime?            @map("confirmed_at") @db.Timestamptz(3)
+  expiresAt         DateTime             @map("expires_at") @db.Timestamptz(3)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([orderId, createdAt])
+  @@map("payment_attempts")
+  @@schema("pagos")
+}
+
+/// Bitácora de cada mensaje recibido del proveedor (respuesta del SDK o IPN), válido o no.
+model PaymentNotification {
+  id             String   @id @default(uuid()) @db.Uuid
+  source         String   @db.VarChar(10)
+  transactionId  String?  @map("transaction_id") @db.VarChar(40)
+  signatureValid Boolean  @map("signature_valid")
+  providerCode   String?  @map("provider_code") @db.VarChar(30)
+  payloadHash    String   @map("payload_hash") @db.Char(64)
+  outcome        String   @db.VarChar(20)
+  receivedAt     DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  @@index([transactionId])
+  @@map("payment_notifications")
+  @@schema("pagos")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M06 Expedientes de exonerados (spec 004) — esquema "expedientes"
+// ════════════════════════════════════════════════════════════════════
+
+enum DossierStatus {
+  BORRADOR
+  EN_REVISION
+  OBSERVADO
+  AUTORIZADO
+  RECHAZADO
+  NO_SUBSANADO
+
+  @@schema("expedientes")
+}
+
+enum DossierDocumentStatus {
+  CARGADO
+  CONFORME
+  OBSERVADO
+  REEMPLAZADO
+
+  @@schema("expedientes")
+}
+
+/// Un expediente por inscripción de exonerado (RF-04.04, RF-06.01).
+model Dossier {
+  id                String            @id @default(uuid()) @db.Uuid
+  applicantCode     String            @unique @map("applicant_code") @db.Char(8)
+  callCode          String            @map("call_code") @db.VarChar(10)
+  submodality       String            @db.VarChar(10)
+  status            DossierStatus     @default(BORRADOR)
+  evaluatorId       String?           @map("evaluator_id") @db.Uuid
+  submittedAt       DateTime?         @map("submitted_at") @db.Timestamptz(3)
+  decidedAt         DateTime?         @map("decided_at") @db.Timestamptz(3)
+  decisionNote      String?           @map("decision_note") @db.VarChar(600)
+  observeDeadline   DateTime?         @map("observe_deadline") @db.Timestamptz(3)
+  verifiedInPerson  Boolean           @default(false) @map("verified_in_person")
+  complementary     Json              @default("{}")
+  specialEvaluation Json?             @map("special_evaluation")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  documents         DossierDocument[]
+  events            DossierEvent[]
+
+  @@index([status, evaluatorId])
+  @@map("dossiers")
+  @@schema("expedientes")
+}
+
+/// Cada versión de cada documento (RF-06.06): nunca se borra, se marca REEMPLAZADO.
+model DossierDocument {
+  id              String                @id @default(uuid()) @db.Uuid
+  dossierId       String                @map("dossier_id") @db.Uuid
+  dossier         Dossier               @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  requirementCode String                @map("requirement_code") @db.VarChar(30)
+  version         Int
+  fileKey         String                @map("file_key") @db.VarChar(200)
+  fileName        String                @map("file_name") @db.VarChar(160)
+  mimeType        String                @map("mime_type") @db.VarChar(40)
+  sizeBytes       Int                   @map("size_bytes")
+  sha256          String                @db.Char(64)
+  status          DossierDocumentStatus @default(CARGADO)
+  note            String?               @db.VarChar(400)
+  uploadedAt      DateTime              @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  reviewedAt      DateTime?             @map("reviewed_at") @db.Timestamptz(3)
+  reviewerId      String?               @map("reviewer_id") @db.Uuid
+
+  @@unique([dossierId, requirementCode, version])
+  @@map("dossier_documents")
+  @@schema("expedientes")
+}
+
+/// Historial del expediente (RF-06.06): quién hizo qué y cuándo.
+model DossierEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  dossierId   String   @map("dossier_id") @db.Uuid
+  dossier     Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String   @db.VarChar(40)
+  note        String?  @db.VarChar(600)
+  at          DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([dossierId, at])
+  @@map("dossier_events")
+  @@schema("expedientes")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M10 Asistente virtual (ADR-017) — esquema "asistente"
+// ════════════════════════════════════════════════════════════════════
+
+/// Base de conocimientos oficial: cada respuesta lleva su fuente (RF-10.03, RF-10.12).
+model KnowledgeEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  topic     String   @db.VarChar(40)
+  question  String   @db.VarChar(200)
+  answer    String   @db.VarChar(2000)
+  source    String   @db.VarChar(160)
+  keywords  String   @db.VarChar(400)
+  active    Boolean  @default(true)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("knowledge_entries")
+  @@schema("asistente")
+}
+
+/// Conversación sin datos de identidad: solo si estuvo identificada y si se derivó (RF-10.11).
+model ChatConversation {
+  id          String        @id @default(uuid()) @db.Uuid
+  identified  Boolean       @default(false)
+  handedOff   Boolean       @default(false) @map("handed_off")
+  caseNumber  String?       @map("case_number") @db.VarChar(30)
+  failedTurns Int           @default(0) @map("failed_turns")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  messages    ChatMessage[]
+
+  @@index([createdAt])
+  @@map("conversations")
+  @@schema("asistente")
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid()) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String           @db.VarChar(10)
+  content        String           @db.VarChar(4000)
+  tools          String[]         @default([])
+  mode           String           @db.VarChar(10)
+  tokensIn       Int              @default(0) @map("tokens_in")
+  tokensOut      Int              @default(0) @map("tokens_out")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+  @@schema("asistente")
+}
+
+/// Consumo diario del proveedor de IA (RF-10.15, RF-12.10).
+model ChatUsageDaily {
+  day       DateTime @id @db.Date
+  requests  Int      @default(0)
+  aiReplies Int      @default(0) @map("ai_replies")
+  tokensIn  Int      @default(0) @map("tokens_in")
+  tokensOut Int      @default(0) @map("tokens_out")
+  costUsd   Decimal  @default(0) @map("cost_usd") @db.Decimal(10, 6)
+  errors    Int      @default(0)
+  handoffs  Int      @default(0)
+
+  @@map("usage_daily")
+  @@schema("asistente")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Transversal — esquema "shared"
+// ════════════════════════════════════════════════════════════════════
+
+model RateLimitCounter {
+  key         String   @db.VarChar(120)
+  windowStart DateTime @map("window_start") @db.Timestamptz(3)
+  count       Int
+
+  @@id([key, windowStart])
+  @@map("rate_limit_counters")
+  @@schema("shared")
+}
+
+model OutboxEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventType     String    @map("event_type") @db.VarChar(60)
+  payload       Json
+  occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  correlationId String?   @map("correlation_id") @db.VarChar(40)
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(3)
+  attempts      Int       @default(0)
+  lastError     String?   @map("last_error") @db.VarChar(500)
+
+  @@index([processedAt, occurredAt])
+  @@map("outbox")
+  @@schema("shared")
+}
+
+model Counter {
+  key   String @id @db.VarChar(40)
+  value Int
+
+  @@map("counters")
+  @@schema("shared")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M07 Exámenes y M08 Sedes y aulas — esquema "examenes" (spec 006)
+// ════════════════════════════════════════════════════════════════════
+
+enum ExamStatus {
+  PROGRAMADO
+  DISTRIBUIDO
+  CONFIRMADO
+  FINALIZADO
+
+  @@schema("examenes")
+}
+
+enum AttendanceStatus {
+  PENDIENTE
+  PRESENTE
+  AUSENTE
+
+  @@schema("examenes")
+}
+
+/// Un examen por convocatoria y grupo de modalidades (RF-07.01, RF-07.06).
+model Exam {
+  id                  String           @id @default(uuid()) @db.Uuid
+  callCode            String           @map("call_code") @db.VarChar(10)
+  code                String           @db.VarChar(20)
+  name                String           @db.VarChar(120)
+  modalities          String[]         @db.VarChar(6)
+  entryOpensAt        DateTime         @map("entry_opens_at") @db.Timestamptz(3)
+  entryClosesAt       DateTime         @map("entry_closes_at") @db.Timestamptz(3)
+  durationMinutes     Int              @map("duration_minutes")
+  place               String           @db.VarChar(200)
+  structure           Json
+  scoring             Json
+  instructions        Json
+  publishAt           DateTime         @map("publish_at") @db.Timestamptz(3)
+  status              ExamStatus       @default(PROGRAMADO)
+  distributionVersion Int              @default(0) @map("distribution_version")
+  distributedAt       DateTime?        @map("distributed_at") @db.Timestamptz(3)
+  confirmedAt         DateTime?        @map("confirmed_at") @db.Timestamptz(3)
+  attendanceClosedAt  DateTime?        @map("attendance_closed_at") @db.Timestamptz(3)
+  roomsNotifiedAt     DateTime?        @map("rooms_notified_at") @db.Timestamptz(3)
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  rooms               ExamRoom[]
+  assignments         ExamAssignment[]
+  incidents           ExamIncident[]
+
+  @@unique([callCode, code])
+  @@map("exams")
+  @@schema("examenes")
+}
+
+/// Sede de evaluación (RF-08.01).
+model Venue {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(120)
+  address   String   @db.VarChar(200)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  rooms     Room[]
+
+  @@map("venues")
+  @@schema("examenes")
+}
+
+/// Aula con pabellón, piso, capacidad, puerta y accesibilidad (RF-08.01, RF-08.02).
+model Room {
+  id         String           @id @default(uuid()) @db.Uuid
+  venueId    String           @map("venue_id") @db.Uuid
+  venue      Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  building   String           @db.VarChar(60)
+  floor      Int
+  code       String           @db.VarChar(20)
+  capacity   Int
+  gate       String           @db.VarChar(40)
+  accessible Boolean          @default(false)
+  active     Boolean          @default(true)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  exams      ExamRoom[]
+  seats      ExamAssignment[]
+
+  @@unique([venueId, code])
+  @@map("rooms")
+  @@schema("examenes")
+}
+
+/// Aulas habilitadas para un examen; el servicio impide cruces de horario (RF-07.07).
+model ExamRoom {
+  examId String @map("exam_id") @db.Uuid
+  exam   Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  roomId String @map("room_id") @db.Uuid
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Restrict)
+
+  @@id([examId, roomId])
+  @@map("exam_rooms")
+  @@schema("examenes")
+}
+
+/// Asiento de un postulante: único por examen y único por aula y asiento (RF-08.04, SC-002).
+model ExamAssignment {
+  id            String             @id @default(uuid()) @db.Uuid
+  examId        String             @map("exam_id") @db.Uuid
+  exam          Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  applicantCode String             @map("applicant_code") @db.Char(8)
+  roomId        String             @map("room_id") @db.Uuid
+  room          Room               @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  seat          Int
+  version       Int                @default(1)
+  attendance    AttendanceStatus   @default(PENDIENTE)
+  checkedInAt   DateTime?          @map("checked_in_at") @db.Timestamptz(3)
+  late          Boolean            @default(false)
+  checkedBy     String?            @map("checked_by") @db.Uuid
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  changes       AssignmentChange[]
+
+  @@unique([examId, applicantCode])
+  @@unique([examId, roomId, seat])
+  @@map("exam_assignments")
+  @@schema("examenes")
+}
+
+/// Trazabilidad de cada cambio de aula (RF-08.09).
+model AssignmentChange {
+  id           String         @id @default(uuid()) @db.Uuid
+  assignmentId String         @map("assignment_id") @db.Uuid
+  assignment   ExamAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  fromRoomId   String?        @map("from_room_id") @db.Uuid
+  toRoomId     String         @map("to_room_id") @db.Uuid
+  reason       String         @db.VarChar(400)
+  actorId      String?        @map("actor_id") @db.Uuid
+  at           DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([assignmentId])
+  @@map("assignment_changes")
+  @@schema("examenes")
+}
+
+/// Incidencia durante el examen (RF-08.08, RN-60).
+model ExamIncident {
+  id            String   @id @default(uuid()) @db.Uuid
+  examId        String   @map("exam_id") @db.Uuid
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  roomId        String?  @map("room_id") @db.Uuid
+  applicantCode String?  @map("applicant_code") @db.Char(8)
+  type          String   @db.VarChar(30)
+  description   String   @db.VarChar(1000)
+  reportedBy    String   @map("reported_by") @db.Uuid
+  at            DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([examId])
+  @@map("exam_incidents")
+  @@schema("examenes")
+}
+
+/// Solicitud de adecuación de un postulante con discapacidad (RN-39, FR-013).
+model AccommodationRequest {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicantCode String   @unique @map("applicant_code") @db.Char(8)
+  examId        String   @map("exam_id") @db.Uuid
+  needs         String   @db.VarChar(600)
+  late          Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("accommodation_requests")
+  @@schema("examenes")
+}
+
+// ── M05: conciliación y anulaciones (spec 005, Historias 4 y 5) ──────────
+
+enum ReconciliationResult {
+  CONCILIADO
+  DIFERENCIA_MONTO
+  DIFERENCIA_ESTADO
+  SOLO_PROVEEDOR
+  SOLO_SISTEMA
+
+  @@schema("pagos")
+}
+
+/// Cruce del reporte del proveedor o de Tesorería con los intentos registrados (RF-05.11).
+model ReconciliationRun {
+  id         String               @id @default(uuid()) @db.Uuid
+  source     String               @db.VarChar(20)
+  fileName   String               @map("file_name") @db.VarChar(160)
+  periodFrom DateTime             @map("period_from") @db.Timestamptz(3)
+  periodTo   DateTime             @map("period_to") @db.Timestamptz(3)
+  summary    Json
+  createdBy  String               @map("created_by") @db.Uuid
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  items      ReconciliationItem[]
+
+  @@map("reconciliation_runs")
+  @@schema("pagos")
+}
+
+model ReconciliationItem {
+  id             String               @id @default(uuid()) @db.Uuid
+  runId          String               @map("run_id") @db.Uuid
+  run            ReconciliationRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  reference      String               @db.VarChar(40)
+  applicantCode  String?              @map("applicant_code") @db.Char(8)
+  providerAmount Decimal?             @map("provider_amount") @db.Decimal(10, 2)
+  providerStatus String?              @map("provider_status") @db.VarChar(20)
+  systemAmount   Decimal?             @map("system_amount") @db.Decimal(10, 2)
+  systemStatus   String?              @map("system_status") @db.VarChar(20)
+  result         ReconciliationResult
+  resolution     String?              @db.VarChar(400)
+  resolvedBy     String?              @map("resolved_by") @db.Uuid
+  resolvedAt     DateTime?            @map("resolved_at") @db.Timestamptz(3)
+
+  @@index([runId, result])
+  @@map("reconciliation_items")
+  @@schema("pagos")
+}
+
+enum AnnulmentStatus {
+  SOLICITADA
+  APROBADA
+  RECHAZADA
+
+  @@schema("pagos")
+}
+
+/// Anulación o devolución solo por error de cobro (RN-08, RF-05.12); el dinero lo mueve Tesorería, no el sistema.
+model PaymentAnnulment {
+  id           String          @id @default(uuid()) @db.Uuid
+  attemptId    String          @map("attempt_id") @db.Uuid
+  kind         String          @db.VarChar(12)
+  reason       String          @db.VarChar(20)
+  detail       String          @db.VarChar(600)
+  resolution   String          @db.VarChar(120)
+  amount       Decimal         @db.Decimal(10, 2)
+  status       AnnulmentStatus @default(SOLICITADA)
+  requestedBy  String          @map("requested_by") @db.Uuid
+  decidedBy    String?         @map("decided_by") @db.Uuid
+  decidedAt    DateTime?       @map("decided_at") @db.Timestamptz(3)
+  decisionNote String?         @map("decision_note") @db.VarChar(400)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([attemptId])
+  @@map("payment_annulments")
+  @@schema("pagos")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M09 Resultados — esquema "resultados" (spec 007)
+// ════════════════════════════════════════════════════════════════════
+
+enum ScoreBatchStatus {
+  VALIDO
+  CON_ERRORES
+  PROCESADO
+
+  @@schema("resultados")
+}
+
+/// Archivo de calificaciones importado (RF-09.01, RF-09.02).
+model ScoreBatch {
+  id         String           @id @default(uuid()) @db.Uuid
+  examId     String           @map("exam_id") @db.Uuid
+  fileName   String           @map("file_name") @db.VarChar(160)
+  status     ScoreBatchStatus
+  rows       Json
+  issues     Json
+  validCount Int              @map("valid_count")
+  uploadedBy String           @map("uploaded_by") @db.Uuid
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([examId])
+  @@map("score_batches")
+  @@schema("resultados")
+}
+
+enum ResultVersionStatus {
+  BORRADOR
+  EN_APROBACION
+  PUBLICADA
+  REEMPLAZADA
+  DESCARTADA
+
+  @@schema("resultados")
+}
+
+/// Versión de resultados de un examen: nunca se borra una publicada (RF-09.11).
+model ResultVersion {
+  id          String              @id @default(uuid()) @db.Uuid
+  examId      String              @map("exam_id") @db.Uuid
+  callCode    String              @map("call_code") @db.VarChar(10)
+  version     Int
+  batchId     String              @map("batch_id") @db.Uuid
+  status      ResultVersionStatus @default(BORRADOR)
+  reason      String?             @db.VarChar(400)
+  createdBy   String              @map("created_by") @db.Uuid
+  submittedBy String?             @map("submitted_by") @db.Uuid
+  submittedAt DateTime?           @map("submitted_at") @db.Timestamptz(3)
+  approvedBy  String?             @map("approved_by") @db.Uuid
+  approvedAt  DateTime?           @map("approved_at") @db.Timestamptz(3)
+  publishAt   DateTime?           @map("publish_at") @db.Timestamptz(3)
+  notifiedAt  DateTime?           @map("notified_at") @db.Timestamptz(3)
+  vacancies   Json
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  results     ExamResult[]
+
+  @@unique([examId, version])
+  @@map("result_versions")
+  @@schema("resultados")
+}
+
+enum ResultCondition {
+  ADMITIDO
+  NO_ADMITIDO
+  AUSENTE
+  NO_CALIFICABLE
+  SIN_DERECHO_VACANTE
+
+  @@schema("resultados")
+}
+
+model ExamResult {
+  id            String          @id @default(uuid()) @db.Uuid
+  versionId     String          @map("version_id") @db.Uuid
+  version       ResultVersion   @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  applicantCode String          @map("applicant_code") @db.Char(8)
+  optionCode    String          @map("option_code") @db.Char(3)
+  quotaCategory String          @map("quota_category") @db.VarChar(6)
+  knowledge     Int?
+  vocational    Int?
+  attitude      Int?
+  score         Decimal?        @db.Decimal(7, 2)
+  rank          Int?
+  condition     ResultCondition
+
+  @@unique([versionId, applicantCode])
+  @@index([versionId, optionCode, quotaCategory])
+  @@map("exam_results")
+  @@schema("resultados")
+}
+
+enum AdmissionStatus {
+  PENDIENTE
+  INGRESANTE
+  PERDIDA
+
+  @@schema("resultados")
+}
+
+/// Trámite de ingreso de un admitido (RN-54 a RN-56).
+model Admission {
+  id                  String          @id @default(uuid()) @db.Uuid
+  applicantCode       String          @unique @map("applicant_code") @db.Char(8)
+  callCode            String          @map("call_code") @db.VarChar(10)
+  status              AdmissionStatus @default(PENDIENTE)
+  documentsReceivedAt DateTime?       @map("documents_received_at") @db.Timestamptz(3)
+  receivedBy          String?         @map("received_by") @db.Uuid
+  receiptNumber       String?         @map("receipt_number") @db.VarChar(40)
+  late                Boolean         @default(false)
+  amountPaid          Decimal?        @map("amount_paid") @db.Decimal(10, 2)
+  note                String?         @db.VarChar(400)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("admissions")
+  @@schema("resultados")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// M11 Notificaciones — esquema "notificaciones" (spec 010)
+// ════════════════════════════════════════════════════════════════════
+
+enum NotificationStatus {
+  PENDIENTE
+  ENVIADA
+  FALLIDA
+  REBOTADA
+
+  @@schema("notificaciones")
+}
+
+/// Cada correo del sistema, enviado o por enviar (RF-11.09).
+model Notification {
+  id         String             @id @default(uuid()) @db.Uuid
+  email      String             @db.VarChar(254)
+  event      String             @db.VarChar(40)
+  subject    String             @db.VarChar(200)
+  html       String
+  text       String
+  status     NotificationStatus @default(PENDIENTE)
+  attempts   Int                @default(0)
+  lastError  String?            @map("last_error") @db.VarChar(500)
+  dedupeKey  String?            @unique @map("dedupe_key") @db.VarChar(120)
+  campaignId String?            @map("campaign_id") @db.Uuid
+  mandatory  Boolean            @default(true)
+  readAt     DateTime?          @map("read_at") @db.Timestamptz(3)
+  sentAt     DateTime?          @map("sent_at") @db.Timestamptz(3)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([email, createdAt])
+  @@index([status, createdAt])
+  @@index([campaignId])
+  @@map("notifications")
+  @@schema("notificaciones")
+}
+
+/// Plantillas editables (FR-006) con variables {{nombre}}, {{codigo}}, {{enlace}} y las propias de cada aviso.
+model NotificationTemplate {
+  key       String   @id @db.VarChar(40)
+  name      String   @db.VarChar(120)
+  subject   String   @db.VarChar(200)
+  body      String
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("notification_templates")
+  @@schema("notificaciones")
+}
+
+/// Comunicado segmentado (RF-11.08).
+model Campaign {
+  id         String   @id @default(uuid()) @db.Uuid
+  subject    String   @db.VarChar(200)
+  body       String
+  segment    Json
+  recipients Int
+  createdBy  String   @map("created_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("campaigns")
+  @@schema("notificaciones")
+}
+
+/// Preferencia de recordatorios (Historia 5); los avisos obligatorios no se desactivan.
+model NotificationPreference {
+  email     String   @id @db.VarChar(254)
+  reminders Boolean  @default(true)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("notification_preferences")
+  @@schema("notificaciones")
+}
+
+/// RF-03.05: documentos que el postulante adjunta a su inscripción (además de la foto).
+model ApplicationDocument {
+  id            String   @id @default(uuid()) @db.Uuid
+  applicantCode String   @map("applicant_code") @db.Char(8)
+  kind          String   @db.VarChar(30)
+  fileKey       String   @map("file_key") @db.VarChar(200)
+  fileName      String   @map("file_name") @db.VarChar(160)
+  mimeType      String   @map("mime_type") @db.VarChar(40)
+  sizeBytes     Int      @map("size_bytes")
+  sha256        String   @db.Char(64)
+  uploadedAt    DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+
+  @@unique([applicantCode, kind])
+  @@map("application_documents")
+  @@schema("inscripciones")
+}
+
+/// RF-14.01: imágenes del portal editables desde el panel (portada, fotos de sección).
+model SiteAsset {
+  key       String   @id @db.VarChar(40)
+  fileKey   String   @map("file_key") @db.VarChar(200)
+  mimeType  String   @map("mime_type") @db.VarChar(40)
+  alt       String   @db.VarChar(300)
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("site_assets")
+  @@schema("configuracion")
+}

@@ -1,0 +1,43 @@
+{
+  "name": "sia-unsch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema Integral de AdmisiÃ³n UNSCH â€” proyecto acadÃ©mico (Spec-Driven Development)",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "db:start": "npm run db:start -w @sia/backend",
+    "db:stop": "npm run db:stop -w @sia/backend",
+    "db:setup": "npm run db:setup -w @sia/backend",
+    "dev": "concurrently -k -n api,web -c red,yellow \"npm run dev -w @sia/backend\" \"npm run start -w @sia/frontend\"",
+    "build": "npm run build -w @sia/contracts && npm run build -w @sia/backend && npm run build -w @sia/frontend",
+    "test": "npm run test -w @sia/backend",
+    "typecheck": "npm run typecheck -w @sia/backend",
+    "rds:check": "npm run rds:check -w @sia/backend",
+    "rds:setup": "npm run rds:setup -w @sia/backend",
+    "dev:rds": "concurrently -k -n api,web -c red,yellow \"npm run dev:rds -w @sia/backend\" \"npm run start -w @sia/frontend\"",
+    "izipay:check": "npm run izipay:check -w @sia/backend",
+    "rds:migrate": "npm run rds:migrate -w @sia/backend"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.6",
+    "playwright-core": "1.64.1",
+    "typescript": "6.0.3"
+  },
+  "allowScripts": {
+    "@embedded-postgres/windows-x64@16.14.0-beta.17": true,
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true,
+    "argon2@0.45.1": true,
+    "esbuild@0.28.2": true,
+    "@parcel/watcher": false,
+    "lmdb": false,
+    "msgpackr-extract": false
+  }
+}

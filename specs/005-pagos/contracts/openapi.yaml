@@ -1,0 +1,173 @@
+openapi: 3.1.0
+info:
+  title: SIA-UNSCH — Pagos en línea (spec 005, iteración 1)
+  version: 0.1.0
+  description: >-
+    Pagos con Izipay (ADR-016). El postulante se identifica con DNI + código de postulante (ADR-015).
+    Respuestas con el sobre {data} / {error} de la API.
+servers:
+  - url: /api/v1
+paths:
+  /payments/session:
+    post:
+      summary: Inicia un intento de pago y devuelve lo necesario para abrir el formulario de Izipay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplicantAuth' }
+      responses:
+        '201':
+          description: Intento creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PaymentSession' }
+        '404': { description: DNI y código no coinciden }
+        '409': { description: 'ALREADY_PAID: la orden ya está pagada' }
+        '422': { description: 'PAYMENT_NOT_REQUIRED: la inscripción no tiene pago pendiente' }
+        '429': { description: Demasiados intentos }
+        '502': { description: 'GATEWAY_UNAVAILABLE: Izipay no respondió' }
+  /payments/confirm:
+    post:
+      summary: Confirma con la respuesta firmada que el SDK de Izipay entrega al navegador
+      description: El servidor verifica la firma de payloadHttp; el resto del cuerpo no se usa para decidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignedMessage' }
+      responses:
+        '200':
+          description: Resultado del intento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/AttemptResult' }
+        '400': { description: 'INVALID_SIGNATURE: la firma no corresponde' }
+        '404': { description: Intento desconocido }
+  /payments/izipay/notify:
+    post:
+      summary: Notificación IPN de Izipay (servidor a servidor)
+      parameters:
+        - { name: transactionId, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignedMessage' }
+      responses:
+        '200': { description: Procesada (o ya procesada antes) }
+        '400': { description: Firma inválida }
+  /payments/status:
+    get:
+      summary: Estado de la orden e historial de intentos
+      parameters:
+        - { name: documentNumber, in: query, required: true, schema: { type: string } }
+        - { name: applicantCode, in: query, required: true, schema: { type: string, pattern: '^\d{8}$' } }
+      responses:
+        '200':
+          description: Orden e intentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PaymentStatus' }
+  /payments/mock/complete:
+    post:
+      summary: Solo con PAYMENTS_PROVIDER=mock — simula la respuesta firmada del formulario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transactionId, approve]
+              properties:
+                transactionId: { type: string }
+                approve: { type: boolean }
+      responses:
+        '200':
+          description: Mensaje firmado, listo para /payments/confirm
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/SignedMessage' }
+        '404': { description: No disponible con Izipay }
+components:
+  schemas:
+    ApplicantAuth:
+      type: object
+      required: [documentNumber, applicantCode]
+      properties:
+        documentNumber: { type: string, minLength: 6, maxLength: 12 }
+        applicantCode: { type: string, pattern: '^\d{8}$' }
+    PaymentSession:
+      type: object
+      required: [provider, environment, transactionId, orderNumber, amount, currency]
+      properties:
+        provider: { type: string, enum: [izipay, mock] }
+        environment: { type: string, enum: [sandbox, production, simulated] }
+        transactionId: { type: string }
+        orderNumber: { type: string }
+        amount: { type: string, example: '250.00' }
+        currency: { type: string, enum: [PEN] }
+        checkout:
+          description: Solo con Izipay. No contiene la clave de API ni la clave hash.
+          type: [object, 'null']
+          properties:
+            scriptUrl: { type: string }
+            authorization: { type: string, description: Token de sesión de un solo uso (15 min) }
+            keyRSA: { type: string }
+            config: { type: object, description: 'Objeto config del SDK (transactionId, action, merchantCode, order, billing, render)' }
+    SignedMessage:
+      type: object
+      required: [transactionId, payloadHttp, signature]
+      properties:
+        code: { type: string }
+        transactionId: { type: string }
+        payloadHttp: { type: string }
+        signature: { type: string, description: base64(HMAC-SHA256(clave hash, payloadHttp)) }
+    AttemptResult:
+      type: object
+      properties:
+        status: { type: string, enum: [INICIADO, AUTORIZADO, RECHAZADO, VENCIDO, DUPLICADO] }
+        message: { type: string }
+        orderStatus: { type: string, enum: [PENDIENTE, PAGADA] }
+    PaymentStatus:
+      type: object
+      properties:
+        provider: { type: string }
+        environment: { type: string }
+        order:
+          type: object
+          properties:
+            orderNumber: { type: string }
+            amount: { type: string }
+            status: { type: string, enum: [PENDIENTE, PAGADA] }
+            paidAt: { type: [string, 'null'], format: date-time }
+            receipt:
+              type: [object, 'null']
+              description: Constancia de pago (no es comprobante electrónico SUNAT)
+              properties:
+                operationNumber: { type: string }
+                authorizationCode: { type: string }
+                payMethod: { type: string }
+                cardMasked: { type: [string, 'null'] }
+        attempts:
+          type: array
+          items:
+            type: object
+            properties:
+              transactionId: { type: string }
+              status: { type: string }
+              message: { type: [string, 'null'] }
+              payMethod: { type: [string, 'null'] }
+              createdAt: { type: string, format: date-time }
