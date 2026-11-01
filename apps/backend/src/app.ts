@@ -74,7 +74,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     ?? (env.EMAIL_PROVIDER === 'ses'
       ? new SesEmailSender({ from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET }, logger)
       : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
-  logger.info({ email: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
+  logger.info({ provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
   // M11: cada correo que envía cualquier módulo queda registrado con su estado (RF-11.09).
   const email = new RecordingEmailSender(db, transport, clock);
   const outbox = new Outbox(db, clock, logger);

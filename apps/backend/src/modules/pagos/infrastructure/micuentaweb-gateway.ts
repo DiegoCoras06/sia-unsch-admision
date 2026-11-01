@@ -28,7 +28,7 @@ const SCRIPT = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/stab
 const THEME = 'https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/classic';
 
 interface KrTransaction {
-  uuid?: string; detailedStatus?: string; errorCode?: string | null; errorMessage?: string | null; detailedErrorMessage?: string | null;
+  uuid?: string; amount?: number; currency?: string; detailedStatus?: string; errorCode?: string | null; errorMessage?: string | null; detailedErrorMessage?: string | null;
   metadata?: Record<string, unknown> | null; paymentMethodType?: string;
   transactionDetails?: { cardDetails?: { pan?: string; effectiveBrand?: string; authorizationResponse?: { authorizationNumber?: string | null } } };
 }
@@ -89,7 +89,8 @@ export class MiCuentaWebGateway implements PaymentGateway {
       const tx = answer?.transactions?.find((t) => t.metadata?.['transactionId'] === attempt.transactionId);
       if (!tx) return null;
       const paid = tx.detailedStatus === 'AUTHORISED' || tx.detailedStatus === 'CAPTURED';
-      return parseKrAnswer({ orderStatus: paid ? 'PAID' : 'UNPAID', orderDetails: { orderId: attempt.orderNumber, orderTotalAmount: Math.round(Number(attempt.amount) * 100), orderCurrency: 'PEN' }, transactions: [tx] }, attempt.transactionId);
+      // Monto y moneda los da la transacción de la pasarela, no el intento local: así se pueden comparar.
+      return parseKrAnswer({ orderStatus: paid ? 'PAID' : 'UNPAID', orderDetails: { orderId: attempt.orderNumber, orderTotalAmount: tx.amount, orderCurrency: tx.currency }, transactions: [tx] }, attempt.transactionId);
     } catch {
       return null;
     }

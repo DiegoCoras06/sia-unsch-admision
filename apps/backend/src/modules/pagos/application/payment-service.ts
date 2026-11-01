@@ -196,6 +196,24 @@ export class PaymentService {
       this.d.logger.warn({ transactionId: attempt.transactionId, via }, 'mensaje de pago con pedido o monto distinto');
       throw new AppError(400, 'PAYMENT_MISMATCH', 'La respuesta de la pasarela no corresponde a tu orden.');
     }
+    // Una aprobación que llega por el navegador no basta: se confirma consultando a la pasarela servidor a servidor.
+    // Si la consulta no la ratifica, el intento sigue «En proceso» y lo resuelven la IPN o la conciliación de status().
+    if (via === 'SDK' && result.approved && this.d.gateway.environment !== 'simulated') {
+      const server = await this.d.gateway.query({ transactionId: attempt.transactionId, orderNumber: attempt.orderNumber, amount: formatAmount(attempt.amount) });
+      if (!server || server.inconclusive || !server.approved || server.orderNumber !== attempt.orderNumber || !this.matches(attempt, server)) {
+        await log('POR_VERIFICAR');
+        this.d.logger.warn({ transactionId: attempt.transactionId, serverCode: server?.code ?? null }, 'aprobación del navegador sin ratificar por la pasarela');
+        const current = await this.d.db.paymentAttempt.findUniqueOrThrow({ where: { id: attempt.id }, include: { order: true } });
+        return {
+          transactionId: current.transactionId, status: current.status, label: ATTEMPT_LABEL[current.status],
+          message: current.status === 'INICIADO' ? 'Estamos verificando tu pago con la pasarela. Revisa el estado en unos minutos.' : current.providerMessage,
+          orderStatus: current.order.status,
+        };
+      }
+      const outcome = await this.apply(attempt, server, 'CONSULTA', meta);
+      await log(outcome.status);
+      return outcome;
+    }
     const outcome = await this.apply(attempt, result, via, meta);
     await log(outcome.status);
     return outcome;

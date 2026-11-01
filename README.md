@@ -196,7 +196,7 @@ Las **funcionalidades** (`specs/`) son cortes verticales que se entregan y demue
 | | **Total** | **14 módulos** | **62** | **32** | **126** | |
 
 **Prioridades:** P1 = imprescindible para el MVP · P2 = importante · P3 = deseable.
-**Trazabilidad:** los **143 requisitos RF-01.01…RF-14.10 de los 14 módulos** de la guía maestra están citados en al menos un FR de las especificaciones; cada FR cita además su regla del Reglamento (`RN`) o mejora (`MEJ`). La [matriz de trazabilidad](docs/trazabilidad-requisitos.md) muestra, módulo por módulo, qué spec cubre cada RF y su estado en el código (hoy: ✅ 134 · 🟡 9 · ⏳ 0; los 9 parciales dependen de servicios externos: RENIEC, Izipay, OpenRouter, Amazon SES y AWS). Se regenera con `node scripts/trazabilidad.mjs`.
+**Trazabilidad:** los **143 requisitos RF-01.01…RF-14.10 de los 14 módulos** de la guía maestra están citados en al menos un FR de las especificaciones; cada FR cita además su regla del Reglamento (`RN`) o mejora (`MEJ`). La [matriz de trazabilidad](docs/trazabilidad-requisitos.md) muestra, módulo por módulo, qué spec cubre cada RF y su estado en el código (hoy: ✅ 136 · 🟡 7 · ⏳ 0; los 7 parciales dependen de servicios externos o del despliegue en AWS). Se regenera con `node scripts/trazabilidad.mjs`.
 
 ### Actores y funcionalidades (vista de casos de uso)
 

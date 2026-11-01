@@ -13,7 +13,7 @@ Generado con `node scripts/trazabilidad.mjs`; el estado se actualiza al cerrar c
 | M02. Registro de usuarios y validación de identidad | 8 | 8 | 0 | 0 | 002, 003 |
 | M03. Inscripción de postulantes – Modalidad Ordinaria | 10 | 10 | 0 | 0 | 003 |
 | M04. Inscripción de postulantes – Modalidad Exonerados | 12 | 12 | 0 | 0 | 004 |
-| M05. Gestión de pagos y pasarela de pagos | 12 | 10 | 2 | 0 | 001, 003, 005 |
+| M05. Gestión de pagos y pasarela de pagos | 12 | 11 | 1 | 0 | 001, 003, 005 |
 | M06. Gestión y validación de expedientes | 8 | 8 | 0 | 0 | 004 |
 | M07. Programación y gestión de exámenes de admisión | 9 | 9 | 0 | 0 | 006 |
 | M08. Gestión de sedes, aulas y distribución de postulantes | 9 | 9 | 0 | 0 | 006 |
@@ -23,7 +23,7 @@ Generado con `node scripts/trazabilidad.mjs`; el estado se actualiza al cerrar c
 | M12. Reportes, estadísticas y panel de control | 10 | 10 | 0 | 0 | 001, 008 |
 | M13. Administración, roles y seguridad | 10 | 10 | 0 | 0 | 002, 008 |
 | M14. Configuración general e integraciones | 10 | 6 | 4 | 0 | 001, 004, 008 |
-| **Total** | **143** | **135** | **8** | **0** | |
+| **Total** | **143** | **136** | **7** | **0** | |
 
 ## M01. Gestión de convocatorias y procesos de admisión
 
@@ -99,9 +99,9 @@ Generado con `node scripts/trazabilidad.mjs`; el estado se actualiza al cerrar c
 |---|---|---|---|
 | RF-05.01 | El sistema debe calcular automáticamente el monto a pagar según modalidad, categoría y tasa vigente. | [001](../specs/001-portal-publico/requirements.md) FR-006, [003](../specs/003-inscripcion-ordinaria/requirements.md) FR-005, [005](../specs/005-pagos/requirements.md) FR-001 | ✅ Simulador y cálculo de tasa en el servidor |
 | RF-05.02 | El sistema debe generar una orden de pago única asociada al postulante y proceso. | [003](../specs/003-inscripcion-ordinaria/requirements.md) FR-008, [005](../specs/005-pagos/requirements.md) FR-002 | ✅ Orden única por inscripción, con número de pedido por intento |
-| RF-05.03 | El sistema debe integrarse con una pasarela de pagos autorizada que admita los medios habilitados por la universidad. | [005](../specs/005-pagos/requirements.md) FR-003, [005](../specs/005-pagos/requirements.md) FR-013 | 🟡 Izipay integrado (ADR-016) y probado con la pasarela simulada; falta el pago real en sandbox |
+| RF-05.03 | El sistema debe integrarse con una pasarela de pagos autorizada que admita los medios habilitados por la universidad. | [005](../specs/005-pagos/requirements.md) FR-003, [005](../specs/005-pagos/requirements.md) FR-013 | ✅ Izipay micuentaweb probado en sandbox con tarjeta de prueba (01/11/2026), confirmado por consulta servidor a servidor; Yape con Culqi integrado |
 | RF-05.04 | El sistema debe redirigir al postulante a un entorno seguro de pago o utilizar un formulario de pago certificado. | [005](../specs/005-pagos/requirements.md) FR-003, [005](../specs/005-pagos/requirements.md) FR-013 | ✅ Formulario certificado de Izipay en pop-up; la tarjeta nunca pasa por el servidor |
-| RF-05.05 | El sistema debe recibir confirmaciones de pago mediante notificaciones seguras del proveedor, como webhooks. | [005](../specs/005-pagos/requirements.md) FR-004 | 🟡 IPN firmada en /payments/izipay/notify; necesita URL pública (Paso 6) |
+| RF-05.05 | El sistema debe recibir confirmaciones de pago mediante notificaciones seguras del proveedor, como webhooks. | [005](../specs/005-pagos/requirements.md) FR-004 | 🟡 IPN firmada en /payments/micuentaweb/notify; mientras no haya URL pública, el pago se confirma por consulta Order/Get, nunca solo por el navegador; prueba de la IPN al desplegar (Paso 11) |
 | RF-05.06 | El sistema debe actualizar automáticamente el estado del pago después de verificar la transacción. | [005](../specs/005-pagos/requirements.md) FR-004, [005](../specs/005-pagos/requirements.md) FR-013 | ✅ Confirmación solo con firma HMAC verificada; la inscripción pasa a Apta por evento |
 | RF-05.07 | El sistema debe registrar el identificador de operación, monto, fecha, medio y estado del pago. | [005](../specs/005-pagos/requirements.md) FR-006 | ✅ Intento con transacción, operación, autorización, medio, monto, fecha y estado |
 | RF-05.08 | El sistema debe generar una constancia de pago y permitir su descarga, diferenciándola del comprobante tributario cuando corresponda. | [005](../specs/005-pagos/requirements.md) FR-008 | ✅ Constancia de pago en «Imprimir documentos» (no es comprobante SUNAT) |

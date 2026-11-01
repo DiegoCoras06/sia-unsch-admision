@@ -465,7 +465,7 @@ export class OnlinePayment implements OnInit {
       const res = await firstValueFrom(this.api.paymentConfirm(message));
       if (res.status === 'AUTORIZADO') this.show('¡Pago confirmado! Tu inscripción quedó Apta.', 'info');
       else if (res.status === 'RECHAZADO') this.show(`${res.label}. ${res.message ?? ''} Puedes intentarlo de nuevo.`.trim(), 'error');
-      else this.show(res.label, 'info');
+      else this.show(`${res.label}. ${res.message ?? ''}`.trim(), 'info');
       await this.refresh();
       if (res.orderStatus === 'PAGADA') this.paid.emit();
     } catch (e) {

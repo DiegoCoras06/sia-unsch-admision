@@ -28,7 +28,9 @@
 ## Fase final
 
 - [x] T330 E2E por la interfaz con la pasarela simulada — `scripts/e2e-pago.mjs`
-- [ ] T331 Pago de prueba con tarjeta en el sandbox de Izipay micuentaweb (credenciales comprobadas con `npm run micuentaweb:check`; falta el pago con tarjeta de prueba desde la web)
+- [x] T331 Pago de prueba con tarjeta en el sandbox de Izipay micuentaweb: aprobado el 01/11/2026 (pedido 2700005801, VISA 497010…0055), confirmado por consulta `Order/Get` (`confirmedVia = CONSULTA`), inscripción Apta y correos por SES — `scripts/e2e-pago-micuentaweb.mjs`
+- [x] T354 Sin IPN, la aprobación del navegador se ratifica con la pasarela servidor a servidor antes de confirmar; si no se ratifica, el intento sigue «En proceso» (prueba `payments-server-check.test.ts`)
+- [ ] T355 Prueba de la IPN de micuentaweb con `PUBLIC_API_URL` HTTPS (al desplegar en AWS, Paso 11)
 - [x] T332 Conciliación con Tesorería (RF-05.11) y devoluciones (RF-05.12) — Paso 10, ver abajo
 
 ## Paso 10 — Conciliación y anulaciones

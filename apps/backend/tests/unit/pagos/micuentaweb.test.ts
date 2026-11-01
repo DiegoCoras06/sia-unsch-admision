@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MiCuentaWebGateway, signKrAnswer } from '../../../src/modules/pagos/infrastructure/micuentaweb-gateway.js';
 
 // Claves inventadas solo para la prueba.
@@ -25,5 +25,21 @@ describe('Izipay micuentaweb (kr-answer / kr-hash)', () => {
     const r = gw.verify({ transactionId: 'T2026000001', payloadHttp: answer, signature: signKrAnswer(answer, 'testpassword_x'), code: 'password' });
     expect(r?.approved).toBe(true);
     expect(gw.verify({ transactionId: 'T2026000001', payloadHttp: answer, signature: signKrAnswer(answer, 'testpassword_x'), code: 'sha256_hmac' })).toBeNull();
+  });
+
+  describe('consulta servidor a servidor (Order/Get)', () => {
+    afterEach(() => vi.unstubAllGlobals());
+    const orderGet = (tx: object) => vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ status: 'SUCCESS', answer: { transactions: [tx] } }))));
+
+    it('toma monto y moneda de la transacción de la pasarela, no del intento local', async () => {
+      orderGet({ uuid: 'abc123', amount: 100, currency: 'PEN', detailedStatus: 'AUTHORISED', metadata: { transactionId: 'T2026000001' } });
+      const r = await gw.query({ transactionId: 'T2026000001', orderNumber: 'SIA000123', amount: '250.00' });
+      expect(r).toMatchObject({ approved: true, amount: '1.00', currency: 'PEN', orderNumber: 'SIA000123', operationNumber: 'abc123' });
+    });
+
+    it('ignora transacciones de otro intento', async () => {
+      orderGet({ uuid: 'zzz', amount: 25000, currency: 'PEN', detailedStatus: 'AUTHORISED', metadata: { transactionId: 'OTRO' } });
+      expect(await gw.query({ transactionId: 'T2026000001', orderNumber: 'SIA000123', amount: '250.00' })).toBeNull();
+    });
   });
 });
