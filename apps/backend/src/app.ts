@@ -13,6 +13,7 @@ import { shiftedClock, systemClock, type Clock } from './shared/clock/clock.js';
 import type { Env } from './shared/config/env.js';
 import { createPrismaClient, type Db } from './shared/db/prisma.js';
 import { FileEmailSender, type EmailSender } from './shared/email/email-sender.js';
+import { SesEmailSender } from './shared/email/ses-email-sender.js';
 import { Outbox } from './shared/events/outbox.js';
 import { errorHandler, handle, notFoundHandler, requestContext } from './shared/http/middleware.js';
 import { RateLimiter } from './shared/rate-limit/rate-limiter.js';
@@ -69,7 +70,11 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const logger = overrides.logger ?? createLogger(env.LOG_LEVEL, env.APP_ENV === 'dev');
   const clock = overrides.clock ?? (env.APP_FIXED_NOW ? shiftedClock(new Date(env.APP_FIXED_NOW)) : systemClock);
   const db = overrides.db ?? createPrismaClient(env.DATABASE_URL, env.dbMaxConnections, env.DB_SSL_CA ? path.resolve(backendDir, env.DB_SSL_CA) : undefined);
-  const transport = overrides.email ?? new FileEmailSender(path.join(backendDir, '.dev-mail'), logger);
+  const transport = overrides.email
+    ?? (env.EMAIL_PROVIDER === 'ses'
+      ? new SesEmailSender({ from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET }, logger)
+      : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
+  logger.info({ email: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
   // M11: cada correo que envía cualquier módulo queda registrado con su estado (RF-11.09).
   const email = new RecordingEmailSender(db, transport, clock);
   const outbox = new Outbox(db, clock, logger);

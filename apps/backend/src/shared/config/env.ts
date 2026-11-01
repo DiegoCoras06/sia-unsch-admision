@@ -52,6 +52,9 @@ const schema = z
     CHAT_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
     EMAIL_PROVIDER: z.enum(['file', 'console', 'ses']).default('file'),
     EMAIL_FROM: z.string().default('Admisión UNSCH (proyecto académico) <no-reply@sia-unsch.local>'),
+    // Amazon SES: región de la identidad verificada y, opcional, el conjunto de configuración para eventos de entrega/rebote.
+    SES_REGION: z.string().default('us-east-2'),
+    SES_CONFIGURATION_SET: z.string().optional(),
     APP_FIXED_NOW: z.iso.datetime({ offset: true }).optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
@@ -59,6 +62,10 @@ const schema = z
   .refine((e) => e.FILE_STORAGE !== 's3' || e.S3_BUCKET, {
     message: 'FILE_STORAGE=s3 requiere S3_BUCKET (y credenciales de AWS: el rol de la Lambda o AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY en local)',
     path: ['FILE_STORAGE'],
+  })
+  .refine((e) => e.EMAIL_PROVIDER !== 'ses' || !/\.local>?\s*$/.test(e.EMAIL_FROM), {
+    message: 'EMAIL_PROVIDER=ses requiere EMAIL_FROM con una dirección verificada en SES, p. ej. "Admisión UNSCH <tu-correo@dominio>" (y credenciales de AWS con permiso ses:SendEmail)',
+    path: ['EMAIL_FROM'],
   })
   .refine((e) => e.IDENTITY_PROVIDER !== 'apiperu' || e.APIPERU_TOKEN, {
     message: 'IDENTITY_PROVIDER=apiperu requiere APIPERU_TOKEN (token de apiperu.dev, sección «Api Tokens»)',

@@ -23,6 +23,7 @@
     "rds:setup": "npm run rds:setup -w @sia/backend",
     "dev:rds": "concurrently -k -n api,web -c red,yellow \"npm run dev:rds -w @sia/backend\" \"npm run start -w @sia/frontend\"",
     "izipay:check": "npm run izipay:check -w @sia/backend",
+    "ses:check": "npm run ses:check -w @sia/backend",
     "rds:migrate": "npm run rds:migrate -w @sia/backend"
   },
   "devDependencies": {

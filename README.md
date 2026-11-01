@@ -93,6 +93,13 @@ npm run izipay:check
 
 Sin credenciales (`PAYMENTS_PROVIDER=mock`) el mismo botón abre una **pasarela simulada** que firma la respuesta igual que Izipay; así se prueba todo el flujo (`node scripts/e2e-pago.mjs`).
 
+### Correo real con Amazon SES
+
+1. Verifica tu remitente en *SES → Identidades* y da al usuario IAM el permiso `ses:SendEmail` ([guía](docs/aws-ses.md)).
+2. En `apps/backend/.env.rds` escribe `EMAIL_FROM="Admisión UNSCH (proyecto académico) <tu-correo@dominio>"`.
+3. Comprueba (con un correo al final, envía uno de prueba): `npm run ses:check -- tu-correo@dominio`
+4. Cambia `EMAIL_PROVIDER=ses` y reinicia la API. En modo sandbox de SES, los destinatarios también deben estar verificados.
+
 ## 1. Spec-Driven Development en este proyecto
 
 La **especificación es la fuente de verdad**; el código se deriva de ella. Cada funcionalidad tiene en `specs/NNN-…/` los **tres artefactos SDD**:
