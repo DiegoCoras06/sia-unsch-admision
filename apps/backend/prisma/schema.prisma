@@ -724,14 +724,48 @@ model SupportCase {
   message    String            @db.VarChar(2000)
   status     SupportCaseStatus @default(OPEN)
   createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  attachments SupportCaseAttachment[]
 
   @@map("support_cases")
+  @@schema("seguridad")
+}
+
+/// Evidencia adjunta a una denuncia (spec 008, Historia 7; MEJ-14): archivo privado, tipo verificado por contenido.
+model SupportCaseAttachment {
+  id          String      @id @default(uuid()) @db.Uuid
+  caseId      String      @map("case_id") @db.Uuid
+  supportCase SupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileName    String      @map("file_name") @db.VarChar(200)
+  contentType String      @map("content_type") @db.VarChar(40)
+  sizeBytes   Int         @map("size_bytes")
+  sha256      String      @db.Char(64)
+  storageKey  String      @map("storage_key") @db.VarChar(200)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([caseId])
+  @@map("support_case_attachments")
   @@schema("seguridad")
 }
 
 // ════════════════════════════════════════════════════════════════════
 // M03 Inscripción pública sin cuenta (ADR-015) — esquema "inscripciones"
 // ════════════════════════════════════════════════════════════════════
+
+/// Lista de adjudicados del CEPRE-UNSCH que carga Admisión (spec 004, Historia 6; Art. 8.10).
+model CepreAwardee {
+  id             String   @id @default(uuid()) @db.Uuid
+  callCode       String   @map("call_code") @db.VarChar(10)
+  documentNumber String   @map("document_number") @db.VarChar(12)
+  fullName       String   @map("full_name") @db.VarChar(200)
+  optionCode     String   @map("option_code") @db.Char(3)
+  cycle          String   @db.VarChar(10)
+  loadedBy       String   @map("loaded_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([callCode, documentNumber])
+  @@map("cepre_awardees")
+  @@schema("inscripciones")
+}
 
 enum ApplicationStatus {
   PENDIENTE_PAGO
@@ -788,10 +822,13 @@ model Application {
   consentTextHash       String?           @map("consent_text_hash") @db.VarChar(64)
   /// RF-13.10: fecha en que se borraron los datos personales al vencer la retención.
   anonymizedAt          DateTime?         @map("anonymized_at") @db.Timestamptz(3)
+  /// RN-16: código de la inscripción de Exonerados de la que viene esta reinscripción al Ordinario.
+  reinscriptionOf       String?           @map("reinscription_of") @db.Char(8)
   createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  @@unique([callCode, documentType, documentNumber])
+  // Una inscripción por documento y modalidad: la reinscripción (EXO → ORD) es la única que agrega una segunda.
+  @@unique([callCode, documentType, documentNumber, modality])
   @@index([callCode, optionCode])
   @@map("applications")
   @@schema("inscripciones")

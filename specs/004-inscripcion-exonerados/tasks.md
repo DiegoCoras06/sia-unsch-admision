@@ -36,7 +36,7 @@
 
 ## Siguiente iteración
 
-- [ ] T640 Adjudicados CEPRE: lista cargada por Admisión y ventana propia (Historia 6)
+- [x] T640 Adjudicados CEPRE (Historia 6): lista CSV cargada por Admisión (todo o nada), consulta por DNI que precarga programa y ciclo, solo quien figura puede inscribirse; S/ 335.00 y S/ 385.00 extemporáneo — `cepre-awardees.ts`, pestaña «Adjudicados CEPRE» del panel
 
 ## Tareas agregadas (27 y 28/10/2026)
 

@@ -99,6 +99,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     identityTokenSecret: env.IDENTITY_TOKEN_SECRET,
     currentCallCode: async () => (await convocatorias.queries.getCurrentCall()).code,
     audit,
+    storage,
   });
   const identity = createIdentityProvider(
     { provider: env.IDENTITY_PROVIDER, url: env.APIPERU_URL, token: env.APIPERU_TOKEN },
@@ -253,6 +254,10 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const ipnForm = express.urlencoded({ extended: false, limit: '200kb' });
   app.use((req, res, next) => {
     if (req.method === 'POST' && (/^\/api\/v1\/admin\/results\/exams\/[^/]+\/batches$/.test(req.path) || req.path === '/api/v1/admin/reconciliations')) return csvJson(req, res, next);
+    // Lista de adjudicados CEPRE (CSV) y cuadro de vacantes (.xlsx en base64).
+    if (req.method === 'POST' && (req.path === '/api/v1/admin/cepre-awardees' || /^\/api\/v1\/admin\/calls\/[^/]+\/vacancies\/import/.test(req.path))) return csvJson(req, res, next);
+    // Denuncia con evidencia: hasta 5 MB en total, en base64.
+    if (req.method === 'POST' && req.path === '/api/v1/support/complaint') return dossierJson(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/inscriptions') return photoJson(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/payments/micuentaweb/notify') return ipnForm(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/dossier/documents') return dossierJson(req, res, next);
@@ -288,7 +293,9 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     catalog: convocatorias.catalog,
     content: configuracion.admin,
     siteAssets: configuracion.assets,
-    security: new SecurityAdmin({ db, clock, audit, inscriptions: inscripciones.service }),
+    security: new SecurityAdmin({ db, clock, audit, inscriptions: inscripciones.service, storage }),
+    cepre: inscripciones.cepre,
+    vacancyImport: convocatorias.vacancyImport,
     inscriptions: inscripciones.service,
     inscriptionDocuments: inscripciones.documents,
     reports: reportes.queries,

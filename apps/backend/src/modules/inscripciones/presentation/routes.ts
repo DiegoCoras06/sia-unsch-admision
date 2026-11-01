@@ -6,6 +6,8 @@ import type { RequestMeta } from '../../../shared/audit/audit.js';
 import { handle } from '../../../shared/http/middleware.js';
 import { parse } from '../../../shared/http/validate.js';
 import type { FichaService } from '../application/ficha-service.js';
+import type { OrdenPagoService } from '../application/orden-pago-pdf.js';
+import type { CepreAwardees } from '../application/cepre-awardees.js';
 import type { InscriptionService } from '../application/inscription-service.js';
 
 const name = z.string().trim().min(1, 'Obligatorio').max(80);
@@ -53,7 +55,7 @@ const inscriptionSchema = z
 const meta = (req: Request): RequestMeta => ({ requestId: req.requestId, ipHash: req.ipHash, userAgent: req.get('user-agent') ?? null });
 
 /** Rutas públicas de M03 (contrato: specs/003-inscripcion-ordinaria/contracts/openapi.yaml). */
-export function inscripcionesRoutes(service: InscriptionService, ficha: FichaService, documents: ApplicationDocuments): Router {
+export function inscripcionesRoutes(service: InscriptionService, ficha: FichaService, documents: ApplicationDocuments, orden: OrdenPagoService, cepre: CepreAwardees): Router {
   const router = Router();
 
   router.post('/identity/lookup', handle(async (req, res) => {
@@ -104,6 +106,34 @@ export function inscripcionesRoutes(service: InscriptionService, ficha: FichaSer
       content: z.string().max(7_200_000).optional(), uploadKey: z.string().max(120).optional(),
     }).refine((v) => !!v.content !== !!v.uploadKey, { message: 'Envía el archivo o la clave de la subida.', path: ['content'] }), req.body);
     res.json({ data: await documents.upload(b, meta(req)) });
+  }));
+
+  // Spec 004, Historia 6: programa adjudicado de un DNI de la lista del CEPRE.
+  router.get('/inscriptions/cepre-awardee', handle(async (req, res) => {
+    const q = parse(z.object({ documentNumber: z.string().regex(/^\d{8}$/, 'El DNI tiene 8 dígitos') }), req.query);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: await cepre.lookup(q.documentNumber, meta(req)) });
+  }));
+
+  // Historia 6 (RN-16): reinscripción de exonerados no admitidos al Ordinario.
+  router.get('/inscriptions/reinscription', handle(async (req, res) => {
+    const q = parse(z.object(who), req.query);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: await service.reinscriptionCheck(q.documentNumber, q.applicantCode, meta(req)) });
+  }));
+  router.post('/inscriptions/reinscription', handle(async (req, res) => {
+    const b = parse(z.object({ ...who, optionCode: z.string().regex(/^P\d{2}$/, 'Elige un programa de estudio') }), req.body);
+    res.status(201).json({ data: await service.reinscribe(b.documentNumber, b.applicantCode, b.optionCode, meta(req)) });
+  }));
+
+  // Historia 4: orden de pago y constancia en una sola hoja A4 (con DNI + código).
+  router.get('/inscriptions/orden-pago.pdf', handle(async (req, res) => {
+    const q = parse(z.object(who), req.query);
+    const pdf = await orden.pdf(q.documentNumber, q.applicantCode, meta(req));
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="orden-de-pago-${q.applicantCode}.pdf"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(pdf);
   }));
 
   // Historia 5: ficha PDF con QR (con DNI + código) y su verificación pública.

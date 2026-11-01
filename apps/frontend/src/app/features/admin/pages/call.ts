@@ -7,6 +7,18 @@ interface Stage { code: string; name: string; scope: string; kind: string; start
 interface Fee { code: string; concept: string; amount: string; kind: string; legalNote: string; _amount?: string }
 interface Opt { code: string; name: string; area: string; byCategory: Record<string, number>; total: number }
 interface CallDetail { code: string; name: string; status: string; stages: Stage[]; fees: Fee[]; vacancies: { categories: string[]; options: Opt[]; total: number } }
+interface ImportRow { line: number; optionCode: string; name: string | null; sum: number; declaredTotal: number | null; changes: { category: string; from: number; to: number }[]; errors: string[] }
+interface ImportPreview { categories: string[]; rows: ImportRow[]; errors: string[]; totals: { before: number; after: number; changedCells: number }; valid: boolean }
+interface Awardee { documentNumber: string; fullName: string; optionCode: string; cycle: string; registered: boolean }
+interface Awardees { callCode: string; total: number; registered: number; items: Awardee[] }
+
+/** Archivo elegido → base64 sin el prefijo `data:…;base64,`. */
+const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(String(r.result).replace(/^data:[^,]*,/, ''));
+  r.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+  r.readAsDataURL(file);
+});
 
 /** Hora de Lima (UTC−5, sin horario de verano) para los campos datetime-local. */
 const toLima = (iso: string) => new Date(new Date(iso).getTime() - 5 * 3600_000).toISOString().slice(0, 16);
@@ -60,6 +72,32 @@ const fromLima = (local: string) => `${local}:00-05:00`;
             @if (d.status === 'PUBLISHED') { <p class="adm-msg">Convocatoria publicada: cada cambio exige resolución y motivo (RN-03).</p>
               <div class="adm-form two"><div class="field"><label for="v-res">Resolución</label><input id="v-res" class="input" [(ngModel)]="resolution" placeholder="R.R. N.° 000-2026-UNSCH-R"></div>
                 <div class="field"><label for="v-why">Motivo</label><input id="v-why" class="input" [(ngModel)]="reason" placeholder="Empate en el último puesto"></div></div> }
+            <details class="vac-import" [open]="!!preview()">
+              <summary><strong>Importar el cuadro desde Excel</strong> <span class="adm-muted">· descarga la plantilla, corrígela y súbela; cada fila debe sumar su TOTAL</span></summary>
+              <div class="vac-import__actions">
+                <button class="btn btn--quiet" type="button" (click)="template()">Descargar plantilla (.xlsx)</button>
+                <label class="btn btn--quiet" for="v-file">Elegir archivo…</label>
+                <input id="v-file" type="file" accept=".xlsx" hidden (change)="pickVacancies($any($event.target))">
+                @if (preview(); as p) {
+                  <button class="btn" type="button" [disabled]="!p.valid || !p.totals.changedCells" (click)="importVacancies()">Guardar {{ p.totals.changedCells }} cambio(s)</button>
+                  <button class="btn btn--quiet" type="button" (click)="preview.set(null)">Descartar</button>
+                }
+              </div>
+              @if (preview(); as p) {
+                <p class="adm-msg" [class.err]="!p.valid">{{ p.valid ? 'Archivo válido.' : 'El archivo tiene errores: corrígelos y vuelve a subirlo. No se guardó nada.' }}
+                  Total actual {{ p.totals.before }} → {{ p.totals.after }} · {{ p.totals.changedCells }} celda(s) cambian.</p>
+                @for (e of p.errors; track e) { <p class="adm-msg err">{{ e }}</p> }
+                <div class="adm-table-wrap"><table class="adm-table">
+                  <thead><tr><th>Fila</th><th>Programa</th><th class="num">Suma</th><th class="num">TOTAL</th><th>Cambios</th><th>Errores</th></tr></thead>
+                  <tbody>@for (r of p.rows; track r.line) { @if (r.errors.length || r.changes.length) {
+                    <tr><td>{{ r.line }}</td><td>{{ r.name ?? r.optionCode }} <span class="adm-muted">{{ r.optionCode }}</span></td>
+                      <td class="num">{{ r.sum }}</td><td class="num">{{ r.declaredTotal ?? '—' }}</td>
+                      <td>@for (c of r.changes; track c.category) { <span class="adm-tag">{{ c.category }}: {{ c.from }} → {{ c.to }}</span> }</td>
+                      <td class="vac-err">{{ r.errors.join(' ') }}</td></tr>
+                  } } @empty { <tr><td colspan="6">Sin filas.</td></tr> }</tbody>
+                </table></div>
+              }
+            </details>
             <div class="adm-table-wrap"><table class="adm-table">
               <thead><tr><th>Programa</th>@for (c of d.vacancies.categories; track c) {<th class="num">{{ c }}</th>}<th class="num">Total</th></tr></thead>
               <tbody>@for (o of d.vacancies.options; track o.code) {
@@ -70,6 +108,27 @@ const fromLima = (local: string) => `${local}:00-05:00`;
                   <td class="num"><strong>{{ o.total }}</strong></td></tr>
               }</tbody>
             </table></div>
+          </section>
+        }
+        @case ('cepre') {
+          <section class="adm-panel"><h2>Adjudicados del CEPRE-UNSCH</h2>
+            <p>Sube la lista oficial en CSV con las columnas <code>dni;programa;ciclo;apellidos y nombres</code> (programa P01 a P40, ciclo I o II).
+              Cada carga reemplaza a la anterior; si una fila tiene error, no se guarda nada. Solo quien figura aquí puede inscribirse como adjudicado, con su programa y ciclo.</p>
+            <div class="vac-import__actions">
+              <label class="btn" for="ce-file">Subir lista (.csv)</label>
+              <input id="ce-file" type="file" accept=".csv,text/csv" hidden (change)="pickAwardees($any($event.target))">
+              @if (awardees(); as a) { <span class="adm-muted">{{ a.total }} adjudicados · {{ a.registered }} ya inscritos</span> }
+            </div>
+            @if (awardeeErrors().length) { <ul class="adm-msg err">@for (e of awardeeErrors(); track e) { <li>{{ e }}</li> }</ul> }
+            @if (awardees(); as a) {
+              <div class="adm-table-wrap"><table class="adm-table">
+                <thead><tr><th>DNI</th><th>Apellidos y nombres</th><th>Programa</th><th>Ciclo</th><th>Inscrito</th></tr></thead>
+                <tbody>@for (w of a.items; track w.documentNumber) {
+                  <tr><td>{{ w.documentNumber }}</td><td>{{ w.fullName }}</td><td>{{ w.optionCode }}</td><td>{{ w.cycle === 'CE-I' ? 'Ciclo I' : 'Ciclo II' }}</td>
+                    <td><span class="adm-tag" [class.ok]="w.registered">{{ w.registered ? 'Sí' : 'Pendiente' }}</span></td></tr>
+                } @empty { <tr><td colspan="5">Aún no se cargó la lista.</td></tr> }</tbody>
+              </table></div>
+            }
           </section>
         }
         @case ('copiar') {
@@ -90,17 +149,27 @@ const fromLima = (local: string) => `${local}:00-05:00`;
       }
     }
   `,
+  styles: `
+    .vac-import { margin: 0 0 1.25rem; padding: 1rem 1.25rem; border: 1px dashed var(--line, #d8cfc9); border-radius: 8px; display: grid; gap: 0.75rem; }
+    .vac-import summary { cursor: pointer; }
+    .vac-import__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.25rem 0 0.75rem; }
+    .vac-err { color: #9b1c1c; max-width: 28rem; }
+  `,
 })
 export class CallAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
   protected readonly calls = signal<{ code: string; status: string }[]>([]);
   protected readonly detail = signal<CallDetail | null>(null);
-  protected readonly tab = signal<'etapas' | 'tasas' | 'vacantes' | 'copiar'>('etapas');
+  protected readonly tab = signal<'etapas' | 'tasas' | 'vacantes' | 'cepre' | 'copiar'>('etapas');
+  protected readonly preview = signal<ImportPreview | null>(null);
+  protected readonly awardees = signal<Awardees | null>(null);
+  protected readonly awardeeErrors = signal<string[]>([]);
+  private vacancyFile: string | null = null;
   protected readonly msg = signal<string | null>(null);
   protected readonly msgErr = signal(false);
   protected readonly tabs = [
     { id: 'etapas' as const, label: 'Cronograma' }, { id: 'tasas' as const, label: 'Tasas' },
-    { id: 'vacantes' as const, label: 'Vacantes' }, { id: 'copiar' as const, label: 'Copiar convocatoria' },
+    { id: 'vacantes' as const, label: 'Vacantes' }, { id: 'cepre' as const, label: 'Adjudicados CEPRE' }, { id: 'copiar' as const, label: 'Copiar convocatoria' },
   ];
   protected code = '2027-I';
   protected resolution = '';
@@ -117,6 +186,56 @@ export class CallAdminPage implements OnInit {
     d.stages.forEach((s) => { s._start = toLima(s.startsAt); s._end = toLima(s.endsAt); });
     d.fees.forEach((f) => { f._amount = f.amount; });
     this.detail.set(d);
+    this.awardees.set(await this.session.get<Awardees>('/admin/cepre-awardees').catch(() => null));
+  }
+
+  protected async template() {
+    await this.act(async () => {
+      await this.session.download(`/admin/calls/${this.code}/vacancies/template.xlsx`, {}, `vacantes-${this.code}.xlsx`);
+      return 'Plantilla descargada con el cuadro vigente.';
+    }, false);
+  }
+
+  protected async pickVacancies(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    await this.act(async () => {
+      this.vacancyFile = await toBase64(file);
+      const p = await this.session.postAuth<ImportPreview>(`/admin/calls/${this.code}/vacancies/import/preview`, { file: this.vacancyFile });
+      this.preview.set(p);
+      return `Vista previa de «${file.name}».`;
+    }, false);
+  }
+
+  protected async importVacancies() {
+    if (!this.vacancyFile) return;
+    await this.act(async () => {
+      const r = await this.session.postAuth<{ changedCells: number; total: number }>(`/admin/calls/${this.code}/vacancies/import`, {
+        file: this.vacancyFile, resolution: this.resolution || undefined, reason: this.reason || undefined,
+      });
+      this.preview.set(null);
+      this.vacancyFile = null;
+      return `Cuadro de vacantes importado: ${r.changedCells} celda(s) actualizadas, ${r.total} vacantes en total.`;
+    });
+  }
+
+  protected async pickAwardees(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.awardeeErrors.set([]);
+    try {
+      const a = await this.session.postAuth<Awardees>('/admin/cepre-awardees', { csv: await file.text() });
+      this.awardees.set(a);
+      this.msg.set(`Lista de adjudicados cargada: ${a.total} personas.`);
+      this.msgErr.set(false);
+    } catch (e) {
+      const details = (e as { error?: { error?: { details?: { field: string; issue: string }[] } } }).error?.error?.details ?? [];
+      this.awardeeErrors.set(details.map((x) => `${x.field}: ${x.issue}`));
+      this.msg.set(apiErrorMessage(e));
+      this.msgErr.set(true);
+    }
   }
 
   protected async saveStage(s: Stage) {

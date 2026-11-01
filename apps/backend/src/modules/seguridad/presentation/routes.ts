@@ -22,7 +22,10 @@ export function seguridadRoutes(cases: SupportCases, currentCallCode: () => Prom
   }));
 
   router.post('/support/complaint', handle(async (req, res) => {
-    const input = parse(contactSchema.extend({ name: z.string().trim().max(120).optional() }), req.body);
+    const input = parse(contactSchema.extend({
+      name: z.string().trim().max(120).optional(),
+      attachments: z.array(z.object({ fileName: z.string().trim().min(1).max(200), content: z.string().min(10).max(7_200_000) })).max(3).optional(),
+    }), req.body);
     const caseNumber = await cases.createComplaint(input, req.ipHash, await currentCallCode());
     res.status(201).json({ data: { caseNumber: caseNumber ?? 'RECIBIDO' } });
   }));

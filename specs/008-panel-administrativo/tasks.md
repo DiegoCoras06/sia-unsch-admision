@@ -37,9 +37,9 @@
 
 ## Siguientes iteraciones
 
-- [ ] T540 Importar vacantes desde Excel validando totales
+- [x] T540 Importar vacantes desde Excel: plantilla con el cuadro vigente, vista previa con diferencias y filas que no suman su TOTAL, guardado todo o nada con resolución — `vacancy-import.ts`
 - [x] T541 Denuncia reservada desde el portal y envío segmentado de comunicados (M11)
-- [ ] T542 Adjuntar evidencia (archivos) a una denuncia
+- [x] T542 Evidencia en denuncias: hasta 3 archivos PDF/JPG/PNG (5 MB) verificados por contenido, almacenamiento privado y descarga auditada en «Casos» — `support-cases.ts`
 
 ## Tareas agregadas (27 y 28/10/2026)
 

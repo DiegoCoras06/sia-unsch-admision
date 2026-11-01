@@ -33,7 +33,8 @@
 - [x] T231 Ficha de inscripción PDF con QR firmado y página pública de verificación (Historia 5) — `inscripciones/application/ficha-service.ts`, `features/inscripcion/verify-ficha.ts`, `tests/integration/ficha.test.ts`
 - [x] T234 Borrador automático en el dispositivo (RF-03.06) — `features/inscripcion/inscription.ts`
 - [x] T235 Cuenta opcional: crear, ingresar, recuperar, «Mi cuenta» con las inscripciones del mismo DNI (enmienda de ADR-015) — `features/cuenta/`, `GET /me/inscriptions`
-- [ ] T232 Reinscripción (Historia 6) — página informativa lista; flujo pendiente
+- [x] T232 Reinscripción (Historia 6): exonerado apto, no admitido y fuera de traslados/graduados (Art. 21) genera una inscripción al Ordinario con sus datos y la tasa T-5 (S/ 180.00) en la etapa REINS — `inscription-service.ts`, `features/inscripcion/reinscription.ts`
+- [x] T233 Orden de pago y constancia en una sola hoja A4 (PDF del servidor) en lugar de imprimir la página — `orden-pago-pdf.ts`
 - [x] T233 Pago en línea (spec 005)
 
 ## Tareas agregadas (27 y 28/10/2026)

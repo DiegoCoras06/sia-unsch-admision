@@ -87,6 +87,11 @@
                     </select>
                     <span id="f-mod-hint" class="hint">{{ modalityNote() }}</span>
                     @if (modality(); as m) { @if (!m.open) { <p class="field-error" id="e-modality">La inscripción de esta modalidad no está abierta hoy. Revisa el <a routerLink="/cronograma">cronograma</a>.</p> } }
+                    @if (form.controls.modality.value === 'CEPRE') {
+                      @if (cepreAward(); as a) { <p class="alert alert--info" role="status">Figuras en la lista de adjudicados del CEPRE-UNSCH: <strong>{{ a.program }}</strong> ({{ a.cycle }}). Tu programa se asigna automáticamente.</p> }
+                      @else if (cepreError()) { <p class="field-error" role="alert">{{ cepreError() }}</p> }
+                      @else { <span class="hint">Escribe tu DNI: verificaremos que figures en la lista de adjudicados del CEPRE-UNSCH.</span> }
+                    }
                   </div>
                 </div>
                 </fieldset>
@@ -368,6 +373,7 @@
                       }
                     </select>
                     @if (err('optionCode'); as e) { <p class="field-error" id="e-optionCode">{{ e }}</p> }
+                    @if (cepreAward(); as a) { <span class="hint">Programa adjudicado por el CEPRE-UNSCH: {{ a.program }}. Aunque elijas otro, se registra el adjudicado.</span> }
                   </div>
                 </div>
                 <div class="row">

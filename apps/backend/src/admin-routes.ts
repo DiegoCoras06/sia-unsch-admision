@@ -3,6 +3,8 @@
  * Cada ruta declara su permiso (verificado en el servidor y auditado si se niega) y llama a la
  * API pública del módulo dueño del dato. Aquí no hay reglas de negocio.
  */
+import type { CepreAwardees } from './modules/inscripciones/application/cepre-awardees.js';
+import type { VacancyImport } from './modules/convocatorias/index.js';
 import type { Request, RequestHandler, Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -27,6 +29,8 @@ export interface AdminDeps {
   security: SecurityAdmin;
   inscriptions: InscriptionService;
   inscriptionDocuments: ApplicationDocuments;
+  cepre: CepreAwardees;
+  vacancyImport: VacancyImport;
   reports: ReportQueries;
   exporters: {
     toExcel(title: string, filters: string, columns: Column[], rows: Record<string, unknown>[]): Promise<Buffer>;
@@ -150,6 +154,25 @@ export function adminRoutes(d: AdminDeps): Router {
     await d.calls.updateVacancy(callCode(req), b, actor(req), meta(req));
     res.status(204).end();
   }));
+  // RF-01.05: cuadro de vacantes desde Excel (plantilla, vista previa con diferencias y guardado todo o nada).
+  r.get('/admin/calls/:code/vacancies/template.xlsx', g('convocatoria.gestionar'), handle(async (req, res) => {
+    sendFile(res, await d.vacancyImport.template(callCode(req)), `vacantes-${callCode(req)}`, 'xlsx');
+  }));
+  const xlsx = z.string().min(20).max(4_000_000);
+  r.post('/admin/calls/:code/vacancies/import/preview', g('convocatoria.gestionar'), handle(async (req, res) => {
+    const b = parse(z.object({ file: xlsx }), req.body);
+    res.json({ data: await d.vacancyImport.preview(callCode(req), b.file) });
+  }));
+  r.post('/admin/calls/:code/vacancies/import', g('convocatoria.gestionar'), handle(async (req, res) => {
+    const b = parse(z.object({ file: xlsx, resolution: z.string().trim().max(120).optional(), reason: z.string().trim().max(300).optional() }), req.body);
+    res.json({ data: await d.vacancyImport.apply(callCode(req), b.file, b, actor(req), meta(req)) });
+  }));
+  // Spec 004, Historia 6: lista de adjudicados del CEPRE-UNSCH.
+  r.get('/admin/cepre-awardees', g('convocatoria.gestionar'), handle(async (_req, res) => res.json({ data: await d.cepre.list() })));
+  r.post('/admin/cepre-awardees', g('convocatoria.gestionar'), handle(async (req, res) => {
+    const b = parse(z.object({ csv: z.string().min(10).max(2_000_000) }), req.body);
+    res.json({ data: await d.cepre.replace(b.csv, actor(req), meta(req)) });
+  }));
   // ── Catálogo del concurso (RF-01.02, RF-01.04, RF-04.11, RF-06.01, RF-14.03) ──
   const name = z.string().trim().min(3).max(160);
   r.get('/admin/calls/:code/catalog', g('convocatoria.gestionar'), handle(async (req, res) => res.json({ data: await d.catalog.catalog(callCode(req)) })));
@@ -232,6 +255,14 @@ export function adminRoutes(d: AdminDeps): Router {
     const b = parse(z.object({ status: z.enum(['OPEN', 'IN_PROGRESS', 'CLOSED']), note: z.string().max(400).optional() }), req.body);
     await d.security.setCaseStatus(number, b.status, b.note, actor(req), meta(req));
     res.status(204).end();
+  }));
+  r.get('/admin/cases/:number/attachments/:id', g('casos.gestionar'), handle(async (req, res) => {
+    const p = parse(z.object({ number: z.string().max(20), id: z.uuid() }), req.params);
+    const f = await d.security.caseAttachment(p.number, p.id, actor(req), meta(req));
+    res.setHeader('Content-Type', f.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(f.fileName)}`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(f.content);
   }));
   r.get('/support/cases/:number', handle(async (req, res) => {
     const { number } = parse(z.object({ number: z.string().min(5).max(20) }), req.params);

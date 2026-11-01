@@ -90,14 +90,19 @@ import { InscriptionTrack } from './inscription-track';
           <ul class="entities">
             @for (e of s.paymentEntities; track e) { <li>{{ e }}</li> }
           </ul>
-          <p class="note">Imprime esta orden de pago con el botón de abajo y llévala.</p>
+          <p class="note">Descarga tu orden de pago (una hoja) con el botón de abajo, imprímela y llévala.</p>
         </details>
       }
 
       <div class="receipt__actions no-print">
-        <button type="button" class="btn" (click)="print()">{{ s.status === 'APTA' ? 'Imprimir constancia' : 'Imprimir orden de pago' }}</button>
+        @if (documentNumber()) {
+          <button type="button" class="btn" (click)="downloadOrden()" [disabled]="downloadingOrden()">{{ downloadingOrden() ? 'Preparando…' : s.status === 'APTA' ? 'Descargar constancia (PDF)' : 'Descargar orden de pago (PDF)' }}</button>
+        } @else {
+          <button type="button" class="btn" (click)="print()">{{ s.status === 'APTA' ? 'Imprimir constancia' : 'Imprimir orden de pago' }}</button>
+        }
         <a routerLink="/mi-inscripcion" class="btn btn--quiet">Consultar mi inscripción</a>
       </div>
+      @if (ordenError()) { <p class="alert alert--error no-print" role="alert">{{ ordenError() }}</p> }
     </article>
   `,
   styles: `
@@ -150,6 +155,8 @@ export class InscriptionReceipt {
   private readonly api = inject(ApiService);
   protected readonly downloading = signal(false);
   protected readonly fichaError = signal<string | null>(null);
+  protected readonly downloadingOrden = signal(false);
+  protected readonly ordenError = signal<string | null>(null);
 
   /** Pago aprobado: se consulta el estado hasta que la inscripción quede Apta (unos 15 s como máximo). */
   protected onPaid(): void {
@@ -177,6 +184,30 @@ export class InscriptionReceipt {
 
   protected print(): void {
     window.print();
+  }
+
+  /** Orden de pago (o constancia, si ya pagó) en una sola hoja A4, generada en el servidor. */
+  protected downloadOrden(): void {
+    const s = this.summary();
+    const doc = this.documentNumber();
+    if (!doc) return;
+    this.downloadingOrden.set(true);
+    this.ordenError.set(null);
+    this.api.ordenPagoPdf(doc, s.applicantCode).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orden-de-pago-${s.applicantCode}.pdf`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.downloadingOrden.set(false);
+      },
+      error: () => {
+        this.ordenError.set('No pudimos generar tu orden de pago. Inténtalo de nuevo en unos minutos.');
+        this.downloadingOrden.set(false);
+      },
+    });
   }
 
   protected downloadFicha(): void {

@@ -4,7 +4,8 @@ import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
 import { shortDateTime } from '../../../core/format';
 
-interface Case { caseNumber: string; type: string; typeLabel: string; status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED'; statusLabel: string; name: string; email: string; phone: string | null; message: string; createdAt: string }
+interface Attachment { id: string; fileName: string; contentType: string; sizeBytes: number }
+interface Case { caseNumber: string; type: string; typeLabel: string; status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED'; statusLabel: string; name: string; email: string; phone: string | null; message: string; createdAt: string; attachments: Attachment[] }
 interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
 
 /** Spec 008, Historia 7: consultas, denuncias y derivaciones del asistente con número de caso. */
@@ -25,13 +26,19 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
         <tbody>@for (c of page()?.items ?? []; track c.caseNumber) {
           <tr><td><strong>{{ c.caseNumber }}</strong><br><span class="adm-muted">{{ when(c.createdAt) }}</span></td><td>{{ c.typeLabel }}</td>
             <td>{{ c.name }}<br><span class="adm-muted">{{ c.email }}</span></td>
-            <td style="max-width:32rem; white-space:pre-line">{{ c.message.length > 400 ? c.message.slice(0, 400) + '…' : c.message }}</td>
+            <td style="max-width:32rem"><p style="margin:0; white-space:pre-line">{{ c.message.length > 400 ? c.message.slice(0, 400) + '…' : c.message }}</p>
+              @if (c.attachments.length) {
+                <ul class="cs-files" aria-label="Evidencia adjunta">@for (a of c.attachments; track a.id) {
+                  <li><button type="button" class="btn btn--quiet" (click)="download(c, a)">📎 {{ a.fileName }} <span class="adm-muted">({{ kb(a.sizeBytes) }})</span></button></li>
+                }</ul>
+              }</td>
             <td><select class="select" [ngModel]="c.status" (ngModelChange)="setStatus(c, $event)" [attr.aria-label]="'Estado del caso ' + c.caseNumber">
               <option value="OPEN">Recibido</option><option value="IN_PROGRESS">En atención</option><option value="CLOSED">Cerrado</option></select></td></tr>
         } @empty { <tr><td colspan="5">No hay casos.</td></tr> }</tbody>
       </table></div>
     </section>
   `,
+  styles: `.cs-files { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; } .cs-files .btn { font-size: 0.8125rem; padding: 0.3rem 0.6rem; }`,
 })
 export class CasesAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
@@ -46,6 +53,18 @@ export class CasesAdminPage implements OnInit {
 
   protected async go(page: number) {
     this.page.set(await this.session.get<Page<Case>>('/admin/cases', { status: this.status, type: this.type, page }));
+  }
+
+  protected kb(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
+
+  /** La descarga queda en la auditoría (Historia 7). */
+  protected async download(c: Case, a: Attachment) {
+    try {
+      await this.session.download(`/admin/cases/${c.caseNumber}/attachments/${a.id}`, {}, a.fileName);
+    } catch (e) {
+      this.msg.set(apiErrorMessage(e));
+      this.msgErr.set(true);
+    }
   }
 
   protected async setStatus(c: Case, status: Case['status']) {

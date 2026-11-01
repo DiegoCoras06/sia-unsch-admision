@@ -18,6 +18,10 @@ import {
   initialStatus, isPlausibleGraduationYear, maskDocument, type InscriptionStatus,
 } from '../domain/inscription-rules.js';
 
+/** Tasa de reinscripción (Tabla N.° 3, ítem 5) y submodalidades que no pueden reinscribirse (Art. 21). */
+const REINSCRIPTION_FEE = 'T-5';
+const NO_REINSCRIPTION = new Set(['GRA', 'TI', 'TEN', 'TEI']);
+
 export interface InscriptionInput {
   documentType: 'DNI' | 'CE';
   documentNumber: string;
@@ -120,8 +124,8 @@ export class InscriptionService {
     await this.d.limiter.consume(`inscription-lookup:${meta.ipHash}`, 20, 3600);
     const callCode = await this.callCode();
     const alreadyRegistered = Boolean(
-      await this.d.db.application.findUnique({
-        where: { callCode_documentType_documentNumber: { callCode, documentType, documentNumber } },
+      await this.d.db.application.findFirst({
+        where: { callCode, documentType, documentNumber },
         select: { id: true },
       }),
     );
@@ -188,6 +192,20 @@ export class InscriptionService {
           ? `La inscripción de ${MODALITIES[input.modality]} se abre el ${shortDate(new Date(next.startsAt))}.`
           : `La inscripción de ${MODALITIES[input.modality]} ya cerró.`,
       );
+    }
+
+    // 1.1 Una inscripción por documento en la convocatoria (la reinscripción al Ordinario tiene su propio caso de uso).
+    if (await this.d.db.application.findFirst({ where: { callCode: call.code, documentType: input.documentType, documentNumber: input.documentNumber }, select: { id: true } })) {
+      throw conflict('ALREADY_REGISTERED', 'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.');
+    }
+
+    // 1.2 Adjudicados CEPRE (spec 004, Historia 6): solo quien figura en la lista, con el programa y el ciclo adjudicados.
+    if (input.modality === 'CEPRE') {
+      const awardee = input.documentType === 'DNI'
+        ? await this.d.db.cepreAwardee.findUnique({ where: { callCode_documentNumber: { callCode: call.code, documentNumber: input.documentNumber } } })
+        : null;
+      if (!awardee) throw businessRule('NOT_CEPRE_AWARDEE', 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.');
+      input = { ...input, optionCode: awardee.optionCode, quotaCategory: awardee.cycle };
     }
 
     // 2. Padrón de inhabilitados (RN-09).
@@ -324,6 +342,119 @@ export class InscriptionService {
       return this.summary(row, option.displayName, categories.find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory,
         exam ? longDate(new Date(exam.startsAt)) : 'Adjudicado por el CEPRE-UNSCH: no rinde examen');
     }));
+  }
+
+  /**
+   * Historia 6 (RN-16, Art. 21): ¿puede este exonerado reinscribirse al Ordinario? No pueden los admitidos,
+   * los traslados ni los graduados/titulados; solo durante la etapa de reinscripción del cronograma.
+   */
+  async reinscriptionCheck(documentNumber: string, applicantCode: string, meta: RequestMeta) {
+    await this.d.limiter.consume(`reinscription:${meta.ipHash}`, 20, 3600);
+    const { row, call } = await this.reinscriptionSource(documentNumber, applicantCode);
+    const fee = (await this.d.convocatorias.listFees(call.code)).find((f) => f.code === REINSCRIPTION_FEE);
+    const stage = call.stages.find((st) => st.scope === 'REINS');
+    const reason = await this.reinscriptionBlocker(row, call);
+    return {
+      eligible: !reason,
+      reason,
+      fullName: `${row.firstNames} ${row.paternalSurname} ${row.maternalSurname}`.trim(),
+      fromModality: (await this.d.convocatorias.listQuotaCategories(call.code)).find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory,
+      amount: fee ? Number(fee.amount).toFixed(2) : null,
+      window: stage ? { startsAt: stage.startsAt, endsAt: stage.endsAt, open: stage.status === 'IN_PROGRESS' } : null,
+    };
+  }
+
+  /** Historia 6: crea la inscripción al Ordinario con los datos de la de Exonerados y la tasa T-5 (S/ 180.00). */
+  async reinscribe(documentNumber: string, applicantCode: string, optionCode: string, meta: RequestMeta): Promise<InscriptionSummary> {
+    await this.d.limiter.consume(`reinscription:${meta.ipHash}`, 20, 3600);
+    const { row, call } = await this.reinscriptionSource(documentNumber, applicantCode);
+    const reason = await this.reinscriptionBlocker(row, call);
+    if (reason) throw businessRule('REINSCRIPTION_NOT_ALLOWED', reason);
+    const option = await this.d.convocatorias.getOption(call.code, optionCode);
+    if ((option.vacanciesByCategory.find((v) => v.category === 'ORD')?.quantity ?? 0) === 0) {
+      throw businessRule('NO_VACANCIES', `${option.displayName} no ofrece vacantes ordinarias. Elige otro programa.`);
+    }
+    const fee = (await this.d.convocatorias.listFees(call.code)).find((f) => f.code === REINSCRIPTION_FEE);
+    if (!fee) throw businessRule('FEE_NOT_CONFIGURED', 'La tasa de reinscripción no está configurada. Consulta en la Dirección de Admisión.');
+    const amount = Number(fee.amount).toFixed(2);
+    const lines = [{ code: fee.code, concept: fee.concept, amount, legalNote: fee.legalNote }];
+    const examStage = call.stages.find((st) => st.kind === 'EXAM' && st.scope === 'ORD');
+    const examDate = examStage ? longDate(new Date(examStage.startsAt)) : 'Por publicar';
+    const photo = await this.d.storage.get(row.photoKey);
+
+    try {
+      const created = await this.d.db.$transaction(async (tx) => {
+        const code = applicantCodeFromSequence(await nextCounterValue(tx, 'applicant_code', 2_700_001));
+        const { id: _id, applicantCode: _code, createdAt: _c, updatedAt: _u, anonymizedAt: _a, feeLines: _f, ...personal } = row;
+        const app = await tx.application.create({
+          data: {
+            ...personal,
+            applicantCode: code,
+            photoKey: `inscripciones/${call.code}/${code}.jpg`,
+            modality: 'ORD',
+            quotaCategory: 'ORD',
+            area: option.area,
+            optionCode: option.internalCode,
+            militaryCondition: 'NONE',
+            familyLink: false,
+            feeTotal: amount,
+            feeLines: lines,
+            status: 'PENDIENTE_PAGO',
+            declarationAcceptedAt: this.d.clock.now(),
+            reinscriptionOf: row.applicantCode,
+          },
+        });
+        await this.d.audit.record({ actorUserId: null, action: 'inscription.reinscribed', resourceType: 'application', resourceId: app.id, after: { from: row.applicantCode, optionCode: app.optionCode }, ...meta }, tx);
+        await this.d.outbox.publish(tx, 'InscripcionRegistrada', {
+          email: app.email, firstNames: app.firstNames, applicantCode: code, program: option.displayName, modality: 'Ordinario (reinscripción)',
+          total: amount, status: STATUS_LABEL.PENDIENTE_PAGO, examDate,
+        }, meta.requestId);
+        return app;
+      });
+      if (photo) await this.d.storage.put(created.photoKey, photo, 'image/jpeg');
+      this.d.outbox.kick();
+      return this.summary(created, option.displayName, 'Ordinario (reinscripción)', examDate);
+    } catch (error) {
+      if ((error as { code?: string })?.code === 'P2002') throw conflict('ALREADY_REGISTERED', 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».');
+      throw error;
+    }
+  }
+
+  private async reinscriptionSource(documentNumber: string, applicantCode: string) {
+    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    if (!row || row.documentNumber !== documentNumber.trim().toUpperCase()) {
+      throw notFound('No encontramos una inscripción con ese documento y código. Revisa los datos.');
+    }
+    return { row, call: await this.d.convocatorias.getCurrentCall() };
+  }
+
+  /** Motivo por el que no puede reinscribirse, o null si puede. */
+  private async reinscriptionBlocker(
+    row: { applicantCode: string; callCode: string; documentType: string; documentNumber: string; modality: string; quotaCategory: string; status: InscriptionStatus },
+    call: Awaited<ReturnType<ConvocatoriasQueries['getCurrentCall']>>,
+  ): Promise<string | null> {
+    if (row.callCode !== call.code) return 'La inscripción no corresponde a la convocatoria vigente.';
+    if (row.modality !== 'EXO') return 'La reinscripción es solo para postulantes de Exonerados que no alcanzaron vacante (Art. 21).';
+    if (NO_REINSCRIPTION.has(row.quotaCategory)) return 'Los postulantes por traslado o graduados/titulados no pueden reinscribirse al Ordinario (Art. 21).';
+    if (row.status !== 'APTA') return 'Tu inscripción de Exonerados no llegó a estar apta para el examen.';
+    if (await this.d.db.application.findFirst({ where: { callCode: row.callCode, documentType: row.documentType, documentNumber: row.documentNumber, modality: 'ORD' }, select: { id: true } })) {
+      return 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».';
+    }
+    // Resultado publicado del examen de Exonerados: solo los no admitidos o ausentes.
+    const result = await this.d.db.examResult.findFirst({
+      where: { applicantCode: row.applicantCode, version: { status: 'PUBLICADA' } },
+      orderBy: { version: { version: 'desc' } },
+      select: { condition: true },
+    });
+    if (!result) return 'Todavía no hay resultados publicados del examen de Exonerados.';
+    if (result.condition === 'ADMITIDO') return 'Alcanzaste una vacante en Exonerados: no corresponde reinscribirte.';
+    const stage = call.stages.find((st) => st.scope === 'REINS');
+    if (!stage || stage.status !== 'IN_PROGRESS') {
+      return stage && stage.status === 'UPCOMING'
+        ? `La reinscripción se abre el ${shortDate(new Date(stage.startsAt))}.`
+        : 'La etapa de reinscripción ya cerró.';
+    }
+    return null;
   }
 
   /** H4: consulta con documento + código de postulante. */

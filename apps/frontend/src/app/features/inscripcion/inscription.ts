@@ -131,6 +131,9 @@ export class InscriptionPage {
   protected readonly serverError = signal<string | null>(null);
   protected readonly serverFieldErrors = signal<Record<string, string>>({});
   protected readonly result = signal<InscriptionSummaryDto | null>(null);
+  /** Spec 004, Historia 6: programa y ciclo adjudicados por el CEPRE (o por qué no puede elegir esa modalidad). */
+  protected readonly cepreAward = signal<{ optionCode: string; program: string; cycle: string } | null>(null);
+  protected readonly cepreError = signal<string | null>(null);
   protected readonly demoDnis = ['99900020', '99900021', '99900022', '99900023', '99900042'];
   protected readonly money = soles;
   protected readonly areaNames = AREA_NAMES;
@@ -222,6 +225,26 @@ export class InscriptionPage {
       if (m !== 'ORD') this.form.controls.militaryCondition.setValue('NONE');
     });
     this.form.controls.area.valueChanges.subscribe(() => this.form.controls.optionCode.setValue(''));
+
+    // Adjudicados CEPRE: con el DNI completo se precargan el programa y el ciclo de la lista oficial.
+    const checkCepre = () => {
+      const { modality, documentNumber } = this.form.getRawValue();
+      this.cepreAward.set(null);
+      this.cepreError.set(null);
+      if (modality !== 'CEPRE' || !/^\d{8}$/.test(documentNumber)) return;
+      this.api.cepreAwardee(documentNumber).subscribe({
+        next: (a) => {
+          this.cepreAward.set(a);
+          this.form.patchValue({ quotaCategory: a.quotaCategory, area: a.area as never });
+          this.form.controls.optionCode.setValue(a.optionCode);
+        },
+        error: (e) => this.cepreError.set((e as { status?: number }).status === 404
+          ? 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.'
+          : 'No pudimos consultar la lista de adjudicados. Inténtalo de nuevo en unos minutos.'),
+      });
+    };
+    this.form.controls.modality.valueChanges.subscribe(checkCepre);
+    this.form.controls.documentNumber.valueChanges.subscribe(checkCepre);
 
     // Programas con vacantes en el tipo elegido.
     effect(() => {

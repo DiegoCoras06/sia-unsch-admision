@@ -19,6 +19,15 @@ export interface SubmodalityDto {
 
 const API = '/api/v1';
 
+export interface ReinscriptionCheck {
+  eligible: boolean;
+  reason: string | null;
+  fullName: string;
+  fromModality: string;
+  amount: string | null;
+  window: { startsAt: string; endsAt: string; open: boolean } | null;
+}
+
 /** Spec 006, Historia 4: respuesta de «Buscar aula». */
 export interface ExamRoomDto {
   applicantCode: string; fullName: string; program: string; modality: string;
@@ -83,7 +92,7 @@ export class ApiService {
   contact = (body: ContactRequestDto) =>
     this.http.post<ApiResponse<{ caseNumber: string }>>(`${API}/support/contact`, body).pipe(map((r) => r.data));
   /** Denuncia atendida con reserva: el nombre es opcional. */
-  complaint = (body: Omit<ContactRequestDto, 'name'> & { name?: string }) =>
+  complaint = (body: Omit<ContactRequestDto, 'name'> & { name?: string; attachments?: { fileName: string; content: string }[] }) =>
     this.http.post<ApiResponse<{ caseNumber: string }>>(`${API}/support/complaint`, body).pipe(map((r) => r.data));
   /** Relación pública de observados (código y modalidad). */
   observed = () => this.get<{ callCode: string; rows: { applicantCode: string; modality: string; since: string }[] }>('/inscriptions/observed');
@@ -104,6 +113,16 @@ export class ApiService {
   /** Ficha PDF con QR (spec 003, Historia 5): se descarga como archivo, sin abrir una URL con el DNI. */
   fichaPdf = (documentNumber: string, applicantCode: string) =>
     this.http.get(`${API}/inscriptions/ficha.pdf`, { params: new HttpParams().set('documentNumber', documentNumber).set('applicantCode', applicantCode), responseType: 'blob' });
+  /** Spec 004, Historia 6: programa y ciclo adjudicados por el CEPRE a un DNI. */
+  cepreAwardee = (documentNumber: string) =>
+    this.get<{ optionCode: string; program: string; area: string; quotaCategory: string; cycle: string }>('/inscriptions/cepre-awardee', { documentNumber });
+  /** Historia 6 (RN-16): reinscripción de exonerados no admitidos al Ordinario. */
+  reinscriptionCheck = (documentNumber: string, applicantCode: string) =>
+    this.get<ReinscriptionCheck>('/inscriptions/reinscription', { documentNumber, applicantCode });
+  reinscribe = (documentNumber: string, applicantCode: string, optionCode: string) =>
+    this.http.post<ApiResponse<InscriptionSummaryDto>>(`${API}/inscriptions/reinscription`, { documentNumber, applicantCode, optionCode }).pipe(map((r) => r.data));
+  ordenPagoPdf = (documentNumber: string, applicantCode: string) =>
+    this.http.get(`${API}/inscriptions/orden-pago.pdf`, { params: new HttpParams().set('documentNumber', documentNumber).set('applicantCode', applicantCode), responseType: 'blob' });
   verifyFicha = (token: string) => this.get<FichaVerification>(`/inscriptions/verify/${encodeURIComponent(token)}`);
 
   // ── 004 Expediente de exonerados (M06) ───────────────────────────

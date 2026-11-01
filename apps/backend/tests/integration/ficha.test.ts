@@ -37,6 +37,13 @@ describe('Ficha de inscripción con QR (spec 003, Historia 5)', () => {
     }).expect(201);
     code = reg.body.data.applicantCode;
     expect(reg.body.data.fichaAvailable).toBe(false);
+
+    // La orden de pago se descarga desde el registro: un PDF de una sola hoja; con otro DNI, 404.
+    const orden = await t.request.get('/api/v1/inscriptions/orden-pago.pdf').query({ documentNumber: '99900017', applicantCode: code }).buffer(true).parse(binary).expect(200);
+    expect(orden.headers['content-type']).toBe('application/pdf');
+    expect(orden.headers['content-disposition']).toContain(`orden-de-pago-${code}.pdf`);
+    expect((orden.body as Buffer).toString('latin1').match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1);
+    await t.request.get('/api/v1/inscriptions/orden-pago.pdf').query({ documentNumber: '12345678', applicantCode: code }).expect(404);
     const early = await t.request.get('/api/v1/inscriptions/ficha.pdf').query({ documentNumber: '99900017', applicantCode: code }).expect(422);
     expect(early.body.error.code).toBe('FICHA_NOT_AVAILABLE');
 

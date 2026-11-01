@@ -2,6 +2,7 @@ import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db } from '../../../shared/db/prisma.js';
 import { notFound, validationError } from '../../../shared/http/errors.js';
+import type { FileStorage } from '../../../shared/storage/file-storage.js';
 
 const CASE_STATUS_LABEL = { OPEN: 'Recibido', IN_PROGRESS: 'En atención', CLOSED: 'Cerrado' } as const;
 const CASE_TYPE_LABEL = { CONTACT: 'Consulta', COMPLAINT: 'Denuncia', CHATBOT_ESCALATION: 'Derivado del asistente', RESULT_REVIEW: 'Revisión de resultados' } as const;
@@ -17,6 +18,7 @@ export class SecurityAdmin {
       clock: Clock;
       audit: AuditLog;
       inscriptions: { annulByDocument(documentType: string, documentNumber: string, resolution: string, actor: string, meta: RequestMeta): Promise<string[]> };
+      storage?: FileStorage;
     },
   ) {}
 
@@ -95,13 +97,14 @@ export class SecurityAdmin {
     const pageSize = 25;
     const [total, rows] = await Promise.all([
       this.d.db.supportCase.count({ where }),
-      this.d.db.supportCase.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize }),
+      this.d.db.supportCase.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize, include: { attachments: { orderBy: { createdAt: 'asc' } } } }),
     ]);
     return {
       total, page: f.page, pageSize,
       items: rows.map((c) => ({
         caseNumber: c.caseNumber, type: c.type, typeLabel: CASE_TYPE_LABEL[c.type], status: c.status, statusLabel: CASE_STATUS_LABEL[c.status],
         name: c.name, email: c.email, phone: c.phone, message: c.message, createdAt: c.createdAt.toISOString(),
+        attachments: c.attachments.map((a) => ({ id: a.id, fileName: a.fileName, contentType: a.contentType, sizeBytes: a.sizeBytes })),
       })),
     };
   }
@@ -113,6 +116,16 @@ export class SecurityAdmin {
       await tx.supportCase.update({ where: { caseNumber }, data: { status } });
       await this.d.audit.record({ actorUserId: actor, action: 'case.status_changed', resourceType: 'support_case', resourceId: caseNumber, before: { status: c.status }, after: { status, note: note ?? null }, ...meta }, tx);
     });
+  }
+
+  /** Historia 7, escenario 1: evidencia adjunta a la denuncia; cada descarga queda auditada. */
+  async caseAttachment(caseNumber: string, attachmentId: string, actor: string, meta: RequestMeta) {
+    const a = await this.d.db.supportCaseAttachment.findFirst({ where: { id: attachmentId, supportCase: { caseNumber } } });
+    if (!a || !this.d.storage) throw notFound('Archivo no encontrado.');
+    const content = await this.d.storage.get(a.storageKey);
+    if (!content) throw notFound('Archivo no encontrado.');
+    await this.d.audit.record({ actorUserId: actor, action: 'case.attachment_downloaded', resourceType: 'support_case', resourceId: caseNumber, after: { fileName: a.fileName }, ...meta });
+    return { content, fileName: a.fileName, contentType: a.contentType };
   }
 
   /** Historia 7, escenario 2: el ciudadano consulta el avance con su número de caso (sin datos personales). */

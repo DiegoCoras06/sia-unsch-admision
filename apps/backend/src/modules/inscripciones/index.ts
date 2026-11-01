@@ -11,6 +11,8 @@ import type { AccessService } from '../seguridad/index.js';
 import type { IdentityProvider } from '../usuarios/index.js';
 import { InscriptionService } from './application/inscription-service.js';
 import { FichaService } from './application/ficha-service.js';
+import { OrdenPagoService } from './application/orden-pago-pdf.js';
+import { CepreAwardees } from './application/cepre-awardees.js';
 import { inscripcionesRoutes } from './presentation/routes.js';
 import { ApplicationDocuments } from './application/application-documents.js';
 
@@ -32,6 +34,8 @@ export function createInscripcionesModule(deps: {
 }) {
   const service = new InscriptionService(deps);
   const ficha = new FichaService({ ...deps, secret: deps.fichaSecret });
+  const orden = new OrdenPagoService({ inscriptions: service, clock: deps.clock, frontendOrigin: deps.frontendOrigin });
+  const cepre = new CepreAwardees(deps);
 
   // Correo de confirmación con el código de postulante y la orden de pago (sin datos sensibles en el asunto).
   deps.outbox.subscribe('InscripcionRegistrada', async (e) => {
@@ -90,7 +94,7 @@ export function createInscripcionesModule(deps: {
   });
 
   const documents = new ApplicationDocuments(deps);
-  return { service, ficha, documents, router: inscripcionesRoutes(service, ficha, documents) };
+  return { service, ficha, documents, cepre, router: inscripcionesRoutes(service, ficha, documents, orden, cepre) };
 }
 
 export type { PaymentContext } from './application/inscription-service.js';

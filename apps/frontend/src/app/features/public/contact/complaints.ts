@@ -46,6 +46,18 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
                     <textarea id="d-msg" class="in in--area" formControlName="message" placeholder="Qué pasó, cuándo y dónde, y quiénes participaron." aria-required="true" [attr.aria-invalid]="bad('message')"></textarea></div>
                 </div>
               </div>
+              <div class="f f--files">
+                <span class="lb" id="d-files-lb">Evidencia <span class="opt">(opcional · hasta 3 archivos PDF, JPG o PNG, 5 MB en total)</span></span>
+                <label class="outline outline--file" for="d-files">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10h-1.5Z"/></svg>
+                  Adjuntar archivos</label>
+                <input id="d-files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" hidden aria-labelledby="d-files-lb" (change)="pick($any($event.target))">
+                @if (files().length) {
+                  <ul class="files">@for (f of files(); track f.name) {
+                    <li><span>{{ f.name }} <span class="opt">({{ kb(f.size) }})</span></span><button type="button" class="files__x" (click)="remove(f)" [attr.aria-label]="'Quitar ' + f.name">×</button></li>
+                  }</ul>
+                }
+              </div>
               <div class="hp" aria-hidden="true"><label for="d-web">Sitio web</label><input id="d-web" tabindex="-1" autocomplete="off" formControlName="website"></div>
               @if (error()) { <p class="err" role="alert">{{ error() }}</p> }
               <button class="send" type="submit" [disabled]="sending()">
@@ -110,6 +122,11 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
     .err { color: #b00020; font-weight: 600; margin: 1rem 0 0; }
     .done h2 { color: var(--navy); }
     .hp { position: absolute; left: -9999px; }
+    .f--files { margin-top: 1.4rem; }
+    .outline--file { cursor: pointer; width: fit-content; }
+    .files { list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
+    .files li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.75rem; background: #f7f7f7; border-radius: 6px; overflow-wrap: anywhere; }
+    .files__x { flex: none; width: 2.25rem; height: 2.25rem; border: 0; background: none; color: var(--g); font-size: 1.35rem; cursor: pointer; }
     .side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
     .card--top { border-top: 5px solid var(--g); }
     .card h2 { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.85rem; font-size: 1.375rem; color: var(--navy); }
@@ -141,13 +158,39 @@ export class ComplaintsPage {
   protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly caseNumber = signal<string | null>(null);
+  protected readonly files = signal<File[]>([]);
+
+  protected kb(bytes: number) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
+
+  /** Evidencia: se valida en el navegador para avisar pronto; el servidor la vuelve a verificar por su contenido. */
+  protected pick(input: HTMLInputElement): void {
+    const picked = [...(input.files ?? [])];
+    input.value = '';
+    const all = [...this.files(), ...picked.filter((p) => !this.files().some((f) => f.name === p.name))];
+    if (all.some((f) => !/\.(pdf|jpe?g|png)$/i.test(f.name))) { this.error.set('Solo se aceptan archivos PDF, JPG o PNG.'); return; }
+    if (all.length > 3) { this.error.set('Puedes adjuntar como máximo 3 archivos.'); return; }
+    if (all.reduce((s, f) => s + f.size, 0) > 5 * 1024 * 1024) { this.error.set('Los archivos superan 5 MB en total.'); return; }
+    this.error.set(null);
+    this.files.set(all);
+  }
+
+  protected remove(f: File): void { this.files.set(this.files().filter((x) => x !== f)); }
+
+  private toDataUrl(f: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error(`No se pudo leer ${f.name}.`));
+      r.readAsDataURL(f);
+    });
+  }
 
   protected bad(name: string): boolean {
     const c = this.form.get(name);
     return !!c && c.invalid && c.touched;
   }
 
-  protected send(): void {
+  protected async send(): Promise<void> {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
       this.error.set('Indica un correo válido para responderte y describe los hechos en al menos 10 caracteres. El celular, si lo pones, tiene 9 dígitos y empieza con 9.');
@@ -156,10 +199,19 @@ export class ComplaintsPage {
     this.sending.set(true);
     this.error.set(null);
     const v = this.form.getRawValue();
-    this.api.complaint({ email: v.email, message: v.message, name: v.name || undefined, phone: v.phone || undefined, website: v.website || undefined }).subscribe({
+    let attachments: { fileName: string; content: string }[] = [];
+    try {
+      attachments = await Promise.all(this.files().map(async (f) => ({ fileName: f.name, content: await this.toDataUrl(f) })));
+    } catch (e) {
+      this.error.set((e as Error).message);
+      this.sending.set(false);
+      return;
+    }
+    this.api.complaint({ email: v.email, message: v.message, name: v.name || undefined, phone: v.phone || undefined, website: v.website || undefined, attachments: attachments.length ? attachments : undefined }).subscribe({
       next: (r) => {
         this.caseNumber.set(r.caseNumber);
         this.form.reset();
+        this.files.set([]);
         this.sending.set(false);
       },
       error: (e) => {

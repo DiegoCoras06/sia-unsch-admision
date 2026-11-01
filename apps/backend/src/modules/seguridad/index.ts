@@ -1,4 +1,5 @@
 // API pública del módulo M13 Seguridad.
+import type { FileStorage } from '../../shared/storage/file-storage.js';
 import type { Clock } from '../../shared/clock/clock.js';
 import type { Db } from '../../shared/db/prisma.js';
 import type { Outbox } from '../../shared/events/outbox.js';
@@ -35,11 +36,12 @@ export function createSeguridadModule(deps: {
   identityTokenSecret: string;
   currentCallCode: () => Promise<string>;
   audit: AuditLog;
+  storage?: FileStorage;
 }) {
   const tokens = new JoseTokenService(deps.jwtSecret, deps.identityTokenSecret, () => deps.clock.now());
   const sessions = new SessionService(deps.db, deps.clock);
   const access = new AccessService(deps.db, deps.clock);
-  const cases = new SupportCases(deps.db, deps.outbox, deps.limiter);
+  const cases = new SupportCases(deps.db, deps.outbox, deps.limiter, deps.storage);
   return {
     tokens,
     sessions,

@@ -1,4 +1,5 @@
 // API pública del módulo M01 Convocatorias. Otros módulos solo importan desde aquí (ADR-002).
+import { VacancyImport } from './application/vacancy-import.js';
 import type { Clock } from '../../shared/clock/clock.js';
 import type { Db } from '../../shared/db/prisma.js';
 import { ConvocatoriasQueries } from './application/convocatorias-queries.js';
@@ -18,8 +19,10 @@ export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog,
   /** Gestión desde el panel (spec 008, Historia 1). */
   const admin = new CallAdmin({ db, clock, audit });
   const catalog = new CatalogAdmin({ db, audit });
-  return { queries, admin, catalog, router: convocatoriasRoutes(queries) };
+  const vacancyImport = new VacancyImport({ db, audit });
+  return { queries, admin, catalog, vacancyImport, router: convocatoriasRoutes(queries) };
 }
 
 export type { CallAdmin } from './application/call-admin.js';
 export type { CatalogAdmin } from './application/catalog-admin.js';
+export type { VacancyImport } from './application/vacancy-import.js';
