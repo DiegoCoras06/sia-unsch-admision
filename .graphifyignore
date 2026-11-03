@@ -1,0 +1,22 @@
+# graphify: el grafo se construye solo con código (análisis AST, sin IA ni tokens).
+# Documentos, imágenes y PDF quedan fuera para no gastar tokens en extracción semántica.
+docs/
+specs/
+.claude/
+.agents/
+.interface-design/
+graphify-out/
+apps/backend/src/generated/
+apps/backend/prisma/migrations/
+apps/frontend/public/
+**/dist/
+**/node_modules/
+*.md
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.svg
+*.gif
+*.ico
