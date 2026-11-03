@@ -52,7 +52,7 @@ import { InscriptionReceipt } from './inscription-receipt';
             <dl class="re-data">
               <div><dt>Postulante</dt><dd>{{ st.fullName }}</dd></div>
               <div><dt>Postulaste por</dt><dd>{{ st.fromModality }}</dd></div>
-              <div><dt>Tasa de reinscripción</dt><dd>{{ st.amount ? 'S/ ' + st.amount : '—' }}</dd></div>
+              <div><dt>Tasa de reinscripción</dt><dd>{{ st.amount ? 'S/ ' + st.amount : '-' }}</dd></div>
             </dl>
             @if (!st.eligible) { <p class="alert alert--error" role="alert">{{ st.reason }}</p> }
             @else {

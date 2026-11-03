@@ -91,7 +91,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
                   <thead><tr><th>Fila</th><th>Programa</th><th class="num">Suma</th><th class="num">TOTAL</th><th>Cambios</th><th>Errores</th></tr></thead>
                   <tbody>@for (r of p.rows; track r.line) { @if (r.errors.length || r.changes.length) {
                     <tr><td>{{ r.line }}</td><td>{{ r.name ?? r.optionCode }} <span class="adm-muted">{{ r.optionCode }}</span></td>
-                      <td class="num">{{ r.sum }}</td><td class="num">{{ r.declaredTotal ?? '—' }}</td>
+                      <td class="num">{{ r.sum }}</td><td class="num">{{ r.declaredTotal ?? '-' }}</td>
                       <td>@for (c of r.changes; track c.category) { <span class="adm-tag">{{ c.category }}: {{ c.from }} → {{ c.to }}</span> }</td>
                       <td class="vac-err">{{ r.errors.join(' ') }}</td></tr>
                   } } @empty { <tr><td colspan="6">Sin filas.</td></tr> }</tbody>
