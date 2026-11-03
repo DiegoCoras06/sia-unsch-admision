@@ -112,7 +112,7 @@ flowchart TB
 | **Backend API REST** | Node.js + TypeScript + Express, AWS Lambda | Exponer los endpoints REST, ejecutar las reglas de negocio, gestionar los 14 módulos funcionales e integrar servicios externos. | Procesa datos de postulantes, inscripciones, pagos, expedientes, exámenes y resultados. |
 | **Base de Datos** | Amazon RDS PostgreSQL | Almacenar de forma persistente la información del proceso de admisión. | Usuarios, convocatorias, postulantes, inscripciones, pagos, expedientes, aulas, exámenes y resultados. |
 | **Almacenamiento de Archivos** | Amazon S3 | Guardar documentos digitales, expedientes y archivos generados por el sistema. | Documentos de inscripción, comprobantes autorizados, fichas y archivos PDF. |
-| **Worker de tareas** | AWS Lambda (`lambda-worker.ts`) + EventBridge Scheduler | Despachar la bandeja de eventos (outbox), vencer órdenes de pago, enviar recordatorios y publicar resultados a la hora aprobada. | Eventos de dominio, correos pendientes y tareas programadas. |
+| **Worker de tareas** | AWS Lambda (`lambda-worker.ts`) + Amazon SQS + EventBridge Scheduler | Procesar los eventos que llegan por la cola SQS (ADR-021), vencer órdenes de pago, enviar recordatorios y publicar resultados a la hora aprobada. | Eventos de dominio, correos pendientes y tareas programadas. |
 
 ### Servicios de infraestructura complementarios
 

@@ -10,7 +10,7 @@ import { syntheticCheckDigit } from '../src/modules/usuarios/infrastructure/synt
 export const TEST_URL = 'postgresql://sia_test:sia_test_only@127.0.0.1:5434/sia_test';
 
 /** Aplicación real contra la base de pruebas, con reloj controlable y correo en memoria. */
-export function testApp(now: string | Clock = '2026-10-25T10:00:00-05:00', extra: Pick<AppOverrides, 'assistantAi' | 'yapeGateway' | 'paymentGateway'> = {}) {
+export function testApp(now: string | Clock = '2026-10-25T10:00:00-05:00', extra: Pick<AppOverrides, 'assistantAi' | 'yapeGateway' | 'paymentGateway' | 'eventQueue'> = {}) {
   const env = loadEnv({
     NODE_ENV: 'test',
     APP_ENV: 'test',

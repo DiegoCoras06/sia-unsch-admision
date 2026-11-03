@@ -55,6 +55,8 @@ const schema = z
     // Amazon SES: región de la identidad verificada y, opcional, el conjunto de configuración para eventos de entrega/rebote.
     SES_REGION: z.string().default('us-east-2'),
     SES_CONFIGURATION_SET: z.string().optional(),
+    /** ADR-021: cola de eventos en Amazon SQS. Vacía o sin definir: la bandeja de eventos se procesa en el mismo proceso. */
+    SQS_QUEUE_URL: z.url().optional().or(z.literal('').transform(() => undefined)),
     APP_FIXED_NOW: z.iso.datetime({ offset: true }).optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),

@@ -15,6 +15,7 @@ import { createPrismaClient, type Db } from './shared/db/prisma.js';
 import { FileEmailSender, type EmailSender } from './shared/email/email-sender.js';
 import { SesEmailSender } from './shared/email/ses-email-sender.js';
 import { Outbox } from './shared/events/outbox.js';
+import { SqsEventQueue, type EventQueue } from './shared/events/event-queue.js';
 import { errorHandler, handle, notFoundHandler, requestContext } from './shared/http/middleware.js';
 import { RateLimiter } from './shared/rate-limit/rate-limiter.js';
 import { createLogger } from './shared/telemetry/logger.js';
@@ -48,6 +49,8 @@ export interface AppOverrides {
   yapeGateway?: YapeGateway | null;
   /** Proveedor de IA del asistente (pruebas); `null` fuerza el modo básico. */
   assistantAi?: LlmProvider | null;
+  /** Cola de eventos (ADR-021) en pruebas; `null` fuerza el modo local. */
+  eventQueue?: EventQueue | null;
 }
 
 export interface Application {
@@ -77,7 +80,9 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   logger.info({ provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
   // M11: cada correo que envía cualquier módulo queda registrado con su estado (RF-11.09).
   const email = new RecordingEmailSender(db, transport, clock);
-  const outbox = new Outbox(db, clock, logger);
+  const eventQueue = overrides.eventQueue !== undefined ? overrides.eventQueue : env.SQS_QUEUE_URL ? new SqsEventQueue(env.SQS_QUEUE_URL, logger) : null;
+  logger.info({ queue: eventQueue ? 'sqs' : 'local' }, 'Cola de eventos');
+  const outbox = new Outbox(db, clock, logger, eventQueue);
   const limiter = new RateLimiter(db, clock);
   const audit = new AuditLog(db);
 

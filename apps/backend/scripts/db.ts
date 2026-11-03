@@ -80,9 +80,11 @@ async function stopExternal(): Promise<void> {
     console.log('No hay una instancia en ejecución.');
     return;
   }
-  const { pg_ctl } = await import('@embedded-postgres/windows-x64').catch(async () => {
+  // Binario de la plataforma actual (windows-x64, linux-x64, darwin-arm64…); con nombre fijo, TypeScript fallaba en Linux (CI).
+  const binaries = `@embedded-postgres/${process.platform === 'win32' ? 'windows' : process.platform}-${process.arch}`;
+  const { pg_ctl } = (await import(binaries).catch(async () => {
     throw new Error('pg_ctl no disponible para esta plataforma; detén el proceso con Ctrl+C.');
-  });
+  })) as { pg_ctl: string };
   execFileSync(pg_ctl, ['stop', '-D', dataDir, '-m', 'fast'], { stdio: 'inherit' });
 }
 

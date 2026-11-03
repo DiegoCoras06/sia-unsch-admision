@@ -1093,6 +1093,8 @@ model OutboxEvent {
   processedAt   DateTime? @map("processed_at") @db.Timestamptz(3)
   attempts      Int       @default(0)
   lastError     String?   @map("last_error") @db.VarChar(500)
+  /// ADR-021: cuándo se envió el ID a Amazon SQS (null sin cola o aún no enviado).
+  queuedAt      DateTime? @map("queued_at") @db.Timestamptz(3)
 
   @@index([processedAt, occurredAt])
   @@map("outbox")
