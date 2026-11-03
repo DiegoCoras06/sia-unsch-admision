@@ -171,6 +171,11 @@ export class AdminLoginPage {
   private readonly session = inject(AdminSession);
   private readonly router = inject(Router);
   private readonly calls = inject(CallStore);
+
+  constructor() {
+    // Con la sesión ya abierta, esta pantalla no vuelve a pedir el ingreso: lleva al panel.
+    void this.session.restore().then((ok) => { if (ok) void this.router.navigateByUrl('/admin'); });
+  }
   protected readonly step = signal<StaffStep | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);

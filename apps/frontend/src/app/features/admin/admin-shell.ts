@@ -2,26 +2,39 @@ import { Component, ViewEncapsulation, computed, inject, signal } from '@angular
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AdminSession } from '../../core/admin-session';
 
-const NAV = [
-  { path: '/admin', label: 'Inicio', permission: 'panel.ver', exact: true },
-  { path: '/admin/inscripciones', label: 'Inscripciones', permission: 'inscripciones.ver' },
-  { path: '/admin/expedientes', label: 'Expedientes', permission: 'expedientes.evaluar' },
-  { path: '/admin/examenes', label: 'Exámenes y aulas', permission: 'examenes.gestionar' },
-  { path: '/admin/asistencia', label: 'Asistencia', permission: 'asistencia.registrar' },
-  { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver' },
-  { path: '/admin/resultados', label: 'Resultados', permission: 'resultados.gestionar' },
-  { path: '/admin/ingreso', label: 'Ingreso', permission: 'ingreso.registrar' },
-  { path: '/admin/tesoreria', label: 'Tesorería', permission: 'pagos.conciliar' },
-  { path: '/admin/notificaciones', label: 'Notificaciones', permission: 'notificaciones.gestionar' },
-  { path: '/admin/convocatoria', label: 'Convocatoria', permission: 'convocatoria.gestionar' },
-  { path: '/admin/catalogo', label: 'Catálogo del concurso', permission: 'convocatoria.gestionar' },
-  { path: '/admin/contenido', label: 'Contenido del portal', permission: 'contenido.gestionar' },
-  { path: '/admin/asistente', label: 'Asistente virtual', permission: 'asistente.gestionar' },
-  { path: '/admin/casos', label: 'Casos de atención', permission: 'casos.gestionar' },
-  { path: '/admin/inhabilitados', label: 'Inhabilitados', permission: 'inhabilitados.gestionar' },
-  { path: '/admin/usuarios', label: 'Usuarios y roles', permission: 'usuarios.gestionar' },
-  { path: '/admin/auditoria', label: 'Auditoría', permission: 'auditoria.ver' },
-  { path: '/admin/configuracion', label: 'Configuración', permission: 'configuracion.gestionar' },
+type NavItem = { path: string; label: string; permission: string; exact?: boolean };
+
+/** Menú agrupado por tarea: el personal busca «qué tengo que hacer», no una lista de 19 pantallas. */
+const NAV: { group: string | null; items: NavItem[] }[] = [
+  { group: null, items: [{ path: '/admin', label: 'Inicio', permission: 'panel.ver', exact: true }] },
+  { group: 'Postulantes y pagos', items: [
+    { path: '/admin/inscripciones', label: 'Inscripciones', permission: 'inscripciones.ver' },
+    { path: '/admin/expedientes', label: 'Expedientes', permission: 'expedientes.evaluar' },
+    { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver' },
+    { path: '/admin/tesoreria', label: 'Tesorería', permission: 'pagos.conciliar' },
+    { path: '/admin/inhabilitados', label: 'Inhabilitados', permission: 'inhabilitados.gestionar' },
+  ] },
+  { group: 'Examen y resultados', items: [
+    { path: '/admin/examenes', label: 'Exámenes y aulas', permission: 'examenes.gestionar' },
+    { path: '/admin/asistencia', label: 'Asistencia', permission: 'asistencia.registrar' },
+    { path: '/admin/resultados', label: 'Resultados', permission: 'resultados.gestionar' },
+    { path: '/admin/ingresantes', label: 'Ingresantes', permission: 'ingreso.registrar' },
+  ] },
+  { group: 'Atención', items: [
+    { path: '/admin/casos', label: 'Casos de atención', permission: 'casos.gestionar' },
+    { path: '/admin/notificaciones', label: 'Notificaciones', permission: 'notificaciones.gestionar' },
+    { path: '/admin/asistente', label: 'Asistente virtual', permission: 'asistente.gestionar' },
+  ] },
+  { group: 'Concurso y portal', items: [
+    { path: '/admin/convocatoria', label: 'Convocatoria', permission: 'convocatoria.gestionar' },
+    { path: '/admin/catalogo', label: 'Catálogo del concurso', permission: 'convocatoria.gestionar' },
+    { path: '/admin/contenido', label: 'Contenido del portal', permission: 'contenido.gestionar' },
+  ] },
+  { group: 'Sistema', items: [
+    { path: '/admin/usuarios', label: 'Usuarios y roles', permission: 'usuarios.gestionar' },
+    { path: '/admin/auditoria', label: 'Auditoría', permission: 'auditoria.ver' },
+    { path: '/admin/configuracion', label: 'Configuración', permission: 'configuracion.gestionar' },
+  ] },
 ];
 
 const ROLE_NAMES: Record<string, string> = {
@@ -40,11 +53,16 @@ const ROLE_NAMES: Record<string, string> = {
       <aside class="adm-side" [class.is-open]="menu()">
         <a routerLink="/admin" class="adm-brand">
           <img src="img/escudo-unsch-80.webp" alt="" width="34" height="41">
-          <span><strong>Panel de Admisión</strong><small>UNSCH · 2027-I</small></span>
+          <span><strong>Panel de Admisión</strong><small>UNSCH, proceso 2027-I</small></span>
         </a>
         <nav aria-label="Secciones del panel">
-          @for (n of nav(); track n.path) {
-            <a [routerLink]="n.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: !!n.exact }" (click)="menu.set(false)">{{ n.label }}</a>
+          @for (g of nav(); track $index) {
+            @if (g.group) { <p class="adm-group" [id]="'adm-g' + $index">{{ g.group }}</p> }
+            <ul [attr.aria-labelledby]="g.group ? 'adm-g' + $index : null">
+              @for (n of g.items; track n.path) {
+                <li><a [routerLink]="n.path" routerLinkActive="is-active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!n.exact }" (click)="menu.set(false)">{{ n.label }}</a></li>
+              }
+            </ul>
           }
         </nav>
         <div class="adm-user">
@@ -67,8 +85,10 @@ export class AdminShell {
   protected readonly session = inject(AdminSession);
   private readonly router = inject(Router);
   protected readonly menu = signal(false);
-  protected readonly nav = computed(() => NAV.filter((n) => this.session.can(n.permission)));
-  protected readonly roles = computed(() => (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(' · '));
+  protected readonly nav = computed(() =>
+    NAV.map((g) => ({ ...g, items: g.items.filter((n) => this.session.can(n.permission)) })).filter((g) => g.items.length),
+  );
+  protected readonly roles = computed(() => (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(', '));
 
   protected async logout() {
     await this.session.logout();

@@ -102,6 +102,12 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 ### Pasos de formulario (inscripción)
 - 6 botones de igual ancho; en el celular solo el número (el nombre va en el título y para el lector de pantalla).
 
+### Panel del personal (menú e inicio)
+- Menú lateral guinda agrupado por tarea; título de grupo en dorado de 0.8125rem, secciones con radio 6px y la activa en blanco. Un grupo sin secciones permitidas no se muestra.
+- El inicio empieza por «Pendientes de hoy»: un bloque por tarea que espera acción (expedientes por revisar, pagos rechazados, duplicados por devolver, casos abiertos, ingresantes por entregar documentos), según el rol, enlazado a su sección. Con trabajo: número guinda y borde izquierdo dorado; al día: «Al día» en verde y borde neutro; lo que tiene trabajo va primero.
+- Los indicadores van después, bajo «Resumen del proceso».
+- Exportaciones en un solo menú «Descargar reporte» (details nativo; se cierra con Esc o al salir el foco), con el formato a la derecha y la nota «Con los filtros aplicados».
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 
@@ -117,4 +123,5 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 | Ingreso en pantalla dividida con datos reales del proceso | Que el personal y el postulante sepan dónde están y qué sigue | 30/10/2026 |
 | Línea del trámite con un solo foco | El postulante ve de un vistazo en qué paso está | 30/10/2026 |
 | Ficha de examen como boleto | Lo que se muestra en la puerta el día del examen debe leerse de un vistazo en el celular | 30/10/2026 |
+| Panel agrupado por tarea y «Pendientes de hoy» primero | El personal entra a resolver algo; 19 secciones sueltas y 6 botones de exportación tapaban lo urgente | 02/11/2026 |
 | Resultado con la condición como foco y regla 0–1000 | El postulante quiere saber primero si ingresó; la regla muestra qué tan cerca quedó del mínimo | 30/10/2026 |

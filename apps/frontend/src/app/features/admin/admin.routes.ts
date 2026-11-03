@@ -25,7 +25,8 @@ export const adminRoutes: Routes = [
       { path: 'sedes', canActivate: [staff('examenes.gestionar')], title: 'Sedes y aulas - Panel', loadComponent: () => import('./pages/venues').then((m) => m.VenuesAdminPage) },
       { path: 'asistencia', canActivate: [staff('asistencia.registrar')], title: 'Asistencia - Panel', loadComponent: () => import('./pages/attendance').then((m) => m.AttendanceAdminPage) },
       { path: 'resultados', canActivate: [staff('resultados.gestionar')], title: 'Resultados - Panel', loadComponent: () => import('./pages/results').then((m) => m.ResultsAdminPage) },
-      { path: 'ingreso', canActivate: [staff('ingreso.registrar')], title: 'Ingreso - Panel', loadComponent: () => import('./pages/admissions').then((m) => m.AdmissionsAdminPage) },
+      // «ingresantes» y no «ingreso»: /admin/ingreso es la pantalla de inicio de sesión del personal.
+      { path: 'ingresantes', canActivate: [staff('ingreso.registrar')], title: 'Ingresantes - Panel', loadComponent: () => import('./pages/admissions').then((m) => m.AdmissionsAdminPage) },
       { path: 'notificaciones', canActivate: [staff('notificaciones.gestionar')], title: 'Notificaciones - Panel', loadComponent: () => import('./pages/notifications').then((m) => m.NotificationsAdminPage) },
       { path: 'tesoreria', canActivate: [staff('pagos.conciliar')], title: 'Tesorería - Panel', loadComponent: () => import('./pages/treasury').then((m) => m.TreasuryAdminPage) },
       { path: 'pagos', canActivate: [staff('pagos.ver')], title: 'Pagos - Panel', loadComponent: () => import('./pages/payments').then((m) => m.PaymentsAdminPage) },
