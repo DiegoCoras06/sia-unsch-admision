@@ -24,5 +24,7 @@ Cada ADR documenta **una** decisión significativa: el contexto, lo que se decid
 | [016](ADR-016-pasarela-izipay.md) | Izipay como pasarela de pagos (sandbox para la demo) | Aceptado | 25/10/2026 |
 | [017](ADR-017-asistente-ia-herramientas.md) | Asistente con OpenRouter que responde solo con herramientas internas | Aceptado | 26/10/2026 |
 | [018](ADR-018-panel-acceso-personal.md) | Panel administrativo: acceso del personal con segundo factor y permisos por rol | Aceptado | 26/10/2026 |
+| [019](ADR-019-yape-con-culqi.md) | Yape con Culqi junto al checkout de Izipay | Aceptado | 29/10/2026 |
+| [020](ADR-020-picos-de-demanda-cache-cloudfront.md) | Picos de demanda con caché en CloudFront antes que Redis | Aceptado | 03/11/2026 |
 
 Plantilla: [`plantilla.md`](plantilla.md)

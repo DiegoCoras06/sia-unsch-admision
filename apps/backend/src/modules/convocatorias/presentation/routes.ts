@@ -63,7 +63,7 @@ export function convocatoriasRoutes(queries: ConvocatoriasQueries): Router {
     res.json({ data: await queries.listFees(code) });
   }));
 
-  router.get('/calls/:callCode/fee-quote', handle(async (req, res) => {
+  router.get('/calls/:callCode/fee-quote', publicCache(60), handle(async (req, res) => {
     const { callCode: code } = parse(callParams, req.params);
     const { at, ...criteria } = parse(feeQuoteQuery, req.query);
     res.json({ data: await queries.quoteFee(code, criteria, at ? new Date(at) : undefined) });

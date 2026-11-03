@@ -40,9 +40,14 @@ export const handle =
     fn(req, res, next).catch(next);
   };
 
-export function publicCache(seconds: number): RequestHandler {
+/**
+ * Caché de respuestas públicas (ADR-020). El navegador guarda poco tiempo, para que los cambios del panel se vean pronto;
+ * CloudFront guarda `seconds` y, al vencer, sigue sirviendo la copia anterior mientras una sola petición la renueva
+ * (`stale-while-revalidate`), así un pico de visitas no llega en bloque a la base de datos.
+ */
+export function publicCache(seconds: number, browserSeconds = Math.min(seconds, 60)): RequestHandler {
   return (_req, res, next) => {
-    res.setHeader('Cache-Control', `public, max-age=${seconds}`);
+    res.setHeader('Cache-Control', `public, max-age=${browserSeconds}, s-maxage=${seconds}, stale-while-revalidate=${seconds}`);
     next();
   };
 }

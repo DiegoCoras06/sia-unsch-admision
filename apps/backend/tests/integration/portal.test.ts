@@ -25,7 +25,7 @@ describe('Semilla 2027-I (T030, SC-003 de 001)', () => {
 describe('Historia 1 - convocatoria y cronograma', () => {
   it('H1-E1: etapa en curso y siguiente hito', async () => {
     const res = await t.request.get('/api/v1/calls/current').expect(200);
-    expect(res.headers['cache-control']).toBe('public, max-age=300');
+    expect(res.headers['cache-control']).toBe('public, max-age=60, s-maxage=300, stale-while-revalidate=300');
     const inProgress = res.body.data.stages.filter((s: { status: string }) => s.status === 'IN_PROGRESS').map((s: { code: string }) => s.code);
     expect(inProgress).toContain('ORD_REGULAR');
     expect(res.body.data.nextMilestone).toMatchObject({ code: 'EXAM_EXO', secondsRemaining: 1_803_600 });

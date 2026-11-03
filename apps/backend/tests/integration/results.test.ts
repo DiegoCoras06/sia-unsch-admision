@@ -130,7 +130,10 @@ describe('Aprobación y publicación (Historia 3)', () => {
     expect(me.breakdown.map((b: { points: string }) => b.points)).toEqual(['855.00', '50.00', '50.00']);
     expect(me.condition).toBe('ADMITIDO');
     expect(me.admission.status).toBe('PENDIENTE');
-    const list = (await t.request.get('/api/v1/results/admitted').query({ exam: 'EXO' }).expect(200)).body.data;
+    const res = await t.request.get('/api/v1/results/admitted').query({ exam: 'EXO' }).expect(200);
+    // ADR-020: CloudFront sirve la lista en el pico del día de resultados.
+    expect(res.headers['cache-control']).toBe('public, max-age=60, s-maxage=60, stale-while-revalidate=60');
+    const list = res.body.data;
     const mine = list.rows.find((r: { applicantCode: string }) => r.applicantCode === codes[0]);
     expect(mine.score).toBe('955.00');
     expect(JSON.stringify(list)).not.toContain(DNIS[0]);

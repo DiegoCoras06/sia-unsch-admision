@@ -2,7 +2,7 @@ import type { Request, RequestHandler, Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 import type { RequestMeta } from '../../../shared/audit/audit.js';
-import { handle } from '../../../shared/http/middleware.js';
+import { handle, publicCache } from '../../../shared/http/middleware.js';
 import { parse } from '../../../shared/http/validate.js';
 import type { ResultsService } from '../application/results-service.js';
 
@@ -46,7 +46,8 @@ export function resultadosRoutes(service: ResultsService, deps: {
     const q = parse(applicant, req.query);
     res.json({ data: await service.mine(q.documentNumber, q.applicantCode, meta(req)) });
   }));
-  r.get('/results/admitted', handle(async (req, res) => {
+  // Lista oficial sin DNI: el día de resultados la consultan miles a la vez, CloudFront la sirve (ADR-020).
+  r.get('/results/admitted', publicCache(60), handle(async (req, res) => {
     const q = parse(z.object({ exam: z.string().max(20), option: z.string().regex(/^P\d{2}$/).optional() }), req.query);
     res.json({ data: await service.admittedList(q.exam, q.option) });
   }));
