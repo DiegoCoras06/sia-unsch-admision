@@ -8,7 +8,7 @@ Proyecto académico del curso de **Arquitectura de Software** (UNSCH): rediseño
 
 ## Cómo ejecutarlo (Windows, sin Docker)
 
-Requisitos: **Node.js 22 o superior**. No se necesita Docker ni instalar PostgreSQL (ADR-014).
+Requisitos: **Node.js 22 o superior**.
 
 ```bash
 npm install
