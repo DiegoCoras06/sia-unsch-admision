@@ -52,7 +52,7 @@ flowchart TB
 
     CORREO["Servicio de Correo<br/>Envío de notificaciones"]
 
-    SMS["Servicio SMS<br/>Notificaciones opcionales"]
+    SMS["Servicio SMS<br/>Opcional, no implementado"]
 
     P -->|"Realiza inscripción y consultas"| SISTEMA
     PA -->|"Gestiona procesos de admisión"| SISTEMA
@@ -102,11 +102,11 @@ flowchart TB
 | **Sistema** | **Tipo** | **Responsabilidad** | **Quién lo construye o administra** |
 |---|---|---|---|
 | **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** | Sistema en alcance | Gestionar convocatorias, postulantes, inscripciones ordinarias y de exonerados, pagos, expedientes, exámenes, resultados, reportes y atención mediante chatbot inteligente. | Equipo de desarrollo del proyecto. |
-| **RENIEC** | Sistema externo | Validar los datos de identidad de los postulantes mediante servicios autorizados. | Registro Nacional de Identificación y Estado Civil. |
-| **Pasarela de Pagos** | Sistema externo | Procesar pagos de inscripción y proporcionar información sobre su estado. | Proveedor de servicios de pago por definir. |
+| **RENIEC** | Sistema externo | Validar los datos de identidad de los postulantes mediante servicios autorizados. | Registro Nacional de Identificación y Estado Civil; se consulta por medio de apiperu.dev. |
+| **Pasarela de Pagos** | Sistema externo | Procesar pagos de inscripción y proporcionar información sobre su estado. | Izipay micuentaweb (tarjeta) y Culqi (Yape), en ambiente de pruebas. |
 | **OpenRouter API** | Sistema externo | Proporcionar acceso a modelos de inteligencia artificial para responder consultas del chatbot. | OpenRouter. |
-| **Servicio de Correo Electrónico** | Sistema externo | Enviar confirmaciones, observaciones y notificaciones a los postulantes. | Proveedor de correo por definir. |
-| **Servicio SMS** | Sistema externo opcional | Enviar avisos y recordatorios mediante mensajes de texto. | Proveedor SMS por definir. |
+| **Servicio de Correo Electrónico** | Sistema externo | Enviar confirmaciones, observaciones y notificaciones a los postulantes. | Amazon SES (región us-east-2). |
+| **Servicio SMS** | Sistema externo opcional | Enviar avisos y recordatorios mediante mensajes de texto. | No implementado; los avisos llegan por correo. |
 
 ---
 
@@ -151,42 +151,14 @@ flowchart TB
 
 ## 7. Pendientes por definir
 
-| **Tema** | **Detalle** |
-|---|---|
-| **Acceso a RENIEC** | Confirmar los requisitos institucionales, credenciales y servicios disponibles para validar el DNI de los postulantes. |
-| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. |
-| **Servicio de correo** | Definir el proveedor encargado de enviar confirmaciones y notificaciones. |
-| **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. |
-| **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. |
-| **Política de privacidad** | Definir qué información puede enviarse al chatbot y a los servicios externos. |
-| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. |
-| **Reglas de admisión** | Confirmar los requisitos, modalidades, vacantes y procedimientos oficiales de cada convocatoria. |
-| **Publicación de resultados** | Definir los responsables y procedimientos de aprobación de resultados oficiales. |
-
----
-
-## 8. Relación con los siguientes niveles C4
-
-| **Nivel** | **Diagrama** | **Descripción** |
+| **Tema** | **Detalle** | **Resolución (02/11/2026)** |
 |---|---|---|
-| **Nivel 1** | Diagrama de Contexto | Identifica usuarios, sistema principal y sistemas externos. |
-| **Nivel 2** | Diagrama de Contenedores | Muestra aplicación web, API Gateway, AWS Lambda, PostgreSQL, Redis y demás componentes desplegables. |
-| **Nivel 3** | Diagrama de Componentes | Describe los módulos funcionales y las capas internas del backend. |
-| **Nivel 4** | Diagrama de Código | Presenta clases, interfaces, casos de uso, repositorios y adaptadores. |
-
----
-
-## 9. Resumen
-
-| **Aspecto** | **Descripción** |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Modelo arquitectónico | C4 |
-| Nivel | Nivel 1 – Contexto del Sistema |
-| Usuarios principales | 8 tipos de usuarios |
-| Sistema principal | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Sistemas externos | RENIEC, pasarela de pagos, OpenRouter API, correo electrónico y SMS opcional |
-| Integraciones | Servicios externos mediante interfaces seguras |
-| Alcance | Gestión integral del proceso de admisión universitaria |
-| Siguiente documento | `Nivel2-Diagrama-de-Contenedores.md` |
-
+| **Acceso a RENIEC** | Confirmar los requisitos institucionales, credenciales y servicios disponibles para validar el DNI de los postulantes. | ✅ apiperu.dev con token; simulador para desarrollo |
+| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. | ✅ Izipay micuentaweb para tarjeta (ADR-016) y Culqi para Yape (ADR-019); conciliación en Tesorería. Faltan las claves de producción |
+| **Servicio de correo** | Definir el proveedor encargado de enviar confirmaciones y notificaciones. | ✅ Amazon SES |
+| **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. | No se implementa por ahora (opcional, RC16) |
+| **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. | ✅ Modelo configurable (`OPENROUTER_MODEL`), presupuesto diario y modo básico sin clave (ADR-017) |
+| **Política de privacidad** | Definir qué información puede enviarse al chatbot y a los servicios externos. | ✅ Datos mínimos con pase firmado; consentimiento en la inscripción y anonimización por retención |
+| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. | ✅ 8 roles definidos en el panel (ADR-018); pendiente la validación formal con la Dirección de Admisión |
+| **Reglas de admisión** | Confirmar los requisitos, modalidades, vacantes y procedimientos oficiales de cada convocatoria. | ✅ Configurables como datos en el panel (catálogo del concurso) |
+| **Publicación de resultados** | Definir los responsables y procedimientos de aprobación de resultados oficiales. | ✅ Aprobación de otra persona y publicación a la hora autorizada |

@@ -35,3 +35,13 @@
 - Inteligencia artificial: OpenRouter API
 - Control de versiones: Git y GitHub
 - Sistema: Gestión Integral del Proceso de Admisión – UNSCH
+
+## Estado de cumplimiento (02/11/2026)
+
+| Estado | Restricciones |
+|---|---|
+| ✅ Cumplidas | RC01, RC02, RC03, RC04, RC05 (REST), RC06, RC07, RC08, RC09, RC10, RC11, RC12, RC13, RC14, RC15, RC17, RC19, RC20 |
+| 🟡 Parcial | RC05 (HTTPS llega con CloudFront en el despliegue), RC16 (correo implementado; SMS opcional no implementado) |
+| ⏳ Pendiente | RC18 (despliegue en AWS, Paso 11) |
+
+El repositorio está en GitHub: [DiegoCoras06/sia-unsch-admision](https://github.com/DiegoCoras06/sia-unsch-admision).

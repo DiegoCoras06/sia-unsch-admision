@@ -76,41 +76,42 @@ La infraestructura implementa los contratos necesarios para almacenar y consulta
 Para mantener una organización uniforme, los módulos utilizarán la siguiente estructura de carpetas.
 
 ```text
-src/
+apps/backend/src/
 ├── modules/
-│   ├── convocatorias/
-│   ├── usuarios/
-│   ├── inscripcion-ordinaria/
-│   │   ├── dominio/
-│   │   │   ├── inscripcion.ts
-│   │   │   └── inscripcion-repository.ts
-│   │   ├── aplicacion/
-│   │   │   └── registrar-inscripcion.use-case.ts
-│   │   ├── infraestructura/
-│   │   │   └── postgres-inscripcion.repository.ts
-│   │   ├── presentacion/
-│   │   │   ├── inscripcion.controller.ts
-│   │   │   └── inscripcion.routes.ts
-│   │   └── inscripcion-ordinaria.module.ts
-│   ├── inscripcion-exonerados/
-│   ├── pagos/
-│   ├── expedientes/
-│   ├── examenes/
-│   ├── sedes-aulas/
-│   ├── resultados/
-│   ├── chatbot-ia/
-│   ├── notificaciones/
-│   ├── reportes/
-│   ├── seguridad/
-│   └── configuracion/
-├── shared/
-├── app.ts
-└── lambda.ts
+│   ├── convocatorias/        M01 (repositorio PrismaConvocatoriasRepository)
+│   ├── usuarios/             M02 (identidad RENIEC, cuentas, personal)
+│   ├── inscripciones/        M03 y M04
+│   │   ├── domain/
+│   │   │   └── inscription-rules.ts        estados, estado inicial, enmascarado del DNI
+│   │   ├── application/
+│   │   │   ├── inscription-service.ts      registrar, consultar, reinscribir, anular
+│   │   │   ├── ficha-service.ts            ficha PDF con QR firmado
+│   │   │   ├── orden-pago-pdf.ts           orden de pago en PDF
+│   │   │   ├── application-documents.ts    documentos adicionales
+│   │   │   └── cepre-awardees.ts           ingresantes CEPRE
+│   │   ├── presentation/
+│   │   │   └── routes.ts                   rutas REST y validación con Zod
+│   │   └── index.ts                        raíz de composición y API pública del módulo
+│   ├── pagos/                M05 (domain/ports.ts + infrastructure/ con 4 pasarelas)
+│   ├── expedientes/          M06
+│   ├── examenes/             M07 y M08 (exámenes, sedes, pabellones y aulas)
+│   ├── resultados/           M09
+│   ├── asistente/            M10 (Chatbot IA con OpenRouter)
+│   ├── notificaciones/       M11
+│   ├── reportes/             M12
+│   ├── seguridad/            M13 (permisos, tokens, TOTP)
+│   └── configuracion/        M14
+├── shared/                   audit, clock, config, db, email, events (outbox), http,
+│                             rate-limit, storage (S3), telemetry, text
+├── app.ts                    composición de la aplicación Express
+├── server.ts                 arranque local
+├── lambda-api.ts             punto de entrada en AWS Lambda (API)
+└── lambda-worker.ts          punto de entrada en AWS Lambda (tareas programadas)
 ```
 
 Cada módulo contará con sus propios componentes internos. La carpeta `shared` almacenará únicamente elementos comunes que puedan reutilizarse sin generar dependencias innecesarias entre módulos.
 
-Esta estructura es una propuesta de organización y podrá adaptarse a las necesidades de implementación del proyecto.
+La estructura propuesta al inicio (`inscripcion-ordinaria/`, `dominio/`, `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts`) se adaptó durante la implementación: las carpetas usan nombres en inglés para las capas (`domain`, `application`, `presentation`, `infrastructure`), cada módulo expone su API en `index.ts` (que también es su raíz de composición) y los casos de uso de un mismo módulo se agrupan en un servicio (`InscriptionService`) en lugar de una clase por caso de uso.
 
 ## 7.5. Funcionamiento del módulo Inscripción Ordinaria
 
@@ -128,32 +129,32 @@ El proceso seguirá la siguiente secuencia:
 
 5. **Aplicación de reglas de negocio:** el dominio creará la inscripción con el estado inicial correspondiente.
 
-6. **Almacenamiento:** el repositorio guardará la información en Amazon RDS PostgreSQL.
+6. **Almacenamiento:** el servicio guarda la inscripción en Amazon RDS PostgreSQL en una transacción, junto con el evento `InscripcionRegistrada` en la bandeja de eventos.
 
 7. **Respuesta al usuario:** el sistema devolverá el código de inscripción y su estado actual.
 
-Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO**. Una vez confirmada la operación por la pasarela de pagos, el módulo correspondiente permitirá actualizar su estado según las reglas del proceso de admisión.
+Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO** (Ordinario y CEPRE) o **PENDIENTE_VALIDACION** (Exonerados, hasta que se autorice su expediente). Cuando la pasarela confirma el pago, el módulo Pagos publica el evento `PagoConfirmado` y el módulo Inscripciones, suscrito a ese evento, cambia el estado a **APTA**. Los otros estados son **OBSERVADA** y **ANULADA**.
 
 ## 7.6. Módulos funcionales del sistema
 
 El sistema estará compuesto por 14 módulos funcionales, organizados dentro de una única aplicación backend.
 
-| Código | Módulo | Responsabilidad principal |
-|---|---|---|
-| M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. |
-| M02 | Usuarios | Registrar usuarios y gestionar sus datos. |
-| M03 | Inscripción Ordinaria | Administrar postulaciones de la modalidad ordinaria. |
-| M04 | Inscripción Exonerados | Gestionar postulaciones de modalidades especiales. |
-| M05 | Pagos | Registrar y verificar los pagos de inscripción. |
-| M06 | Expedientes | Administrar documentos y observaciones. |
-| M07 | Exámenes | Programar las evaluaciones de admisión. |
-| M08 | Sedes y Aulas | Gestionar ambientes y asignaciones. |
-| M09 | Resultados | Procesar y publicar resultados de admisión. |
-| M10 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. |
-| M11 | Notificaciones | Enviar avisos y correos electrónicos. |
-| M12 | Reportes | Generar estadísticas e informes. |
-| M13 | Seguridad | Administrar autenticación, roles y permisos. |
-| M14 | Configuración | Gestionar parámetros generales del sistema. |
+| Código | Módulo | Responsabilidad principal | Carpeta |
+|---|---|---|---|
+| M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. | `convocatorias` |
+| M02 | Usuarios | Registrar usuarios y gestionar sus datos. | `usuarios` |
+| M03 | Inscripción Ordinaria | Administrar postulaciones de la modalidad ordinaria. | `inscripciones` |
+| M04 | Inscripción Exonerados | Gestionar postulaciones de modalidades especiales. | `inscripciones` |
+| M05 | Pagos | Registrar y verificar los pagos de inscripción. | `pagos` |
+| M06 | Expedientes | Administrar documentos y observaciones. | `expedientes` |
+| M07 | Exámenes | Programar las evaluaciones de admisión. | `examenes` |
+| M08 | Sedes y Aulas | Gestionar ambientes y asignaciones. | `examenes` |
+| M09 | Resultados | Procesar y publicar resultados de admisión. | `resultados` |
+| M10 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. | `asistente` |
+| M11 | Notificaciones | Enviar avisos y correos electrónicos. | `notificaciones` |
+| M12 | Reportes | Generar estadísticas e informes. | `reportes` |
+| M13 | Seguridad | Administrar autenticación, roles y permisos. | `seguridad` |
+| M14 | Configuración | Gestionar parámetros generales del sistema. | `configuracion` |
 
 Cada módulo tendrá responsabilidades específicas y se comunicará con los demás mediante interfaces definidas, evitando dependencias directas innecesarias.
 
@@ -169,10 +170,9 @@ El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funci
 | AWS Lambda | Ejecución del backend. |
 | Amazon RDS PostgreSQL | Almacenamiento de información. |
 | Amazon S3 | Almacenamiento de documentos y fichas PDF. |
-| Amazon ElastiCache Redis | Almacenamiento temporal en caché. |
-| Amazon SQS | Procesamiento de tareas asíncronas. |
-| RENIEC | Validación de identidad. |
-| Pasarela de pagos | Procesamiento y confirmación de pagos. |
+| Bandeja de eventos (outbox) en PostgreSQL + EventBridge Scheduler | Procesamiento de tareas asíncronas y eventos entre módulos. |
+| RENIEC (vía apiperu.dev) | Validación de identidad. |
+| Izipay micuentaweb y Culqi | Pago con tarjeta y con Yape. |
 | OpenRouter API | Integración del chatbot de inteligencia artificial. |
 | Amazon SES | Envío de correos electrónicos. |
 
@@ -201,3 +201,16 @@ El diseño interno de módulos permitirá desarrollar el Sistema Integral de Ges
 La aplicación de Clean Architecture facilitará la separación entre las reglas de negocio y los detalles tecnológicos, mientras que el Monolito Modular por Capas permitirá integrar las funcionalidades dentro de una sola aplicación backend.
 
 Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sistema, además de facilitar futuras mejoras y ampliaciones.
+
+## 7.10. Estado de implementación (02/11/2026)
+
+| Regla de diseño (7.8) | Estado |
+|---|---|
+| 1. Responsabilidades claras por módulo | ✅ 14 módulos en 12 carpetas |
+| 2. Lógica de negocio separada de la infraestructura | 🟡 Las reglas están en `domain/` y los proveedores externos detrás de puertos; pero los servicios de aplicación consultan la base de datos con Prisma directamente |
+| 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos |
+| 4. Los casos de uso coordinan los procesos | ✅ Servicios de aplicación por módulo |
+| 5. Repositorios que implementan interfaces internas | 🟡 Solo en Convocatorias (`ConvocatoriasRepository` → `PrismaConvocatoriasRepository`); pendiente en los demás módulos |
+| 6. Sin dependencias circulares | ✅ Los módulos se comunican por su `index.ts` o por eventos |
+| 7. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API y tareas programadas |
+

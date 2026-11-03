@@ -60,20 +60,18 @@ flowchart TB
 
     subgraph AWS["Servicios AWS"]
         DB[("Amazon RDS PostgreSQL")]
-        CACHE[("Amazon ElastiCache Redis")]
         S3["Amazon S3"]
-        SQS["Amazon SQS"]
+        OUTBOX["Bandeja de eventos<br/>(outbox en PostgreSQL)"]
     end
 
-    EXT["Servicios externos<br/>RENIEC, Pasarela de Pagos,<br/>OpenRouter y Correo"]
+    EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
 
     WEB -->|"HTTPS / JSON"| API
     API -->|"Invoca AWS Lambda"| CTRL
 
     INFRA --> DB
-    INFRA --> CACHE
     INFRA --> S3
-    INFRA --> SQS
+    INFRA --> OUTBOX
     INFRA --> EXT
 
     classDef principal fill:#2563eb,color:#ffffff,stroke:#1d4ed8
@@ -84,10 +82,10 @@ flowchart TB
     class WEB,API,CTRL,APP principal
     class M1,M2,M3 modulo
     class INFRA infraestructura
-    class DB,CACHE,S3,SQS,EXT externo
+    class DB,S3,OUTBOX,EXT externo
 ```
 
-**Descripción:** El backend está organizado en 14 módulos funcionales que se ejecutan dentro de una única aplicación AWS Lambda. Los módulos se comunican mediante interfaces públicas y utilizan repositorios y adaptadores para acceder a los servicios de infraestructura y sistemas externos.
+**Descripción:** El backend está organizado en 14 módulos funcionales que se ejecutan dentro de una única aplicación AWS Lambda. Los módulos se comunican mediante interfaces públicas (`index.ts`) y eventos, y utilizan adaptadores para acceder a los servicios externos. En el código, los 14 módulos ocupan 12 carpetas y la persistencia se hace con Prisma (repositorio formal solo en Convocatorias).
 
 **Nota:** Las conexiones del diagrama representan dependencias funcionales y flujos de comunicación propuestos. No significan que los módulos puedan acceder directamente a las tablas o implementaciones internas de otros módulos.
 
@@ -147,17 +145,15 @@ flowchart TB
 
 | **Componente** | **Destino** | **Descripción** | **Protocolo** | **Patrón aplicado** |
 |---|---|---|---|---|
-| Módulos con persistencia | Amazon RDS PostgreSQL | Cada módulo accede a las tablas de las que es responsable mediante su repositorio. | PostgreSQL / TLS | Repositorio |
-| Convocatorias | Redis | Almacena temporalmente convocatorias y configuraciones consultadas frecuentemente. | Redis / TLS | Decorador |
-| Configuración | Redis | Mantiene en caché parámetros de consulta frecuente. | Redis / TLS | Decorador |
-| Usuarios | RENIEC | Solicita la validación de identidad de postulantes. | HTTPS / API autorizada | Adaptador |
-| Pagos | Pasarela de Pagos | Gestiona operaciones de pago y verifica confirmaciones. | HTTPS / REST | Adaptador |
+| Módulos con persistencia | Amazon RDS PostgreSQL | Cada módulo accede a su propio esquema de PostgreSQL; Convocatorias lo hace mediante su repositorio y los demás con Prisma desde el servicio. | PostgreSQL / TLS | Repositorio (parcial) |
+| Usuarios | RENIEC (apiperu) | Solicita la validación de identidad de postulantes. | HTTPS / API autorizada | Adaptador + Fábrica |
+| Pagos | Izipay micuentaweb y Culqi | Gestiona pagos con tarjeta y Yape y verifica confirmaciones firmadas. | HTTPS / REST | Adaptador + Fábrica |
 | Chatbot IA | OpenRouter API | Solicita respuestas de modelos de inteligencia artificial. | HTTPS / REST | Adaptador |
-| Notificaciones | Servicio de Correo | Solicita el envío de mensajes electrónicos. | API segura | Adaptador |
-| Notificaciones | Amazon SQS | Publica tareas de notificación para procesamiento asíncrono. | AWS SDK / HTTPS | Mensajería |
+| Notificaciones | Amazon SES | Solicita el envío de mensajes electrónicos. | AWS SDK / HTTPS | Adaptador |
+| Pagos, Expedientes, Inscripciones | Bandeja de eventos | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan. | SQL / TLS | Observador |
 | Expedientes | Amazon S3 | Almacena y recupera documentos de postulantes. | AWS SDK / HTTPS | Repositorio de archivos / Adaptador |
 | Inscripciones | Amazon S3 | Guarda y recupera fichas y documentos generados. | AWS SDK / HTTPS | Adaptador |
-| Backend API REST | Amazon CloudWatch | Registra logs, errores y métricas operativas. | Integración AWS | Observabilidad |
+| Backend API REST | Grafana Cloud | Envía logs, trazas y métricas con OpenTelemetry (al desplegar). | OTLP / HTTPS | Observabilidad |
 
 ---
 
@@ -171,7 +167,7 @@ flowchart TB
 | 4 | Cada integración externa debe tener un módulo responsable y utilizar interfaces y adaptadores. | Centralizar las integraciones y facilitar el cambio de proveedores. |
 | 5 | Cada módulo se organizará internamente mediante Clean Architecture. | Separar las reglas de negocio de los detalles tecnológicos. |
 | 6 | Los casos de uso dependerán de interfaces y no de implementaciones concretas. | Cumplir el principio de inversión de dependencias. |
-| 7 | Los controladores no accederán directamente a PostgreSQL, Redis ni a servicios externos. | Mantener la separación entre presentación e infraestructura. |
+| 7 | Los controladores no accederán directamente a PostgreSQL ni a servicios externos. | Mantener la separación entre presentación e infraestructura. |
 | 8 | Las operaciones críticas de inscripción y pago deberán utilizar mecanismos de integridad e idempotencia. | Evitar duplicidades e inconsistencias. |
 | 9 | Las operaciones asíncronas se realizarán mediante mecanismos de mensajería cuando sea necesario. | Reducir el acoplamiento temporal entre procesos. |
 | 10 | Las operaciones administrativas estarán protegidas mediante autenticación y autorización basada en roles. | Garantizar la seguridad de los procesos de admisión. |
@@ -219,64 +215,24 @@ src/
 
 | **Patrón** | **Aplicación en el sistema** | **Beneficio** |
 |---|---|---|
-| Repositorio | Persistencia de inscripciones, pagos, convocatorias y resultados. | Separar las reglas de negocio de PostgreSQL. |
-| Adaptador | Integraciones con RENIEC, pasarela de pagos y OpenRouter API. | Evitar dependencia directa de proveedores externos. |
-| Decorador | Implementación de caché con Redis. | Mejorar el rendimiento sin modificar la lógica de negocio. |
+| Repositorio | Persistencia de convocatorias (pendiente en inscripciones, pagos y resultados). | Separar las reglas de negocio de PostgreSQL. |
+| Adaptador | Integraciones con RENIEC, Izipay, Culqi, OpenRouter API, Amazon SES y S3. | Evitar dependencia directa de proveedores externos. |
+| Observador | Bandeja de eventos entre módulos (`Outbox.publish` / `subscribe`). | Reaccionar a pagos y dictámenes sin acoplar los módulos. |
+| Fábrica | Selección del adaptador real o simulado según la configuración. | Usar los mismos casos de uso en pruebas y en producción. |
 | Inyección de Dependencias | Composición de casos de uso, repositorios y adaptadores. | Facilitar las pruebas y el mantenimiento. |
 | Fachada | Interfaces públicas entre módulos. | Reducir el acoplamiento entre componentes. |
 
 ---
 
-## 9. Relación con el Nivel 4
+## 9. Estado de cumplimiento de las reglas (02/11/2026)
 
-El siguiente nivel del modelo C4 detallará la estructura interna de código del módulo **Inscripción Ordinaria**, seleccionado como módulo de referencia.
-
-Se representarán sus principales clases e interfaces:
-
-| **Elemento** | **Responsabilidad** |
+| Regla | Estado |
 |---|---|
-| `InscripcionController` | Recibir solicitudes HTTP de inscripción. |
-| `RegistrarInscripcionUseCase` | Coordinar el registro de una inscripción. |
-| `Inscripcion` | Aplicar las reglas de negocio. |
-| `EstadoInscripcion` | Definir los estados permitidos. |
-| `InscripcionRepository` | Declarar las operaciones de persistencia. |
-| `ElegibilidadPort` | Definir la validación de elegibilidad. |
-| `PostgresInscripcionRepository` | Implementar la persistencia en PostgreSQL. |
-| `ElegibilidadAdapter` | Implementar las consultas de elegibilidad mediante contratos internos. |
-| `InscripcionOrdinariaModule` | Configurar las dependencias del módulo. |
-
-**Siguiente documento:** `Nivel4-Diagrama-de-Codigo.md`
-
----
-
-## 10. Resumen
-
-| **Aspecto** | **Descripción** |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Modelo | C4 |
-| Nivel | Nivel 3 – Componentes |
-| Contenedor detallado | Backend API REST |
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque interno | Clean Architecture |
-| Número de módulos | 14 módulos funcionales |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
-| Comunicación externa | API REST mediante HTTPS |
-| Comunicación entre módulos | Llamadas en memoria mediante interfaces públicas |
-| Persistencia | Amazon RDS PostgreSQL |
-| Caché | Amazon ElastiCache Redis |
-| Almacenamiento | Amazon S3 |
-| Mensajería | Amazon SQS |
-| Integraciones | RENIEC, pasarela de pagos, OpenRouter API y correo |
-| Siguiente nivel | Nivel 4 – Diagrama de Código |
-
-## 11. Conclusión
-
-El diagrama de componentes del **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** permite comprender cómo se organiza internamente el backend y cómo se distribuyen las responsabilidades entre sus 14 módulos funcionales.
-
-La arquitectura de **Monolito Modular por Capas** permite mantener todos los módulos dentro de una única aplicación desplegada en AWS Lambda, mientras que **Clean Architecture** establece una separación entre presentación, aplicación, dominio e infraestructura.
-
-La comunicación mediante interfaces públicas, junto con los patrones Repositorio, Adaptador e Inyección de Dependencias, permite reducir el acoplamiento y facilitar el mantenimiento del sistema.
-
-Este diseño constituye la base para el **Nivel 4 del modelo C4**, donde se describirán las clases, interfaces y dependencias internas del módulo Inscripción Ordinaria.
+| 1. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API (`lambda-api.ts`) y tareas (`lambda-worker.ts`) |
+| 2. Comunicación solo por la API pública (`index.ts`) | ✅ Ningún módulo importa capas internas de otro |
+| 3. Cada módulo usa solo sus tablas | 🟡 Un esquema de PostgreSQL por módulo; `reportes` lee tablas de otros módulos (solo lectura, para los indicadores) y hay algunas lecturas cruzadas, como `inscripciones` sobre resultados |
+| 4. Integraciones con interfaces y adaptadores | ✅ |
+| 5. Clean Architecture por módulo | 🟡 Capas presentes; la persistencia aún no está detrás de repositorios en la mayoría de módulos |
+| 6. Casos de uso dependen de interfaces | 🟡 Sí para los servicios externos; no para la base de datos |
+| 7. Controladores sin acceso directo a datos | ✅ |
+| 8. Integridad e idempotencia en inscripción y pago | ✅ |

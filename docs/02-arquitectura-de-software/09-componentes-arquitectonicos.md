@@ -47,10 +47,9 @@ flowchart TB
 
     DB[("Amazon RDS<br/>PostgreSQL")]
     S3["Amazon S3<br/>Documentos"]
-    REDIS["ElastiCache Redis<br/>Caché"]
-    SQS["Amazon SQS<br/>Mensajería"]
+    OUTBOX["Bandeja de eventos<br/>Outbox en PostgreSQL"]
 
-    EXT["Servicios externos<br/>RENIEC, pasarela de pagos,<br/>OpenRouter, correo y SMS"]
+    EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
 
     U --> FE
     FE --> API
@@ -58,8 +57,7 @@ flowchart TB
 
     INFRA --> DB
     INFRA --> S3
-    INFRA --> REDIS
-    INFRA --> SQS
+    INFRA --> OUTBOX
     INFRA --> EXT
 
     classDef user fill:#244478,color:#fff,stroke:#244478
@@ -70,7 +68,7 @@ flowchart TB
     class U user
     class FE,API,CTRL,APP,INFRA main
     class M1,M2,M3,M4 module
-    class DB,S3,REDIS,SQS,EXT external
+    class DB,S3,OUTBOX,EXT external
 ```
 
 ## 6.3. Componentes principales
@@ -101,7 +99,7 @@ Estará organizada en cuatro grupos de módulos funcionales:
 
 ### Capa de infraestructura
 
-Permitirá la conexión con Amazon RDS PostgreSQL, Amazon S3, ElastiCache Redis, Amazon SQS y los servicios externos.
+Permite la conexión con Amazon RDS PostgreSQL, Amazon S3, Amazon SES y los servicios externos. Las tareas asíncronas usan una bandeja de eventos (outbox) guardada en la misma base de datos.
 
 ## 6.4. Funcionamiento general
 
@@ -122,3 +120,11 @@ Esta estructura facilita el desarrollo, mantenimiento y despliegue, manteniendo 
 Además, permite integrar servicios AWS sin la complejidad de administrar múltiples microservicios.
 
 Por estas razones, se considera adecuada para el Sistema Integral de Gestión del Proceso de Admisión UNSCH.
+
+## 6.6. Estado de implementación (02/11/2026)
+
+- Los cuatro grupos de módulos están implementados: **Gestión de admisión** (`convocatorias`, `inscripciones`, `expedientes`), **Gestión académica** (`examenes`, `resultados`), **Gestión administrativa** (`usuarios`, `pagos`, `seguridad`, `configuracion`) y **Servicios complementarios** (`asistente`, `notificaciones`, `reportes`).
+- **Redis y SQS se retiraron del diagrama:** no se usan. La mensajería entre módulos es una bandeja de eventos en PostgreSQL (ADR-008 del repositorio) y Redis queda como opción si la prueba de carga lo justifica.
+- **SMS no se implementó** (opcional según RC16): los avisos van por correo.
+- La pasarela de pagos son dos adaptadores: Izipay micuentaweb para tarjeta y Culqi para Yape.
+

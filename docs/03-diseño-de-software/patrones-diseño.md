@@ -14,7 +14,8 @@ Documentar los patrones de diseño aplicados en el backend del Sistema Integral 
 - **Despliegue:** AWS Lambda.
 - **Comunicación:** API REST mediante HTTPS.
 - **Base de datos:** Amazon RDS PostgreSQL.
-- **Caché:** Redis mediante Amazon ElastiCache.
+- **Caché:** no se usa por ahora; Redis queda previsto si la prueba de carga lo exige.
+- **Eventos:** bandeja de eventos (Transactional Outbox) en PostgreSQL.
 - **Almacenamiento:** Amazon S3.
 - **Inteligencia artificial:** OpenRouter API.
 - **Base arquitectónica:** Diagrama de componentes C4 – Nivel 3.
@@ -22,67 +23,70 @@ Documentar los patrones de diseño aplicados en el backend del Sistema Integral 
 
 ## 3. Patrones aplicados
 
+Esta tabla muestra los patrones como están **implementados en el código** al 02/11/2026. Las rutas son relativas a `apps/backend/src/`.
+
 | Patrón | Dónde se usa | Problema que resuelve | Se implementa con | Archivos en el código |
 |---|---|---|---|---|
-| Adaptador | Usuarios → RENIEC | El servicio de validación de identidad utiliza una interfaz externa. | API REST mediante HTTPS. | `identity-port.ts`, `reniec.adapter.ts` |
-| Adaptador | Pagos → Pasarela de pagos | La pasarela tiene sus propios métodos de procesamiento y confirmación de pagos. | SDK o API REST mediante HTTPS. | `payment-port.ts`, `payment-gateway.adapter.ts` |
-| Adaptador | Chatbot IA → OpenRouter API | La API de inteligencia artificial utiliza solicitudes y respuestas específicas. | API REST de OpenRouter mediante HTTPS. | `ai-port.ts`, `openrouter.adapter.ts` |
-| Adaptador | Notificaciones → Servicio de correo | El proveedor de correo utiliza una interfaz propia para enviar mensajes. | Amazon SES o API de correo. | `notification-port.ts`, `email.adapter.ts` |
-| Repositorio | Módulos de negocio → PostgreSQL | Evitar que las reglas de negocio dependan directamente de consultas SQL. | PostgreSQL mediante `pg` u ORM. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts` |
-| Decorador | Convocatorias y Configuración → Redis | Reducir las consultas repetitivas a la base de datos. | Redis mediante Amazon ElastiCache. | `cached-convocatoria.repository.ts` |
-| Inyección de dependencias | Todos los módulos | Evitar el acoplamiento entre casos de uso e implementaciones concretas. | Interfaces de TypeScript y composición de objetos. | `inscripcion-ordinaria.module.ts`, `pagos.module.ts` |
-| Fachada | Comunicación entre módulos | Proporcionar una interfaz controlada para utilizar funcionalidades de otros módulos. | Servicios y contratos públicos internos. | `usuarios.facade.ts`, `convocatorias.facade.ts` |
+| Adaptador | Usuarios → RENIEC | El servicio de identidad tiene su propia interfaz. | Puerto `IdentityProvider` con adaptadores `ApiPeruIdentityProvider` (apiperu.dev) y `MockIdentityProvider`. | `modules/usuarios/domain/ports.ts`, `modules/usuarios/infrastructure/apiperu-identity-provider.ts` |
+| Adaptador | Pagos → pasarelas | Cada pasarela tiene su propio protocolo y su firma. | Puertos `PaymentGateway` y `YapeGateway`; adaptadores `MiCuentaWebGateway`, `IzipayPaymentGateway`, `CulqiYapeGateway` y `MockPaymentGateway`. | `modules/pagos/domain/ports.ts`, `modules/pagos/infrastructure/*-gateway.ts` |
+| Adaptador | Chatbot IA → OpenRouter | La API de IA usa solicitudes y respuestas propias. | Puerto `LlmProvider` con `OpenRouterProvider` y `RuleBasedProvider` (modo básico sin clave). | `modules/asistente/domain/ports.ts`, `modules/asistente/infrastructure/openrouter-provider.ts` |
+| Adaptador | Notificaciones y documentos → AWS | SES y S3 tienen sus propios SDK. | Puertos `EmailSender` y `FileStorage`; adaptadores para SES, S3, archivos locales y memoria (pruebas). | `shared/email/`, `shared/storage/` |
+| Repositorio | Convocatorias → PostgreSQL | Evitar que las reglas de negocio dependan de consultas SQL. | Interfaz `ConvocatoriasRepository` implementada por `PrismaConvocatoriasRepository`. | `modules/convocatorias/domain/ports.ts`, `modules/convocatorias/infrastructure/prisma-convocatorias-repository.ts` |
+| Fábrica | Selección de adaptadores | Elegir el proveedor real o simulado según la configuración, sin que los casos de uso lo sepan. | Funciones `createPaymentGateway`, `createYapeGateway` y `createIdentityProvider`. | `modules/pagos/index.ts`, `modules/usuarios/index.ts` |
+| Inyección de dependencias | Todos los módulos | Evitar el acoplamiento entre casos de uso e implementaciones concretas. | Cada servicio recibe sus dependencias en el constructor; cada módulo tiene su raíz de composición `createXModule(deps)`. | `modules/*/index.ts`, `app.ts` |
+| Fachada | Comunicación entre módulos | Que un módulo use a otro sin conocer sus clases internas. | El `index.ts` de cada módulo publica solo su API (`ConvocatoriasQueries`, `AccessService`, `IdentityProvider`). | `modules/convocatorias/index.ts`, `modules/seguridad/index.ts` |
+| Observador | Pagos, Expedientes → Inscripciones y Notificaciones | Reaccionar a un hecho sin que el módulo que lo produce conozca a los interesados. | Bandeja de eventos `Outbox` con `publish` y `subscribe`; eventos como `PagoConfirmado`, `InscripcionRegistrada`, `ExpedienteDictaminado`. | `shared/events/outbox.ts`, `modules/inscripciones/index.ts` |
 
 ## 4. Cómo funciona cada patrón
 
 | Patrón | En pocas palabras |
 |---|---|
-| Adaptador | El sistema solicita `validarDNI(dni)` y el adaptador transforma la operación en una petición HTTPS compatible con RENIEC. |
-| Adaptador | El módulo Pagos solicita `crearPago(monto)` y el adaptador realiza la operación correspondiente en la pasarela de pagos. |
-| Adaptador | El chatbot solicita `generarRespuesta(mensaje)` y el adaptador se comunica con OpenRouter API. |
-| Repositorio | El caso de uso solicita `guardar(inscripcion)` y el repositorio ejecuta la operación en PostgreSQL. |
-| Decorador | Primero consulta Redis; si no encuentra la información, consulta PostgreSQL y almacena temporalmente el resultado en caché. |
-| Inyección de dependencias | El caso de uso recibe interfaces mediante su constructor, sin crear directamente conexiones o servicios externos. |
-| Fachada | Un módulo utiliza una interfaz pública para consultar funcionalidades de otro módulo sin acceder directamente a sus componentes internos. |
+| Adaptador | El caso de uso pide `lookupDni(dni)` al puerto `IdentityProvider`; el adaptador de apiperu lo convierte en una petición HTTPS y normaliza la respuesta. |
+| Adaptador | El módulo Pagos pide `createCheckout(...)` y `verify(...)` al puerto `PaymentGateway`; cada adaptador habla con su pasarela y verifica su firma. |
+| Repositorio | El servicio de Convocatorias pide la convocatoria vigente al repositorio, que ejecuta la consulta con Prisma. |
+| Fábrica | Con `PAYMENTS_PROVIDER=micuentaweb` la fábrica devuelve `MiCuentaWebGateway`; con `mock`, la pasarela simulada. |
+| Inyección de dependencias | `new PaymentService({ db, clock, outbox, gateway, ... })`: el servicio no crea conexiones ni clientes externos. |
+| Fachada | Inscripciones usa `convocatorias.queries` para consultar tasas y vacantes, sin importar clases internas de Convocatorias. |
+| Observador | Pagos guarda `PagoConfirmado` en la misma transacción que el pago; Inscripciones, suscrito al evento, cambia el estado a APTA y envía el correo. |
 
 ## 5. Diagrama de patrones de diseño
 
 ```mermaid
 flowchart TB
-    WEB["Aplicación Web<br/>Postulantes y personal UNSCH"]
-    API["Amazon API Gateway<br/>REST + HTTPS"]
+    WEB["Aplicación Angular<br/>Postulantes y personal UNSCH"]
+    API["API REST /api/v1<br/>(API Gateway + Lambda al desplegar)"]
 
-    subgraph BACKEND["AWS Lambda - Monolito Modular"]
+    subgraph BACKEND["Monolito Modular - Node.js + Express"]
         direction TB
 
-        CTRL["Controladores REST"]
+        CTRL["presentation/<br/>Rutas REST + Zod"]
 
-        subgraph APP["Capa de Aplicación"]
-            UC["Casos de uso"]
-            FAC["Fachadas entre módulos"]
+        subgraph APP["application/"]
+            UC["Servicios de casos de uso"]
+            FAC["index.ts de cada módulo<br/>(Fachada)"]
         end
 
-        subgraph DOM["Capa de Dominio"]
-            PORT["Interfaces y puertos"]
-            ENT["Entidades y reglas de negocio"]
+        subgraph DOM["domain/"]
+            PORT["Puertos"]
+            ENT["Reglas de negocio"]
         end
 
-        subgraph INFRA["Capa de Infraestructura"]
-            REP["Patrón Repositorio"]
-            ADP["Patrón Adaptador"]
-            CACHE["Patrón Decorador"]
+        subgraph INFRA["infrastructure/ y shared/"]
+            REP["Repositorio<br/>(Convocatorias)"]
+            ADP["Adaptadores"]
+            FAB["Fábricas de adaptadores"]
+            OBS["Outbox<br/>(Observador)"]
         end
 
-        COMP["Inyección de dependencias<br/>Raíz de composición"]
+        COMP["Inyección de dependencias<br/>createXModule(deps) y app.ts"]
     end
 
     DB[("Amazon RDS PostgreSQL")]
-    REDIS[("Redis - ElastiCache")]
 
-    RENIEC["RENIEC"]
-    PAGOS["Pasarela de pagos"]
+    RENIEC["RENIEC (apiperu)"]
+    PAGOS["Izipay micuentaweb<br/>Culqi (Yape)"]
     IA["OpenRouter API"]
-    EMAIL["Servicio de correo"]
+    AWS["Amazon SES y S3"]
 
     WEB -->|"HTTPS"| API
     API --> CTRL
@@ -90,52 +94,57 @@ flowchart TB
     UC --> ENT
     UC --> PORT
     UC --> FAC
+    UC -->|"publica eventos"| OBS
+    OBS -->|"notifica a suscriptores"| UC
 
     REP -.->|"Implementa puertos"| PORT
     ADP -.->|"Implementa puertos"| PORT
-    CACHE --> REP
+    FAB --> ADP
 
     REP --> DB
-    CACHE --> REDIS
+    OBS --> DB
+    UC -->|"Prisma (sin repositorio en la mayoría de módulos)"| DB
 
     ADP -->|"HTTPS"| RENIEC
     ADP -->|"HTTPS"| PAGOS
     ADP -->|"HTTPS"| IA
-    ADP -->|"HTTPS"| EMAIL
+    ADP -->|"SDK de AWS"| AWS
 
     COMP -.-> CTRL
     COMP -.-> UC
     COMP -.-> REP
-    COMP -.-> ADP
+    COMP -.-> FAB
 
     classDef principal fill:#3d6cba,color:#fff,stroke:#28539b
     classDef componente fill:#9fc1ed,color:#102b50,stroke:#6a95cc
     classDef externo fill:#929292,color:#fff,stroke:#777
 
     class WEB,API,CTRL principal
-    class UC,FAC,PORT,ENT,REP,ADP,CACHE,COMP componente
-    class RENIEC,PAGOS,IA,EMAIL externo
+    class UC,FAC,PORT,ENT,REP,ADP,FAB,OBS,COMP componente
+    class RENIEC,PAGOS,IA,AWS externo
 ```
 
-**Nota:** Las flechas continuas representan principalmente el flujo de utilización. Las flechas discontinuas representan implementación de contratos o composición de dependencias. Las reglas de dependencia del código se mantienen conforme a Clean Architecture.
+**Nota:** Las flechas continuas representan el flujo de utilización y las discontinuas la implementación de contratos o la composición de dependencias. La flecha directa de los servicios a PostgreSQL muestra la desviación registrada en la sección 7.
 
 ## 6. Beneficios de los patrones
 
-- **Adaptador:** permite cambiar RENIEC, la pasarela de pagos, OpenRouter API o el servicio de correo sin modificar las reglas de negocio.
-- **Repositorio:** mantiene el acceso a PostgreSQL separado del dominio.
-- **Decorador:** permite utilizar Redis para mejorar el rendimiento sin modificar la lógica principal.
-- **Inyección de dependencias:** facilita las pruebas unitarias mediante implementaciones simuladas.
-- **Fachada:** reduce el acoplamiento entre los 14 módulos funcionales.
+- **Adaptador:** cambiar de pasarela (de Izipay Web Core a micuentaweb, y agregar Culqi para Yape) no obligó a modificar las reglas de pago.
+- **Fábrica:** el mismo código corre con proveedores simulados en las pruebas y reales con `.env.rds`.
+- **Repositorio:** mantiene el acceso a PostgreSQL de Convocatorias separado del dominio.
+- **Inyección de dependencias:** las 239 pruebas usan relojes, correos y pasarelas simulados sin conexiones reales.
+- **Fachada:** ningún módulo importa capas internas de otro.
+- **Observador:** el pago y el cambio de estado de la inscripción quedan desacoplados y sin pérdida de eventos.
 
-## 7. Patrones previstos para las siguientes iteraciones
+## 7. Diferencias con el diseño inicial y patrones pendientes
 
-| Patrón | Dónde se aplicaría | Cuándo |
+| Patrón | Diseño inicial | Estado al 02/11/2026 |
 |---|---|---|
-| Observador | Inscripciones y Pagos → Notificaciones | Cuando se implementen eventos de confirmación de inscripción y pago. |
-| Fábrica | Inscripción Ordinaria y Exonerados | Cuando la creación de inscripciones requiera reglas específicas según la modalidad. |
-| Estrategia | Evaluación de expedientes | Cuando existan diferentes criterios de evaluación según la modalidad de admisión. |
-| Estado | Inscripciones y Expedientes | Cuando aumente la complejidad de las transiciones entre estados. |
-| Fachada | Comunicación entre módulos | Cuando sea necesario ampliar las interfaces públicas internas. |
+| Repositorio | En todos los módulos (`inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`) | 🟡 Solo en Convocatorias. Los demás servicios usan Prisma directamente; pendiente extraer repositorios, empezando por Inscripciones y Pagos. |
+| Decorador | Caché con Redis (`cached-convocatoria.repository.ts`) | No implementado: no se usa Redis (ver 01, decisiones, ADR-005). |
+| Observador | Previsto para una iteración posterior | ✅ Implementado con la bandeja de eventos. |
+| Fábrica | Previsto para las modalidades de inscripción | ✅ Implementado para elegir adaptadores; para las modalidades se resolvió con reglas por modalidad (`initialStatus`). |
+| Estrategia | Evaluación de expedientes por modalidad | Pendiente: los criterios se configuran como datos por submodalidad (ADR-011 del repositorio). |
+| Estado | Transiciones de inscripciones y expedientes | Pendiente: las transiciones se validan en los servicios. |
 
 ## 8. Relación con las decisiones arquitectónicas
 
@@ -143,10 +152,10 @@ flowchart TB
 |---|---|
 | Adaptador | ADR-007 - Integración mediante interfaces y adaptadores |
 | Repositorio | ADR-002 - Clean Architecture y ADR-004 - PostgreSQL |
-| Decorador | ADR-005 - Estrategia de caché mediante Redis |
+| Fábrica | ADR-007 - Integración mediante interfaces y adaptadores |
 | Inyección de dependencias | ADR-001 - Monolito Modular y ADR-002 - Clean Architecture |
 | Fachada | ADR-001 - Monolito Modular por Capas |
-| Observador | ADR-009 - Comunicación asíncrona mediante eventos |
+| Observador | ADR-009 - Comunicación asíncrona (implementada como outbox, ADR-008 del repositorio) |
 
 ## 9. Resumen
 
@@ -154,19 +163,16 @@ flowchart TB
 |---|---|
 | Arquitectura | Monolito Modular por Capas |
 | Enfoque | Clean Architecture |
-| Patrones principales | Adaptador, Repositorio, Decorador, Inyección de dependencias y Fachada |
-| Patrones previstos | Observador, Fábrica, Estrategia y Estado |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
+| Patrones implementados | Adaptador, Fábrica, Inyección de dependencias, Fachada, Observador y Repositorio (parcial) |
+| Patrones pendientes | Repositorio en el resto de módulos, Estrategia y Estado |
+| Backend | Node.js + TypeScript + Express 5 + Prisma 7 |
+| Despliegue | AWS Lambda (`lambda-api.ts`, `lambda-worker.ts`), pendiente del Paso 11 |
 | Comunicación | API REST mediante HTTPS |
 | Base de datos | Amazon RDS PostgreSQL |
-| Caché | Redis |
-| Integraciones | RENIEC, pasarela de pagos, OpenRouter API y correo |
+| Integraciones | RENIEC (apiperu), Izipay micuentaweb, Culqi, OpenRouter API, Amazon SES y S3 |
 
 ## 10. Conclusión
 
-La aplicación de patrones de diseño permitirá mantener una estructura uniforme, reducir el acoplamiento entre componentes y facilitar el mantenimiento del Sistema Integral de Gestión del Proceso de Admisión – UNSCH.
+Los patrones Adaptador, Fábrica, Inyección de dependencias, Fachada y Observador están implementados y probados. El patrón Repositorio se aplicó en Convocatorias y queda pendiente en los demás módulos; el Decorador con Redis se descartó mientras la carga no lo justifique.
 
-Los patrones Adaptador, Repositorio, Decorador, Inyección de dependencias y Fachada se consideran parte del diseño propuesto. Su implementación concreta deberá verificarse durante el desarrollo.
-
-El sistema conservará una arquitectura de Monolito Modular por Capas, utilizando Clean Architecture para organizar las responsabilidades internas y AWS Lambda para su despliegue.
+El sistema conserva una arquitectura de Monolito Modular por Capas, con Clean Architecture para organizar las responsabilidades internas y AWS Lambda como destino de despliegue.

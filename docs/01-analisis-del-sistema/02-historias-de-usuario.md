@@ -28,3 +28,14 @@
 | HU22 | Como administrador, quiero configurar modalidades, programas, vacantes y cronogramas, para administrar los procesos de admisión. |
 | HU23 | Como administrador, quiero gestionar las integraciones con RENIEC, pasarela de pagos, OpenRouter y correo electrónico, para garantizar el funcionamiento de los servicios externos. |
 | HU24 | Como administrador, quiero consultar los registros de auditoría, para supervisar las operaciones realizadas en el sistema. |
+
+## Estado de implementación (02/11/2026)
+
+Las 24 historias de usuario están implementadas y probadas (Pasos 5 a 10.2 de la hoja de ruta del README). Particularidades:
+
+- **HU01:** la identidad se valida con RENIEC por medio de apiperu.dev; la inscripción no exige crear una cuenta (ADR-015) y la cuenta es opcional.
+- **HU04:** pago con tarjeta (Izipay micuentaweb) y con Yape (Culqi), por ahora en ambiente de pruebas.
+- **HU19:** las notificaciones llegan por correo (Amazon SES) y a la bandeja del postulante; no hay SMS.
+- **HU23:** las credenciales de las integraciones se ven enmascaradas en el panel y se configuran en el servidor, nunca en el navegador (RC17).
+
+El detalle por requisito está en la [matriz de trazabilidad](../trazabilidad-requisitos.md).

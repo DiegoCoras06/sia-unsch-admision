@@ -15,12 +15,14 @@ Documentar cómo se aplican los principios SOLID en el backend del Sistema Integ
 - **Despliegue:** AWS Lambda.
 - **Comunicación:** API REST mediante HTTPS.
 - **Base de datos:** Amazon RDS PostgreSQL.
-- **Caché:** Redis mediante Amazon ElastiCache.
+- **Caché:** no se usa por ahora (Redis previsto solo si la prueba de carga lo exige).
 - **Módulo de referencia:** Inscripción Ordinaria, porque integra validación de postulantes, convocatorias, registro de inscripciones y persistencia en PostgreSQL.
 
 ## 3. SOLID en el módulo Inscripción Ordinaria
 
-### Diagrama de aplicación de SOLID
+### Diagrama de aplicación de SOLID (diseño objetivo)
+
+> Este diagrama es el **diseño objetivo** del sprint 1. La sección 3.1 muestra cómo se cumple cada principio en el código actual.
 
 ```mermaid
 flowchart TB
@@ -93,6 +95,20 @@ flowchart TB
 | **L - Sustitución de Liskov (LSP)** | Dominio e Infraestructura | Las implementaciones de `InscripcionRepository` y `ElegibilidadPort` deben respetar sus contratos, permitiendo sustituirlas por implementaciones de prueba o alternativas sin alterar el comportamiento esperado. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts` |
 | **I - Segregación de Interfaces (ISP)** | Dominio | Cada interfaz contiene únicamente las operaciones necesarias: `InscripcionRepository` permite guardar y consultar inscripciones, mientras que `ElegibilidadPort` verifica las condiciones de inscripción. | `inscripcion-repository.ts`, `elegibilidad-port.ts` |
 | **D - Inversión de Dependencias (DIP)** | Aplicación e Infraestructura | El caso de uso depende de interfaces y no conoce directamente PostgreSQL ni los módulos externos. Las implementaciones concretas se conectan mediante inyección de dependencias. | `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts` |
+
+### 3.1. Estado en el código (02/11/2026)
+
+Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`, `InscripcionRepository`, `ElegibilidadPort`, `PostgresInscripcionRepository`, `InscripcionOrdinariaModule`) **no existen con esos nombres**. En el código, el módulo de inscripciones agrupa sus casos de uso en `InscriptionService` y la referencia más completa de SOLID es el módulo **Pagos**. Rutas relativas a `apps/backend/src/`.
+
+| Principio | Cómo se cumple hoy | Archivos | Estado |
+|---|---|---|---|
+| **S** | Rutas solo validan con Zod y responden; los servicios coordinan; las reglas están en `domain/`; cada pasarela tiene su propio adaptador. Los servicios de aplicación son grandes (agrupan varios casos de uso). | `modules/pagos/presentation/routes.ts`, `modules/pagos/application/payment-service.ts`, `modules/pagos/domain/payment-rules.ts` | 🟡 |
+| **O** | Para agregar Yape con Culqi se creó un adaptador nuevo (`CulqiYapeGateway`) sin modificar las reglas de pago con tarjeta. | `modules/pagos/infrastructure/culqi-gateway.ts` | ✅ |
+| **L** | `MiCuentaWebGateway`, `IzipayPaymentGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real. | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts` | ✅ |
+| **I** | `PaymentService` no depende de todo el módulo de inscripciones, sino de una interfaz con un solo método: `inscriptions: { paymentContext(...) }`. | `modules/pagos/application/payment-service.ts` | ✅ |
+| **D** | Los servicios reciben puertos (`PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. **Desviación:** también reciben el cliente de Prisma (`db`) y consultan la base de datos directamente; solo Convocatorias tiene un repositorio. | `modules/*/index.ts`, `modules/convocatorias/infrastructure/prisma-convocatorias-repository.ts` | 🟡 |
+
+**Pendiente para cumplir el diseño objetivo:** extraer `InscripcionRepository` y `PagoRepository` (interfaces en `domain/`, implementación con Prisma en `infrastructure/`) para que los servicios de Inscripciones y Pagos no dependan de Prisma.
 
 ## 4. Cómo funciona cada principio
 

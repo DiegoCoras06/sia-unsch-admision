@@ -78,17 +78,17 @@ flowchart TB
 
     subgraph DATOS["Persistencia y almacenamiento"]
         DB[("Amazon RDS - PostgreSQL")]
-        CACHE[("ElastiCache - Redis")]
         S3["Amazon S3 - Documentos"]
     end
 
     subgraph EVENTOS["Comunicación asíncrona"]
-        EB["Amazon EventBridge"]
+        EB["Outbox en PostgreSQL<br/>+ EventBridge Scheduler"]
     end
 
     subgraph EXTERNOS["Integraciones externas"]
-        ID["Validación de identidad"]
-        PG["Pasarela de pagos"]
+        ID["RENIEC vía apiperu"]
+        PG["Izipay micuentaweb y Culqi (Yape)"]
+        AI["OpenRouter API"]
         SES["Amazon SES"]
     end
 
@@ -99,15 +99,15 @@ flowchart TB
     API --> CTRL
 
     REP --> DB
-    REP --> CACHE
     REP --> S3
 
-    EVT --> EB
+    EVT --> DB
     EB --> NO
 
     EXT --> ID
     EXT --> PG
     EXT --> SES
+    EXT --> AI
 ```
 
 ## 5.3. Descripción de las capas
@@ -152,8 +152,7 @@ Implementará los repositorios de datos, los adaptadores externos y la comunicac
 | Amazon S3 | Almacenamiento de archivos |
 | Amazon CloudFront | Distribución web |
 | Amazon Route 53 | Dominio |
-| Amazon ElastiCache Redis | Caché |
-| Amazon EventBridge | Comunicación asíncrona |
+| Amazon EventBridge Scheduler | Despacho periódico de la bandeja de eventos y tareas programadas |
 | Amazon SES | Correos electrónicos |
 | AWS Certificate Manager | Certificados HTTPS |
 
@@ -178,3 +177,19 @@ Amazon S3 podrá utilizarse tanto para almacenar documentos como para alojar los
 Las integraciones externas se implementarán mediante adaptadores.
 
 El certificado HTTPS se administrará mediante AWS Certificate Manager.
+
+## 5.7. Estado de implementación (02/11/2026)
+
+La arquitectura se implementó con estos ajustes respecto de la vista inicial:
+
+| Elemento de la vista inicial | Cómo quedó | Motivo |
+|---|---|---|
+| 7 módulos de dominio | 14 módulos funcionales en 12 carpetas (ver 03, diseño interno) | El análisis detallado separó convocatorias, expedientes, exámenes, chatbot, reportes, seguridad y configuración |
+| ElastiCache Redis | Retirado del diagrama; previsto solo si la prueba de carga lo exige | Las consultas frecuentes son livianas y el límite de intentos funciona con PostgreSQL; Redis añade un costo fijo |
+| Amazon EventBridge como bus de eventos | Bandeja de eventos (Transactional Outbox) en PostgreSQL; EventBridge Scheduler solo dispara el despacho cada minuto | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 del repositorio) |
+| Validación de identidad | RENIEC por medio de apiperu.dev | Proveedor autorizado y de bajo costo para el proyecto académico |
+| Pasarela de pagos | Izipay micuentaweb (tarjeta) y Culqi (Yape) | Yape no estaba disponible en la cuenta de Izipay (ADR-019) |
+| Route 53, CloudFront, API Gateway, Lambda | Diseñados, pendientes del despliegue | Paso 11 de la hoja de ruta |
+
+Hoy el sistema funciona en local (Node.js + Angular) conectado a los servicios reales de AWS: RDS PostgreSQL, S3 y SES.
+

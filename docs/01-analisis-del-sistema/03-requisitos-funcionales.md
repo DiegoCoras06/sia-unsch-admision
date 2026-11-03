@@ -76,3 +76,14 @@
 - Módulos del sistema: 14
 - Arquitectura: Monolito Modular por Capas
 - Enfoque arquitectónico: Clean Architecture
+
+## Estado de implementación (02/11/2026)
+
+Los 35 requisitos funcionales están implementados. Durante la especificación se desglosaron en el catálogo oficial de 143 RF (14 módulos), con este avance:
+
+| Estado | RF del catálogo |
+|---|---|
+| ✅ Implementado y probado | 136 |
+| 🟡 Parcial (depende de AWS o de claves de producción) | 7 |
+
+Los 7 parciales son RF-05.05 (notificación IPN, necesita URL pública), RF-10.01 (IA en vivo), RF-11.09 (rebotes de correo), RF-14.04, RF-14.05 y RF-14.07 (credenciales gestionadas desde el panel; hoy se configuran en el servidor) y RF-14.10 (respaldos reales). Detalle en la [matriz de trazabilidad](../trazabilidad-requisitos.md); se valida con 239 casos de prueba automáticos del backend y pruebas de punta a punta en el navegador.
