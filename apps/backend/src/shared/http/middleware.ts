@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Response } from 'express';
 import type { Logger } from 'pino';
+import type { ApiErrorBody } from '@sia/contracts';
 import { AppError } from './errors.js';
 
 declare global {
@@ -56,13 +57,13 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
       res.setHeader('Retry-After', String(err.extra['retryAfter']));
     }
     const { retryAfter: _omit, ...extra } = err.extra;
-    res.status(err.status).json({ error: { code: err.code, message: err.message, requestId: req.requestId, ...extra } });
+    res.status(err.status).json({ error: { code: err.code, message: err.message, requestId: req.requestId, ...extra } } satisfies ApiErrorBody);
     return;
   }
   if (err instanceof SyntaxError && 'body' in err) {
-    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'El cuerpo no es JSON válido.', requestId: req.requestId } });
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'El cuerpo no es JSON válido.', requestId: req.requestId } } satisfies ApiErrorBody);
     return;
   }
   req.log?.error({ err }, 'error no controlado');
-  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Ocurrió un error inesperado. Inténtalo más tarde.', requestId: req.requestId } });
+  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Ocurrió un error inesperado. Inténtalo más tarde.', requestId: req.requestId } } satisfies ApiErrorBody);
 };

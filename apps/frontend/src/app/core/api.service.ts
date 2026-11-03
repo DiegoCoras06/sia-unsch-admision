@@ -2,6 +2,7 @@ import type { UploadTicket } from './direct-upload';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type {
+  ApiErrorBody,
   AnnouncementDto, ApiResponse, AssistantPassDto, AssistantReplyDto, DossierDto, AreaDto, ContactRequestDto, CurrentCallDto, FeeDto, FeeQuoteDto, HomeContentDto,
   IdentityResultDto, InscriptionOptionsDto, InscriptionRequestDto, InscriptionSummaryDto, OfficialDocumentDto,
   OptionDetailDto, OptionSummaryDto, OptionsMeta, PageMeta, PaymentAttemptResultDto, PaymentSessionDto, PaymentStatusDto,
@@ -187,17 +188,20 @@ export class ApiService {
     this.http.post<ApiResponse<SignedPaymentMessageDto>>(`${API}/payments/mock/complete`, { transactionId, approve }).pipe(map((r) => r.data));
 }
 
+/** Error HTTP de Angular cuyo cuerpo es el sobre de error de la API (contrato compartido con el backend). */
+type ApiHttpError = { error?: Partial<ApiErrorBody> | null; status?: number } | null | undefined;
+
 /** Extrae el mensaje legible del sobre `{ error }` de la API. */
 export function apiErrorMessage(error: unknown, fallback = 'No pudimos completar la acción. Inténtalo de nuevo.'): string {
-  const e = error as { error?: { error?: { message?: string } }; status?: number };
+  const e = error as ApiHttpError;
   if (e?.status === 0) return 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
   return e?.error?.error?.message ?? fallback;
 }
 
 export function apiErrorCode(error: unknown): string | undefined {
-  return (error as { error?: { error?: { code?: string } } })?.error?.error?.code;
+  return (error as ApiHttpError)?.error?.error?.code;
 }
 
-export function apiErrorDetails(error: unknown): { field: string; issue: string }[] {
-  return ((error as { error?: { error?: { details?: { field: string; issue: string }[] } } })?.error?.error?.details ?? []);
+export function apiErrorDetails(error: unknown): NonNullable<ApiErrorBody['error']['details']> {
+  return (error as ApiHttpError)?.error?.error?.details ?? [];
 }
