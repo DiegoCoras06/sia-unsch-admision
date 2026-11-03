@@ -33,6 +33,7 @@
   },
   "allowScripts": {
     "@embedded-postgres/windows-x64@16.14.0-beta.17": true,
+    "@embedded-postgres/linux-x64@16.14.0-beta.17": true,
     "@prisma/engines@7.10.1": true,
     "prisma@7.10.1": true,
     "argon2@0.45.1": true,

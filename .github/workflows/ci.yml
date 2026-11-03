@@ -1,0 +1,58 @@
+# Integración continua: en cada push y pull request se compilan los contratos, el backend y el frontend,
+# y se corren las pruebas del backend con PostgreSQL embebido (sin RDS ni claves).
+# El despliegue continuo (CD) a AWS se agrega en el Paso 11.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (tipos y pruebas)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: npm del proyecto (packageManager)
+        run: npm install -g npm@11.19.0
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Compilar contratos
+        run: npm run build -w @sia/contracts
+      - name: Revisar tipos del backend
+        run: npm run typecheck -w @sia/backend
+      - name: Pruebas del backend
+        run: npm test -w @sia/backend
+
+  frontend:
+    name: Frontend (compilación)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: npm del proyecto (packageManager)
+        run: npm install -g npm@11.19.0
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Compilar contratos
+        run: npm run build -w @sia/contracts
+      - name: Compilar Angular
+        run: npm run build -w @sia/frontend
