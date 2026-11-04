@@ -37,7 +37,7 @@ const LABEL = { PENDIENTE: 'Admitido: por entregar', INGRESANTE: 'Ingresante', P
                 <div class="adm-row"><input class="input" style="width:9rem" [(ngModel)]="receipts[r.applicantCode]" [name]="'rc' + r.applicantCode" placeholder="N.° de recibo" [attr.aria-label]="'Recibo de ' + r.applicantCode">
                 <button type="button" class="btn btn--quiet" (click)="deliver(r.applicantCode)">Registrar entrega</button></div>
               } @else if (r.status === 'INGRESANTE') { <button type="button" class="adm-link" (click)="certificate(r.applicantCode)">Constancia (PDF)</button> }</td></tr>
-        } @empty { <tr><td colspan="6">No hay admitidos con ese filtro. Aparecen cuando la Comisión aprueba los resultados.</td></tr> }</tbody>
+        } @empty { <tr class="adm-none"><td colspan="6">No hay admitidos con ese filtro. Aparecen cuando la Comisión aprueba los resultados.</td></tr> }</tbody>
       </table></div>
     </section>
   `,

@@ -50,7 +50,7 @@ const SCORING = [
               <td><span class="adm-tag" [class.ok]="e.visible" [class.warn]="e.status === 'DISTRIBUIDO'">{{ e.statusLabel }}</span>
                 <br><span class="adm-muted">{{ e.visible ? 'Publicada' : 'Se publica: ' + when(e.publishAt) }}</span></td>
               <td><button type="button" class="adm-link" (click)="open(e.id)">Gestionar</button></td></tr>
-          } @empty { <tr><td colspan="7">No hay exámenes programados.</td></tr> }</tbody>
+          } @empty { <tr class="adm-none"><td colspan="7">No hay exámenes programados.</td></tr> }</tbody>
         </table></div>
         <button type="button" class="btn btn--quiet" style="justify-self:start" (click)="create()">Programar otro examen</button>
       </section>
@@ -197,7 +197,7 @@ const SCORING = [
           <section class="adm-panel">
             <h2>Cambios de aula recientes</h2>
             <ul class="adm-form" style="list-style:none;margin:0;padding:0">@for (c of d.changes; track $index) {
-              <li><span class="adm-muted">{{ when(c.at) }}</span><br><strong>{{ c.applicantCode }}</strong>: {{ c.from }} → {{ c.to }} - {{ c.reason }}</li>
+              <li><span class="adm-muted">{{ when(c.at) }}</span><br><strong>{{ c.applicantCode }}</strong>: {{ c.from }} a {{ c.to }} - {{ c.reason }}</li>
             } @empty { <li class="adm-muted">Sin cambios.</li> }</ul>
           </section>
         </div>

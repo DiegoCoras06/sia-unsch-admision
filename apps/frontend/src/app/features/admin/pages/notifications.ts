@@ -51,7 +51,7 @@ const INS_STATUS = [
             <tr><td>{{ when(n.createdAt) }}</td><td>{{ n.email }}</td><td>{{ ev(n.event) }}</td><td>{{ n.subject }}</td>
               <td><span class="adm-tag" [class.ok]="n.status === 'ENVIADA'" [class.warn]="n.status === 'PENDIENTE'" [class.bad]="n.status === 'FALLIDA' || n.status === 'REBOTADA'">{{ st(n.status) }}</span>
                 @if (n.attempts > 1 || n.lastError) { <br><span class="adm-muted">{{ n.attempts }} intentos{{ n.lastError ? ' · ' + n.lastError : '' }}</span> }</td></tr>
-          } @empty { <tr><td colspan="5">Sin notificaciones.</td></tr> }</tbody>
+          } @empty { <tr class="adm-none"><td colspan="5">Sin notificaciones.</td></tr> }</tbody>
         </table></div>
         <div class="adm-pager">
           <button type="button" class="btn btn--quiet" [disabled]="l.page <= 1" (click)="loadLog(l.page - 1)">Anterior</button>

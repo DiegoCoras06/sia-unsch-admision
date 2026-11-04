@@ -34,7 +34,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
               }</td>
             <td><select class="select" [ngModel]="c.status" (ngModelChange)="setStatus(c, $event)" [attr.aria-label]="'Estado del caso ' + c.caseNumber">
               <option value="OPEN">Recibido</option><option value="IN_PROGRESS">En atención</option><option value="CLOSED">Cerrado</option></select></td></tr>
-        } @empty { <tr><td colspan="5">No hay casos.</td></tr> }</tbody>
+        } @empty { <tr class="adm-none"><td colspan="5">No hay casos.</td></tr> }</tbody>
       </table></div>
     </section>
   `,

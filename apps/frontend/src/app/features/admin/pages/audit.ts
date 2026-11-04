@@ -32,7 +32,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
             <td>{{ e.resourceType }}<br><span class="adm-muted">{{ e.resourceId }}</span></td>
             <td>@if (e.before || e.after) {<details class="adm-json"><summary>Ver</summary>@if (e.before) {<pre>Antes: {{ e.before | json }}</pre>}@if (e.after) {<pre>Después: {{ e.after | json }}</pre>}</details>}</td>
             <td class="adm-muted">{{ e.origin ?? '-' }}</td></tr>
-        } @empty { <tr><td colspan="6">Sin registros con esos filtros.</td></tr> }</tbody>
+        } @empty { <tr class="adm-none"><td colspan="6">Sin registros con esos filtros.</td></tr> }</tbody>
       </table></div>
       @if (page(); as p) {
         <div class="adm-pager"><span>{{ p.total }} registros</span>

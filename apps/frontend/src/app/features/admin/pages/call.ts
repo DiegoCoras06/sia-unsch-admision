@@ -85,16 +85,16 @@ const fromLima = (local: string) => `${local}:00-05:00`;
               </div>
               @if (preview(); as p) {
                 <p class="adm-msg" [class.err]="!p.valid">{{ p.valid ? 'Archivo válido.' : 'El archivo tiene errores: corrígelos y vuelve a subirlo. No se guardó nada.' }}
-                  Total actual {{ p.totals.before }} → {{ p.totals.after }} · {{ p.totals.changedCells }} celda(s) cambian.</p>
+                  Total actual {{ p.totals.before }} a {{ p.totals.after }} · {{ p.totals.changedCells }} celda(s) cambian.</p>
                 @for (e of p.errors; track e) { <p class="adm-msg err">{{ e }}</p> }
                 <div class="adm-table-wrap"><table class="adm-table">
                   <thead><tr><th>Fila</th><th>Programa</th><th class="num">Suma</th><th class="num">TOTAL</th><th>Cambios</th><th>Errores</th></tr></thead>
                   <tbody>@for (r of p.rows; track r.line) { @if (r.errors.length || r.changes.length) {
                     <tr><td>{{ r.line }}</td><td>{{ r.name ?? r.optionCode }} <span class="adm-muted">{{ r.optionCode }}</span></td>
                       <td class="num">{{ r.sum }}</td><td class="num">{{ r.declaredTotal ?? '-' }}</td>
-                      <td>@for (c of r.changes; track c.category) { <span class="adm-tag">{{ c.category }}: {{ c.from }} → {{ c.to }}</span> }</td>
+                      <td>@for (c of r.changes; track c.category) { <span class="adm-tag">{{ c.category }}: {{ c.from }} a {{ c.to }}</span> }</td>
                       <td class="vac-err">{{ r.errors.join(' ') }}</td></tr>
-                  } } @empty { <tr><td colspan="6">Sin filas.</td></tr> }</tbody>
+                  } } @empty { <tr class="adm-none"><td colspan="6">Sin filas.</td></tr> }</tbody>
                 </table></div>
               }
             </details>
@@ -126,7 +126,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
                 <tbody>@for (w of a.items; track w.documentNumber) {
                   <tr><td>{{ w.documentNumber }}</td><td>{{ w.fullName }}</td><td>{{ w.optionCode }}</td><td>{{ w.cycle === 'CE-I' ? 'Ciclo I' : 'Ciclo II' }}</td>
                     <td><span class="adm-tag" [class.ok]="w.registered">{{ w.registered ? 'Sí' : 'Pendiente' }}</span></td></tr>
-                } @empty { <tr><td colspan="5">Aún no se cargó la lista.</td></tr> }</tbody>
+                } @empty { <tr class="adm-none"><td colspan="5">Aún no se cargó la lista.</td></tr> }</tbody>
               </table></div>
             }
           </section>

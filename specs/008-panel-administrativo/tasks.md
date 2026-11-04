@@ -51,3 +51,4 @@
 - [x] T548 Ruta de ingresantes `/admin/ingresantes` (antes chocaba con el inicio de sesión) y redirección al panel con sesión abierta
 - [x] T549 Menú lateral agrupado por tarea (Postulantes y pagos, Examen y resultados, Atención, Concurso y portal, Sistema), filtrado por permisos
 - [x] T550 Inicio del panel con «Pendientes de hoy» enlazados a su sección y menú «Descargar reporte» con los 6 reportes; estados de carga y error con reintento
+- [x] T551 Estados de carga, vacío y error comunes a las tablas del panel, y mensajes fijos al desplazar

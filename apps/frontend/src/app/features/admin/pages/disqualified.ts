@@ -29,7 +29,7 @@ interface Person { id: string; documentType: string; documentNumber: string; rea
           <thead><tr><th>Documento</th><th>Resolución y motivo</th><th>Vigencia</th><th></th></tr></thead>
           <tbody>@for (p of list(); track p.id) {
             <tr><td>{{ p.documentType }} {{ p.documentNumber }}</td><td><strong>{{ p.resolution }}</strong><br><span class="adm-muted">{{ p.reason }}</span></td>
-              <td><span class="adm-tag" [class.bad]="p.active">{{ p.active ? 'Vigente' : 'Sin efecto' }}</span><br><span class="adm-muted">{{ p.validFrom }} → {{ p.validUntil ?? 'indefinida' }}</span></td>
+              <td><span class="adm-tag" [class.bad]="p.active">{{ p.active ? 'Vigente' : 'Sin efecto' }}</span><br><span class="adm-muted">{{ p.validFrom }} a {{ p.validUntil ?? 'indefinida' }}</span></td>
               <td>@if (p.active) {<button type="button" class="adm-link" (click)="lift(p)">Retirar</button>}</td></tr>
           }</tbody>
         </table></div>

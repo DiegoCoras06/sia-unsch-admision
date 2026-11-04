@@ -77,13 +77,41 @@
 .adm-table-wrap { overflow-x: auto; }
 .adm-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .adm-table th { text-align: left; font-weight: 700; padding: 0.6rem 0.65rem; background: var(--stone); white-space: nowrap; }
+.adm-table th:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.adm-table th:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
 .adm-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--stone); vertical-align: top; }
 .adm-table tr:hover td { background: #fbf9f6; }
 .adm-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Estados de las tablas (una sola regla para las 20 pantallas). Sin filas y sin mensaje propio: mensaje común. */
+.adm-table tr.adm-none td { padding: 1.25rem 0.65rem; color: var(--ink-soft); font-size: 0.9375rem; background: none; }
+.adm-table-wrap:has(> .adm-table > tbody:empty)::after { content: 'Sin registros por ahora.'; display: block; padding: 1.25rem 0.65rem; color: var(--ink-soft); font-size: 0.9375rem; }
+/* Cargando: filas de relleno en lugar del mensaje de vacío, que sería falso mientras llegan los datos. */
+.adm-main.is-loading tr.adm-none { display: none; }
+.adm-main.is-loading .adm-table-wrap:has(> .adm-table > tbody:empty)::after,
+.adm-main.is-loading .adm-table-wrap:has(tr.adm-none)::after {
+  content: ''; display: block; height: 7rem; margin-top: 0.5rem; padding: 0;
+  background: repeating-linear-gradient(var(--stone) 0 1.5rem, transparent 1.5rem 2.75rem);
+  animation: adm-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes adm-pulse { to { opacity: 0.45; } }
+
+/* Barra de progreso: aparece solo si la consulta tarda, para no parpadear en cada clic. */
+.adm-progress { position: fixed; inset: 0 0 auto 15.5rem; z-index: 30; height: 3px; overflow: hidden; opacity: 0; pointer-events: none; }
+.adm-progress::after { content: ''; display: block; width: 40%; height: 100%; background: var(--gold); }
+.adm-main.is-loading .adm-progress { opacity: 1; transition: opacity 0s 200ms; }
+.adm-main.is-loading .adm-progress::after { animation: adm-slide 1.1s var(--ease) infinite; }
+@keyframes adm-slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@media (prefers-reduced-motion: reduce) {
+  .adm-main.is-loading .adm-progress::after { animation: none; width: 100%; }
+  .adm-main.is-loading .adm-table-wrap::after { animation: none; }
+}
+/* El aviso general reemplaza al error propio de la pantalla: no se repite el mismo problema dos veces. */
+.adm-main:has(.adm-load-error) .adm-msg.err:not(.adm-load-error) { display: none; }
 .adm-table input.input { width: 7rem; }
 .adm-table input[type="datetime-local"].input { width: 13.5rem; }
 
-.adm-tag { display: inline-block; padding: 0.15rem 0.5rem; font-size: 0.75rem; font-weight: 700; background: var(--stone); white-space: nowrap; }
+.adm-tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius); font-size: 0.75rem; font-weight: 700; background: var(--stone); white-space: nowrap; }
 .adm-tag.ok { background: #e3f1e8; color: #164d2a; }
 .adm-tag.warn { background: #fbf1d9; color: #6b4a00; }
 .adm-tag.bad { background: #f7e3e3; color: #6d1212; }
@@ -93,9 +121,10 @@
 .adm-form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .adm-form textarea.input { min-height: 8rem; font-family: inherit; }
 .adm-tabs { display: flex; flex-wrap: wrap; gap: 2px; }
-.adm-tabs button { font: inherit; font-weight: 700; padding: 0.55rem 1rem; border: 0; background: var(--stone-deep); cursor: pointer; }
+.adm-tabs button { font: inherit; font-weight: 700; padding: 0.55rem 1rem; border: 0; border-radius: var(--radius); background: var(--stone-deep); cursor: pointer; }
 .adm-tabs button.is-on { background: var(--ground); color: var(--accent); }
-.adm-msg { padding: 0.65rem 0.9rem; font-size: 0.9375rem; background: #e3f1e8; color: #164d2a; }
+/* Fijo al desplazar: la confirmación de guardado se ve aunque el formulario esté abajo. */
+.adm-msg { position: sticky; top: 0.75rem; z-index: 5; padding: 0.65rem 0.9rem; border-radius: var(--radius); font-size: 0.9375rem; background: #e3f1e8; color: #164d2a; }
 .adm-msg.err { background: #f7e3e3; color: #6d1212; }
 .adm-check { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.9375rem; }
 details.adm-json summary { cursor: pointer; color: var(--accent); font-weight: 600; }
@@ -105,6 +134,7 @@ details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: va
   .adm { grid-template-columns: 1fr; }
   .adm-side { position: fixed; inset: 0 auto 0 0; width: min(17rem, 85vw); z-index: 40; transform: translateX(-100%); transition: transform var(--fast) var(--ease); }
   .adm-side.is-open { transform: none; }
+  .adm-progress { left: 0; }
   .adm-burger { display: inline-block; justify-self: start; font: inherit; font-weight: 700; padding: 0.5rem 0.9rem; background: var(--accent); color: var(--accent-ink); border: 0; }
   .adm-form .two { grid-template-columns: 1fr; }
   .adm-bars li { grid-template-columns: 1fr 3rem; }

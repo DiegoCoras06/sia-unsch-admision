@@ -63,7 +63,7 @@ const TAG: Record<string, string> = { ADMITIDO: 'ok', NO_ADMITIDO: '', AUSENTE: 
                 <td>{{ v.publishAt ? when(v.publishAt) : '-' }}@if (v.status === 'PUBLICADA') { <br><span class="adm-muted">{{ v.visible ? 'Visible' : 'Programada' }}</span> }</td>
                 <td>{{ v.reason ?? '-' }}</td>
                 <td>@if (v.status !== 'DESCARTADA') { <button type="button" class="adm-link" (click)="open(v.id)">Revisar</button> }</td></tr>
-            } @empty { <tr><td colspan="5">Aún no hay resultados procesados.</td></tr> }</tbody>
+            } @empty { <tr class="adm-none"><td colspan="5">Aún no hay resultados procesados.</td></tr> }</tbody>
           </table></div>
         </section>
       }

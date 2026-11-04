@@ -53,7 +53,7 @@ const RESULTS = [
               <tbody>@for (x of runs(); track x.id) {
                 <tr><td>{{ when(x.createdAt) }}<br><span class="adm-muted">{{ x.fileName }}</span></td><td>{{ x.source }}</td><td>{{ x.periodFrom.slice(0, 10) }} – {{ x.periodTo.slice(0, 10) }}</td>
                   <td class="num">{{ diffs(x.summary) }}</td><td><button type="button" class="adm-link" (click)="open(x.id)">Ver</button></td></tr>
-              } @empty { <tr><td colspan="5">Aún no hay conciliaciones.</td></tr> }</tbody>
+              } @empty { <tr class="adm-none"><td colspan="5">Aún no hay conciliaciones.</td></tr> }</tbody>
             </table></div>
           </section>
         </div>
@@ -78,7 +78,7 @@ const RESULTS = [
                 <td>@if (i.resolution) { {{ i.resolution }} } @else if (i.result !== 'CONCILIADO') {
                   <div class="adm-row"><input class="input" [(ngModel)]="notes[i.id]" [name]="'n' + i.id" placeholder="Cómo se resolvió" [attr.aria-label]="'Resolución de ' + i.reference">
                   <button type="button" class="btn btn--quiet" (click)="resolve(i.id)">Resolver</button></div> }</td></tr>
-            } @empty { <tr><td colspan="6">Sin partidas con ese filtro.</td></tr> }</tbody>
+            } @empty { <tr class="adm-none"><td colspan="6">Sin partidas con ese filtro.</td></tr> }</tbody>
           </table></div>
         </section>
       }

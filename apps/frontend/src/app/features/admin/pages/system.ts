@@ -43,7 +43,7 @@ interface SystemInfo {
             @for (f of s.failures; track f.id) {
               <tr><td><strong>{{ f.eventType }}</strong><br><span class="adm-muted">{{ when(f.occurredAt) }} · {{ f.attempts }} intentos</span><br><span class="adm-muted">{{ f.lastError }}</span></td>
                 <td><button class="btn btn--quiet" type="button" (click)="retry(f.id)">Reintentar</button></td></tr>
-            } @empty { <tr><td>Sin fallas pendientes. Todas las notificaciones se entregaron.</td></tr> }
+            } @empty { <tr class="adm-none"><td>Sin fallas pendientes. Todas las notificaciones se entregaron.</td></tr> }
           </tbody></table></div>
         </section>
       </div>

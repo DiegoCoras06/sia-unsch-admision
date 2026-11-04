@@ -74,7 +74,14 @@ const ROLE_NAMES: Record<string, string> = {
           </div>
         </div>
       </aside>
-      <div class="adm-main">
+      <div class="adm-main" [class.is-loading]="session.busy()" [attr.aria-busy]="session.busy()">
+        <div class="adm-progress" aria-hidden="true"></div>
+        @if (session.loadFailed()) {
+          <p class="adm-msg err adm-load-error" role="alert">
+            No se pudo cargar la información. Revisa tu conexión e inténtalo de nuevo.
+            <button type="button" class="adm-link" (click)="retry()">Reintentar</button>
+          </p>
+        }
         <button type="button" class="adm-burger" (click)="menu.update((v) => !v)" [attr.aria-expanded]="menu()">Menú del panel</button>
         <router-outlet />
       </div>
@@ -89,6 +96,11 @@ export class AdminShell {
     NAV.map((g) => ({ ...g, items: g.items.filter((n) => this.session.can(n.permission)) })).filter((g) => g.items.length),
   );
   protected readonly roles = computed(() => (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(', '));
+
+  /** La sesión se restaura con la cookie, así que recargar vuelve a pedir todo lo de la pantalla. */
+  protected retry() {
+    location.reload();
+  }
 
   protected async logout() {
     await this.session.logout();

@@ -41,7 +41,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
               <td><span class="adm-tag" [class]="'adm-tag ' + tag(r.status)">{{ r.statusLabel }}</span>
                 @if (r.status === 'OBSERVADO' && r.observeDeadline) { <br><span class="adm-muted">Plazo: {{ when(r.observeDeadline) }}</span> }</td>
               <td><button type="button" class="adm-link" (click)="open(r.id)">Revisar</button></td></tr>
-          } @empty { <tr><td colspan="8">No hay expedientes con ese filtro.</td></tr> }</tbody>
+          } @empty { <tr class="adm-none"><td colspan="8">No hay expedientes con ese filtro.</td></tr> }</tbody>
         </table></div>
       </section>
     } @else {

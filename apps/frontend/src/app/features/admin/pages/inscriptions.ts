@@ -49,7 +49,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
                   } @empty { <p class="adm-muted">Cargando…</p> }
                 </td></tr>
               }
-            } @empty { <tr><td colspan="9">No hay inscripciones con esos filtros.</td></tr> }
+            } @empty { <tr class="adm-none"><td colspan="9">No hay inscripciones con esos filtros.</td></tr> }
           </tbody>
         </table>
       </div>

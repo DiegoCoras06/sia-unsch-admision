@@ -51,7 +51,7 @@ interface Asset { key: string; label: string; fallback: string; custom: { url: s
                 <tr><td><span class="adm-tag" [class.warn]="a.type === 'FE_ERRATAS'">{{ a.type === 'FE_ERRATAS' ? 'Fe de erratas' : a.type === 'RESULTADO' ? 'Resultados' : 'Comunicado' }}</span>
                   <br><strong>{{ a.title }}</strong><br><span class="adm-muted">{{ when(a.publishedAt!) }}</span></td>
                   <td><button type="button" class="adm-link" (click)="edit(a)">Editar</button><br><button type="button" class="adm-link" (click)="remove(a)">Retirar</button></td></tr>
-              } @empty { <tr><td>Sin comunicados.</td></tr> }
+              } @empty { <tr class="adm-none"><td>Sin comunicados.</td></tr> }
             </tbody></table></div>
           </section>
         </div>

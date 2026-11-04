@@ -25,6 +25,11 @@ export class AdminSession {
   private token: string | null = null;
   private restoring: Promise<boolean> | null = null;
   readonly me = signal<StaffMe | null>(null);
+  /** Consultas en curso: el marco del panel muestra la barra de progreso y las filas de carga. */
+  private readonly pending = signal(0);
+  readonly busy = computed(() => this.pending() > 0);
+  /** Falló la conexión o el servidor al consultar (no un 4xx, que cada pantalla explica a su manera). */
+  readonly loadFailed = signal(false);
   readonly permissions = computed(() => new Set(this.me()?.permissions ?? []));
 
   can = (permission: string) => this.permissions().has(permission);
@@ -56,7 +61,18 @@ export class AdminSession {
   }
 
   // ── Llamadas autenticadas ──────────────────────────────────────────
-  get<T>(path: string, query: Query = {}) { return this.request<T>('GET', path, undefined, query); }
+  async get<T>(path: string, query: Query = {}): Promise<T> {
+    if (this.pending() === 0) this.loadFailed.set(false);
+    this.pending.update((n) => n + 1);
+    try {
+      return await this.request<T>('GET', path, undefined, query);
+    } catch (e) {
+      if (e instanceof HttpErrorResponse && (e.status === 0 || e.status >= 500)) this.loadFailed.set(true);
+      throw e;
+    } finally {
+      this.pending.update((n) => n - 1);
+    }
+  }
   put<T>(path: string, body: unknown) { return this.request<T>('PUT', path, body); }
   postAuth<T>(path: string, body: unknown = {}) { return this.request<T>('POST', path, body); }
   delete<T>(path: string) { return this.request<T>('DELETE', path); }

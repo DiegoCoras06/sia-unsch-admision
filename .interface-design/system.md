@@ -108,6 +108,13 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Los indicadores van después, bajo «Resumen del proceso».
 - Exportaciones en un solo menú «Descargar reporte» (details nativo; se cierra con Esc o al salir el foco), con el formato a la derecha y la nota «Con los filtros aplicados».
 
+### Estados de las tablas del panel
+- Reglas centralizadas en `admin.scss` y `AdminSession`, no por pantalla: `get()` cuenta las consultas en curso y el marco pone `.is-loading` y `aria-busy`.
+- Cargando: barra dorada de 3 px arriba (aparece a los 200 ms para no parpadear) y filas de relleno en la tabla sin datos; sin animación con `prefers-reduced-motion`.
+- Vacío: `tr.adm-none` con el mensaje propio de la pantalla; si no lo tiene, «Sin registros por ahora.». Nunca se muestra mientras carga.
+- Error de conexión o del servidor (0 o 5xx): aviso general con «Reintentar» que reemplaza al error de la pantalla. Los 4xx los explica cada pantalla.
+- Mensajes `.adm-msg` fijos al desplazar, para que la confirmación se vea aunque el formulario esté abajo.
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 
@@ -124,4 +131,5 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 | Línea del trámite con un solo foco | El postulante ve de un vistazo en qué paso está | 30/10/2026 |
 | Ficha de examen como boleto | Lo que se muestra en la puerta el día del examen debe leerse de un vistazo en el celular | 30/10/2026 |
 | Panel agrupado por tarea y «Pendientes de hoy» primero | El personal entra a resolver algo; 19 secciones sueltas y 6 botones de exportación tapaban lo urgente | 02/11/2026 |
+| Estados de tabla en un solo lugar | Eran 20 pantallas, solo 2 mostraban carga y varias quedaban en blanco; cualquier pantalla nueva los hereda | 03/11/2026 |
 | Resultado con la condición como foco y regla 0–1000 | El postulante quiere saber primero si ingresó; la regla muestra qué tan cerca quedó del mínimo | 30/10/2026 |
