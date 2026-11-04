@@ -1,0 +1,22 @@
+# Avisos y pull requests semanales de dependencias. Los paquetes de AWS se agrupan en uno solo para no llenar de PR.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Lima
+    open-pull-requests-limit: 5
+    groups:
+      aws-sdk:
+        patterns: ['@aws-sdk/*']
+      angular:
+        patterns: ['@angular/*', '@angular-devkit/*']
+      prisma:
+        patterns: ['prisma', '@prisma/*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
