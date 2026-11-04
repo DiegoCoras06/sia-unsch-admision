@@ -52,3 +52,4 @@
 - [x] T549 Menú lateral agrupado por tarea (Postulantes y pagos, Examen y resultados, Atención, Concurso y portal, Sistema), filtrado por permisos
 - [x] T550 Inicio del panel con «Pendientes de hoy» enlazados a su sección y menú «Descargar reporte» con los 6 reportes; estados de carga y error con reintento
 - [x] T551 Estados de carga, vacío y error comunes a las tablas del panel, y mensajes fijos al desplazar
+- [x] T552 Códigos de respaldo del segundo factor: entrega única al activar, ingreso con código, «Mi seguridad» y aviso en el inicio (ADR-022)

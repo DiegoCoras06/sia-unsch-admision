@@ -76,6 +76,7 @@ interface Dashboard {
       <div class="field"><label for="f-to">Hasta</label><input id="f-to" class="input" type="date" name="to" [(ngModel)]="f.to"></div>
       <button class="btn" type="submit" [disabled]="loading()">{{ loading() ? 'Cargando…' : 'Aplicar filtros' }}</button>
     </form>
+    @if (noRecovery()) { <p class="adm-msg warn">Aún no tienes códigos de respaldo: si pierdes el celular, no podrás entrar. <a routerLink="/admin/seguridad">Generarlos ahora</a></p> }
     @if (error()) { <p class="adm-msg err" role="alert">{{ error() }} <button type="button" class="adm-link" (click)="load()">Reintentar</button></p> }
     @if (!d() && loading()) { <p class="adm-muted" role="status">Cargando indicadores…</p> }
 
@@ -144,6 +145,7 @@ export class DashboardPage implements OnInit {
   protected readonly options = signal<{ code: string; name: string }[]>([]);
   protected readonly error = signal<string | null>(null);
   protected readonly loading = signal(false);
+  protected readonly noRecovery = signal(false);
   protected f = { modality: '', optionCode: '', from: '', to: '' };
   protected readonly reports = computed(() => REPORTS.filter((r) => this.session.can(r.permission)));
 
@@ -168,6 +170,7 @@ export class DashboardPage implements OnInit {
   ngOnInit() {
     this.api.options('2027-I').subscribe((r) => this.options.set(r.data.map((o) => ({ code: o.internalCode, name: o.displayName }))));
     void this.load();
+    this.session.recoveryStatus().then((r) => this.noRecovery.set(r.remaining === 0)).catch(() => undefined);
   }
 
   protected async load() {

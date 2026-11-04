@@ -5,6 +5,7 @@ import { AdminSession, type StaffStep } from '../../core/admin-session';
 import { apiErrorMessage } from '../../core/api.service';
 import { CallStore } from '../../core/call.store';
 import { longDate } from '../../core/format';
+import { RecoveryCodes } from './recovery-codes';
 
 /** Pasos visibles del ingreso; el cambio de contraseña y la activación del TOTP solo aparecen la primera vez. */
 const STEP_LABEL: Record<string, string> = {
@@ -12,6 +13,7 @@ const STEP_LABEL: Record<string, string> = {
   CHANGE_PASSWORD: 'Contraseña propia',
   SETUP_MFA: 'Segundo factor',
   MFA: 'Código de verificación',
+  CODES: 'Códigos de respaldo',
 };
 
 /**
@@ -21,7 +23,7 @@ const STEP_LABEL: Record<string, string> = {
  */
 @Component({
   selector: 'app-admin-login',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, RecoveryCodes],
   template: `
     <main class="login">
       <aside class="cover" aria-label="Dirección de Admisión">
@@ -49,6 +51,9 @@ const STEP_LABEL: Record<string, string> = {
             </p>
           </header>
 
+          @if (codes(); as list) {
+            <app-recovery-codes [codes]="list" doneLabel="Entrar al panel" (done)="enter()" />
+          } @else {
           @switch (step()?.step) {
             @case ('CHANGE_PASSWORD') {
               <form (ngSubmit)="changePassword()" class="form">
@@ -79,15 +84,28 @@ const STEP_LABEL: Record<string, string> = {
               </form>
             }
             @case ('MFA') {
-              <form (ngSubmit)="verify()" class="form">
-                <p class="lead">Abre tu aplicación de autenticación y escribe el código de 6 dígitos de la Dirección de Admisión.</p>
-                <div class="field">
-                  <label for="lg-code2">Código</label>
-                  <input id="lg-code2" class="input code" name="c2" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
-                </div>
-                <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
-                <button class="btn btn--quiet" type="button" (click)="reset()">Usar otra cuenta</button>
-              </form>
+              @if (recovery()) {
+                <form (ngSubmit)="useRecovery()" class="form">
+                  <p class="lead">Escribe uno de tus códigos de respaldo. Cada código sirve una sola vez.</p>
+                  <div class="field">
+                    <label for="lg-rec">Código de respaldo</label>
+                    <input id="lg-rec" class="input code" name="rec" [(ngModel)]="recoveryCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="XXXXX-XXXXX" required>
+                  </div>
+                  <button class="btn submit" type="submit" [disabled]="busy() || recoveryCode.trim().length < 10">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
+                  <button class="link" type="button" (click)="recovery.set(false)">Volver al código de la aplicación</button>
+                </form>
+              } @else {
+                <form (ngSubmit)="verify()" class="form">
+                  <p class="lead">Abre tu aplicación de autenticación y escribe el código de 6 dígitos de la Dirección de Admisión.</p>
+                  <div class="field">
+                    <label for="lg-code2">Código</label>
+                    <input id="lg-code2" class="input code" name="c2" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+                  </div>
+                  <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
+                  <button class="link" type="button" (click)="recovery.set(true)">¿Perdiste el celular? Usar un código de respaldo</button>
+                  <button class="btn btn--quiet" type="button" (click)="reset()">Usar otra cuenta</button>
+                </form>
+              }
             }
             @default {
               <form (ngSubmit)="login()" class="form">
@@ -107,6 +125,7 @@ const STEP_LABEL: Record<string, string> = {
                 <p class="help">¿Olvidaste tu contraseña o perdiste tu aplicación de autenticación? Pide el restablecimiento al administrador del sistema.</p>
               </form>
             }
+          }
           }
           @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
           <p class="foot"><a routerLink="/">Volver al portal de Admisión</a></p>
@@ -148,6 +167,7 @@ const STEP_LABEL: Record<string, string> = {
     .caps { margin: -0.4rem 0 0; font-size: var(--size-note); font-weight: 600; color: var(--warn); }
     .submit { width: 100%; min-height: 3.25rem; font-size: 1.0625rem; }
     .btn--quiet { width: 100%; }
+    .link { justify-self: center; min-height: 2.75rem; padding: 0 0.5rem; font: inherit; font-size: var(--size-note); font-weight: 600; color: var(--accent); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
     .help { margin: 0; font-size: var(--size-note); color: var(--ink-soft); }
     .qr { justify-self: center; background: #fff; padding: 0.5rem; border: 1px solid var(--stone-deep); border-radius: var(--radius-lg); }
     .secret { margin: 0; font-size: 0.8125rem; color: var(--ink-soft); word-break: break-all; }
@@ -185,6 +205,10 @@ export class AdminLoginPage {
   protected password = '';
   protected newPassword = '';
   protected code = '';
+  protected recoveryCode = '';
+  protected readonly recovery = signal(false);
+  /** Códigos recién generados al activar el segundo factor: se muestran antes de entrar. */
+  protected readonly codes = signal<string[] | null>(null);
 
   /** Proceso vigente y fechas de examen, del cronograma oficial (sin datos inventados). */
   protected readonly process = computed(() => {
@@ -196,11 +220,11 @@ export class AdminLoginPage {
     return { code: call.code, exams };
   });
 
-  protected readonly current = computed(() => this.step()?.step ?? 'CREDENTIALS');
+  protected readonly current = computed(() => (this.codes() ? 'CODES' : (this.step()?.step ?? 'CREDENTIALS')));
   /** El primer ingreso tiene cuatro pasos; los siguientes, dos. */
   protected readonly steps = computed(() => {
     const s = this.current();
-    return s === 'CHANGE_PASSWORD' || s === 'SETUP_MFA' ? ['CREDENTIALS', 'CHANGE_PASSWORD', 'SETUP_MFA'] : ['CREDENTIALS', 'MFA'];
+    return s === 'CHANGE_PASSWORD' || s === 'SETUP_MFA' || s === 'CODES' ? ['CREDENTIALS', 'CHANGE_PASSWORD', 'SETUP_MFA', 'CODES'] : ['CREDENTIALS', 'MFA'];
   });
   protected readonly stepIndex = computed(() => Math.max(0, this.steps().indexOf(this.current())));
   protected label(s: string): string {
@@ -215,13 +239,25 @@ export class AdminLoginPage {
   protected changePassword() { return this.run(async () => this.step.set(await this.session.changePassword(this.step()!.challenge, this.newPassword))); }
   protected verify() {
     return this.run(async () => {
-      await this.session.verifyMfa(this.step()!.challenge, this.code.trim());
-      await this.router.navigateByUrl('/admin');
+      const codes = await this.session.verifyMfa(this.step()!.challenge, this.code.trim());
+      if (codes?.length) this.codes.set(codes);
+      else await this.enter();
     });
+  }
+  protected useRecovery() {
+    return this.run(async () => {
+      await this.session.verifyRecovery(this.step()!.challenge, this.recoveryCode.trim());
+      await this.enter();
+    });
+  }
+  protected enter() {
+    return this.router.navigateByUrl('/admin');
   }
   protected reset() {
     this.step.set(null);
     this.code = '';
+    this.recoveryCode = '';
+    this.recovery.set(false);
     this.error.set(null);
   }
 
@@ -239,6 +275,7 @@ export class AdminLoginPage {
     } finally {
       this.busy.set(false);
       this.code = '';
+      this.recoveryCode = '';
     }
   }
 }

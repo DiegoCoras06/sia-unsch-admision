@@ -70,6 +70,7 @@ const ROLE_NAMES: Record<string, string> = {
           <p class="adm-muted">{{ roles() }}</p>
           <div class="adm-row">
             <a routerLink="/" class="adm-link">Ver portal</a>
+            <a routerLink="/admin/seguridad" class="adm-link" (click)="menu.set(false)">Mi seguridad</a>
             <button type="button" class="adm-link" (click)="logout()">Cerrar sesión</button>
           </div>
         </div>

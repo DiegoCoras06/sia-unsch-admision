@@ -38,6 +38,7 @@ export const adminRoutes: Routes = [
       { path: 'inhabilitados', canActivate: [staff('inhabilitados.gestionar')], title: 'Inhabilitados - Panel', loadComponent: () => import('./pages/disqualified').then((m) => m.DisqualifiedAdminPage) },
       { path: 'usuarios', canActivate: [staff('usuarios.gestionar')], title: 'Usuarios - Panel', loadComponent: () => import('./pages/users').then((m) => m.UsersAdminPage) },
       { path: 'auditoria', canActivate: [staff('auditoria.ver')], title: 'Auditoría - Panel', loadComponent: () => import('./pages/audit').then((m) => m.AuditAdminPage) },
+      { path: 'seguridad', title: 'Mi seguridad - Panel', loadComponent: () => import('./pages/security').then((m) => m.SecurityPage) },
       { path: 'configuracion', canActivate: [staff('configuracion.gestionar')], title: 'Configuración - Panel', loadComponent: () => import('./pages/system').then((m) => m.SystemAdminPage) },
     ],
   },

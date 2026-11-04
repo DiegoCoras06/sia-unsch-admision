@@ -38,11 +38,22 @@ export class AdminSession {
   login = (email: string, password: string) => this.post<StaffStep>('/admin/auth/login', { email, password });
   changePassword = (challenge: string, newPassword: string) => this.post<StaffStep>('/admin/auth/password', { challenge, newPassword });
 
-  async verifyMfa(challenge: string, code: string): Promise<void> {
-    const r = await this.post<{ accessToken: string }>('/admin/auth/mfa', { challenge, code });
+  /** Al activar el segundo factor devuelve los códigos de respaldo, que no se vuelven a mostrar (ADR-022). */
+  async verifyMfa(challenge: string, code: string): Promise<string[] | undefined> {
+    const r = await this.post<{ accessToken: string; recoveryCodes?: string[] }>('/admin/auth/mfa', { challenge, code });
+    this.token = r.accessToken;
+    await this.loadMe();
+    return r.recoveryCodes;
+  }
+
+  async verifyRecovery(challenge: string, code: string): Promise<void> {
+    const r = await this.post<{ accessToken: string }>('/admin/auth/recovery', { challenge, code });
     this.token = r.accessToken;
     await this.loadMe();
   }
+
+  recoveryStatus = () => this.get<{ remaining: number }>('/admin/me/recovery-codes');
+  regenerateRecovery = (code: string) => this.postAuth<{ codes: string[] }>('/admin/me/recovery-codes', { code });
 
   /** Recupera la sesión con la cookie (recarga de página). Devuelve si hay sesión del personal. */
   restore(): Promise<boolean> {

@@ -68,9 +68,9 @@ export function usuariosRoutes(
     httpOnly: true, secure: cookieSecure, sameSite: 'strict', path: '/', maxAge: maxAgeSeconds * 1000,
   });
   const meta = (req: Request): RequestMeta => ({ requestId: req.requestId, ipHash: req.ipHash, userAgent: req.get('user-agent') ?? null });
-  const sendSession = (res: Response, result: Awaited<ReturnType<AuthService['login']>>) => {
+  const sendSession = (res: Response, result: Awaited<ReturnType<AuthService['login']>> & { recoveryCodes?: string[] }) => {
     res.cookie(cookieName, result.refreshToken, cookieOptions(SESSION_TTL[result.token.user.type]));
-    res.json({ data: result.token });
+    res.json({ data: { ...result.token, ...(result.recoveryCodes ? { recoveryCodes: result.recoveryCodes } : {}) } });
   };
   const readCookie = (req: Request): string | undefined => (req.cookies as Record<string, string> | undefined)?.[cookieName];
 
@@ -179,6 +179,18 @@ export function usuariosRoutes(
     router.post('/admin/auth/mfa', handle(async (req, res) => {
       const b = parse(z.object({ challenge: z.string().min(20), code: z.string().trim().regex(/^\d{6}$/, 'El código tiene 6 dígitos') }), req.body);
       sendSession(res, await staffAuth.verifyMfa(b.challenge, b.code, meta(req)));
+    }));
+    router.post('/admin/auth/recovery', handle(async (req, res) => {
+      const b = parse(z.object({ challenge: z.string().min(20), code: z.string().trim().min(10).max(16) }), req.body);
+      sendSession(res, await staffAuth.verifyRecoveryCode(b.challenge, b.code, meta(req)));
+    }));
+    router.get('/admin/me/recovery-codes', authenticate, guard('panel.ver'), handle(async (req, res) => {
+      res.json({ data: { remaining: await staffAuth.recoveryRemaining(req.principal!.userId) } });
+    }));
+    router.post('/admin/me/recovery-codes', authenticate, guard('panel.ver'), handle(async (req, res) => {
+      const b = parse(z.object({ code: z.string().trim().regex(/^\d{6}$/, 'El código tiene 6 dígitos') }), req.body);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { codes: await staffAuth.regenerateRecoveryCodes(req.principal!.userId, b.code, meta(req)) } });
     }));
     router.get('/admin/me', authenticate, guard('panel.ver'), handle(async (req, res) => {
       res.json({ data: await staffAuth.me(req.principal!.userId) });

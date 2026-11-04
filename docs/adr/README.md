@@ -27,5 +27,6 @@ Cada ADR documenta **una** decisión significativa: el contexto, lo que se decid
 | [019](ADR-019-yape-con-culqi.md) | Yape con Culqi junto al checkout de Izipay | Aceptado | 29/10/2026 |
 | [020](ADR-020-picos-de-demanda-cache-cloudfront.md) | Picos de demanda con caché en CloudFront antes que Redis | Aceptado | 03/11/2026 |
 | [021](ADR-021-cola-de-eventos-sqs.md) | Cola de eventos con Amazon SQS detrás de la bandeja de eventos | Aceptado | 03/11/2026 |
+| [022](ADR-022-codigos-de-respaldo-personal.md) | Códigos de respaldo para el segundo factor del personal | Aceptado | 03/11/2026 |
 
 Plantilla: [`plantilla.md`](plantilla.md)

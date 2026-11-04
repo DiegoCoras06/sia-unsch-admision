@@ -126,6 +126,8 @@
 /* Fijo al desplazar: la confirmación de guardado se ve aunque el formulario esté abajo. */
 .adm-msg { position: sticky; top: 0.75rem; z-index: 5; padding: 0.65rem 0.9rem; border-radius: var(--radius); font-size: 0.9375rem; background: #e3f1e8; color: #164d2a; }
 .adm-msg.err { background: #f7e3e3; color: #6d1212; }
+.adm-msg.warn { background: #fbf1d9; color: #6b4a00; }
+.adm-msg.warn a { color: inherit; font-weight: 700; }
 .adm-check { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.9375rem; }
 details.adm-json summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: var(--stone); padding: 0.5rem; margin: 0.35rem 0 0; }

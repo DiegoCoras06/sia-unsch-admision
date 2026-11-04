@@ -81,6 +81,7 @@ export class StaffAdmin {
     await this.staffUser(userId);
     await this.d.db.$transaction(async (tx) => {
       await tx.staffProfile.update({ where: { userId }, data: { mfaSecretEnc: null, mfaEnabledAt: null, mfaLastStep: null } });
+      await tx.staffRecoveryCode.deleteMany({ where: { userId } });
       await this.d.sessions.revokeAll(userId, 'MFA_RESET', tx);
       await this.d.audit.record({ actorUserId: actor, action: 'staff.mfa_reset', resourceType: 'user', resourceId: userId, ...meta }, tx);
     });

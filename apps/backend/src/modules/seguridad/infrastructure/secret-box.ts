@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
 /** Cifra secretos en reposo (secreto TOTP del personal) con AES-256-GCM; formato `v1.iv.tag.datos` en base64url. */
 export class SecretBox {
@@ -6,6 +6,11 @@ export class SecretBox {
 
   constructor(keyMaterial: string) {
     this.key = createHash('sha256').update(`secret-box:${keyMaterial}`).digest();
+  }
+
+  /** Huella con clave de un valor que solo hay que comparar (códigos de respaldo); sin la clave no se puede probar por fuerza bruta. */
+  fingerprint(value: string): string {
+    return createHmac('sha256', this.key).update(value).digest('hex');
   }
 
   seal(plain: string): string {

@@ -484,6 +484,7 @@ model User {
 
   applicant          Applicant?
   staff              StaffProfile?
+  recoveryCodes      StaffRecoveryCode[]
   emailCodes         EmailVerificationCode[]
   passwordResets     PasswordResetToken[]
   consents           Consent[]
@@ -1082,6 +1083,20 @@ model RateLimitCounter {
   @@id([key, windowStart])
   @@map("rate_limit_counters")
   @@schema("shared")
+}
+
+/// ADR-022: códigos de respaldo del segundo factor. Solo se guarda su huella (HMAC), nunca el código.
+model StaffRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @map("code_hash") @db.Char(64)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, codeHash])
+  @@map("staff_recovery_codes")
+  @@schema("usuarios")
 }
 
 model OutboxEvent {

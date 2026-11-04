@@ -2,7 +2,7 @@ import type { TokenDto } from '@sia/contracts';
 import QRCode from 'qrcode';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { Db, Tx } from '../../../shared/db/prisma.js';
 import { forbidden, locked, unauthorized, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../../seguridad/index.js';
 import { normalizeEmail, passwordIssues, registerLoginFailure } from '../domain/account-rules.js';
 import type { PasswordHasher } from '../domain/ports.js';
+import { newRecoveryCodes, normalizeRecoveryCode } from '../domain/recovery-codes.js';
 
 export type StaffStep = 'CHANGE_PASSWORD' | 'SETUP_MFA' | 'MFA';
 
@@ -21,6 +22,7 @@ export interface StaffChallenge {
   mfaSetup?: { secret: string; otpauthUri: string; qrDataUrl: string };
 }
 
+interface StaffSession { token: TokenDto; refreshToken: string }
 interface ChallengePayload { purpose: 'staff'; uid: string; step: StaffStep }
 
 /**
@@ -90,8 +92,8 @@ export class StaffAuthService {
     return staff.mfaEnabledAt ? this.challenge(uid, 'MFA', staff.fullName) : this.setupChallenge(uid, user.email, staff.fullName);
   }
 
-  /** Último paso: código TOTP (al activar o en cada ingreso) → sesión. */
-  async verifyMfa(challenge: string, code: string, meta: RequestMeta): Promise<{ token: TokenDto; refreshToken: string }> {
+  /** Último paso: código TOTP (al activar o en cada ingreso) → sesión. Al activar entrega los códigos de respaldo, una sola vez. */
+  async verifyMfa(challenge: string, code: string, meta: RequestMeta): Promise<StaffSession & { recoveryCodes?: string[] }> {
     const { uid, step } = await this.readChallenge(challenge, 'MFA', 'SETUP_MFA');
     await this.d.limiter.consume(`staff-mfa:${uid}`, 10, 900);
     const user = await this.d.db.user.findUniqueOrThrow({ where: { id: uid }, include: { staff: true } });
@@ -103,6 +105,7 @@ export class StaffAuthService {
       await this.d.audit.record({ actorUserId: uid, action: 'staff.mfa_failed', resourceType: 'user', resourceId: uid, ...meta });
       throw unauthorized('MFA_INVALID', 'El código no es válido o ya fue usado. Escribe el código actual de tu aplicación.');
     }
+    let recoveryCodes: string[] | undefined;
     await this.d.db.$transaction(async (tx) => {
       await tx.staffProfile.update({
         where: { userId: uid },
@@ -110,7 +113,58 @@ export class StaffAuthService {
       });
       await tx.user.update({ where: { id: uid }, data: { lastLoginAt: now, status: 'ACTIVE', emailVerifiedAt: user.emailVerifiedAt ?? now } });
       await this.d.audit.record({ actorUserId: uid, action: step === 'SETUP_MFA' ? 'staff.mfa_enabled' : 'staff.login', resourceType: 'user', resourceId: uid, ...meta }, tx);
+      if (step === 'SETUP_MFA') recoveryCodes = await this.replaceRecoveryCodes(tx, uid);
     });
+    return { ...(await this.openSession(uid, meta)), ...(recoveryCodes ? { recoveryCodes } : {}) };
+  }
+
+  /** Celular perdido: un código de respaldo reemplaza al TOTP en un ingreso y no vuelve a servir (ADR-022). */
+  async verifyRecoveryCode(challenge: string, code: string, meta: RequestMeta): Promise<StaffSession> {
+    const { uid } = await this.readChallenge(challenge, 'MFA');
+    await this.d.limiter.consume(`staff-mfa:${uid}`, 10, 900);
+    const normalized = normalizeRecoveryCode(code);
+    const now = this.d.clock.now();
+    // updateMany con `usedAt: null`: dos ingresos simultáneos no pueden gastar el mismo código.
+    const used = normalized
+      ? await this.d.db.staffRecoveryCode.updateMany({ where: { userId: uid, codeHash: this.d.secrets.fingerprint(normalized), usedAt: null }, data: { usedAt: now } })
+      : { count: 0 };
+    if (used.count === 0) {
+      await this.d.audit.record({ actorUserId: uid, action: 'staff.recovery_failed', resourceType: 'user', resourceId: uid, ...meta });
+      throw unauthorized('RECOVERY_INVALID', 'El código de respaldo no es válido o ya fue usado.');
+    }
+    await this.d.db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: uid }, data: { lastLoginAt: now } });
+      await this.d.audit.record({ actorUserId: uid, action: 'staff.login_recovery', resourceType: 'user', resourceId: uid, ...meta }, tx);
+    });
+    return this.openSession(uid, meta);
+  }
+
+  /** Cuántos códigos de respaldo sin usar le quedan. */
+  recoveryRemaining(userId: string): Promise<number> {
+    return this.d.db.staffRecoveryCode.count({ where: { userId, usedAt: null } });
+  }
+
+  /** Nuevos códigos con el TOTP actual: los anteriores dejan de valer. También para quien activó el segundo factor antes de que existieran. */
+  async regenerateRecoveryCodes(userId: string, code: string, meta: RequestMeta): Promise<string[]> {
+    await this.d.limiter.consume(`staff-mfa:${userId}`, 10, 900);
+    const staff = await this.d.db.staffProfile.findUniqueOrThrow({ where: { userId } });
+    const usedStep = staff.mfaSecretEnc ? this.d.totp.verify(this.d.secrets.open(staff.mfaSecretEnc), code.trim(), this.d.clock.now(), staff.mfaLastStep ?? null) : null;
+    if (usedStep === null) throw unauthorized('MFA_INVALID', 'El código no es válido o ya fue usado. Escribe el código actual de tu aplicación.');
+    return this.d.db.$transaction(async (tx) => {
+      await tx.staffProfile.update({ where: { userId }, data: { mfaLastStep: usedStep } });
+      await this.d.audit.record({ actorUserId: userId, action: 'staff.recovery_regenerated', resourceType: 'user', resourceId: userId, ...meta }, tx);
+      return this.replaceRecoveryCodes(tx, userId);
+    });
+  }
+
+  private async replaceRecoveryCodes(tx: Tx, userId: string): Promise<string[]> {
+    const codes = newRecoveryCodes();
+    await tx.staffRecoveryCode.deleteMany({ where: { userId } });
+    await tx.staffRecoveryCode.createMany({ data: codes.map((c) => ({ userId, codeHash: this.d.secrets.fingerprint(c) })) });
+    return codes;
+  }
+
+  private async openSession(uid: string, meta: RequestMeta): Promise<StaffSession> {
     const session = await this.d.sessions.create(uid, 'STAFF', { userAgent: meta.userAgent, ipHash: meta.ipHash });
     const roles = await this.d.access.rolesOf(uid);
     const accessToken = await this.d.tokens.signAccess({ sub: uid, sid: session.sessionId, typ: 'STAFF', roles });
