@@ -28,5 +28,6 @@ Cada ADR documenta **una** decisión significativa: el contexto, lo que se decid
 | [020](ADR-020-picos-de-demanda-cache-cloudfront.md) | Picos de demanda con caché en CloudFront antes que Redis | Aceptado | 03/11/2026 |
 | [021](ADR-021-cola-de-eventos-sqs.md) | Cola de eventos con Amazon SQS detrás de la bandeja de eventos | Aceptado | 03/11/2026 |
 | [022](ADR-022-codigos-de-respaldo-personal.md) | Códigos de respaldo para el segundo factor del personal | Aceptado | 03/11/2026 |
+| [023](ADR-023-portal-instalable-boleto-sin-conexion.md) | Portal instalable y boleto de examen sin conexión | Aceptado | 05/11/2026 |
 
 Plantilla: [`plantilla.md`](plantilla.md)

@@ -47,3 +47,4 @@
 
 - [x] T751 Temario por curso en la estructura del examen (RF-07.03)
 - [x] T752 Ficha de examen tipo boleto en «Buscar aula» (skill interface-design)
+- [x] T753 Portal instalable y boleto guardado por el postulante para verlo sin internet (ADR-023)

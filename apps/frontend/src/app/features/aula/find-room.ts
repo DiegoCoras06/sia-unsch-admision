@@ -7,15 +7,33 @@ import { dateTime } from '../../core/format';
 import { CallStore } from '../../core/call.store';
 import { CodeReminder } from '../../shared/code-reminder';
 import { DocsSidebar } from '../../shared/docs-sidebar';
+import { ExamTicket, type ExamTicketData } from './exam-ticket';
 
 const TZ = 'America/Lima';
 const longDate = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+/** Boleto guardado en el dispositivo (ADR-023). Solo lo que se ve en él: sin nombre ni DNI. */
+const KEPT = 'sia-boleto';
+
+function readKept(): ExamTicketData | null {
+  try {
+    const t = JSON.parse(localStorage.getItem(KEPT) ?? 'null') as ExamTicketData | null;
+    // Después del examen ya no sirve: no se deja en el dispositivo.
+    if (t?.entryClosesAt && new Date(t.entryClosesAt).getTime() + 86_400_000 < Date.now()) {
+      localStorage.removeItem(KEPT);
+      return null;
+    }
+    return t;
+  } catch {
+    return null;
+  }
+}
+
 const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
 
 /** Spec 006, Historia 4: «Buscar aula» con DNI + código, ficha de examen y solicitud de adecuación (RN-39). */
 @Component({
   selector: 'app-find-room',
-  imports: [FormsModule, RouterLink, DocsSidebar, CodeReminder],
+  imports: [FormsModule, RouterLink, DocsSidebar, CodeReminder, ExamTicket],
   template: `
     <section class="page field-accent">
       <div class="frame grid">
@@ -26,6 +44,13 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
             <ul class="pubdates" aria-label="Fechas de publicación de aulas">
               @for (d of dates(); track d.name) { <li><strong>{{ d.name }}:</strong> aulas desde el {{ d.publish }} · examen el {{ d.exam }}@if (d.ready) { <span class="pubdates__ok">publicado</span> }</li> }
             </ul>
+          }
+          @if (shownKept(); as t) {
+            <article class="card" aria-labelledby="saved-title">
+              <h2 id="saved-title" class="saved__title">Tu boleto guardado</h2>
+              <app-exam-ticket [data]="t" />
+              <p class="keep"><button type="button" class="keep__out" (click)="forget()">Quitar de este dispositivo</button></p>
+            </article>
           }
           <form class="box" (ngSubmit)="search()">
             <div class="field">
@@ -49,29 +74,15 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
               </header>
 
               @if (r.state === 'ASSIGNED' && r.room; as room) {
-                <section class="ticket" aria-labelledby="ticket-title">
-                  <header class="ticket__head">
-                    <div>
-                      <p class="ticket__kicker">Ficha de examen</p>
-                      <h3 id="ticket-title" class="ticket__exam">{{ r.exam?.name ?? r.modality }}</h3>
-                      @if (r.exam; as e) { <p class="ticket__date">{{ long(e.entryOpensAt) }}</p> }
-                    </div>
-                    <p class="ticket__code"><span>Código</span>{{ r.applicantCode }}</p>
-                  </header>
-                  <div class="ticket__main">
-                    <div class="ticket__room"><span>Aula</span><strong>{{ room.code }}</strong></div>
-                    <div class="ticket__seat"><span>Asiento</span><strong>{{ room.seat }}</strong></div>
-                  </div>
-                  <dl class="ticket__route">
-                    <div><dt>Puerta</dt><dd>{{ room.gate }}</dd></div>
-                    <div><dt>Pabellón</dt><dd>{{ room.building }}</dd></div>
-                    <div><dt>Piso</dt><dd>{{ room.floor }}</dd></div>
-                  </dl>
-                  @if (r.exam; as e) {
-                    <p class="ticket__entry"><strong>Ingreso de {{ hr(e.entryOpensAt) }} a {{ hr(e.entryClosesAt) }}</strong>, después no hay ingreso</p>
+                <app-exam-ticket [data]="ticketOf(r)" />
+                <p class="keep">
+                  @if (saved()?.applicantCode === r.applicantCode) {
+                    <span>Guardado en este dispositivo: podrás verlo aquí sin internet.</span>
+                  } @else {
+                    <button type="button" class="btn btn--quiet" (click)="keep(r)">Guardar en este celular</button>
+                    <span>Para verlo sin internet el día del examen. No guarda tu nombre ni tu DNI.</span>
                   }
-                  <p class="ticket__venue">{{ room.venue }}, {{ room.address }}@if (room.accessible) { <span class="ticket__acc">Aula accesible</span> }</p>
-                </section>
+                </p>
               } @else if (r.message) {
                 <p class="alert" [class.alert--info]="r.state === 'NOT_PUBLISHED'" [class.alert--error]="r.state === 'NOT_ELIGIBLE' || r.state === 'NOT_ASSIGNED'" role="status">{{ r.message }}</p>
               }
@@ -124,6 +135,10 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     </section>
   `,
   styles: `
+    .saved__title { font-size: 1.25rem; letter-spacing: -0.01em; }
+    .keep { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; max-width: none; font-size: var(--size-note); color: var(--ink-soft); }
+    .keep__out { min-height: 2.75rem; padding: 0; font: inherit; color: var(--ink-soft); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
+    @media print { .keep { display: none; } }
     .pubdates { list-style: none; margin: 0; padding: 0.9rem 1.1rem; display: grid; gap: 0.35rem; background: var(--accent-press); }
     .pubdates__ok { margin-left: 0.4rem; padding: 0.1rem 0.45rem; background: var(--gold); color: var(--ink); font-size: var(--size-note); font-weight: 700; }
     .page { padding-block: clamp(2.5rem, 6vw, 5rem); }
@@ -141,33 +156,6 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     .card__who p { color: var(--ink-soft); }
     /* Boleto de examen: el aula y el asiento son el foco; la ruta (puerta, pabellón, piso) la acompaña.
        Las muescas laterales y la línea punteada separan el talón, como en un boleto impreso. */
-    .ticket { --notch: 0.75rem; position: relative; display: grid; border-radius: var(--radius-lg); overflow: hidden;
-      background: var(--accent); color: var(--accent-ink); }
-    .ticket__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.25rem 1.5rem 1rem; }
-    .ticket__kicker { margin: 0; font-size: var(--size-note); font-weight: 600; color: var(--gold); }
-    .ticket__exam { margin: 0.15rem 0 0; font-size: clamp(1.125rem, 2.2vw, 1.375rem); letter-spacing: -0.01em; }
-    .ticket__date { margin: 0.15rem 0 0; opacity: 0.9; }
-    .ticket__code { margin: 0; display: grid; justify-items: end; font-size: clamp(1.25rem, 2.6vw, 1.625rem); font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
-    .ticket__code span { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; color: var(--accent-ink); opacity: 0.85; }
-    .ticket__main { position: relative; display: grid; grid-template-columns: 2fr 1fr; gap: 1px; background: rgb(255 255 255 / 0.18);
-      border-top: 2px dashed rgb(255 255 255 / 0.35); }
-    .ticket__main::before, .ticket__main::after { content: ''; position: absolute; top: calc(-1 * var(--notch) - 1px); width: calc(2 * var(--notch)); height: calc(2 * var(--notch));
-      border-radius: 50%; background: var(--ground); }
-    .ticket__main::before { left: calc(-1 * var(--notch)); }
-    .ticket__main::after { right: calc(-1 * var(--notch)); }
-    .ticket__main > div { display: grid; gap: 0.15rem; padding: 1.25rem 1.5rem; background: var(--accent); }
-    .ticket__main span, .ticket__route dt { font-size: 0.875rem; font-weight: 600; color: var(--gold); }
-    .ticket__main strong { font-size: clamp(3rem, 8vw, 4.5rem); font-weight: 800; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-    .ticket__seat { background: var(--accent-press) !important; }
-    .ticket__route { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); background: var(--accent-press); }
-    .ticket__route div { min-width: 0; padding: 0.9rem 1.5rem; display: grid; gap: 0.1rem; border-right: 1px solid rgb(255 255 255 / 0.15); }
-    .ticket__route dd { overflow-wrap: anywhere; }
-    .ticket__route div:last-child { border-right: 0; }
-    .ticket__route dd { margin: 0; font-size: clamp(1.25rem, 2.6vw, 1.625rem); font-weight: 700; font-variant-numeric: tabular-nums; }
-    .ticket__entry { margin: 0; padding: 0.9rem 1.5rem; background: var(--gold); color: var(--ink); max-width: none; }
-    .ticket__venue { margin: 0; padding: 0.9rem 1.5rem 1.1rem; font-size: var(--size-note); opacity: 0.92; max-width: none; }
-    .ticket__acc { margin-left: 0.5rem; padding: 0.1rem 0.5rem; border-radius: var(--radius); background: rgb(255 255 255 / 0.16); font-weight: 600; white-space: nowrap; }
-    @media print { .ticket { border: 2px solid var(--accent); } .ticket__main::before, .ticket__main::after { display: none; } }
     .when { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.5rem; margin: 0; }
     .when dt { font-size: var(--size-note); color: var(--ink-soft); }
     .when dd { margin: 0; font-weight: 700; }
@@ -184,8 +172,6 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
     @media (max-width: 640px) {
       .box, .rules, .when { grid-template-columns: 1fr; }
-      .ticket__head { padding: 1.1rem 1.1rem 0.9rem; }
-      .ticket__main > div, .ticket__route div, .ticket__entry, .ticket__venue { padding-inline: 1.1rem; }
     }
   `,
 })
@@ -202,6 +188,7 @@ export class FindRoomPage {
   });
 
   private readonly api = inject(ApiService);
+  protected readonly saved = signal<ExamTicketData | null>(readKept());
   protected doc = '';
   protected code = '';
   protected needs = '';
@@ -210,10 +197,35 @@ export class FindRoomPage {
   protected readonly downloading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly r = signal<ExamRoomDto | null>(null);
+  /** El boleto guardado, salvo que ya esté en pantalla por una consulta. */
+  protected readonly shownKept = computed(() => (this.saved()?.applicantCode === this.r()?.applicantCode ? null : this.saved()));
   protected readonly long = longDate;
   protected readonly hr = hour;
   protected readonly when = dateTime;
   private searched: { doc: string; code: string } | null = null;
+
+  protected ticketOf(r: ExamRoomDto): ExamTicketData {
+    return { applicantCode: r.applicantCode, examName: r.exam?.name ?? r.modality, entryOpensAt: r.exam?.entryOpensAt ?? null, entryClosesAt: r.exam?.entryClosesAt ?? null, room: r.room! };
+  }
+
+  protected keep(r: ExamRoomDto) {
+    const ticket = this.ticketOf(r);
+    try {
+      localStorage.setItem(KEPT, JSON.stringify(ticket));
+      this.saved.set(ticket);
+    } catch {
+      this.error.set('No pudimos guardar tu boleto en este dispositivo. Descarga la ficha en PDF.');
+    }
+  }
+
+  protected forget() {
+    try {
+      localStorage.removeItem(KEPT);
+    } catch {
+      // Sin acceso al almacenamiento no hay nada que quitar.
+    }
+    this.saved.set(null);
+  }
 
   protected async search() {
     this.error.set(null);
