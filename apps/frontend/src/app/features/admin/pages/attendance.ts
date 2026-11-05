@@ -72,7 +72,7 @@ const INCIDENTS = [
               <p class="at-code">{{ o.code }}</p>
               @if (o.row) { <h3>{{ o.row.fullName }}</h3><p>{{ o.row.document }} · asiento {{ o.row.seat }}</p> }
               @else { <h3>Código fuera de la lista de esta aula</h3> }
-              <p class="at-state">Sin conexión: lectura guardada a las {{ when(o.at) }}. Compara el DNI con la persona; la foto y el estado de apto se confirman al enviar.</p>
+              <p class="at-state">Sin conexión: lectura guardada a las {{ when(o.at) }} - Compara el DNI con la persona; la foto y el estado de apto se confirman al enviar.</p>
             </div>
           </article>
         }
