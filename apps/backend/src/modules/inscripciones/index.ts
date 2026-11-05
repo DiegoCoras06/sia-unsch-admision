@@ -41,12 +41,19 @@ export function createInscripcionesModule(deps: {
   deps.outbox.subscribe('InscripcionRegistrada', async (e) => {
     const { html, text } = renderEmail('Tu inscripción quedó registrada', [
       `Hola ${e.firstNames}:`,
-      `Tu código de postulante es <strong style="font-size:22px">${e.applicantCode}</strong>.`,
-      `Programa: <strong>${e.program}</strong> · Modalidad: ${e.modality}.`,
-      `Monto a pagar: <strong>S/ ${e.total}</strong>. Paga en línea desde «Mi inscripción» (tarjeta, Yape o Plin con Izipay) o en Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante.`,
-      `Estado: ${e.status}. Examen: ${e.examDate}.`,
-      `Consulta tu inscripción en <a href="${deps.frontendOrigin}/mi-inscripcion">${deps.frontendOrigin}/mi-inscripcion</a> con tu DNI y tu código.`,
-    ]);
+      'Guarda tu código de postulante: lo necesitas para pagar, descargar tu ficha y consultar tu aula y tu resultado.',
+      `Paga en línea desde «Mi inscripción» (tarjeta o Yape) o en Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante.`,
+    ], {
+      facts: [
+        ['Código de postulante', e.applicantCode],
+        ['Programa', e.program],
+        ['Modalidad', e.modality],
+        ['Monto a pagar', `S/ ${e.total}`],
+        ['Estado', e.status],
+        ['Examen', e.examDate],
+      ],
+      action: { label: 'Ver mi inscripción', url: `${deps.frontendOrigin}/mi-inscripcion` },
+    });
     await deps.email.send({ to: e.email, subject: 'Inscripción registrada - Admisión UNSCH 2027-I', html, text });
   });
 
@@ -67,10 +74,17 @@ export function createInscripcionesModule(deps: {
     if (!row) return;
     const { html, text } = renderEmail('Recibimos tu pago', [
       `Hola ${row.firstNames}:`,
-      `Confirmamos tu pago de <strong>S/ ${e.amount}</strong> (operación ${e.operationNumber}, ${e.payMethod}).`,
       row.changed ? 'Tu inscripción ahora está <strong>Apta</strong>.' : 'Tu inscripción ya tenía el pago registrado.',
-      `Descarga tu ficha de inscripción con código QR en <a href="${deps.frontendOrigin}/mi-inscripcion">${deps.frontendOrigin}/mi-inscripcion</a> con tu DNI y tu código ${e.applicantCode}. Imprímela y llévala al examen con tu DNI.`,
-    ]);
+      'Descarga tu ficha de inscripción con código QR, imprímela y llévala al examen con tu DNI.',
+    ], {
+      facts: [
+        ['Código de postulante', e.applicantCode],
+        ['Monto', `S/ ${e.amount}`],
+        ['Operación', e.operationNumber],
+        ['Medio de pago', e.payMethod],
+      ],
+      action: { label: 'Descargar mi ficha', url: `${deps.frontendOrigin}/mi-inscripcion` },
+    });
     await deps.email.send({ to: row.email, subject: 'Pago confirmado - Admisión UNSCH 2027-I', html, text });
   });
 

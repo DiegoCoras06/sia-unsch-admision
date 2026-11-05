@@ -115,6 +115,16 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Error de conexión o del servidor (0 o 5xx): aviso general con «Reintentar» que reemplaza al error de la pantalla. Los 4xx los explica cada pantalla.
 - Mensajes `.adm-msg` fijos al desplazar, para que la confirmación se vea aunque el formulario esté abajo.
 
+### Documentos PDF (`shared/pdf/letterhead.ts`)
+- Membrete sobre papel blanco, como un oficio: escudo, universidad, título guinda en Archivo y doble línea guinda y dorada. Sin bloques de color de lado a lado: gastan tóner y se imprimen mal en blanco y negro.
+- Etiquetas en minúscula, sin «·» ni mayúsculas sostenidas. Un solo bloque guinda por documento, para el dato principal (total en la orden, aula en la ficha de examen).
+- Constancia de ingreso: marco doble guinda y dorado con el escudo tenue de fondo.
+- Pie con línea fina, datos de emisión y la nota de proyecto académico. Cada documento cabe en una hoja A4.
+
+### Correos (`renderEmail`)
+- Tablas y estilos en línea para Gmail y Outlook. Banda guinda con filete dorado, título guinda, tarjeta de datos sobre `#f7f2ee` y un solo botón de acción.
+- Sin imágenes: muchos clientes las bloquean. La versión de texto lleva los mismos datos y el enlace.
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 
@@ -132,4 +142,5 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 | Ficha de examen como boleto | Lo que se muestra en la puerta el día del examen debe leerse de un vistazo en el celular | 30/10/2026 |
 | Panel agrupado por tarea y «Pendientes de hoy» primero | El personal entra a resolver algo; 19 secciones sueltas y 6 botones de exportación tapaban lo urgente | 02/11/2026 |
 | Estados de tabla en un solo lugar | Eran 20 pantallas, solo 2 mostraban carga y varias quedaban en blanco; cualquier pantalla nueva los hereda | 03/11/2026 |
+| PDF con membrete blanco y Archivo | El bloque guinda gastaba tóner, el escudo JPG quedaba con recuadro y Helvetica no se parecía al portal | 03/11/2026 |
 | Resultado con la condición como foco y regla 0–1000 | El postulante quiere saber primero si ingresó; la regla muestra qué tan cerca quedó del mínimo | 30/10/2026 |

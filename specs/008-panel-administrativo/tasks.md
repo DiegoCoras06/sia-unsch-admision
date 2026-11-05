@@ -53,3 +53,4 @@
 - [x] T550 Inicio del panel con «Pendientes de hoy» enlazados a su sección y menú «Descargar reporte» con los 6 reportes; estados de carga y error con reintento
 - [x] T551 Estados de carga, vacío y error comunes a las tablas del panel, y mensajes fijos al desplazar
 - [x] T552 Códigos de respaldo del segundo factor: entrega única al activar, ingreso con código, «Mi seguridad» y aviso en el inicio (ADR-022)
+- [x] T553 Documentos PDF con membrete común y tipografía Archivo; plantilla de correo con tarjeta de datos y botón de acción

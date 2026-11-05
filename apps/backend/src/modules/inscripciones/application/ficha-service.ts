@@ -1,8 +1,4 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db } from '../../../shared/db/prisma.js';
@@ -12,16 +8,12 @@ import type { RequestMeta } from '../../../shared/audit/audit.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
 import type { ConvocatoriasQueries } from '../../convocatorias/index.js';
 import { MODALITIES, STATUS_LABEL, maskDocument } from '../domain/inscription-rules.js';
+import { BOLD, GUINDA, HEAVY, INK, letterhead, NOT_OFFICIAL, PAPER, pageFooter, REGULAR, renderPdf, sectionTitle, SOFT } from '../../../shared/pdf/letterhead.js';
 
-const ESCUDO = readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../assets/escudo-unsch.jpg'));
-const GUINDA = '#7A1C22';
-const GOLD = '#D9B44A';
-const INK = '#1D1415';
-const SOFT = '#5B4F50';
 /** Horario de ingreso al local por modalidad (RN-36, Art. 25). */
 const ENTRY: Record<string, string> = {
-  ORD: '6:30 a 8:30 a.m. · puertas 1 y 2 de la Ciudad Universitaria',
-  EXO: '7:00 a 8:30 a.m. · puertas 1 y 2 de la Ciudad Universitaria',
+  ORD: '6:30 a 8:30 a.m., puertas 1 y 2 de la Ciudad Universitaria',
+  EXO: '7:00 a 8:30 a.m., puertas 1 y 2 de la Ciudad Universitaria',
   CEPRE: 'Adjudicado por el CEPRE-UNSCH: no rinde examen',
 };
 const longDate = (d: Date) => d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -77,49 +69,37 @@ export class FichaService {
     const category = categories.find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory;
     const modality = MODALITIES[row.modality as keyof typeof MODALITIES] ?? row.modality;
 
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ size: 'A4', margin: 40, info: { Title: `Ficha de inscripción ${applicantCode}`, Author: 'Dirección de Admisión UNSCH' } });
-      const chunks: Buffer[] = [];
-      doc.on('data', (c: Buffer) => chunks.push(c));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+    return renderPdf(`Ficha de inscripción ${applicantCode}`, (doc) => {
       const W = doc.page.width;
       const L = 40;
       const R = W - 40;
 
-      // Encabezado institucional.
-      doc.rect(0, 0, W, 112).fill(GUINDA);
-      doc.image(ESCUDO, L, 18, { height: 76 });
-      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(13).text('UNIVERSIDAD NACIONAL DE SAN CRISTÓBAL DE HUAMANGA', L + 76, 26, { width: R - L - 76 });
-      doc.font('Helvetica').fontSize(10).text(`Dirección de Admisión · ${call.name}`, L + 76, 46);
-      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(22).text('FICHA DE INSCRIPCIÓN', L + 76, 66);
+      const top = letterhead(doc, { title: 'Ficha de inscripción', subtitle: `Dirección de Admisión, ${call.name}` });
 
       // Código de postulante y foto.
-      const top = 136;
-      doc.rect(L, top, 132, 176).fill('#F3EFEA');
+      doc.roundedRect(L, top, 132, 176, 6).fill(PAPER);
       if (photo) doc.image(photo, L + 6, top + 6, { width: 120, height: 160 });
       else doc.fillColor(SOFT).fontSize(9).text('Fotografía', L, top + 80, { width: 132, align: 'center' });
       const x = L + 152;
-      doc.fillColor(SOFT).font('Helvetica').fontSize(9).text('CÓDIGO DE POSTULANTE', x, top);
-      doc.fillColor(GUINDA).font('Helvetica-Bold').fontSize(34).text(applicantCode, x, top + 12, { characterSpacing: 2 });
+      doc.fillColor(SOFT).font(REGULAR).fontSize(9).text('Código de postulante', x, top);
+      doc.fillColor(GUINDA).font(HEAVY).fontSize(34).text(applicantCode, x, top + 12, { characterSpacing: 2 });
       const field = (label: string, value: string, y: number, w = R - x) => {
-        doc.fillColor(SOFT).font('Helvetica').fontSize(8.5).text(label.toUpperCase(), x, y, { width: w });
-        doc.fillColor(INK).font('Helvetica-Bold').fontSize(11.5).text(value, x, y + 11, { width: w });
+        doc.fillColor(SOFT).font(REGULAR).fontSize(8.5).text(label, x, y, { width: w });
+        doc.fillColor(INK).font(BOLD).fontSize(11.5).text(value, x, y + 11, { width: w });
       };
       field('Apellidos y nombres', `${row.paternalSurname} ${row.maternalSurname}, ${row.firstNames}`, top + 58);
       field('Documento de identidad', `${row.documentType} ${row.documentNumber}`, top + 92, 150);
-      doc.fillColor(SOFT).font('Helvetica').fontSize(8.5).text('ESTADO', x + 170, top + 92);
-      doc.fillColor('#164D2A').font('Helvetica-Bold').fontSize(11.5).text(STATUS_LABEL[row.status], x + 170, top + 103);
+      doc.fillColor(SOFT).font(REGULAR).fontSize(8.5).text('Estado', x + 170, top + 92);
+      doc.fillColor('#164D2A').font(BOLD).fontSize(11.5).text(STATUS_LABEL[row.status], x + 170, top + 103);
       field('Modalidad', category === modality ? modality : `${modality} - ${category}`, top + 126);
 
       // Datos del examen.
       let y = top + 196;
-      doc.rect(L, y, R - L, 26).fill(GUINDA);
-      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(11).text('PROGRAMA DE ESTUDIO Y EXAMEN', L + 10, y + 8);
-      y += 36;
+      sectionTitle(doc, 'Programa de estudio y examen', y);
+      y += 22;
       const row2 = (label: string, value: string) => {
-        doc.fillColor(SOFT).font('Helvetica').fontSize(9).text(label, L, y, { width: 150 });
-        doc.fillColor(INK).font('Helvetica-Bold').fontSize(11).text(value, L + 155, y, { width: R - L - 155 - 150 });
+        doc.fillColor(SOFT).font(REGULAR).fontSize(9).text(label, L, y, { width: 150 });
+        doc.fillColor(INK).font(BOLD).fontSize(11).text(value, L + 155, y, { width: R - L - 155 - 150 });
         y = Math.max(doc.y, y + 14) + 8;
       };
       row2('Programa de estudio', option.displayName);
@@ -133,13 +113,13 @@ export class FichaService {
       // QR de verificación.
       const qrTop = top + 230;
       doc.image(qr, R - 130, qrTop, { width: 130 });
-      doc.fillColor(SOFT).font('Helvetica').fontSize(8).text('Escanea para verificar esta ficha', R - 140, qrTop + 134, { width: 150, align: 'center' });
+      doc.fillColor(SOFT).font(REGULAR).fontSize(8).text('Escanea para verificar esta ficha', R - 140, qrTop + 134, { width: 150, align: 'center' });
 
       // Indicaciones (Art. 26).
       y = Math.max(y, qrTop + 160) + 6;
-      doc.rect(L, y, R - L, 92).fill('#F3EFEA');
-      doc.fillColor(INK).font('Helvetica-Bold').fontSize(10).text('Indicaciones para el día del examen', L + 12, y + 10);
-      doc.font('Helvetica').fontSize(9).fillColor(INK).list([
+      doc.roundedRect(L, y, R - L, 92, 6).fill(PAPER);
+      doc.fillColor(INK).font(BOLD).fontSize(10).text('Indicaciones para el día del examen', L + 12, y + 10);
+      doc.font(REGULAR).fontSize(9).fillColor(INK).list([
         'Presenta tu DNI original vigente y esta ficha impresa. Sin ellos no ingresas al local.',
         'Lleva solo lápiz 2B, borrador y tajador.',
         'Prohibido: celulares, relojes y equipos electrónicos, objetos metálicos, joyas, lapiceros, mochilas y ropa con capucha o de jean.',
@@ -154,12 +134,10 @@ export class FichaService {
       doc.fillColor(SOFT).fontSize(8.5).text('Firma del postulante', L + 20, y + 58, { width: 200, align: 'center' });
       doc.text('Huella digital', R - 110, y + 74, { width: 90, align: 'center' });
 
-      // Pie dentro del margen inferior: sin margen, PDFKit no crea una segunda hoja.
-      doc.page.margins.bottom = 0;
-      doc.fillColor(SOFT).fontSize(7.5)
-        .text(`Emitida el ${this.d.clock.now().toLocaleString('es-PE', { timeZone: 'America/Lima' })} · Verificación: ${this.verifyUrl(applicantCode)}`, L, doc.page.height - 46, { width: R - L, align: 'center', lineBreak: false })
-        .text('SIA-UNSCH · proyecto académico del curso de Arquitectura de Software', L, doc.page.height - 34, { width: R - L, align: 'center', lineBreak: false });
-      doc.end();
+      pageFooter(doc, [
+        `Emitida el ${this.d.clock.now().toLocaleString('es-PE', { timeZone: 'America/Lima' })} - Verificación: ${this.verifyUrl(applicantCode)}`,
+        NOT_OFFICIAL,
+      ]);
     });
   }
 
