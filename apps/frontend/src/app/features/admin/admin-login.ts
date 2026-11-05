@@ -140,13 +140,14 @@ const STEP_LABEL: Record<string, string> = {
     .cover { display: flex; flex-direction: column; justify-content: space-between; gap: 2.5rem; padding: clamp(2rem, 5vw, 4.5rem);
       background: var(--accent); color: var(--accent-ink); }
     .cover__top { display: grid; gap: 1rem; justify-items: start; }
-    .cover__crest { width: clamp(7rem, 12vw, 10rem); height: auto; filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.25)); }
+    /* Sello blanco: sobre el guinda, el dorado del escudo pierde contraste. */
+    .cover__crest { width: clamp(8rem, 13vw, 11rem); height: auto; padding: 0.9rem; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--gold); }
     .cover__uni { margin: 0.75rem 0 0; font-size: 0.9375rem; opacity: 0.85; max-width: 28ch; }
     .cover__office { margin: 0; font-size: clamp(2rem, 3.6vw, 3rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; text-wrap: balance; }
     .cover__file { margin: 0; display: grid; gap: 0; max-width: 28rem; border-top: 1px solid rgb(255 255 255 / 0.25); }
-    .cover__file div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid rgb(255 255 255 / 0.25); }
+    .cover__file div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.1rem 1rem; padding: 0.7rem 0; border-bottom: 1px solid rgb(255 255 255 / 0.25); }
     .cover__file dt { opacity: 0.85; white-space: nowrap; }
-    .cover__file dd { margin: 0; font-weight: 700; color: var(--gold); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .cover__file dd { margin: 0; font-weight: 700; color: var(--gold); margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
     .cover__note { margin: 0; font-size: 0.875rem; opacity: 0.8; max-width: 40ch; }
 
     /* Formulario: centrado en su mitad, con un solo foco (el botón del paso). */
@@ -178,7 +179,7 @@ const STEP_LABEL: Record<string, string> = {
       .login { grid-template-columns: minmax(0, 1fr); }
       .cover { flex-direction: row; align-items: center; padding: 1.25rem; gap: 1rem; }
       .cover__top { grid-template-columns: auto 1fr; align-items: center; gap: 0 0.9rem; }
-      .cover__crest { width: 3.5rem; grid-row: span 2; }
+      .cover__crest { width: 4rem; padding: 0.35rem; box-shadow: 0 0 0 2px var(--gold); grid-row: span 2; }
       .cover__uni { margin: 0; font-size: 0.8125rem; }
       .cover__office { font-size: 1.375rem; }
       .cover__file, .cover__note { display: none; }

@@ -58,7 +58,7 @@ import { AREA_NAMES } from '../../../core/format';
         <a routerLink="/programas" class="link-arrow">Ver todos los programas</a>
       </section>
     } @else {
-      <section class="frame section"><p>Cargando…</p></section>
+      <section class="frame section"><div class="skel" role="status" aria-label="Cargando el programa"><span></span><span></span><span></span><span></span><span></span><span></span></div></section>
     }
   `,
   styles: `

@@ -94,7 +94,7 @@
       <a routerLink="/programas" class="link-arrow" appReveal="60">Buscar programa y vacantes</a>
     </div>
     @switch (optionsState()) {
-      @case ('loading') { <p class="load-note" role="status">Cargando los programas de estudio…</p> }
+      @case ('loading') { <div class="skel skel--cards" role="status" aria-label="Cargando los programas de estudio"><span></span><span></span><span></span></div> }
       @case ('error') { <p class="load-note" role="status">No pudimos cargar los programas ahora. Consulta la lista completa en <a routerLink="/programas">Programas de estudios</a>.</p> }
     }
     @if (optionsState() === 'ok') {
@@ -212,7 +212,7 @@
           </li>
         } @empty {
           @switch (newsState()) {
-            @case ('loading') { <li><p role="status">Cargando comunicados…</p></li> }
+            @case ('loading') { <li><div class="skel" role="status" aria-label="Cargando comunicados"><span></span><span></span><span></span></div></li> }
             @case ('error') { <li><p role="status">No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.</p></li> }
             @default { <li><p>No hay comunicados publicados.</p></li> }
           }

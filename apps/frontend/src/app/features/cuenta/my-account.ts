@@ -79,7 +79,7 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
           </div>
         </div>
       } @else {
-        <div class="frame"><p role="status">Cargando tu cuenta…</p></div>
+        <div class="frame"><div class="skel" role="status" aria-label="Cargando tu cuenta"><span></span><span></span><span></span><span></span><span></span></div></div>
       }
     </section>
   `,

@@ -59,7 +59,7 @@ import { StageTrack } from '../../../shared/stage-track';
     } @else if (store.unavailable()) {
       <section class="frame section"><p class="alert alert--info">Próximamente: aún no hay una convocatoria publicada.</p></section>
     } @else {
-      <section class="frame section"><p>Cargando el cronograma…</p></section>
+      <section class="frame section"><div class="skel skel--cards" role="status" aria-label="Cargando el cronograma"><span></span><span></span><span></span><span></span></div></section>
     }
 
     <section class="section--tight field-stone">

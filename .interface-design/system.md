@@ -139,6 +139,12 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Barras finas de 0.625rem con extremo redondeado y proporcionales al valor real. Nunca anchos fijos.
 - Cifras únicas como indicador, no como gráfico.
 
+### Acabado común del portal
+- Transición entre páginas: fundido de 180 ms con `withViewTransitions`; cabecera y menú del panel quedan fijos. Sin animación con «reducir movimiento».
+- Carga: `.skel` con filas o `.skel--cards`, nunca un texto «Cargando…» suelto.
+- Escudo sobre guinda: sello blanco circular con filete dorado.
+- Impresión: sin cabecera, pie, asistente ni botones; el contenido con entrada animada se imprime igual.
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 

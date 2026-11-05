@@ -192,7 +192,34 @@ body:has(dialog.ck[open]) app-assistant { display: none; }
   body:has(.mobilebar) app-assistant .launcher { display: none; }
 }
 
+/* Transición entre páginas: un fundido breve. Cabecera y menú del panel no se mueven. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
+app-site-header .bar { view-transition-name: cabecera; }
+.adm-side { view-transition-name: menu-panel; }
+
+/* Filas de carga: reservan el lugar del contenido y evitan que la página salte al llegar los datos. */
+.skel { display: grid; gap: 0.75rem; padding-block: 0.5rem; }
+.skel > span { display: block; height: 1rem; border-radius: var(--radius); background: var(--stone-deep); animation: skel-pulse 1.2s ease-in-out infinite alternate; }
+.skel > span:nth-child(3n + 1) { width: 72%; }
+.skel > span:nth-child(3n + 2) { width: 94%; }
+.skel > span:nth-child(3n) { width: 58%; }
+.skel--cards { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.skel--cards > span { width: 100% !important; height: 6rem; border-radius: var(--radius-lg); }
+@keyframes skel-pulse { to { opacity: 0.45; } }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* Impresión: solo el contenido, en papel blanco. Lo que aún no entró en pantalla también debe imprimirse. */
+@media print {
+  app-site-header, app-site-footer, app-assistant, .skip-link, .mobilebar, main .btn, main .link-arrow { display: none !important; }
+  body { background: #fff; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .field-stone { background: none !important; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { break-after: avoid; }
+  li, tr { break-inside: avoid; }
 }
