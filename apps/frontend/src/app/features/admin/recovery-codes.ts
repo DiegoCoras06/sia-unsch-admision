@@ -10,7 +10,7 @@ import { Component, input, output, signal } from '@angular/core';
     </ol>
     <div class="rc__actions">
       <button type="button" class="btn btn--quiet" (click)="copy()">{{ copied() ? 'Copiados' : 'Copiar' }}</button>
-      <button type="button" class="btn btn--quiet" (click)="download()">Descargar</button>
+      <button type="button" class="btn btn--quiet" (click)="download()" data-icon="descargar">Descargar</button>
     </div>
     <label class="rc__check"><input type="checkbox" [checked]="saved()" (change)="saved.set(!saved())"> Ya los guardé en un lugar seguro</label>
     <button type="button" class="btn rc__done" [disabled]="!saved()" (click)="done.emit()">{{ doneLabel() }}</button>

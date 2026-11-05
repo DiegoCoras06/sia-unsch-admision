@@ -90,12 +90,7 @@ type Menu = 'contenido' | 'pasos' | null;
     </header>
   `,
   styles: `
-    /* Vidrio sutil en una capa aparte: backdrop-filter sobre .bar cambiaría la referencia del menú desplegable. */
-    .bar { position: sticky; top: 0; z-index: 30; box-shadow: 0 1px 0 #e6e6e6; }
-    .bar::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #fff; }
-    @supports (backdrop-filter: blur(1px)) {
-      .bar::before { background: rgb(255 255 255 / 0.88); backdrop-filter: saturate(160%) blur(10px); }
-    }
+    .bar { background: #fff; position: sticky; top: 0; z-index: 30; box-shadow: 0 1px 0 #e6e6e6, 0 8px 18px -14px rgb(29 20 21 / 0.35); }
     .bar__inner { display: flex; align-items: center; gap: 2rem; min-height: 5.75rem; position: relative; }
     .brand { display: flex; align-items: center; text-decoration: none; margin-right: 1.5rem; }
     .brand img { width: 56px; height: auto; }

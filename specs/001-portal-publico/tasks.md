@@ -118,4 +118,4 @@ Fase 1 → Fase 2 → Fases 3, 4, 5 (paralelas) → 6, 7, 8 → final. La 002 de
 - [x] T111 Línea de tiempo del cronograma con marca «Hoy» y cuenta de días hasta el cierre de cada etapa en curso
 - [x] T112 Imagen y metadatos para compartir enlaces, y página 404 con los trámites más buscados
 - [x] T113 Transiciones entre páginas, filas de carga, sello del escudo sobre guinda e impresión cuidada
-- [x] T114 Cabecera con vidrio sutil, botones con estados e indicador de proceso, y respuesta al puntero en enlaces y tarjetas
+- [x] T114 Botones con estados e indicador de proceso, respuesta al puntero en enlaces y tarjetas, degradado de la portada e iconos de acción

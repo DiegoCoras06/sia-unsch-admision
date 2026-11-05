@@ -11,7 +11,9 @@
 .hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1.75rem; }
 .hero__count { margin-top: 1rem; display: grid; gap: 0.5rem; }
 .hero__count-label { font-weight: 600; }
-.hero__media { margin: 0; overflow: hidden; background: var(--stone-deep); }
+.hero__media { position: relative; margin: 0; overflow: hidden; background: var(--stone-deep); }
+/* Degradado fijo: funde la foto con el campo guinda y le da profundidad, sin animación. */
+.hero__media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(122 28 34 / 0.75), rgb(122 28 34 / 0) 34%), linear-gradient(0deg, rgb(29 20 21 / 0.22), rgb(29 20 21 / 0) 30%); }
 .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 30% center; animation: drift 24s var(--ease) both; }
 @keyframes drift { from { transform: scale(1.08); } to { transform: scale(1); } }
 

@@ -61,7 +61,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
               <label for="a-code">Código de postulante</label>
               <input id="a-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required>
             </div>
-            <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Buscando…' : 'Buscar mi aula' }}</button>
+            <button class="btn btn--gold" type="submit" [disabled]="busy()" data-icon="buscar" [attr.aria-busy]="busy()">{{ busy() ? 'Buscando…' : 'Buscar mi aula' }}</button>
           </form>
           <app-code-reminder />
           @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
@@ -107,7 +107,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
 
               @if (r.state === 'ASSIGNED') {
                 <div class="actions">
-                  <button type="button" class="btn" (click)="download()" [disabled]="downloading()" [attr.aria-busy]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha de examen (PDF)' }}</button>
+                  <button type="button" class="btn" (click)="download()" data-icon="descargar" [disabled]="downloading()" [attr.aria-busy]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha de examen (PDF)' }}</button>
                   <a class="btn btn--quiet" routerLink="/mi-inscripcion">Ficha de inscripción</a>
                 </div>
               }

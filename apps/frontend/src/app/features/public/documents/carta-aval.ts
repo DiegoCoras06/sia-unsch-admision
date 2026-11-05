@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
       <h1>Modelo de carta aval</h1>
       <p class="lead">Para la modalidad Exonerados, submodalidad Pueblos indígenas (Art. 49 del Reglamento). La firma la junta directiva de tu comunidad y se adjunta al expediente.</p>
       <div class="actions">
-        <button type="button" class="btn" (click)="print()">Imprimir o guardar en PDF</button>
+        <button type="button" class="btn" (click)="print()" data-icon="imprimir">Imprimir o guardar en PDF</button>
         <a routerLink="/requisitos" class="btn btn--quiet">Ver todos los requisitos</a>
       </div>
     </header>

@@ -13,7 +13,7 @@ import { DomSanitizer } from '@angular/platform-browser';
         <p class="viewer__name">{{ title() }}</p>
         <div class="viewer__actions">
           <a class="btn" [href]="file()" target="_blank" rel="noopener">Ver documento completo</a>
-          <a class="btn btn--quiet" [href]="file()" download>Descargar</a>
+          <a class="btn btn--quiet" [href]="file()" download data-icon="descargar">Descargar</a>
         </div>
       </div>
       @if (safeUrl(); as url) {

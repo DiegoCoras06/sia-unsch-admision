@@ -75,7 +75,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
             <details class="vac-import" [open]="!!preview()">
               <summary><strong>Importar el cuadro desde Excel</strong> <span class="adm-muted">· descarga la plantilla, corrígela y súbela; cada fila debe sumar su TOTAL</span></summary>
               <div class="vac-import__actions">
-                <button class="btn btn--quiet" type="button" (click)="template()">Descargar plantilla (.xlsx)</button>
+                <button class="btn btn--quiet" type="button" (click)="template()" data-icon="descargar">Descargar plantilla (.xlsx)</button>
                 <label class="btn btn--quiet" for="v-file">Elegir archivo…</label>
                 <input id="v-file" type="file" accept=".xlsx" hidden (change)="pickVacancies($any($event.target))">
                 @if (preview(); as p) {

@@ -150,9 +150,10 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Lista por dispositivo: «Chrome en Windows», con «Este dispositivo» o la última actividad, y botón «Cerrar» salvo en el actual. Se usa en Mi cuenta y en Mi seguridad.
 
 ### Acabado moderno, sin perder formalidad
-- Cabecera con vidrio sutil en una capa aparte (`.bar::before`, blanco al 88 % con desenfoque): `backdrop-filter` sobre `.bar` afectaría al menú desplegable.
+- Cabecera blanca sólida con sombra suave. Se probó con vidrio (`backdrop-filter`) y se retiró: el texto de las páginas guinda se leía a través de ella.
 - Tarjetas con enlace: suben 2px con sombra suave solo con puntero.
-- Descartados: neomorfismo (falla el contraste), claymorfismo (poco serio), gradientes animados (distraen) y vidrio como estilo general (texto difícil de leer).
+- Degradado fijo sobre la foto de la portada, que la funde con el campo guinda. Iconos de línea con `data-icon` solo en descargar, imprimir y buscar.
+- Descartados: neomorfismo (falla el contraste), claymorfismo (poco serio), gradientes animados (distraen) y vidrio (texto difícil de leer).
 
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.

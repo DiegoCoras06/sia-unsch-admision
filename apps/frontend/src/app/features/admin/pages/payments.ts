@@ -20,7 +20,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
       <div class="field"><label for="p-st">Estado</label>
         <select id="p-st" class="select" name="st" [(ngModel)]="status"><option value="">Todos</option><option value="AUTORIZADO">Autorizado</option><option value="INICIADO">Iniciado</option><option value="RECHAZADO">Rechazado</option><option value="VENCIDO">Vencido</option><option value="DUPLICADO">Duplicado</option></select></div>
       <button class="btn" type="submit">Filtrar</button>
-      @if (session.can('reportes.pagos')) { <button class="btn btn--quiet" type="button" (click)="export()">Exportar a Excel</button> }
+      @if (session.can('reportes.pagos')) { <button class="btn btn--quiet" type="button" (click)="export()" data-icon="descargar">Exportar a Excel</button> }
     </form>
     @if (error()) { <p class="adm-msg err" role="alert">{{ error() }}</p> }
     <section class="adm-panel">
