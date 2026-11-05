@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminSession } from '../../../core/admin-session';
 import { ApiService, apiErrorMessage } from '../../../core/api.service';
+import { DailyChart } from '../daily-chart';
 
 interface Count { key: string; label: string; count: number; monto?: string }
 type ReportKind = 'inscripciones' | 'pagos' | 'expedientes' | 'asistencia';
@@ -29,7 +30,7 @@ interface Dashboard {
 /** Spec 008, Historia 2: indicadores filtrables, por rol, exportables a Excel y PDF (RF-12.01 a RF-12.10). */
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DailyChart],
   template: `
     <header class="adm-head">
       <div>
@@ -96,6 +97,7 @@ interface Dashboard {
 
       <div class="adm-grid">
         @if (d.inscripciones; as i) {
+          <section class="adm-panel adm-panel--wide"><h2>Inscripciones por día</h2><app-daily-chart [data]="i.porDia" /></section>
           <section class="adm-panel"><h2>Inscripciones por estado</h2><ul class="adm-bars">@for (c of i.porEstado; track c.key) {<li><span>{{ c.label }}</span><span class="bar"><i [style.width.%]="pct(c.count, i.porEstado)"></i></span><b>{{ c.count }}</b></li>} @empty {<li>Sin datos</li>}</ul></section>
           @if (d.expedientes; as x) {
             <section class="adm-panel"><h2>Expedientes de exonerados</h2><ul class="adm-bars">@for (c of x; track c.key) {<li><span>{{ c.label }}</span><span class="bar"><i [style.width.%]="pct(c.count, x)"></i></span><b>{{ c.count }}</b></li>} @empty {<li>Aún no hay expedientes</li>}</ul></section>
@@ -111,14 +113,13 @@ interface Dashboard {
           }
           <section class="adm-panel"><h2>Por modalidad</h2><ul class="adm-bars">@for (c of i.porModalidad; track c.key) {<li><span>{{ c.label }}</span><span class="bar"><i [style.width.%]="pct(c.count, i.porModalidad)"></i></span><b>{{ c.count }}</b></li>} @empty {<li>Sin datos</li>}</ul></section>
           <section class="adm-panel"><h2>Programas con más inscritos</h2><ul class="adm-bars">@for (c of i.porPrograma; track c.key) {<li><span>{{ c.label }}</span><span class="bar"><i [style.width.%]="pct(c.count, i.porPrograma)"></i></span><b>{{ c.count }}</b></li>} @empty {<li>Sin datos</li>}</ul></section>
-          <section class="adm-panel"><h2>Inscripciones por día</h2><ul class="adm-bars">@for (c of i.porDia.slice(-10); track c.day) {<li><span>{{ c.day }}</span><span class="bar"><i [style.width.%]="pctDay(c.count, i.porDia)"></i></span><b>{{ c.count }}</b></li>} @empty {<li>Sin datos</li>}</ul></section>
         }
         @if (d.pagos; as p) {
           <section class="adm-panel"><h2>Pagos en línea</h2>
             <ul class="adm-bars">
-              <li><span>Órdenes pagadas</span><span class="bar"><i style="width:100%"></i></span><b>{{ p.ordenesPagadas }}</b></li>
-              <li><span>Intentos vencidos</span><span class="bar"><i [style.width.%]="p.intentosVencidos ? 40 : 0"></i></span><b>{{ p.intentosVencidos }}</b></li>
-              <li><span>Pagos duplicados (a devolver)</span><span class="bar"><i [style.width.%]="p.pagosDuplicados ? 20 : 0"></i></span><b>{{ p.pagosDuplicados }}</b></li>
+              <li><span>Órdenes pagadas</span><span class="bar"><i [style.width.%]="payPct(p.ordenesPagadas, p)"></i></span><b>{{ p.ordenesPagadas }}</b></li>
+              <li><span>Intentos vencidos</span><span class="bar"><i [style.width.%]="payPct(p.intentosVencidos, p)"></i></span><b>{{ p.intentosVencidos }}</b></li>
+              <li><span>Pagos duplicados (a devolver)</span><span class="bar"><i [style.width.%]="payPct(p.pagosDuplicados, p)"></i></span><b>{{ p.pagosDuplicados }}</b></li>
             </ul>
             @if (p.porMedio.length) { <p class="adm-muted">Por medio de pago: {{ methods(p.porMedio) }}</p> }
           </section>
@@ -197,7 +198,9 @@ export class DashboardPage implements OnInit {
     const max = Math.max(...list.map((x) => x.count), 1);
     return (n / max) * 100;
   }
-  protected pctDay = (n: number, list: { count: number }[]) => this.pct(n, list);
+  protected payPct(n: number, p: NonNullable<Dashboard['pagos']>) {
+    return (n / Math.max(p.ordenesPagadas, p.intentosVencidos, p.pagosDuplicados, 1)) * 100;
+  }
 
   protected methods(list: Count[]) {
     const name: Record<string, string> = { CARD: 'Tarjeta', QR: 'QR', YAPE_CODE: 'Yape', PAGO_PUSH: 'Plin', APPLE_PAY: 'Apple Pay', OTRO: 'Otro' };

@@ -133,6 +133,12 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Tablas y estilos en línea para Gmail y Outlook. Banda guinda con filete dorado, título guinda, tarjeta de datos sobre `#f7f2ee` y un solo botón de acción.
 - Sin imágenes: muchos clientes las bloquean. La versión de texto lleva los mismos datos y el enlace.
 
+### Gráficos del panel (`app-daily-chart`, `.adm-bars`)
+- SVG propio, sin librerías. Serie única en guinda: línea de 2 px, área al 10 %, rejilla de 1 px, valor al final y texto siempre en tinta.
+- Los días sin datos cuentan como 0, para no inventar una tendencia. Globo con puntero y flechas del teclado, y vista de tabla.
+- Barras finas de 0.625rem con extremo redondeado y proporcionales al valor real. Nunca anchos fijos.
+- Cifras únicas como indicador, no como gráfico.
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 
