@@ -22,6 +22,11 @@
 .now__stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
 .now__stages li { display: grid; }
 .now__stages span { color: var(--ink-soft); }
+.dates { display: grid; gap: clamp(1.75rem, 3vw, 2.5rem); }
+.dates__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem 2rem; }
+/* Cuánto falta para el cierre: lo que empuja a inscribirse a tiempo. */
+.now__stages .now__left { justify-self: start; margin-top: 0.3rem; padding: 0.1rem 0.55rem; border-radius: var(--radius); background: var(--ground); color: var(--ink); font-size: var(--size-note); font-weight: 700; font-variant-numeric: tabular-nums; }
+.now__stages .now__left.is-soon { background: var(--accent); color: var(--accent-ink); }
 .quick ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.5rem; }
 .quick__item { display: grid; gap: 0.25rem; padding: 1rem 1.25rem; background: var(--ground); font-weight: 700; text-decoration: none; height: 100%;
   transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease); }
@@ -35,13 +40,6 @@ span.quick__item { color: var(--ink-soft); }
 
 /* Cronograma resumido */
 .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(2rem, 6vw, 6rem); align-items: start; }
-.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
-.timeline li { display: grid; grid-template-columns: 9rem 1fr auto; gap: 1.25rem; align-items: baseline; padding: 1rem 1.25rem; background: var(--ground); }
-.timeline li.is-now { background: var(--accent); color: var(--accent-ink); }
-.timeline li.is-now .status { color: var(--gold); }
-.timeline li.is-past { color: var(--ink-soft); }
-.timeline__date { font-weight: 700; font-variant-numeric: tabular-nums; }
-.timeline__name { font-weight: 600; }
 
 /* Áreas */
 .load-note { font-size: 1.125rem; color: var(--ink-soft); }
@@ -126,5 +124,4 @@ span.quick__item { color: var(--ink-soft); }
   .now__grid, .split, .exam__grid, .news, .rector__grid { grid-template-columns: 1fr; }
   .rector__photo { max-width: 26rem; }
   .areas, .steps { grid-template-columns: 1fr; }
-  .timeline li { grid-template-columns: 1fr; gap: 0.25rem; }
-}
+  }

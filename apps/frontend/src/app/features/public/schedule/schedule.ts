@@ -4,11 +4,12 @@ import { CallStore } from '../../../core/call.store';
 import { STAGE_STATUS_LABEL, dateRange, longDate, time } from '../../../core/format';
 import { Countdown } from '../../../shared/countdown';
 import { RevealDirective } from '../../../shared/reveal.directive';
+import { StageTrack } from '../../../shared/stage-track';
 
 /** Spec 001, Historia 1 - FR-002, FR-003, MEJ-09. */
 @Component({
   selector: 'app-schedule',
-  imports: [RouterLink, Countdown, RevealDirective],
+  imports: [RouterLink, Countdown, RevealDirective, StageTrack],
   template: `
     <header class="frame page-head">
       <h1>Cronograma 2027-I</h1>
@@ -21,16 +22,23 @@ import { RevealDirective } from '../../../shared/reveal.directive';
           <div class="frame next__grid">
             <div>
               <h2 id="next-title" class="next__title">{{ m.name }}</h2>
-              <p class="lead">{{ longDate(m.startsAt) }}, desde las {{ time(m.startsAt) }}.</p>
+              <p class="lead">{{ longDate(m.startsAt) }}, desde las {{ time(m.startsAt) }}</p>
             </div>
             <app-countdown [target]="m.startsAt" [serverNow]="call.now" [label]="m.name" />
           </div>
         </section>
       }
 
+      <section class="section--tight overview" aria-labelledby="overview-title">
+        <div class="frame">
+          <h2 id="overview-title" class="overview__title">El proceso de un vistazo</h2>
+          <app-stage-track [stages]="store.keyStages()" />
+        </div>
+      </section>
+
       <section class="section" aria-labelledby="stages-title">
         <div class="frame">
-          <h2 id="stages-title" class="sr-only">Todas las etapas</h2>
+          <h2 id="stages-title" class="overview__title">Todas las etapas</h2>
           <ol class="stages">
             @for (s of call.stages; track s.code; let i = $index) {
               <li class="stage" [class.is-now]="s.status === 'IN_PROGRESS'" [class.is-past]="s.status === 'FINISHED'" [appReveal]="(i % 4) * 60">
@@ -63,6 +71,7 @@ import { RevealDirective } from '../../../shared/reveal.directive';
   `,
   styles: `
     .next { padding-block: clamp(2.5rem, 5vw, 4rem); }
+    .overview__title { font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
     .next__grid { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 2rem; }
     .next__title { font-size: clamp(1.75rem, 3vw, 2.75rem); margin-bottom: 0.75rem; }
     .stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }

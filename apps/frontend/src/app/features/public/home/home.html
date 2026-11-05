@@ -34,7 +34,11 @@
       }
       <ul class="now__stages">
         @for (s of nowStages(); track s.code) {
-          <li><strong>{{ s.name }}</strong><span>hasta el {{ longDate(s.endsAt) }}</span></li>
+          <li>
+            <strong>{{ s.name }}</strong>
+            <span>hasta el {{ longDate(s.endsAt) }}</span>
+            <span class="now__left" [class.is-soon]="soon(s.endsAt)">{{ left(s.endsAt) }}</span>
+          </li>
         }
       </ul>
     </div>
@@ -68,21 +72,15 @@
 <!-- Cronograma resumido -->
 <section class="section field-stone" aria-labelledby="dates-title">
   <div class="frame">
-    <div class="split">
-      <div class="stack" appReveal>
-        <h2 id="dates-title">Las fechas que importan</h2>
-        <p>Cada etapa se abre y se cierra sola, en hora de Lima. Fuera de plazo, la inscripción paga un recargo de S/ 65.00.</p>
+    <div class="dates">
+      <div class="dates__head">
+        <div class="stack">
+          <h2 id="dates-title">Las fechas que importan</h2>
+          <p>Cada etapa se abre y se cierra sola, en hora de Lima. Fuera de plazo, la inscripción paga un recargo de S/ 65.00.</p>
+        </div>
         <a routerLink="/cronograma" class="link-arrow">Cronograma completo</a>
       </div>
-      <ol class="timeline" appReveal="80">
-        @for (s of keyStages(); track s.code) {
-          <li [class.is-now]="s.status === 'IN_PROGRESS'" [class.is-past]="s.status === 'FINISHED'">
-            <span class="timeline__date">{{ dateRange(s.startsAt, s.endsAt) }}</span>
-            <span class="timeline__name">{{ s.name }}</span>
-            <span class="status status--{{ s.status }}">{{ s.status === 'IN_PROGRESS' ? 'En curso' : s.status === 'UPCOMING' ? 'Próxima' : 'Finalizada' }}</span>
-          </li>
-        }
-      </ol>
+      <app-stage-track [stages]="store.keyStages()" />
     </div>
   </div>
 </section>

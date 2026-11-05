@@ -39,3 +39,18 @@ export const soles = (amount: string) => `S/ ${amount}`;
 export const STAGE_STATUS_LABEL = { UPCOMING: 'Próxima', IN_PROGRESS: 'En curso', FINISHED: 'Finalizada' } as const;
 
 export const AREA_NAMES: Record<string, string> = { I: 'Ciencias', II: 'Letras', III: 'Biomédicas' };
+
+const limaDay = (iso: string) => Date.parse(`${new Date(iso).toLocaleDateString('en-CA', { timeZone: TZ })}T00:00:00Z`);
+
+/** Días de calendario en Lima desde `nowIso` hasta `iso`. */
+export function daysUntil(iso: string, nowIso: string): number {
+  return Math.round((limaDay(iso) - limaDay(nowIso)) / 86_400_000);
+}
+
+/** Cuánto falta para que cierre una etapa, en palabras. */
+export function closesIn(iso: string, nowIso: string): string {
+  const days = daysUntil(iso, nowIso);
+  if (days <= 0) return 'Cierra hoy';
+  if (days === 1) return 'Cierra mañana';
+  return `Faltan ${days} días`;
+}

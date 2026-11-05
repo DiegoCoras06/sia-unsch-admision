@@ -4,10 +4,11 @@ import type { AnnouncementDto, HomeContentDto, OptionSummaryDto, QuickAccessKey 
 import { ApiService } from '../../../core/api.service';
 import { CallStore } from '../../../core/call.store';
 import { SiteImages } from '../../../core/site-images';
-import { AREA_NAMES, dateRange, longDate } from '../../../core/format';
+import { AREA_NAMES, closesIn, daysUntil, longDate } from '../../../core/format';
 import { Countdown } from '../../../shared/countdown';
 import { MarkdownPipe } from '../../../shared/markdown.pipe';
 import { RevealDirective } from '../../../shared/reveal.directive';
+import { StageTrack } from '../../../shared/stage-track';
 import { ApplicationFinder } from './application-finder';
 
 /** Página de cada acceso rápido y texto del botón principal cuando ese trámite es el de la etapa. */
@@ -45,7 +46,7 @@ const CAMPUS = [
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Countdown, ApplicationFinder, MarkdownPipe, RevealDirective],
+  imports: [RouterLink, Countdown, ApplicationFinder, MarkdownPipe, RevealDirective, StageTrack],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
@@ -64,9 +65,6 @@ export class HomePage {
 
   protected readonly milestone = computed(() => this.store.call()?.nextMilestone ?? null);
   protected readonly nowStages = computed(() => this.store.current().filter((s) => s.kind !== 'OTHER'));
-  protected readonly keyStages = computed(() =>
-    (this.store.call()?.stages ?? []).filter((s) => ['ORD_REGULAR', 'EXO_REGULAR', 'ORD_EXTEMP', 'CEPRE_REGULAR', 'EXAM_EXO', 'EXAM_ORD', 'DELIVERY'].includes(s.code)),
-  );
   protected readonly byArea = computed(() =>
     (['I', 'II', 'III'] as const).map((code) => ({ code, name: AREA_NAMES[code], options: this.options().filter((o) => o.area === code) })),
   );
@@ -88,7 +86,9 @@ export class HomePage {
   }
 
   protected readonly longDate = longDate;
-  protected readonly dateRange = dateRange;
+  protected left = (endsAt: string) => closesIn(endsAt, this.store.call()!.now);
+  /** Tres días o menos: se resalta para que nadie se quede fuera. */
+  protected soon = (endsAt: string) => daysUntil(endsAt, this.store.call()!.now) <= 3;
 
   constructor() {
     this.api.home().subscribe((c) => this.content.set(c));

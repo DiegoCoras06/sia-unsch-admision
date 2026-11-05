@@ -27,7 +27,11 @@ export class Countdown {
   readonly label = input('el examen');
 
   private readonly tick = signal(Date.now());
-  private readonly offset = computed(() => new Date(this.serverNow()).getTime() - this.loadedAt);
+  /** Solo un reloj realmente distinto (el simulado) cuenta: unos minutos de diferencia son la caché de la respuesta (ADR-020). */
+  private readonly offset = computed(() => {
+    const diff = new Date(this.serverNow()).getTime() - this.loadedAt;
+    return Math.abs(diff) < 15 * 60_000 ? 0 : diff;
+  });
   private readonly loadedAt = Date.now();
 
   protected readonly parts = computed(() => {

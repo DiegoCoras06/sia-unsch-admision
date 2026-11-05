@@ -115,3 +115,4 @@ Fase 1 → Fase 2 → Fases 3, 4, 5 (paralelas) → 6, 7, 8 → final. La 002 de
 - [x] T108 Sección Misión y principios con galería de la Ciudad Universitaria en la portada
 - [x] T109 Infografías de Ordinario y Exonerado completas (1042 × 822) con sus variantes WebP
 - [x] T110 Acabado formal: botones, campos y paneles con esquinas suaves; sin flechas, mayúsculas ni entradas animadas
+- [x] T111 Línea de tiempo del cronograma con marca «Hoy» y cuenta de días hasta el cierre de cada etapa en curso

@@ -80,6 +80,14 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Siempre hay un foco: si todo está al día, se destaca lo que sigue.
 - Horizontal en escritorio, vertical en el celular; `aria-current="step"`.
 
+### Línea de tiempo del cronograma (`app-stage-track`)
+- Etapas clave en columnas iguales, no proporcionales al tiempo: se solapan y una escala real las amontonaría. Ordenadas por inicio y, a igual inicio, por cierre.
+- Mismo punto que la línea del trámite: guinda con check, dorado con halo, contorno. Etiqueta guinda «Hoy» en la última etapa en curso.
+- Horizontal desde 900 px; debajo, vertical. El detalle de cada etapa vive en la lista de `/cronograma`.
+
+### Cuenta hasta el cierre («Ahora en curso»)
+- Días de calendario en Lima, no horas: «Cierra hoy», «Cierra mañana», «Faltan N días». Etiqueta blanca; guinda a tres días o menos.
+
 ### Ficha de examen tipo boleto (Buscar aula)
 - Bloque guinda de radio 10px: encabezado (examen, fecha y código en dorado) → talón separado por línea punteada con muescas de 0.75rem → aula (2fr) y asiento (1fr) en 3–4.5rem, peso 800 → ruta puerta / pabellón / piso (1fr 2fr 1fr) → franja dorada con la hora de ingreso → local.
 - Foco: aula y asiento. Al imprimir, sin muescas y con borde guinda.
