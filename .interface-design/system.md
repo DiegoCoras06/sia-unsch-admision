@@ -145,6 +145,9 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Escudo sobre guinda: sello blanco circular con filete dorado.
 - Impresión: sin cabecera, pie, asistente ni botones; el contenido con entrada animada se imprime igual.
 
+### Sesiones activas (`app-active-sessions`)
+- Lista por dispositivo: «Chrome en Windows», con «Este dispositivo» o la última actividad, y botón «Cerrar» salvo en el actual. Se usa en Mi cuenta y en Mi seguridad.
+
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.
 

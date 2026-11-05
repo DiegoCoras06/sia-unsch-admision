@@ -131,7 +131,10 @@ describe('Vacantes desde Excel (T540)', () => {
     if (call.status === 'PUBLISHED') await t.request.post('/api/v1/admin/calls/2027-I/vacancies/import').set(as(admin)).send({ file }).expect(422);
     const done = (await t.request.post('/api/v1/admin/calls/2027-I/vacancies/import').set(as(admin)).send({ file, resolution: 'R.D. 015-2026', reason: 'Ajuste de vacantes' }).expect(200)).body.data;
     expect(done.changedCells).toBe(1);
-    expect((await t.db.vacancy.findFirstOrThrow({ where: { call: { code: '2027-I' }, option: { internalCode: 'P01' }, quotaCategory: { code: 'ORD' } } })).quantity).toBe(before + 1);
+    const where = { call: { code: '2027-I' }, option: { internalCode: 'P01' }, quotaCategory: { code: 'ORD' } };
+    expect((await t.db.vacancy.findFirstOrThrow({ where })).quantity).toBe(before + 1);
+    // Deja la semilla como estaba: otras pruebas comprueban el total oficial de 1803 vacantes.
+    await t.db.vacancy.updateMany({ where, data: { quantity: before } });
   });
 });
 

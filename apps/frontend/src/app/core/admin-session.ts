@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import type { SessionDto } from '@sia/contracts';
 import { firstValueFrom } from 'rxjs';
 
 export interface StaffMe { id: string; email: string; fullName: string; roles: string[]; permissions: string[] }
@@ -53,6 +54,8 @@ export class AdminSession {
   }
 
   recoveryStatus = () => this.get<{ remaining: number }>('/admin/me/recovery-codes');
+  sessions = () => this.get<SessionDto[]>('/me/sessions');
+  closeSession = (id: string) => this.delete<void>(`/me/sessions/${id}`);
   regenerateRecovery = (code: string) => this.postAuth<{ codes: string[] }>('/admin/me/recovery-codes', { code });
 
   /** Recupera la sesión con la cookie (recarga de página). Devuelve si hay sesión del personal. */

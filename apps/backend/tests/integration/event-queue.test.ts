@@ -55,6 +55,24 @@ describe('Bandeja de eventos con cola (ADR-021)', () => {
     expect((await t.db.outboxEvent.findUniqueOrThrow({ where: { id } })).processedAt).not.toBeNull();
   });
 
+  it('dos procesadores a la vez no duplican el trabajo', async () => {
+    const email = `carrera-${randomUUID()}@prueba.test`;
+    const id = await publish(email);
+    await Promise.all([t.outbox.processEvent(id), t.outbox.processEvent(id), t.outbox.processEvent(id)]);
+    expect(handled.get(email)).toBe(1);
+  });
+
+  it('otro procesador retoma el evento si el primero murió sin terminar', async () => {
+    const email = `retoma-${randomUUID()}@prueba.test`;
+    const id = await publish(email);
+    await t.db.outboxEvent.update({ where: { id }, data: { attempts: 1, claimedAt: clock.now() } });
+    expect(await t.outbox.processEvent(id)).toBe(true);
+    expect(handled.get(email)).toBeUndefined();
+    clock.advance(3 * 60);
+    expect(await t.outbox.processEvent(id)).toBe(true);
+    expect(handled.get(email)).toBe(1);
+  });
+
   it('informa el fallo para que la cola reintente, y reenvía el evento atascado', async () => {
     const email = `falla-${randomUUID()}@prueba.test`;
     failFor.add(email);

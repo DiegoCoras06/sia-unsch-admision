@@ -15,7 +15,7 @@ Usaremos **Amazon SQS** como cola entre la bandeja de eventos y el worker, sin a
 
 1. `publish` sigue guardando el evento en PostgreSQL en la misma transacción: si SQS falla, el evento no se pierde.
 2. Con `SQS_QUEUE_URL` definida, `dispatch` solo **envía el ID** del evento a la cola (`SqsEventQueue`) y marca `queued_at` con un UPDATE atómico (`FOR UPDATE SKIP LOCKED`), para que dos peticiones no envíen el mismo evento. La cola no transporta datos personales.
-3. El **Lambda worker** recibe lotes de SQS y llama a `Outbox.processEvent(id)`, que reclama el evento antes de procesarlo: un mensaje repetido no duplica correos. Los que fallan se informan con `batchItemFailures` y SQS los reintenta; tras varios intentos van a una **cola de errores (DLQ)**.
+3. El **Lambda worker** recibe lotes de SQS y llama a `Outbox.processEvent(id)`, que reserva el evento (`claimed_at`, con vencimiento de 2 minutos si el proceso muere) antes de procesarlo: un mensaje repetido o dos procesadores a la vez no duplican correos. Los que fallan se informan con `batchItemFailures` y SQS los reintenta; tras varios intentos van a una **cola de errores (DLQ)**.
 4. La tarea programada `outbox.dispatch` reenvía los eventos enviados hace más de 5 minutos y aún no procesados (mensaje perdido).
 5. Sin `SQS_QUEUE_URL` (local y pruebas) todo funciona como antes: el mismo proceso entrega los eventos.
 

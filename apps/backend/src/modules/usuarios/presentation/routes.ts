@@ -158,6 +158,15 @@ export function usuariosRoutes(
     res.json({ data: await inscriptionsOf(me.documentType, me.documentNumber) });
   }));
 
+  router.get('/me/sessions', authenticate, handle(async (req, res) => {
+    res.json({ data: await auth.listSessions(req.principal!.userId, req.principal!.sessionId) });
+  }));
+  router.delete('/me/sessions/:id', authenticate, handle(async (req, res) => {
+    const { id } = parse(z.object({ id: z.uuid() }), req.params);
+    await auth.closeSession(req.principal!.userId, id, meta(req));
+    res.status(204).end();
+  }));
+
   router.get('/me/activity', authenticate, handle(async (req, res) => {
     const { page } = parse(z.object({ page: z.coerce.number().int().min(1).default(1) }), req.query);
     res.json({ data: await profile.activity(req.principal!.userId, page) });

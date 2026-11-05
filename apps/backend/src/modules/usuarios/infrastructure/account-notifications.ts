@@ -10,6 +10,18 @@ const limaTime = (iso: string) =>
  * Ningún asunto contiene datos personales (RNF-03).
  */
 export function subscribeAccountNotifications(outbox: Outbox, email: EmailSender, frontendOrigin: string): void {
+  outbox.subscribe('InicioSesionNuevo', async (e) => {
+    const when = new Date(e.at).toLocaleString('es-PE', { timeZone: 'America/Lima', dateStyle: 'long', timeStyle: 'short' });
+    const { html, text } = renderEmail('Nuevo inicio de sesión en tu cuenta', [
+      'Alguien entró a tu cuenta desde un dispositivo que no habías usado antes.',
+      'Si fuiste tú, no necesitas hacer nada. Si no reconoces este ingreso, cierra esa sesión y cambia tu contraseña.',
+    ], {
+      facts: [['Dispositivo', e.device], ['Fecha y hora', when]],
+      action: { label: 'Revisar mis sesiones', url: `${frontendOrigin}${e.staff ? '/admin/seguridad' : '/mi-cuenta'}` },
+    });
+    await email.send({ to: e.email, subject: 'Nuevo inicio de sesión - Admisión UNSCH', html, text });
+  });
+
   outbox.subscribe('CodigoVerificacionSolicitado', async (e) => {
     const { html, text } = renderEmail('Tu código de verificación', [
       `Hola ${e.firstNames || 'postulante'}:`,

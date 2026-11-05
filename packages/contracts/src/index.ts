@@ -350,6 +350,14 @@ export interface InscriptionSummaryDto {
   createdAt: string;
 }
 
+/** Una sesión abierta por dispositivo (spec 002). */
+export interface SessionDto {
+  id: string;
+  device: string;
+  lastActiveAt: string;
+  current: boolean;
+}
+
 export interface ActivityDto {
   occurredAt: string;
   action: string;

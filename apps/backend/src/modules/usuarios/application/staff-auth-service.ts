@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db, Tx } from '../../../shared/db/prisma.js';
+import type { Outbox } from '../../../shared/events/outbox.js';
 import { forbidden, locked, unauthorized, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import {
@@ -36,6 +37,7 @@ export class StaffAuthService {
     private readonly d: {
       db: Db;
       clock: Clock;
+      outbox: Outbox;
       audit: AuditLog;
       limiter: RateLimiter;
       hasher: PasswordHasher;
@@ -166,6 +168,12 @@ export class StaffAuthService {
 
   private async openSession(uid: string, meta: RequestMeta): Promise<StaffSession> {
     const session = await this.d.sessions.create(uid, 'STAFF', { userAgent: meta.userAgent, ipHash: meta.ipHash });
+    if (session.newDevice) {
+      const { email } = await this.d.db.user.findUniqueOrThrow({ where: { id: uid }, select: { email: true } });
+      const event = { email, device: session.newDevice, at: this.d.clock.now().toISOString(), staff: true };
+      await this.d.db.$transaction((tx) => this.d.outbox.publish(tx, 'InicioSesionNuevo', event));
+      this.d.outbox.kick();
+    }
     const roles = await this.d.access.rolesOf(uid);
     const accessToken = await this.d.tokens.signAccess({ sub: uid, sid: session.sessionId, typ: 'STAFF', roles });
     return { token: { accessToken, expiresIn: ACCESS_TOKEN_TTL_SECONDS, user: { id: uid, type: 'STAFF', status: 'ACTIVE', roles } }, refreshToken: session.refreshToken };

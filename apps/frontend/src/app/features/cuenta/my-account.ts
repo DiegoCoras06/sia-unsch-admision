@@ -5,6 +5,7 @@ import type { ActivityDto, InscriptionSummaryDto } from '@sia/contracts';
 import { AccountSession } from '../../core/account-session';
 import { apiErrorMessage } from '../../core/api.service';
 import { dateTime } from '../../core/format';
+import { ActiveSessions } from '../../shared/active-sessions';
 import { InscriptionReceipt } from '../inscripcion/inscription-receipt';
 
 type ContactForm = { email: string; phone: string; addressLine: string; guardianName: string };
@@ -15,7 +16,7 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
  */
 @Component({
   selector: 'app-my-account',
-  imports: [FormsModule, RouterLink, InscriptionReceipt],
+  imports: [FormsModule, RouterLink, InscriptionReceipt, ActiveSessions],
   styleUrl: './account.scss',
   template: `
     <section class="acc">
@@ -62,6 +63,11 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
                 <button class="btn me__save" type="submit" [disabled]="busy() || !dirty()">{{ busy() ? 'Guardando…' : dirty() ? 'Guardar cambios' : 'Sin cambios' }}</button>
                 @if (msg()) { <p [class]="msgErr() ? 'alert alert--error' : 'acc__ok me__ok'" role="status">{{ msg() }}</p> }
               </form>
+
+              <section class="me__card" aria-labelledby="ma-ses">
+                <h2 id="ma-ses">Dispositivos con sesión abierta</h2>
+                <app-active-sessions [load]="loadSessions" [close]="closeSession" />
+              </section>
 
               <section class="me__card" aria-labelledby="ma-act">
                 <h2 id="ma-act">Actividad reciente</h2>
@@ -135,6 +141,8 @@ export class MyAccountPage implements OnInit {
   protected form: ContactForm = { email: '', phone: '', addressLine: '', guardianName: '' };
   private saved: ContactForm = { ...this.form };
   protected readonly when = dateTime;
+  protected readonly loadSessions = () => this.account.sessions();
+  protected readonly closeSession = (id: string) => this.account.closeSession(id);
   protected title = (s: string) => s.split(' ')[0]!.charAt(0) + s.split(' ')[0]!.slice(1).toLowerCase();
   /** El documento se muestra parcialmente (como en la constancia): basta para reconocerlo. */
   protected masked = (doc: string) => (doc.length > 4 ? `${doc.slice(0, 4)}${'•'.repeat(doc.length - 6)}${doc.slice(-2)}` : doc);

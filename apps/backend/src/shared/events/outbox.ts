@@ -11,6 +11,8 @@ export interface DomainEvents {
   CuentaBloqueada: { userId: string; email: string; lockedUntil: string };
   RecuperacionSolicitada: { userId: string; email: string; resetUrl: string };
   ContrasenaCambiada: { userId: string; email: string };
+  /** Entró desde un navegador o sistema que la cuenta nunca usó. */
+  InicioSesionNuevo: { email: string; device: string; at: string; staff: boolean };
   InscripcionRegistrada: {
     email: string; firstNames: string; applicantCode: string; program: string; modality: string;
     total: string; status: string; examDate: string;
@@ -40,6 +42,8 @@ type Handler<T extends EventType> = (payload: DomainEvents[T], meta: { eventId: 
 /** Un evento enviado a la cola y no procesado en este tiempo se vuelve a enviar (mensaje perdido o con errores). */
 const REQUEUE_AFTER_MS = 5 * 60_000;
 const MAX_ATTEMPTS = 5;
+/** Si quien reservó un evento muere sin terminar, otro lo retoma pasado este tiempo. */
+const CLAIM_MS = 2 * 60_000;
 
 /**
  * Transactional Outbox (ADR-008): `publish` guarda el evento en la misma transacción que el cambio de estado.
@@ -48,6 +52,8 @@ const MAX_ATTEMPTS = 5;
  */
 export class Outbox {
   private readonly handlers = new Map<EventType, Handler<EventType>[]>();
+  /** Despacho en curso de este proceso: uno nuevo lo espera en lugar de cruzarse con él. */
+  private running: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly db: Db,
@@ -71,7 +77,13 @@ export class Outbox {
   }
 
   /** Entrega los eventos pendientes: los procesa aquí, o los envía a la cola si la hay. Devuelve cuántos atendió. */
-  async dispatch(batchSize = 20): Promise<number> {
+  dispatch(batchSize = 20): Promise<number> {
+    const run = this.running.catch(() => undefined).then(() => this.dispatchNow(batchSize));
+    this.running = run;
+    return run;
+  }
+
+  private async dispatchNow(batchSize: number): Promise<number> {
     if (this.queue) return this.relay(batchSize);
     const pending = await this.db.outboxEvent.findMany({
       where: { processedAt: null, attempts: { lt: MAX_ATTEMPTS } },
@@ -90,10 +102,14 @@ export class Outbox {
   async processEvent(eventId: string): Promise<boolean> {
     const event = await this.db.outboxEvent.findUnique({ where: { id: eventId } });
     if (!event || event.processedAt || event.attempts >= MAX_ATTEMPTS) return true;
-    // Reclama el evento para que dos procesadores simultáneos no lo atiendan a la vez.
+    // Reserva el evento: el contador solo no basta, porque otro procesador leería el ya incrementado y lo tomaría también.
+    const now = this.clock.now();
     const claimed = await this.db.outboxEvent.updateMany({
-      where: { id: event.id, processedAt: null, attempts: event.attempts },
-      data: { attempts: { increment: 1 } },
+      where: {
+        id: event.id, processedAt: null, attempts: event.attempts,
+        OR: [{ claimedAt: null }, { claimedAt: { lt: new Date(now.getTime() - CLAIM_MS) } }],
+      },
+      data: { attempts: { increment: 1 }, claimedAt: now },
     });
     if (claimed.count === 0) return true;
     try {
@@ -110,7 +126,7 @@ export class Outbox {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn({ eventId: event.id, eventType: event.eventType, err: message }, 'falló un suscriptor de la outbox');
-      await this.db.outboxEvent.update({ where: { id: event.id }, data: { lastError: message.slice(0, 500) } });
+      await this.db.outboxEvent.update({ where: { id: event.id }, data: { lastError: message.slice(0, 500), claimedAt: null } });
       return false;
     }
   }

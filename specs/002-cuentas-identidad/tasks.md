@@ -71,3 +71,4 @@
 - [x] T185 Scripts de estado y restablecimiento de cuentas del personal
 - [x] T186 Ingreso del postulante en tarjeta dividida (skill interface-design)
 - [x] T187 «Mi cuenta» como resumen y refresco tras pagar (`updated`)
+- [x] T188 Sesiones activas por dispositivo (ver y cerrar) y aviso por correo de inicio de sesión desde un dispositivo nuevo

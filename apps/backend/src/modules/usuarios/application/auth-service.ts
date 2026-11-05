@@ -1,7 +1,6 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import type {
-  ConsentDto, IdentityLookupDto, IdentityLookupRequestDto, RegisterRequestDto, RegisterResultDto, TokenDto,
-} from '@sia/contracts';
+  ConsentDto, IdentityLookupDto, IdentityLookupRequestDto, RegisterRequestDto, RegisterResultDto, TokenDto, SessionDto } from '@sia/contracts';
 import type { RequestMeta } from '../../../shared/audit/audit.js';
 import type { AuditLog } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
@@ -286,7 +285,22 @@ export class AuthService {
     await this.d.db.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, failedLoginSince: null, lockedUntil: null, lastLoginAt: now } });
     await this.d.audit.record({ actorUserId: user.id, action: 'auth.login', resourceType: 'user', resourceId: user.id, ...meta });
     const session = await this.d.sessions.create(user.id, user.type, { userAgent: meta.userAgent, ipHash: meta.ipHash });
+    if (session.newDevice) {
+      const event = { email: user.email, device: session.newDevice, at: now.toISOString(), staff: false };
+      await this.d.db.$transaction((tx) => this.d.outbox.publish(tx, 'InicioSesionNuevo', event));
+      this.d.outbox.kick();
+    }
     return { token: await this.accessTokenFor(user.id, session.sessionId), refreshToken: session.refreshToken };
+  }
+
+  listSessions(userId: string, sessionId: string): Promise<SessionDto[]> {
+    return this.d.sessions.list(userId, sessionId);
+  }
+
+  async closeSession(userId: string, familyId: string, meta: RequestMeta): Promise<void> {
+    if (await this.d.sessions.revokeDevice(userId, familyId)) {
+      await this.d.audit.record({ actorUserId: userId, action: 'sessions.revoked_one', resourceType: 'user', resourceId: userId, ...meta });
+    }
   }
 
   async refresh(refreshToken: string, meta: RequestMeta): Promise<{ token: TokenDto; refreshToken: string }> {

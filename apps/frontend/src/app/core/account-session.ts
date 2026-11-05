@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import type { ActivityDto, ConsentDto, IdentityLookupDto, InscriptionSummaryDto, ProfileDto, RegisterResultDto, UpdateProfileRequestDto } from '@sia/contracts';
+import type { ActivityDto, ConsentDto, IdentityLookupDto, InscriptionSummaryDto, ProfileDto, RegisterResultDto, UpdateProfileRequestDto, SessionDto } from '@sia/contracts';
 import { firstValueFrom } from 'rxjs';
 
 const API = '/api/v1';
@@ -54,6 +54,8 @@ export class AccountSession {
   // ── Mi cuenta (Historias 4 y 5) ────────────────────────────────────
   inscriptions = () => this.authed<InscriptionSummaryDto[]>('GET', '/me/inscriptions');
   activity = () => this.authed<ActivityDto[]>('GET', '/me/activity');
+  sessions = () => this.authed<SessionDto[]>('GET', '/me/sessions');
+  closeSession = (id: string) => this.authed<void>('DELETE', `/me/sessions/${id}`);
   async updateProfile(body: UpdateProfileRequestDto): Promise<{ pendingEmailVerification: boolean }> {
     const r = await this.authedRaw<ProfileDto>('PATCH', '/me', body);
     this.profile.set(r.data);

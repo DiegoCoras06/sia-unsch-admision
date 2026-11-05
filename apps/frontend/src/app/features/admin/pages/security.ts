@@ -2,12 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
+import { ActiveSessions } from '../../../shared/active-sessions';
 import { RecoveryCodes } from '../recovery-codes';
 
 /** Mi seguridad (ADR-022): cuántos códigos de respaldo quedan y generarlos de nuevo con el código actual. */
 @Component({
   selector: 'app-admin-security',
-  imports: [FormsModule, RecoveryCodes],
+  imports: [FormsModule, RecoveryCodes, ActiveSessions],
   template: `
     <header class="adm-head"><div><h1>Mi seguridad</h1><p>Si pierdes el celular con tu aplicación de autenticación, un código de respaldo te permite entrar.</p></div></header>
     @if (error()) { <p class="adm-msg err" role="alert">{{ error() }}</p> }
@@ -30,6 +31,10 @@ import { RecoveryCodes } from '../recovery-codes';
         </form>
       }
     </section>
+    <section class="adm-panel sec">
+      <h2>Dispositivos con sesión abierta</h2>
+      <app-active-sessions [load]="loadSessions" [close]="closeSession" />
+    </section>
   `,
   styles: `
     .sec { max-width: 32rem; }
@@ -45,6 +50,8 @@ export class SecurityPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected code = '';
+  protected readonly loadSessions = () => this.session.sessions();
+  protected readonly closeSession = (id: string) => this.session.closeSession(id);
 
   ngOnInit() { void this.load(); }
 

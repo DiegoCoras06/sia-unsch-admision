@@ -2,7 +2,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db, Tx } from '../../../shared/db/prisma.js';
 import { unauthorized } from '../../../shared/http/errors.js';
-import { SESSION_TTL, evaluateRefresh } from '../domain/session-policy.js';
+import { SESSION_TTL, deviceLabel, evaluateRefresh } from '../domain/session-policy.js';
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -15,8 +15,28 @@ export interface SessionMeta {
 export class SessionService {
   constructor(private readonly db: Db, private readonly clock: Clock) {}
 
-  async create(userId: string, type: 'APPLICANT' | 'STAFF', meta: SessionMeta): Promise<{ sessionId: string; refreshToken: string; expiresAt: Date }> {
-    return this.issue(this.db, userId, type, randomUUID(), meta);
+  /** `newDevice` trae la etiqueta si entra desde un navegador o sistema que esta cuenta nunca usó; en el primer ingreso no avisa. */
+  async create(userId: string, type: 'APPLICANT' | 'STAFF', meta: SessionMeta): Promise<{ sessionId: string; refreshToken: string; expiresAt: Date; newDevice: string | null }> {
+    const device = deviceLabel(meta.userAgent);
+    const known = await this.db.session.findMany({ where: { userId }, select: { userAgent: true }, distinct: ['userAgent'], take: 100 });
+    const newDevice = device && known.length && !known.some((s) => deviceLabel(s.userAgent) === device) ? device : null;
+    return { ...(await this.issue(this.db, userId, type, randomUUID(), meta)), newDevice };
+  }
+
+  /** Sesiones abiertas, una por dispositivo: cada rotación deja viva solo la última de su familia. */
+  async list(userId: string, currentSessionId: string) {
+    const now = this.clock.now();
+    const [rows, current] = await Promise.all([
+      this.db.session.findMany({ where: { userId, revokedAt: null, expiresAt: { gt: now } }, orderBy: { lastRefreshedAt: 'desc' } }),
+      this.db.session.findUnique({ where: { id: currentSessionId }, select: { familyId: true } }),
+    ]);
+    return rows.map((s) => ({ id: s.familyId, device: deviceLabel(s.userAgent) ?? 'Dispositivo desconocido', lastActiveAt: s.lastRefreshedAt.toISOString(), current: s.familyId === current?.familyId }));
+  }
+
+  /** Cierra un dispositivo de esta cuenta. Corta la renovación al instante; su token de acceso vence en 15 minutos o menos (ADR-006). */
+  async revokeDevice(userId: string, familyId: string): Promise<boolean> {
+    const { count } = await this.db.session.updateMany({ where: { userId, familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: 'USER_REVOKED' } });
+    return count > 0;
   }
 
   /** Rota el refresh token. Lanza 401 con el motivo; si detecta reutilización, revoca la familia. */

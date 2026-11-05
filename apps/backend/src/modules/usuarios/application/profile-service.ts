@@ -17,6 +17,7 @@ const ACTIONS: Record<string, string> = {
   'auth.password_reset_requested': 'Solicitaste recuperar tu contraseña',
   'auth.password_reset': 'Cambiaste tu contraseña',
   'sessions.revoked_all': 'Cerraste todas tus sesiones',
+  'sessions.revoked_one': 'Cerraste la sesión de un dispositivo',
   'profile.updated': 'Actualizaste tus datos de contacto',
   'profile.email_change_requested': 'Solicitaste cambiar tu correo',
   'profile.email_changed': 'Confirmaste tu nuevo correo',
