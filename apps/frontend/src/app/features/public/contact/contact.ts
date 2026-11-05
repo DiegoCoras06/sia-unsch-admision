@@ -94,7 +94,7 @@ const TEAM: Member[] = [
               <div class="f f--wide"><label for="c-msg">Tu consulta <span class="req" aria-hidden="true">*</span></label><textarea id="c-msg" class="in" rows="5" formControlName="message" aria-required="true" [attr.aria-invalid]="bad('message')"></textarea></div>
               <div class="hp" aria-hidden="true"><label for="c-web">Sitio web</label><input id="c-web" tabindex="-1" autocomplete="off" formControlName="website"></div>
               @if (error()) { <p class="err f--wide" role="alert">{{ error() }}</p> }
-              <div class="f--wide"><button class="btn-blue" type="submit" [disabled]="sending()">{{ sending() ? 'Enviando…' : 'Enviar consulta' }}</button></div>
+              <div class="f--wide"><button class="btn-blue" type="submit" [disabled]="sending()" [attr.aria-busy]="sending()">{{ sending() ? 'Enviando…' : 'Enviar consulta' }}</button></div>
             </form>
           }
         </div>

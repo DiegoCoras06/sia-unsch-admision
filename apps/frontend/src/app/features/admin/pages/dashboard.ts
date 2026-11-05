@@ -75,7 +75,7 @@ interface Dashboard {
         <select id="f-prog" class="select" name="prog" [(ngModel)]="f.optionCode"><option value="">Todos</option>@for (o of options(); track o.code) {<option [value]="o.code">{{ o.name }}</option>}</select></div>
       <div class="field"><label for="f-from">Desde</label><input id="f-from" class="input" type="date" name="from" [(ngModel)]="f.from"></div>
       <div class="field"><label for="f-to">Hasta</label><input id="f-to" class="input" type="date" name="to" [(ngModel)]="f.to"></div>
-      <button class="btn" type="submit" [disabled]="loading()">{{ loading() ? 'Cargando…' : 'Aplicar filtros' }}</button>
+      <button class="btn" type="submit" [disabled]="loading()" [attr.aria-busy]="loading()">{{ loading() ? 'Cargando…' : 'Aplicar filtros' }}</button>
     </form>
     @if (noRecovery()) { <p class="adm-msg warn">Aún no tienes códigos de respaldo: si pierdes el celular, no podrás entrar. <a routerLink="/admin/seguridad">Generarlos ahora</a></p> }
     @if (error()) { <p class="adm-msg err" role="alert">{{ error() }} <button type="button" class="adm-link" (click)="load()">Reintentar</button></p> }

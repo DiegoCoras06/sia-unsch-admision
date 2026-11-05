@@ -47,7 +47,7 @@ import { InscriptionTrack } from './inscription-track';
             <p>Tu aula se publica 24 horas antes del examen en <a routerLink="/buscar-aula">«Buscar aula»</a>.</p>
           </div>
           @if (documentNumber()) {
-            <button type="button" class="btn btn--gold" (click)="downloadFicha()" [disabled]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha (PDF)' }}</button>
+            <button type="button" class="btn btn--gold" (click)="downloadFicha()" [disabled]="downloading()" [attr.aria-busy]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha (PDF)' }}</button>
           } @else {
             <a routerLink="/mi-inscripcion" class="btn btn--gold">Descargar en «Mi inscripción»</a>
           }
@@ -96,7 +96,7 @@ import { InscriptionTrack } from './inscription-track';
 
       <div class="receipt__actions no-print">
         @if (documentNumber()) {
-          <button type="button" class="btn" (click)="downloadOrden()" [disabled]="downloadingOrden()">{{ downloadingOrden() ? 'Preparando…' : s.status === 'APTA' ? 'Descargar constancia (PDF)' : 'Descargar orden de pago (PDF)' }}</button>
+          <button type="button" class="btn" (click)="downloadOrden()" [disabled]="downloadingOrden()" [attr.aria-busy]="downloadingOrden()">{{ downloadingOrden() ? 'Preparando…' : s.status === 'APTA' ? 'Descargar constancia (PDF)' : 'Descargar orden de pago (PDF)' }}</button>
         } @else {
           <button type="button" class="btn" (click)="print()">{{ s.status === 'APTA' ? 'Imprimir constancia' : 'Imprimir orden de pago' }}</button>
         }

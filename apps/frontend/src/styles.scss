@@ -109,10 +109,23 @@ strong { font-weight: 700; }
   min-height: 3rem; padding: 0.7rem 1.6rem; border: 1px solid var(--accent-press); border-radius: var(--radius);
   font: inherit; font-weight: 600; font-size: 1rem; letter-spacing: 0.01em; line-height: 1.25; text-decoration: none; cursor: pointer;
   background: var(--accent); color: var(--accent-ink);
-  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 .btn:hover { background: var(--accent-press); }
-.btn:active { transform: translateY(1px); }
+.btn:active { transform: translateY(1px); box-shadow: none; transition-duration: 60ms; }
+/* Solo con puntero real: en una pantalla táctil, el botón se quedaría levantado después de tocarlo. */
+@media (hover: hover) {
+  .btn:not([disabled]):hover { transform: translateY(-1px); box-shadow: 0 6px 14px -6px rgb(122 28 34 / 0.55); }
+  .btn--quiet:not([disabled]):hover, .btn--light:not([disabled]):hover { box-shadow: 0 6px 14px -8px rgb(29 20 21 / 0.35); }
+  .btn--gold:not([disabled]):hover { box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.4); }
+  .lift { transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+  .lift:hover, a.quick__item:hover, .nf__links a:hover, .adm-todo a:hover { transform: translateY(-2px); box-shadow: 0 10px 22px -14px rgb(29 20 21 / 0.4); }
+  a.quick__item, .nf__links a, .adm-todo a { transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background-color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+}
+/* Indicador de proceso: el botón dice qué hace y además se ve que sigue trabajando. */
+.btn[aria-busy='true'] { cursor: progress; }
+.btn[aria-busy='true']::before { content: ''; width: 0.95em; height: 0.95em; flex: none; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: btn-spin 700ms linear infinite; }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
 .btn[disabled] { background: var(--stone-deep); border-color: var(--stone-deep); color: var(--ink-soft); cursor: not-allowed; transform: none; }
 .btn--gold { background: var(--gold); border-color: #b8952f; color: var(--ink); }
 .btn--gold:hover { background: var(--gold-hover); }
@@ -125,9 +138,11 @@ strong { font-weight: 700; }
 .link-arrow {
   font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  transition: text-decoration-color var(--fast) var(--ease);
+  background: linear-gradient(currentColor, currentColor) left bottom / 0 2px no-repeat;
+  padding-bottom: 0.1rem;
+  transition: background-size 220ms var(--ease);
 }
-.link-arrow:hover { text-decoration-color: currentColor; text-decoration-thickness: 2px; }
+.link-arrow:hover { background-size: 100% 2px; }
 
 /* ── Formularios ────────────────────────────────────────────────────── */
 .field { display: grid; gap: 0.4rem; }
@@ -211,6 +226,9 @@ app-site-header .bar { view-transition-name: cabecera; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .skel > span { animation: none; }
+  .btn[aria-busy='true']::before { animation: none; border-right-color: currentColor; }
+  .btn:hover, .lift:hover, a.quick__item:hover, .nf__links a:hover, .adm-todo a:hover { transform: none !important; }
 }
 
 /* Impresión: solo el contenido, en papel blanco. Lo que aún no entró en pantalla también debe imprimirse. */

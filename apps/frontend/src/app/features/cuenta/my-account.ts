@@ -60,7 +60,7 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
                 <div class="field"><label for="ma-cel">Celular</label><input id="ma-cel" class="input" name="cel" [(ngModel)]="form.phone" maxlength="9" inputmode="numeric" autocomplete="tel"></div>
                 <div class="field"><label for="ma-dir">Dirección</label><input id="ma-dir" class="input" name="dir" [(ngModel)]="form.addressLine" autocomplete="street-address"></div>
                 <div class="field"><label for="ma-apo">Apoderado <span class="opt">(si eres menor de edad)</span></label><input id="ma-apo" class="input" name="apo" [(ngModel)]="form.guardianName"></div>
-                <button class="btn me__save" type="submit" [disabled]="busy() || !dirty()">{{ busy() ? 'Guardando…' : dirty() ? 'Guardar cambios' : 'Sin cambios' }}</button>
+                <button class="btn me__save" type="submit" [disabled]="busy() || !dirty()" [attr.aria-busy]="busy()">{{ busy() ? 'Guardando…' : dirty() ? 'Guardar cambios' : 'Sin cambios' }}</button>
                 @if (msg()) { <p [class]="msgErr() ? 'alert alert--error' : 'acc__ok me__ok'" role="status">{{ msg() }}</p> }
               </form>
 

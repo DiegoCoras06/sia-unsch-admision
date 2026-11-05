@@ -56,7 +56,7 @@ const LEAD = {
                     </div>
                   </div>
                   @if (capsOn()) { <p class="caps" role="status">Las mayúsculas están activadas.</p> }
-                  <button class="btn lg__submit" type="submit" [disabled]="busy()">{{ busy() ? 'Ingresando…' : 'Ingresar' }}</button>
+                  <button class="btn lg__submit" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Ingresando…' : 'Ingresar' }}</button>
                   <p class="lg__links"><a routerLink="/recuperar">Olvidé mi contraseña</a></p>
                 </form>
                 <p class="lg__alt">¿Aún no tienes cuenta? <a routerLink="/crear-cuenta">Crear cuenta</a></p>
@@ -67,7 +67,7 @@ const LEAD = {
                     <label for="fo-id">DNI o correo de tu cuenta</label>
                     <input id="fo-id" class="input" name="id" [(ngModel)]="identifier" autocomplete="username" required>
                   </div>
-                  <button class="btn lg__submit" type="submit" [disabled]="busy()">{{ busy() ? 'Enviando…' : 'Enviarme el enlace' }}</button>
+                  <button class="btn lg__submit" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Enviando…' : 'Enviarme el enlace' }}</button>
                 </form>
                 <p class="lg__alt"><a routerLink="/ingresar">Volver a ingresar</a></p>
               }
@@ -83,7 +83,7 @@ const LEAD = {
                     <span id="re-pass-hint" class="hint">{{ password.length }} de 10 caracteres como mínimo</span>
                   </div>
                   @if (capsOn()) { <p class="caps" role="status">Las mayúsculas están activadas.</p> }
-                  <button class="btn lg__submit" type="submit" [disabled]="busy() || !token() || password.length < 10">{{ busy() ? 'Guardando…' : 'Guardar contraseña' }}</button>
+                  <button class="btn lg__submit" type="submit" [disabled]="busy() || !token() || password.length < 10" [attr.aria-busy]="busy()">{{ busy() ? 'Guardando…' : 'Guardar contraseña' }}</button>
                   @if (!token()) { <p class="hint">Abre esta página desde el enlace que te enviamos por correo.</p> }
                 </form>
               }

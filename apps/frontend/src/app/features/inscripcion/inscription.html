@@ -457,7 +457,7 @@
           <div class="step__nav">
             @if (step() > 0) { <button type="button" class="btn btn--back" (click)="back()">Atrás</button> }
             @if (isLast()) {
-              <button class="btn btn--gold" type="submit" [disabled]="submitting()">{{ submitting() ? 'Guardando…' : 'Guardar inscripción' }}</button>
+              <button class="btn btn--gold" type="submit" [disabled]="submitting()" [attr.aria-busy]="submitting()">{{ submitting() ? 'Guardando…' : 'Guardar inscripción' }}</button>
             } @else {
               <button class="btn btn--gold" type="button" (click)="next()">Siguiente: {{ steps[step() + 1].title }}</button>
             }

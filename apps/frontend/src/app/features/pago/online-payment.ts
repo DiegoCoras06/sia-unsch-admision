@@ -136,7 +136,7 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
                   <li>En tu app Yape toca <strong>«Aprobar compras»</strong> y copia el código de 6 dígitos: vale 2 minutos.</li>
                   <li>Pulsa el botón de abajo y escribe ambos datos en la ventana de Culqi.</li>
                 </ol>
-                <button type="button" class="ck__yape-btn" (click)="payWithYape()" [disabled]="busy()">{{ busy() ? 'Procesando…' : 'Pagar ' + money(amount()) + ' con Yape' }}</button>
+                <button type="button" class="ck__yape-btn" (click)="payWithYape()" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Procesando…' : 'Pagar ' + money(amount()) + ' con Yape' }}</button>
                 @if (yapeEnv() === 'sandbox') { <p class="ck__sandbox">Ambiente de pruebas de Culqi: usa el celular 900 000 001 y cualquier código de 6 dígitos.</p> }
               </div>
             }

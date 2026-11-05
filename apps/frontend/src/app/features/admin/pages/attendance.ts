@@ -63,7 +63,7 @@ const INCIDENTS = [
           <div class="at-offline" role="status">
             <p><strong>{{ pending().length }} {{ pending().length === 1 ? 'lectura guardada' : 'lecturas guardadas' }} sin conexión.</strong>
               {{ online() ? 'Se envían con la hora en que se leyeron.' : 'Se enviarán solas cuando vuelva la conexión.' }}</p>
-            <button class="btn btn--quiet" type="button" (click)="sync()" [disabled]="!online() || syncing()">{{ syncing() ? 'Enviando…' : 'Enviar ahora' }}</button>
+            <button class="btn btn--quiet" type="button" (click)="sync()" [disabled]="!online() || syncing()" [attr.aria-busy]="syncing()">{{ syncing() ? 'Enviando…' : 'Enviar ahora' }}</button>
           </div>
         }
         @if (offlineCard(); as o) {

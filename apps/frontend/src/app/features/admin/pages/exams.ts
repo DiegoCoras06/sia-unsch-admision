@@ -160,7 +160,7 @@ const SCORING = [
             <p class="adm-muted">Primero quienes pidieron adecuación, en aulas accesibles; luego por área académica y orden alfabético, llenando las aulas por puerta, pabellón y piso. Si la capacidad no alcanza no se asigna a nadie.</p>
             @if (d.visible) { <div class="field"><label for="ds-reason">Justificación</label><input id="ds-reason" class="input" [(ngModel)]="reason" name="dr" maxlength="400" placeholder="Obligatoria: la distribución ya está publicada"><span class="adm-muted">Se avisa por correo a quien cambie de aula.</span></div> }
             <div class="adm-row">
-              <button type="button" class="btn" (click)="distribute()" [disabled]="busy() || !!d.attendanceClosedAt">{{ busy() ? 'Distribuyendo…' : d.version ? 'Volver a distribuir' : 'Distribuir aptos' }}</button>
+              <button type="button" class="btn" (click)="distribute()" [disabled]="busy() || !!d.attendanceClosedAt" [attr.aria-busy]="busy()">{{ busy() ? 'Distribuyendo…' : d.version ? 'Volver a distribuir' : 'Distribuir aptos' }}</button>
               @if (d.status === 'DISTRIBUIDO') { <button type="button" class="btn btn--quiet" (click)="confirm()">Confirmar y programar publicación</button> }
               @if (d.assigned) { <button type="button" class="btn btn--quiet" (click)="eligiblePdf()">Relación de aptos (PDF)</button> }
               @if (d.status === 'CONFIRMADO') { <button type="button" class="btn btn--quiet" (click)="closeAttendance()">Cerrar asistencia</button> }

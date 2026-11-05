@@ -26,7 +26,7 @@ import { RecoveryCodes } from '../recovery-codes';
             <label for="sec-code">Código de tu aplicación de autenticación</label>
             <input id="sec-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
           </div>
-          <button class="btn" type="submit" [disabled]="busy() || code.length !== 6">{{ busy() ? 'Generando…' : remaining() ? 'Generar códigos nuevos' : 'Generar códigos' }}</button>
+          <button class="btn" type="submit" [disabled]="busy() || code.length !== 6" [attr.aria-busy]="busy()">{{ busy() ? 'Generando…' : remaining() ? 'Generar códigos nuevos' : 'Generar códigos' }}</button>
           @if (remaining()) { <p class="adm-muted">Los códigos anteriores dejarán de funcionar.</p> }
         </form>
       }

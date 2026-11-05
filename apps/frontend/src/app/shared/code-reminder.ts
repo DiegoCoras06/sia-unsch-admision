@@ -17,7 +17,7 @@ import { ApiService, apiErrorMessage } from '../core/api.service';
         <label for="rc-doc">DNI o carné de extranjería</label>
         <div class="remind__row">
           <input id="rc-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required>
-          <button class="btn btn--gold" type="submit" [disabled]="busy()">{{ busy() ? 'Enviando…' : 'Enviarme el código' }}</button>
+          <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Enviando…' : 'Enviarme el código' }}</button>
         </div>
       </form>
       @if (done()) { <p class="remind__ok" role="status">{{ done() }}</p> }

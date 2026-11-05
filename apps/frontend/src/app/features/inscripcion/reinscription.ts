@@ -43,7 +43,7 @@ import { InscriptionReceipt } from './inscription-receipt';
             <div class="field"><label for="re-code">Código de postulante (Exonerados)</label>
               <input id="re-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required></div>
           </div>
-          <button class="btn" type="submit" [disabled]="busy()">{{ busy() ? 'Verificando…' : 'Verificar' }}</button>
+          <button class="btn" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Verificar' }}</button>
         </form>
 
         @if (status(); as st) {
@@ -66,7 +66,7 @@ import { InscriptionReceipt } from './inscription-receipt';
                   </select>
                 </div>
                 <p class="note">Tus datos personales y tu foto se copian de tu inscripción de Exonerados. Después de reinscribirte no podrás cambiar de programa; el pago no se devuelve (Art. 18).</p>
-                <button class="btn btn--gold" type="submit" [disabled]="!optionCode || busy()">{{ busy() ? 'Registrando…' : 'Reinscribirme por S/ ' + st.amount }}</button>
+                <button class="btn btn--gold" type="submit" [disabled]="!optionCode || busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Registrando…' : 'Reinscribirme por S/ ' + st.amount }}</button>
               </form>
             }
           </div>

@@ -55,10 +55,11 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 - Texto 1rem, peso 600.
 - Guinda con borde `--accent-press`; dorado (`.btn--gold`) sobre fondos guinda; blanco (`.btn--light`) solo en la portada guinda.
 - Secundario (`.btn--quiet`): contorno fino `--field-line`, sin relleno.
-- Al presionar: baja 1px (sin escala).
+- Con puntero: sube 1px con sombra suave. Al presionar: baja 1px, sin sombra y sin escala. En pantallas táctiles no se levanta.
+- En proceso: `[attr.aria-busy]` muestra un indicador giratorio junto al texto («Enviando…»).
 
 ### Enlace de acción (`.link-arrow`)
-- Peso 600, subrayado de 1px al 45 % que pasa a 2px al pasar el puntero. Sin flecha.
+- Peso 600, subrayado de 1px al 45 % y una línea de 2px que crece de izquierda a derecha con el puntero. Sin flecha.
 
 ### Campo (`.input`, `.select`)
 - Alto mínimo 3.25rem, fondo blanco, borde 1px `--field-line`, radio 6px.
@@ -147,6 +148,11 @@ Base 4px en componentes (0.25rem). Márgenes de página `--margin` clamp(1rem �
 
 ### Sesiones activas (`app-active-sessions`)
 - Lista por dispositivo: «Chrome en Windows», con «Este dispositivo» o la última actividad, y botón «Cerrar» salvo en el actual. Se usa en Mi cuenta y en Mi seguridad.
+
+### Acabado moderno, sin perder formalidad
+- Cabecera con vidrio sutil en una capa aparte (`.bar::before`, blanco al 88 % con desenfoque): `backdrop-filter` sobre `.bar` afectaría al menú desplegable.
+- Tarjetas con enlace: suben 2px con sombra suave solo con puntero.
+- Descartados: neomorfismo (falla el contraste), claymorfismo (poco serio), gradientes animados (distraen) y vidrio como estilo general (texto difícil de leer).
 
 ### Resumen de errores
 - Arriba del paso, recibe el foco (`role="alert"`, `tabindex="-1"`), una línea por subgrupo con enlace al primer campo pendiente.

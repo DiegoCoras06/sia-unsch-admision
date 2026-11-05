@@ -28,7 +28,7 @@ import { ExtraDocuments } from './extra-documents';
               <label for="m-code">Código de postulante</label>
               <input id="m-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required>
             </div>
-            <button class="btn btn--gold" type="submit" [disabled]="busy()">{{ busy() ? 'Buscando…' : 'Ver mi inscripción' }}</button>
+            <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Buscando…' : 'Ver mi inscripción' }}</button>
           </form>
           <app-code-reminder />
           @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }

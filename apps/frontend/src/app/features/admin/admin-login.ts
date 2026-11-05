@@ -68,7 +68,7 @@ const STEP_LABEL: Record<string, string> = {
                   <span id="lg-new-hint" class="hint">{{ newPassword.length }} de 10 caracteres como mínimo</span>
                 </div>
                 @if (capsOn()) { <p class="caps" role="status">Las mayúsculas están activadas.</p> }
-                <button class="btn submit" type="submit" [disabled]="busy() || newPassword.length < 10">{{ busy() ? 'Guardando…' : 'Guardar y continuar' }}</button>
+                <button class="btn submit" type="submit" [disabled]="busy() || newPassword.length < 10" [attr.aria-busy]="busy()">{{ busy() ? 'Guardando…' : 'Guardar y continuar' }}</button>
               </form>
             }
             @case ('SETUP_MFA') {
@@ -80,7 +80,7 @@ const STEP_LABEL: Record<string, string> = {
                   <label for="lg-code1">Código de 6 dígitos</label>
                   <input id="lg-code1" class="input code" name="c1" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
                 </div>
-                <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6">{{ busy() ? 'Verificando…' : 'Activar y entrar' }}</button>
+                <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Activar y entrar' }}</button>
               </form>
             }
             @case ('MFA') {
@@ -91,7 +91,7 @@ const STEP_LABEL: Record<string, string> = {
                     <label for="lg-rec">Código de respaldo</label>
                     <input id="lg-rec" class="input code" name="rec" [(ngModel)]="recoveryCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="XXXXX-XXXXX" required>
                   </div>
-                  <button class="btn submit" type="submit" [disabled]="busy() || recoveryCode.trim().length < 10">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
+                  <button class="btn submit" type="submit" [disabled]="busy() || recoveryCode.trim().length < 10" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
                   <button class="link" type="button" (click)="recovery.set(false)">Volver al código de la aplicación</button>
                 </form>
               } @else {
@@ -101,7 +101,7 @@ const STEP_LABEL: Record<string, string> = {
                     <label for="lg-code2">Código</label>
                     <input id="lg-code2" class="input code" name="c2" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
                   </div>
-                  <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
+                  <button class="btn submit" type="submit" [disabled]="busy() || code.length !== 6" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Entrar al panel' }}</button>
                   <button class="link" type="button" (click)="recovery.set(true)">¿Perdiste el celular? Usar un código de respaldo</button>
                   <button class="btn btn--quiet" type="button" (click)="reset()">Usar otra cuenta</button>
                 </form>
@@ -121,7 +121,7 @@ const STEP_LABEL: Record<string, string> = {
                   </div>
                 </div>
                 @if (capsOn()) { <p class="caps" role="status">Las mayúsculas están activadas.</p> }
-                <button class="btn submit" type="submit" [disabled]="busy()">{{ busy() ? 'Verificando…' : 'Continuar' }}</button>
+                <button class="btn submit" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Continuar' }}</button>
                 <p class="help">¿Olvidaste tu contraseña o perdiste tu aplicación de autenticación? Pide el restablecimiento al administrador del sistema.</p>
               </form>
             }

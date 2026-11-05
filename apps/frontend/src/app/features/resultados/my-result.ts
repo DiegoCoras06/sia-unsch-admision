@@ -28,7 +28,7 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
               <input id="r-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required></div>
             <div class="field"><label for="r-code">Código de postulante</label>
               <input id="r-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required></div>
-            <button class="btn btn--gold" type="submit" [disabled]="busy()">{{ busy() ? 'Buscando…' : 'Ver mi puntaje' }}</button>
+            <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Buscando…' : 'Ver mi puntaje' }}</button>
           </form>
           <app-code-reminder />
           @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
@@ -75,7 +75,7 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
                     @if (a.status === 'INGRESANTE') {
                       <h3>¡Eres ingresante de la UNSCH!</h3>
                       <p>Admisión registró la entrega de tus documentos. Descarga tu constancia de ingreso con código QR.</p>
-                      <button type="button" class="btn btn--gold" (click)="certificate()" [disabled]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar constancia de ingreso (PDF)' }}</button>
+                      <button type="button" class="btn btn--gold" (click)="certificate()" [disabled]="downloading()" [attr.aria-busy]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar constancia de ingreso (PDF)' }}</button>
                     } @else if (a.status === 'PERDIDA') {
                       <h3>Perdiste la condición de admitido</h3>
                       <p>No se registró la entrega de tus documentos dentro del plazo (Art. 34). La vacante no se cubre con otro postulante.</p>

@@ -61,7 +61,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
               <label for="a-code">Código de postulante</label>
               <input id="a-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required>
             </div>
-            <button class="btn btn--gold" type="submit" [disabled]="busy()">{{ busy() ? 'Buscando…' : 'Buscar mi aula' }}</button>
+            <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Buscando…' : 'Buscar mi aula' }}</button>
           </form>
           <app-code-reminder />
           @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
@@ -107,7 +107,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
 
               @if (r.state === 'ASSIGNED') {
                 <div class="actions">
-                  <button type="button" class="btn" (click)="download()" [disabled]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha de examen (PDF)' }}</button>
+                  <button type="button" class="btn" (click)="download()" [disabled]="downloading()" [attr.aria-busy]="downloading()">{{ downloading() ? 'Preparando…' : 'Descargar ficha de examen (PDF)' }}</button>
                   <a class="btn btn--quiet" routerLink="/mi-inscripcion">Ficha de inscripción</a>
                 </div>
               }
@@ -122,7 +122,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
                     <p class="note">Comunícalo al menos 72 horas antes del examen (Art. 22). Te ubicaremos en un aula accesible del primer piso.</p>
                     <label for="a-needs">Describe lo que necesitas</label>
                     <textarea id="a-needs" class="input" name="needs" rows="3" [(ngModel)]="needs" maxlength="600" placeholder="Ejemplo: uso silla de ruedas; necesito aula sin escaleras."></textarea>
-                    <button class="btn btn--quiet" type="submit" [disabled]="sending()">{{ sending() ? 'Enviando…' : 'Enviar solicitud' }}</button>
+                    <button class="btn btn--quiet" type="submit" [disabled]="sending()" [attr.aria-busy]="sending()">{{ sending() ? 'Enviando…' : 'Enviar solicitud' }}</button>
                   </form>
                 </details>
               }

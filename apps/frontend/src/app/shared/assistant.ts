@@ -56,7 +56,7 @@ function toLines(text: string): Line[] {
               <label for="as-code">Código de postulante</label>
               <input id="as-code" class="input" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="8" autocomplete="off" required>
               <div class="row">
-                <button class="btn" type="submit" [disabled]="busy()">{{ busy() ? 'Verificando…' : 'Verificar' }}</button>
+                <button class="btn" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Verificando…' : 'Verificar' }}</button>
                 <button class="btn btn--quiet" type="button" (click)="panel.set('chat')">Volver</button>
               </div>
             </form>
@@ -70,7 +70,7 @@ function toLines(text: string): Line[] {
               <label for="as-mail">Correo</label>
               <input id="as-mail" class="input" type="email" name="mail" [(ngModel)]="mail" autocomplete="email" required>
               <div class="row">
-                <button class="btn" type="submit" [disabled]="busy() || !conversationId">{{ busy() ? 'Enviando…' : 'Enviar' }}</button>
+                <button class="btn" type="submit" [disabled]="busy() || !conversationId" [attr.aria-busy]="busy()">{{ busy() ? 'Enviando…' : 'Enviar' }}</button>
                 <button class="btn btn--quiet" type="button" (click)="panel.set('chat')">Volver</button>
               </div>
               @if (!conversationId) { <p class="note">Escribe primero tu consulta en el chat.</p> }
