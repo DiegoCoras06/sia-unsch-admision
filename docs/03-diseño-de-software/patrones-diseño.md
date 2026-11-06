@@ -15,11 +15,11 @@ Documentar los patrones de diseño aplicados en el backend del Sistema Integral 
 - **Comunicación:** API REST mediante HTTPS.
 - **Base de datos:** Amazon RDS PostgreSQL.
 - **Caché:** no se usa por ahora; Redis queda previsto si la prueba de carga lo exige.
-- **Eventos:** bandeja de eventos (Transactional Outbox) en PostgreSQL.
+- **Eventos:** bandeja de eventos (Transactional Outbox) en PostgreSQL y Amazon SQS.
 - **Almacenamiento:** Amazon S3.
 - **Inteligencia artificial:** OpenRouter API.
 - **Base arquitectónica:** Diagrama de componentes C4 – Nivel 3.
-- **Organización:** 14 módulos funcionales.
+- **Organización:** 12 módulos funcionales.
 
 ## 3. Patrones aplicados
 
@@ -35,7 +35,7 @@ Esta tabla muestra los patrones como están **implementados en el código** al 0
 | Fábrica | Selección de adaptadores | Elegir el proveedor real o simulado según la configuración, sin que los casos de uso lo sepan. | Funciones `createPaymentGateway`, `createYapeGateway` y `createIdentityProvider`. | `modules/pagos/index.ts`, `modules/usuarios/index.ts` |
 | Inyección de dependencias | Todos los módulos | Evitar el acoplamiento entre casos de uso e implementaciones concretas. | Cada servicio recibe sus dependencias en el constructor; cada módulo tiene su raíz de composición `createXModule(deps)`. | `modules/*/index.ts`, `app.ts` |
 | Fachada | Comunicación entre módulos | Que un módulo use a otro sin conocer sus clases internas. | El `index.ts` de cada módulo publica solo su API (`ConvocatoriasQueries`, `AccessService`, `IdentityProvider`). | `modules/convocatorias/index.ts`, `modules/seguridad/index.ts` |
-| Observador | Pagos, Expedientes → Inscripciones y Notificaciones | Reaccionar a un hecho sin que el módulo que lo produce conozca a los interesados. | Bandeja de eventos `Outbox` con `publish` y `subscribe`; eventos como `PagoConfirmado`, `InscripcionRegistrada`, `ExpedienteDictaminado`. | `shared/events/outbox.ts`, `modules/inscripciones/index.ts` |
+| Observador | Pagos, Expedientes → Inscripciones y Notificaciones | Reaccionar a un hecho sin que el módulo que lo produce conozca a los interesados. | Bandeja de eventos `Outbox` con `publish` y `subscribe`, y Amazon SQS como transporte (`SqsEventQueue`, ADR-021); eventos como `PagoConfirmado`, `InscripcionRegistrada`, `ExpedienteDictaminado`. | `shared/events/outbox.ts`, `modules/inscripciones/index.ts` |
 
 ## 4. Cómo funciona cada patrón
 

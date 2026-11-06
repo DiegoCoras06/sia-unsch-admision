@@ -61,7 +61,7 @@ flowchart TB
     subgraph AWS["Servicios AWS"]
         DB[("Amazon RDS PostgreSQL")]
         S3["Amazon S3"]
-        OUTBOX["Bandeja de eventos<br/>(outbox en PostgreSQL)"]
+        OUTBOX["Amazon SQS<br/>(con outbox en PostgreSQL)"]
     end
 
     EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
@@ -85,7 +85,7 @@ flowchart TB
     class DB,S3,OUTBOX,EXT externo
 ```
 
-**Descripción:** El backend está organizado en 14 módulos funcionales que se ejecutan dentro de una única aplicación AWS Lambda. Los módulos se comunican mediante interfaces públicas (`index.ts`) y eventos, y utilizan adaptadores para acceder a los servicios externos. En el código, los 14 módulos ocupan 12 carpetas y la persistencia se hace con Prisma (repositorio formal solo en Convocatorias).
+**Descripción:** El backend está organizado en 12 módulos funcionales que se ejecutan dentro de una única aplicación AWS Lambda. Los módulos se comunican mediante interfaces públicas (`index.ts`) y eventos, y utilizan adaptadores para acceder a los servicios externos. En el código, cada módulo ocupa una carpeta y la persistencia se hace con Prisma (repositorio formal solo en Convocatorias).
 
 **Nota:** Las conexiones del diagrama representan dependencias funcionales y flujos de comunicación propuestos. No significan que los módulos puedan acceder directamente a las tablas o implementaciones internas de otros módulos.
 
@@ -98,18 +98,16 @@ flowchart TB
 | **API REST** | Punto de entrada HTTP del backend. | Rutas `/api/v1`, autenticación, autorización, validación de solicitudes y manejo de errores. | `src/api/` |
 | **M01 – Convocatorias** | Administrar los procesos de admisión. | Crear convocatorias, configurar cronogramas, modalidades, programas y vacantes. | `src/modules/convocatorias/` |
 | **M02 – Usuarios e Identidad** | Gestionar la información de postulantes y usuarios. | Registro, actualización de datos y validación de identidad mediante RENIEC. | `src/modules/usuarios/` |
-| **M03 – Inscripción Ordinaria** | Gestionar las inscripciones de modalidad ordinaria. | Registro de postulaciones, selección de programas y seguimiento del estado de inscripción. | `src/modules/inscripcion-ordinaria/` |
-| **M04 – Inscripción Exonerados** | Gestionar las postulaciones de modalidades especiales. | Registro de postulantes exonerados y validación de requisitos específicos. | `src/modules/inscripcion-exonerados/` |
-| **M05 – Pagos** | Gestionar los pagos de inscripción. | Generación de órdenes, integración con pasarela, confirmación y conciliación de pagos. | `src/modules/pagos/` |
-| **M06 – Expedientes** | Administrar la documentación de postulantes. | Carga, revisión, validación y observación de documentos. | `src/modules/expedientes/` |
-| **M07 – Exámenes** | Organizar las evaluaciones de admisión. | Programación de exámenes, fechas y asignación de evaluaciones. | `src/modules/examenes/` |
-| **M08 – Sedes y Aulas** | Gestionar ambientes de evaluación. | Registro de sedes, aulas, capacidades y asignación de postulantes. | `src/modules/sedes-aulas/` |
-| **M09 – Resultados** | Gestionar las calificaciones y resultados de admisión. | Procesamiento, validación, orden de mérito y publicación de resultados. | `src/modules/resultados/` |
-| **M10 – Chatbot IA** | Proporcionar orientación automatizada. | Atención de consultas frecuentes e integración con OpenRouter API. | `src/modules/chatbot-ia/` |
-| **M11 – Notificaciones** | Gestionar la comunicación con postulantes. | Envío de confirmaciones, avisos, observaciones y recordatorios. | `src/modules/notificaciones/` |
-| **M12 – Reportes** | Generar información estadística y administrativa. | Reportes de inscritos, pagos, modalidades, exámenes y resultados. | `src/modules/reportes/` |
-| **M13 – Seguridad y Roles** | Controlar el acceso a funcionalidades. | Autenticación, autorización, roles, permisos y auditoría de acciones. | `src/modules/seguridad/` |
-| **M14 – Configuración** | Gestionar parámetros generales del sistema. | Configuración institucional, parámetros operativos e integraciones. | `src/modules/configuracion/` |
+| **M03 – Inscripciones** | Gestionar las inscripciones de todas las modalidades. | Registro de postulaciones ordinarias y de exonerados, selección de programa, ficha y estado. | `modules/inscripciones` |
+| **M04 – Pagos** | Gestionar los pagos de inscripción. | Generación de órdenes, integración con pasarela, confirmación y conciliación de pagos. | `src/modules/pagos/` |
+| **M05 – Expedientes** | Administrar la documentación de postulantes. | Carga, revisión, validación y observación de documentos. | `src/modules/expedientes/` |
+| **M06 – Exámenes, Sedes y Aulas** | Organizar las evaluaciones y sus ambientes. | Programación de exámenes, sedes, aulas, capacidades, asignación y asistencia. | `modules/examenes` |
+| **M07 – Resultados** | Gestionar las calificaciones y resultados de admisión. | Procesamiento, validación, orden de mérito y publicación de resultados. | `src/modules/resultados/` |
+| **M08 – Chatbot IA** | Proporcionar orientación automatizada. | Atención de consultas frecuentes e integración con OpenRouter API. | `src/modules/chatbot-ia/` |
+| **M09 – Notificaciones** | Gestionar la comunicación con postulantes. | Envío de confirmaciones, avisos, observaciones y recordatorios. | `src/modules/notificaciones/` |
+| **M10 – Reportes** | Generar información estadística y administrativa. | Reportes de inscritos, pagos, modalidades, exámenes y resultados. | `src/modules/reportes/` |
+| **M11 – Seguridad** | Controlar el acceso a funcionalidades. | Autenticación, autorización, roles, permisos y auditoría de acciones. | `src/modules/seguridad/` |
+| **M12 – Configuración** | Gestionar parámetros generales del sistema. | Configuración institucional, parámetros operativos e integraciones. | `src/modules/configuracion/` |
 | **Infraestructura Compartida** | Proporcionar mecanismos técnicos reutilizables. | Conexiones, manejo de errores, clientes AWS y utilidades transversales. | `src/shared/` |
 
 ---
@@ -120,22 +118,17 @@ flowchart TB
 |---|---|---|---|
 | Aplicación Web | API REST | Envía solicitudes para ejecutar funcionalidades del sistema. | HTTPS / JSON |
 | API REST | Módulos funcionales | Invoca los casos de uso correspondientes. | Llamada en memoria |
-| Inscripción Ordinaria | Convocatorias | Consulta convocatorias activas, modalidades y vacantes. | Llamada en memoria mediante API pública |
-| Inscripción Ordinaria | Usuarios | Comprueba la información y validación del postulante. | Llamada en memoria mediante API pública |
-| Inscripción Exonerados | Convocatorias | Consulta modalidades especiales y requisitos. | Llamada en memoria mediante API pública |
-| Inscripción Exonerados | Usuarios | Comprueba los datos del postulante. | Llamada en memoria mediante API pública |
-| Pagos | Inscripción Ordinaria | Comunica la confirmación de pagos asociados a inscripciones ordinarias. | API pública o evento interno |
-| Pagos | Inscripción Exonerados | Comunica la confirmación de pagos de modalidades especiales. | API pública o evento interno |
-| Expedientes | Inscripción Ordinaria | Consulta información de inscripciones ordinarias. | Llamada en memoria |
-| Expedientes | Inscripción Exonerados | Consulta información de inscripciones especiales. | Llamada en memoria |
-| Exámenes | Sedes y Aulas | Solicita ambientes y asignaciones de postulantes. | Llamada en memoria |
-| Resultados | Exámenes | Consulta información de las evaluaciones programadas. | Llamada en memoria |
+| Inscripciones | Convocatorias | Consulta convocatorias activas, modalidades y vacantes. | Llamada en memoria mediante API pública |
+| Inscripciones | Usuarios | Comprueba la información y validación del postulante. | Llamada en memoria mediante API pública |
+| Pagos | Inscripciones | Comunica la confirmación de pagos con el evento `PagoConfirmado`. | Evento mediante outbox y Amazon SQS |
+| Expedientes | Inscripciones | Consulta información de las inscripciones. | Llamada en memoria |
+| Resultados | Exámenes, Sedes y Aulas | Consulta información de las evaluaciones programadas. | Llamada en memoria |
 | Chatbot IA | Convocatorias | Consulta información pública sobre procesos de admisión. | API pública del módulo |
 | Notificaciones | Pagos | Recibe solicitudes o eventos de confirmación de pago. | Evento interno o mensajería |
 | Notificaciones | Resultados | Recibe solicitudes de comunicación sobre resultados publicados. | Evento interno o mensajería |
 | Reportes | Convocatorias | Obtiene información autorizada de procesos de admisión. | API pública del módulo |
 | Reportes | Resultados | Obtiene información estadística de evaluaciones y resultados. | API pública del módulo |
-| API REST | Seguridad y Roles | Valida autenticación y permisos de acceso. | Middleware y llamada en memoria |
+| API REST | Seguridad | Valida autenticación y permisos de acceso. | Middleware y llamada en memoria |
 
 **Regla:** la comunicación entre módulos del monolito se realiza mediante sus interfaces públicas. No se utilizarán solicitudes HTTP entre módulos que se ejecutan dentro de la misma aplicación.
 
@@ -150,7 +143,7 @@ flowchart TB
 | Pagos | Izipay micuentaweb y Culqi | Gestiona pagos con tarjeta y Yape y verifica confirmaciones firmadas. | HTTPS / REST | Adaptador + Fábrica |
 | Chatbot IA | OpenRouter API | Solicita respuestas de modelos de inteligencia artificial. | HTTPS / REST | Adaptador |
 | Notificaciones | Amazon SES | Solicita el envío de mensajes electrónicos. | AWS SDK / HTTPS | Adaptador |
-| Pagos, Expedientes, Inscripciones | Bandeja de eventos | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan. | SQL / TLS | Observador |
+| Pagos, Expedientes, Inscripciones | Bandeja de eventos y Amazon SQS | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan. | SQL / TLS y AWS SDK | Observador |
 | Expedientes | Amazon S3 | Almacena y recupera documentos de postulantes. | AWS SDK / HTTPS | Repositorio de archivos / Adaptador |
 | Inscripciones | Amazon S3 | Guarda y recupera fichas y documentos generados. | AWS SDK / HTTPS | Adaptador |
 | Backend API REST | Grafana Cloud | Envía logs, trazas y métricas con OpenTelemetry (al desplegar). | OTLP / HTTPS | Observabilidad |

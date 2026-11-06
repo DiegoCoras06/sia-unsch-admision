@@ -179,24 +179,24 @@ proyectofinal/
 
 ## 3. Mapa de funcionalidades
 
-Las **funcionalidades** (`specs/`) son cortes verticales que se entregan y demuestran solas. Los **módulos** (`M01`–`M14`) son la organización interna del código del monolito modular; una funcionalidad puede tocar varios módulos.
+Las **funcionalidades** (`specs/`) son cortes verticales que se entregan y demuestran solas. Los **módulos** (`M01`–`M12`) son la organización interna del código del monolito modular; una funcionalidad puede tocar varios módulos. Las specs conservan la numeración anterior de 14 módulos: la equivalencia está en el [diseño interno](docs/03-diseño-de-software/diseño-interno-modulos.md).
 
 | # | Funcionalidad | Módulos | Historias | P1 | Requisitos FR | Depende de |
 |---|---|---|--:|--:|--:|---|
-| 001 | [Portal público](specs/001-portal-publico/requirements.md) | M01, M14 | 6 | 3 | 13 | — |
-| 002 | [Cuentas e identidad](specs/002-cuentas-identidad/requirements.md) | M02, M13 | 6 | 4 | 13 | — |
-| 003 | [Inscripción Ordinario](specs/003-inscripcion-ordinaria/requirements.md) | M03, M05, M06 | 7 | 5 | 16 | 001, 002 |
-| 004 | [Inscripción Exonerados y expediente](specs/004-inscripcion-exonerados/requirements.md) | M04, M06 | 7 | 5 | 15 | 002, 003 |
-| 005 | [Pagos y conciliación](specs/005-pagos/requirements.md) | M05 | 5 | 2 | 12 | 003 |
-| 006 | [Examen, aulas y asistencia](specs/006-examen-aulas/requirements.md) | M07, M08 | 6 | 4 | 13 | 005 |
-| 007 | [Resultados e ingreso](specs/007-resultados-ingreso/requirements.md) | M09 | 7 | 4 | 11 | 006 |
-| 008 | [Panel administrativo, seguridad y reportes](specs/008-panel-administrativo/requirements.md) | M01, M12, M13, M14 | 8 | 3 | 14 | 002 |
-| 009 | [Asistente virtual (chatbot IA)](specs/009-chatbot-ia/requirements.md) | M10 | 5 | 1 | 11 | 001, 002 |
-| 010 | [Notificaciones](specs/010-notificaciones/requirements.md) | M11 | 5 | 1 | 8 | 002 |
-| | **Total** | **14 módulos** | **62** | **32** | **126** | |
+| 001 | [Portal público](specs/001-portal-publico/requirements.md) | M01, M12 | 6 | 3 | 13 | — |
+| 002 | [Cuentas e identidad](specs/002-cuentas-identidad/requirements.md) | M02, M11 | 6 | 4 | 13 | — |
+| 003 | [Inscripción Ordinario](specs/003-inscripcion-ordinaria/requirements.md) | M03, M04, M05 | 7 | 5 | 16 | 001, 002 |
+| 004 | [Inscripción Exonerados y expediente](specs/004-inscripcion-exonerados/requirements.md) | M03, M05 | 7 | 5 | 15 | 002, 003 |
+| 005 | [Pagos y conciliación](specs/005-pagos/requirements.md) | M04 | 5 | 2 | 12 | 003 |
+| 006 | [Examen, aulas y asistencia](specs/006-examen-aulas/requirements.md) | M06 | 6 | 4 | 13 | 005 |
+| 007 | [Resultados e ingreso](specs/007-resultados-ingreso/requirements.md) | M07 | 7 | 4 | 11 | 006 |
+| 008 | [Panel administrativo, seguridad y reportes](specs/008-panel-administrativo/requirements.md) | M01, M10, M11, M12 | 8 | 3 | 14 | 002 |
+| 009 | [Asistente virtual (chatbot IA)](specs/009-chatbot-ia/requirements.md) | M08 | 5 | 1 | 11 | 001, 002 |
+| 010 | [Notificaciones](specs/010-notificaciones/requirements.md) | M09 | 5 | 1 | 8 | 002 |
+| | **Total** | **12 módulos** | **62** | **32** | **126** | |
 
 **Prioridades:** P1 = imprescindible para el MVP · P2 = importante · P3 = deseable.
-**Trazabilidad:** los **143 requisitos RF-01.01…RF-14.10 de los 14 módulos** de la guía maestra están citados en al menos un FR de las especificaciones; cada FR cita además su regla del Reglamento (`RN`) o mejora (`MEJ`). La [matriz de trazabilidad](docs/trazabilidad-requisitos.md) muestra, módulo por módulo, qué spec cubre cada RF y su estado en el código (hoy: ✅ 136 · 🟡 7 · ⏳ 0; los 7 parciales dependen de servicios externos o del despliegue en AWS). Se regenera con `node scripts/trazabilidad.mjs`.
+**Trazabilidad:** los **143 requisitos RF-01.01…RF-14.10** de la guía maestra (escrita con 14 módulos; el sistema trabaja con 12) están citados en al menos un FR de las especificaciones; cada FR cita además su regla del Reglamento (`RN`) o mejora (`MEJ`). La [matriz de trazabilidad](docs/trazabilidad-requisitos.md) muestra, módulo por módulo, qué spec cubre cada RF y su estado en el código (hoy: ✅ 136 · 🟡 7 · ⏳ 0; los 7 parciales dependen de servicios externos o del despliegue en AWS). Se regenera con `node scripts/trazabilidad.mjs`.
 
 ### Actores y funcionalidades (vista de casos de uso)
 
@@ -235,17 +235,17 @@ Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuent
 | 2 | Estructura SDD + requisitos (hoy `requirements.md`) de las 10 funcionalidades (historias, escenarios, FR, criterios de éxito) y RNF en la constitución | ✅ Aprobado |
 | 3 | `/clarify` (5 aclaraciones) + [arquitectura C4](docs/arquitectura.md) + [13 ADR](docs/adr/README.md) | ✅ Aprobado |
 | 4 | `/plan` de [001](specs/001-portal-publico/design.md) y [002](specs/002-cuentas-identidad/design.md): diseño técnico, decisiones, modelo de datos, `contracts/openapi.yaml` y guía de validación | ✅ Aprobado |
-| **5** | **`/tasks` + `/implement` de 001 y 002: monorepo, PostgreSQL embebido, API (M01, M02, M13, M14), portal público y cuentas en Angular con sistema de diseño UNSCH; 92 pruebas del backend y E2E de cuentas por la interfaz** | ✅ Listo para revisión |
+| **5** | **`/tasks` + `/implement` de 001 y 002: monorepo, PostgreSQL embebido, API (M01, M02, M11, M12), portal público y cuentas en Angular con sistema de diseño UNSCH; 92 pruebas del backend y E2E de cuentas por la interfaz** | ✅ Listo para revisión |
 | **5.1** | **Ajustes pedidos: inscripción pública sin cuenta ([ADR-015](docs/adr/ADR-015-inscripcion-sin-cuenta.md)) con el formulario oficial y autocompletado por DNI, documentos oficiales como PDF dentro de la web con menú «Contenido», consulta con DNI + código, conexión a RDS con SSL verificado** | ✅ Listo para revisión |
 | **5.2** | **Catálogo oficial de 14 módulos y 143 RF: [matriz de trazabilidad](docs/trazabilidad-requisitos.md) con estado por requisito; [ADR-016](docs/adr/ADR-016-pasarela-izipay.md) Izipay sandbox; enmienda de ADR-015 (cuenta opcional del postulante); RF-14.10 respaldos en spec 008** | ✅ Listo para revisión |
-| **5.3** | **Pagos en línea (spec 005, iteración 1): módulo M05 con Izipay ([ADR-016](docs/adr/ADR-016-pasarela-izipay.md)) y pasarela simulada, firma HMAC verificada en el servidor, IPN idempotente, constancia e historial en «Imprimir documentos»; inscripción a Apta por evento. Falta el pago real en sandbox (faltan credenciales)** | 🟡 Listo, salvo sandbox |
-| **5.4** | **Asistente virtual (spec 009, M10): OpenRouter con herramientas sobre datos oficiales ([ADR-017](docs/adr/ADR-017-asistente-ia-herramientas.md)), modo básico sin clave, «Consultar mi proceso» con pase firmado, derivación a una persona, control de uso y retención; 128 pruebas del backend y E2E del asistente** | ✅ Listo para revisión |
+| **5.3** | **Pagos en línea (spec 005, iteración 1): módulo M04 con Izipay ([ADR-016](docs/adr/ADR-016-pasarela-izipay.md)) y pasarela simulada, firma HMAC verificada en el servidor, IPN idempotente, constancia e historial en «Imprimir documentos»; inscripción a Apta por evento. Falta el pago real en sandbox (faltan credenciales)** | 🟡 Listo, salvo sandbox |
+| **5.4** | **Asistente virtual (spec 009, M08): OpenRouter con herramientas sobre datos oficiales ([ADR-017](docs/adr/ADR-017-asistente-ia-herramientas.md)), modo básico sin clave, «Consultar mi proceso» con pase firmado, derivación a una persona, control de uso y retención; 128 pruebas del backend y E2E del asistente** | ✅ Listo para revisión |
 | **5.5** | **Panel administrativo (spec 008, adelantado a pedido): ingreso del personal con contraseña + TOTP ([ADR-018](docs/adr/ADR-018-panel-acceso-personal.md)), 8 roles con permisos verificados y auditados, convocatoria (fechas, tasas, vacantes con resolución, copia), inscripciones, pagos, contenido, asistente, casos, inhabilitados, usuarios, auditoría, configuración e indicadores exportables a Excel y PDF; 143 pruebas del backend y E2E del panel** | ✅ Listo para revisión |
 | 6 | Cuenta opcional del postulante (crear con DNI + dígito verificador, código por correo, ingresar, recuperar, «Mi cuenta» con las inscripciones del mismo DNI), borrador automático de la inscripción y ficha de inscripción en PDF con QR firmado y verificación pública; 147 pruebas del backend y E2E de pago, ficha y cuenta | ✅ Aprobado |
-| 7 | Exonerados y expedientes (M04, M06): expediente en línea en «Imprimir documentos» (carga validada de PDF/JPG/PNG, datos de la submodalidad, envío), bandeja del evaluador en el panel (conforme u observado por documento, autorizar/observar/rechazar, verificación presencial, evaluación especial, reasignación), subsanación en 72 h, pago bloqueado hasta autorizar, correos y expedientes por estado en el indicador; 154 pruebas del backend y E2E del expediente | ✅ Aprobado |
+| 7 | Exonerados y expedientes (M03, M05): expediente en línea en «Imprimir documentos» (carga validada de PDF/JPG/PNG, datos de la submodalidad, envío), bandeja del evaluador en el panel (conforme u observado por documento, autorizar/observar/rechazar, verificación presencial, evaluación especial, reasignación), subsanación en 72 h, pago bloqueado hasta autorizar, correos y expedientes por estado en el indicador; 154 pruebas del backend y E2E del expediente | ✅ Aprobado |
 | 8 | ~~Panel administrativo~~ — adelantado como Paso 5.5; la edición de modalidades, programas y requisitos se completó en el Paso 10.2 | ✅ Adelantado |
-| 9 | Exámenes, sedes y aulas (M07, M08): programación con ventana de ingreso, estructura, calificación e indicaciones; sedes, pabellones y aulas con capacidad y accesibilidad; control de cruces; distribución automática todo o nada (adecuaciones primero), confirmación y publicación 24 h antes; «Buscar aula» y ficha de examen con QR; asistencia por QR con foto, fuera de hora, ausentes e incidencias; cambios de aula y reprogramación con correo; 22 pruebas nuevas y E2E del examen | ✅ Aprobado |
-| 10 | Resultados (M09): importación validada de la lectora, puntaje y orden de mérito con empates, mínimo 450, sin derecho a vacante y traslado de vacantes de exonerados; versiones con aprobación de otra persona y publicación a la hora autorizada; «Ver puntaje», lista de admitidos sin DNI, ingreso con constancia y QR, admisión perdida, reportes y revisión por error material. Notificaciones (M11): registro de cada correo, cola con reintentos sin duplicar, recordatorios, aulas publicadas, resultados disponibles, comunicados segmentados, plantillas y bandeja del postulante. Tesorería (M05): conciliación y anulaciones por error de cobro; 28 pruebas nuevas y E2E de resultados | ✅ Aprobado |
+| 9 | Exámenes, sedes y aulas (M06): programación con ventana de ingreso, estructura, calificación e indicaciones; sedes, pabellones y aulas con capacidad y accesibilidad; control de cruces; distribución automática todo o nada (adecuaciones primero), confirmación y publicación 24 h antes; «Buscar aula» y ficha de examen con QR; asistencia por QR con foto, fuera de hora, ausentes e incidencias; cambios de aula y reprogramación con correo; 22 pruebas nuevas y E2E del examen | ✅ Aprobado |
+| 10 | Resultados (M07): importación validada de la lectora, puntaje y orden de mérito con empates, mínimo 450, sin derecho a vacante y traslado de vacantes de exonerados; versiones con aprobación de otra persona y publicación a la hora autorizada; «Ver puntaje», lista de admitidos sin DNI, ingreso con constancia y QR, admisión perdida, reportes y revisión por error material. Notificaciones (M09): registro de cada correo, cola con reintentos sin duplicar, recordatorios, aulas publicadas, resultados disponibles, comunicados segmentados, plantillas y bandeja del postulante. Tesorería (M04): conciliación y anulaciones por error de cobro; 28 pruebas nuevas y E2E de resultados | ✅ Aprobado |
 | 10.1 | ~~Rediseño con las skills de diseño~~ — revertido a pedido el 27/10/2026: el portal y el panel vuelven al diseño anterior (Archivo, guinda y dorado) y se retiraron las fotos del retablo y de la catedral | ↩️ Revertido |
 | **10.2** | **Los 17 requisitos parciales sin dependencias externas: catálogo del concurso editable (modalidades, tipos, submodalidades con criterios, facultades, áreas, programas y requisitos), imágenes de la portada editables, documentos adicionales de la inscripción, consentimiento en la inscripción, anonimización por retención, temario por curso en el examen, asistencia sin conexión, aviso de anulación, asistente con expediente/aula/resultado y exportación de expedientes y asistencia; 212 pruebas del backend** | ✅ Listo para revisión |
 | 11 | Despliegue en AWS con CDK (Lambda, API Gateway, RDS, CloudFront) — **requiere confirmar costos** — y pruebas finales | ⏳ |
@@ -269,7 +269,7 @@ Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuent
 - [Constitución](.specify/memory/constitution.md)
 - [Arquitectura (C4 y despliegue AWS)](docs/arquitectura.md)
 - [Decisiones de arquitectura (ADR)](docs/adr/README.md)
-- [Trazabilidad de los 143 requerimientos funcionales (14 módulos)](docs/trazabilidad-requisitos.md)
+- [Trazabilidad de los 143 requerimientos funcionales](docs/trazabilidad-requisitos.md)
 - [Visión y análisis del portal actual](docs/vision.md)
 - [Reglas de negocio y catálogos 2027-I](docs/reglas-negocio.md)
 - [Fuentes oficiales](docs/fuentes/)

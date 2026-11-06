@@ -47,7 +47,7 @@ flowchart TB
 
     DB[("Amazon RDS<br/>PostgreSQL")]
     S3["Amazon S3<br/>Documentos"]
-    OUTBOX["Bandeja de eventos<br/>Outbox en PostgreSQL"]
+    OUTBOX["Amazon SQS<br/>con Outbox en PostgreSQL"]
 
     EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
 
@@ -99,7 +99,7 @@ Estará organizada en cuatro grupos de módulos funcionales:
 
 ### Capa de infraestructura
 
-Permite la conexión con Amazon RDS PostgreSQL, Amazon S3, Amazon SES y los servicios externos. Las tareas asíncronas usan una bandeja de eventos (outbox) guardada en la misma base de datos.
+Permite la conexión con Amazon RDS PostgreSQL, Amazon S3, Amazon SES y los servicios externos. Las tareas asíncronas usan una bandeja de eventos (outbox) en la misma base de datos, que envía los ID a Amazon SQS.
 
 ## 6.4. Funcionamiento general
 
@@ -124,7 +124,8 @@ Por estas razones, se considera adecuada para el Sistema Integral de Gestión de
 ## 6.6. Estado de implementación (02/11/2026)
 
 - Los cuatro grupos de módulos están implementados: **Gestión de admisión** (`convocatorias`, `inscripciones`, `expedientes`), **Gestión académica** (`examenes`, `resultados`), **Gestión administrativa** (`usuarios`, `pagos`, `seguridad`, `configuracion`) y **Servicios complementarios** (`asistente`, `notificaciones`, `reportes`).
-- **Redis y SQS se retiraron del diagrama:** no se usan. La mensajería entre módulos es una bandeja de eventos en PostgreSQL (ADR-008 del repositorio) y Redis queda como opción si la prueba de carga lo justifica.
+- **Redis se retiró del diagrama:** no se usa; queda como opción si la prueba de carga lo justifica.
+- **Mensajería con Amazon SQS:** los eventos se guardan en una bandeja (outbox) en PostgreSQL, se envían a SQS y los procesa un worker (ADR-021). El código está listo; la cola se crea en el despliegue. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso.
 - **SMS no se implementó** (opcional según RC16): los avisos van por correo.
 - La pasarela de pagos son dos adaptadores: Izipay micuentaweb para tarjeta y Culqi para Yape.
 

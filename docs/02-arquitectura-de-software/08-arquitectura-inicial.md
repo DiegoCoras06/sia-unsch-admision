@@ -82,7 +82,7 @@ flowchart TB
     end
 
     subgraph EVENTOS["Comunicación asíncrona"]
-        EB["Outbox en PostgreSQL<br/>+ EventBridge Scheduler"]
+        EB["Amazon SQS<br/>con Outbox en PostgreSQL"]
     end
 
     subgraph EXTERNOS["Integraciones externas"]
@@ -152,7 +152,8 @@ Implementará los repositorios de datos, los adaptadores externos y la comunicac
 | Amazon S3 | Almacenamiento de archivos |
 | Amazon CloudFront | Distribución web |
 | Amazon Route 53 | Dominio |
-| Amazon EventBridge Scheduler | Despacho periódico de la bandeja de eventos y tareas programadas |
+| Amazon SQS | Cola de eventos entre el backend y el worker (ADR-021) |
+| Amazon EventBridge Scheduler | Tareas programadas y reenvío de eventos atascados |
 | Amazon SES | Correos electrónicos |
 | AWS Certificate Manager | Certificados HTTPS |
 
@@ -184,9 +185,9 @@ La arquitectura se implementó con estos ajustes respecto de la vista inicial:
 
 | Elemento de la vista inicial | Cómo quedó | Motivo |
 |---|---|---|
-| 7 módulos de dominio | 14 módulos funcionales en 12 carpetas (ver 03, diseño interno) | El análisis detallado separó convocatorias, expedientes, exámenes, chatbot, reportes, seguridad y configuración |
+| 7 módulos de dominio | 12 módulos funcionales, uno por carpeta (ver 03, diseño interno) | El análisis detallado separó convocatorias, expedientes, exámenes, chatbot, reportes, seguridad y configuración |
 | ElastiCache Redis | Retirado del diagrama; previsto solo si la prueba de carga lo exige | Las consultas frecuentes son livianas y el límite de intentos funciona con PostgreSQL; Redis añade un costo fijo |
-| Amazon EventBridge como bus de eventos | Bandeja de eventos (Transactional Outbox) en PostgreSQL; EventBridge Scheduler solo dispara el despacho cada minuto | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 del repositorio) |
+| Amazon EventBridge como bus de eventos | Bandeja de eventos (Transactional Outbox) en PostgreSQL que envía los ID a Amazon SQS; un worker los procesa. EventBridge Scheduler queda para las tareas programadas | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 y ADR-021 del repositorio) |
 | Validación de identidad | RENIEC por medio de apiperu.dev | Proveedor autorizado y de bajo costo para el proyecto académico |
 | Pasarela de pagos | Izipay micuentaweb (tarjeta) y Culqi (Yape) | Yape no estaba disponible en la cuenta de Izipay (ADR-019) |
 | Route 53, CloudFront, API Gateway, Lambda | Diseñados, pendientes del despliegue | Paso 11 de la hoja de ruta |

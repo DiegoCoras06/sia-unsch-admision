@@ -17,7 +17,8 @@ Comparación entre lo comprometido en `docs/01` a `docs/04` y el código impleme
 | Tema | Antes | Ahora |
 |---|---|---|
 | Caché | Redis (ElastiCache) | No se usa; previsto solo si la prueba de carga lo exige |
-| Mensajería | Amazon SQS o EventBridge | Bandeja de eventos (outbox) en PostgreSQL + EventBridge Scheduler |
+| Mensajería | Amazon SQS o EventBridge, sin definir | Bandeja de eventos (outbox) en PostgreSQL + Amazon SQS (código listo, ADR-021) |
+| Módulos | 14 | 12: Inscripciones une Ordinaria y Exonerados; Exámenes une Sedes y Aulas |
 | Monitoreo | Amazon CloudWatch | OpenTelemetry + Grafana Cloud |
 | Secretos y conexiones | Secrets Manager y RDS Proxy | SSM Parameter Store y `connection_limit=1` |
 | Patrones | Decorador y Fachada con archivos inexistentes | Adaptador, Fábrica, Inyección de dependencias, Fachada (`index.ts`) y Observador implementados |

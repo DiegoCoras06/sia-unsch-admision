@@ -148,18 +148,16 @@ Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`,
 |---|---|
 | M01 - Convocatorias | Separar la gestión de convocatorias de su persistencia. |
 | M02 - Usuarios | Desacoplar la validación de identidad del servicio RENIEC. |
-| M03 - Inscripción Ordinaria | Separar reglas de inscripción, casos de uso y repositorios. |
-| M04 - Inscripción Exonerados | Encapsular reglas específicas de las modalidades especiales. |
-| M05 - Pagos | Utilizar interfaces y adaptadores para las pasarelas de pago. |
-| M06 - Expedientes | Separar la evaluación documental del almacenamiento de archivos. |
-| M07 - Exámenes | Encapsular las reglas de programación de evaluaciones. |
-| M08 - Sedes y Aulas | Separar las reglas de asignación y capacidad de aulas. |
-| M09 - Resultados | Mantener independientes el cálculo, validación y publicación de resultados. |
-| M10 - Chatbot IA | Desacoplar los casos de uso del proveedor OpenRouter API. |
-| M11 - Notificaciones | Permitir sustituir proveedores de correo o SMS mediante adaptadores. |
-| M12 - Reportes | Separar la generación de reportes de las consultas y formatos de exportación. |
-| M13 - Seguridad | Separar autenticación, autorización y gestión de roles. |
-| M14 - Configuración | Centralizar la configuración mediante interfaces controladas. |
+| M03 - Inscripciones | Separar reglas de inscripción, casos de uso y persistencia, con reglas por modalidad (Ordinaria y Exonerados). |
+| M04 - Pagos | Utilizar interfaces y adaptadores para las pasarelas de pago. |
+| M05 - Expedientes | Separar la evaluación documental del almacenamiento de archivos. |
+| M06 - Exámenes, Sedes y Aulas | Encapsular las reglas de programación, asignación y capacidad de aulas. |
+| M07 - Resultados | Mantener independientes el cálculo, validación y publicación de resultados. |
+| M08 - Chatbot IA | Desacoplar los casos de uso del proveedor OpenRouter API. |
+| M09 - Notificaciones | Permitir sustituir el proveedor de correo mediante adaptadores. |
+| M10 - Reportes | Separar la generación de reportes de las consultas y formatos de exportación. |
+| M11 - Seguridad | Separar autenticación, autorización y gestión de roles. |
+| M12 - Configuración | Centralizar la configuración mediante interfaces controladas. |
 
 ## 8. Beneficios de aplicar SOLID
 
@@ -192,7 +190,7 @@ Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`,
 | Arquitectura | Monolito Modular por Capas |
 | Enfoque | Clean Architecture |
 | Principios | SRP, OCP, LSP, ISP y DIP |
-| Módulo de referencia | Inscripción Ordinaria |
+| Módulo de referencia | Inscripciones |
 | Backend | Node.js + TypeScript + Express |
 | Despliegue | AWS Lambda |
 | Comunicación | API REST mediante HTTPS |

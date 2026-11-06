@@ -70,7 +70,7 @@ flowchart TB
 
   subgraph SIA["SIA-UNSCH"]
     SPA["<b>Aplicación web</b><br/>Angular + TypeScript<br/><i>SPA: portal público,<br/>postulante y administración</i>"]
-    API["<b>API</b><br/>Node.js + Express + TypeScript<br/><i>monolito modular, 14 módulos,<br/>REST /api/v1</i>"]
+    API["<b>API</b><br/>Node.js + Express + TypeScript<br/><i>monolito modular, 12 módulos,<br/>REST /api/v1</i>"]
     WORKER["<b>Procesador asíncrono</b><br/>mismo código del monolito,<br/>otro punto de entrada<br/><i>outbox, correos, publicaciones<br/>programadas, recordatorios</i>"]
     DB[("<b>Base de datos</b><br/>PostgreSQL<br/><i>un esquema por módulo</i>")]
     FILES[("<b>Almacén de documentos</b><br/>Amazon S3 privado<br/><i>fotos, expedientes, PDF</i>")]
@@ -127,51 +127,48 @@ flowchart LR
 flowchart TB
   subgraph G1["Gestión de admisión"]
     M01["M01<br/>Convocatorias"]
-    M02["M02<br/>Usuarios e identidad"]
-    M03["M03<br/>Inscripción ordinaria"]
-    M04["M04<br/>Inscripción exonerados"]
-    M05["M05<br/>Pagos"]
+    M02["M02<br/>Usuarios"]
+    M03["M03<br/>Inscripciones"]
+    M04["M04<br/>Pagos"]
   end
   subgraph G2["Evaluación"]
-    M06["M06<br/>Expedientes"]
-    M07["M07<br/>Exámenes"]
-    M08["M08<br/>Sedes y aulas"]
-    M09["M09<br/>Resultados"]
+    M05["M05<br/>Expedientes"]
+    M06["M06<br/>Exámenes, sedes y aulas"]
+    M07["M07<br/>Resultados"]
   end
   subgraph G3["Soporte"]
-    M10["M10<br/>Chatbot IA"]
-    M11["M11<br/>Notificaciones"]
-    M12["M12<br/>Reportes"]
-    M13["M13<br/>Seguridad"]
-    M14["M14<br/>Configuración"]
+    M08["M08<br/>Chatbot IA"]
+    M09["M09<br/>Notificaciones"]
+    M10["M10<br/>Reportes"]
+    M11["M11<br/>Seguridad"]
+    M12["M12<br/>Configuración"]
   end
 
-  M03 & M04 -->|"consulta etapas, tasas, vacantes"| M01
-  M03 & M04 -->|"consulta postulante"| M02
-  M04 -->|"crea expediente"| M06
-  M03 & M04 -->|"solicita orden"| M05
-  M05 -. "evento PagoConfirmado" .-> M03 & M04
-  M06 -. "evento ExpedienteAutorizado" .-> M04
-  M07 -->|"lista de aptos"| M03 & M04
-  M08 -->|"exámenes"| M07
-  M09 -->|"asignaciones, asistencia"| M08
-  M10 -->|"consultas autorizadas"| M03 & M05 & M06 & M08 & M09
-  M11 -. "escucha todos los eventos" .-> G1 & G2
-  M12 -. "lectura de vistas de reporte" .-> G1 & G2
-  M13 ===|"transversal: autenticación,<br/>permisos y auditoría"| G1 & G2 & G3
-  M01 -->|"parámetros"| M14
+  M03 -->|"consulta etapas, tasas, vacantes"| M01
+  M03 -->|"consulta postulante"| M02
+  M03 -->|"crea expediente"| M05
+  M03 -->|"solicita orden"| M04
+  M04 -. "evento PagoConfirmado" .-> M03
+  M05 -. "evento ExpedienteAutorizado" .-> M03
+  M06 -->|"lista de aptos"| M03
+  M07 -->|"asignaciones, asistencia"| M06
+  M08 -->|"consultas autorizadas"| M03 & M04 & M05 & M06 & M07
+  M09 -. "escucha todos los eventos" .-> G1 & G2
+  M10 -. "lectura de vistas de reporte" .-> G1 & G2
+  M11 ===|"transversal: autenticación,<br/>permisos y auditoría"| G1 & G2 & G3
+  M01 -->|"parámetros"| M12
 ```
 
 - **Flecha continua** = llamada síncrona a la API pública del otro módulo (`index.ts`).
-- **Flecha punteada** = **evento de dominio** publicado en la *outbox* dentro de la misma transacción y entregado después (ADR-008). Así, por ejemplo, Pagos no necesita conocer a Inscripción.
-- **Reportes (M12)** solo lee **vistas de base de datos** preparadas para reportes; nunca escribe.
+- **Flecha punteada** = **evento de dominio** publicado en la *outbox* dentro de la misma transacción y entregado después mediante Amazon SQS (ADR-008 y ADR-021). Así, por ejemplo, Pagos no necesita conocer a Inscripción.
+- **Reportes (M10)** solo lee **vistas de base de datos** preparadas para reportes; nunca escribe.
 
 ### 4.3 Componentes transversales (`apps/backend/src/shared`)
 
 | Componente | Función |
 |---|---|
 | `http/` | Formato `{ data, meta }` / `{ error }`, `requestId`, manejo central de errores |
-| `auth/` | Middleware de autenticación (JWT) y autorización (RBAC + propietario), provisto por M13 |
+| `auth/` | Middleware de autenticación (JWT) y autorización (RBAC + propietario), provisto por M11 |
 | `audit/` | Servicio `audit.record()` usado por cualquier módulo en operaciones críticas |
 | `events/` | Outbox: `publish()` dentro de la transacción y despachador |
 | `clock/` | Reloj inyectable con zona horaria `America/Lima`, para probar etapas y fechas |
@@ -213,7 +210,9 @@ flowchart TB
   CF -->|"/*"| S3WEB[("S3 — build Angular<br/><i>privado, acceso por OAC</i>")]
   CF -->|"/api/*"| APIGW["API Gateway<br/>HTTP API"]
   APIGW --> LAPI["λ Lambda — API<br/><i>Express vía adaptador</i>"]
-  SCH["EventBridge Scheduler<br/><i>cada minuto + horarios</i>"] --> LWK["λ Lambda — Worker"]
+  SCH["EventBridge Scheduler<br/><i>tareas programadas</i>"] --> LWK["λ Lambda — Worker"]
+  SQS["Amazon SQS<br/><i>ID de eventos + cola de errores</i>"] --> LWK
+  LAPI -->|"ID del evento"| SQS
 
   subgraph VPC["VPC — 2 zonas de disponibilidad"]
     subgraph PRIV["Subredes privadas"]
@@ -261,12 +260,13 @@ sequenceDiagram
   autonumber
   actor P as Postulante
   participant W as Aplicación web
-  participant API as API (M05 Pagos)
+  participant API as API (M04 Pagos)
   participant PG as Izipay (sandbox)
   participant DB as PostgreSQL
+  participant Q as Amazon SQS
   participant WK as Worker
-  participant M03 as M03 Inscripción
-  participant M11 as M11 Notificaciones
+  participant M03 as M03 Inscripciones
+  participant M09 as M09 Notificaciones
 
   P->>W: "Pagar en línea"
   W->>API: POST /api/v1/payments/orders/{id}/checkout
@@ -278,9 +278,11 @@ sequenceDiagram
   API->>API: Verificar firma, monto y moneda
   API->>DB: BEGIN · registrar eventId (único) · pago=CONFIRMADO · outbox(PagoConfirmado) · COMMIT
   API-->>PG: 200 OK (también si el eventId ya existía)
-  WK->>DB: Leer outbox pendiente
+  API->>Q: Enviar ID del evento
+  Q->>WK: Entregar ID del evento
+  WK->>DB: Leer y reservar el evento
   WK->>M03: PagoConfirmado → inscripción APTA
-  WK->>M11: PagoConfirmado → correo "Tu ficha está lista"
+  WK->>M09: PagoConfirmado → correo "Tu ficha está lista"
   W->>API: GET /api/v1/applications/me (sondeo)
   API-->>W: Estado APTA + ficha disponible
 ```
@@ -309,13 +311,13 @@ sequenceDiagram
 
 | Funcionalidad | Web | API (módulos) | Worker | Externos |
 |---|---|---|---|---|
-| 001 Portal público | public | M01, M14 | — | — |
-| 002 Cuentas | public, postulante | M02, M13 | correo de verificación | RENIEC (sim.), SES |
-| 003 Ordinario | postulante | M03, M05, M06 | ficha, eventos | — |
-| 004 Exonerados | postulante, admin | M04, M06 | eventos | — |
-| 005 Pagos | postulante, admin | M05 | outbox | Pasarela (sim.) |
-| 006 Examen y aulas | public, admin | M07, M08 | publicación programada | — |
-| 007 Resultados | public, postulante, admin | M09 | publicación programada | archivo de calificación |
-| 008 Panel | admin | M01, M12, M13, M14 | — | — |
-| 009 Chatbot | todas | M10 | — | OpenRouter |
-| 010 Notificaciones | postulante, admin | M11 | envíos, recordatorios | SES |
+| 001 Portal público | public | M01, M12 | — | — |
+| 002 Cuentas | public, postulante | M02, M11 | correo de verificación | RENIEC (sim.), SES |
+| 003 Ordinario | postulante | M03, M04, M05 | ficha, eventos | — |
+| 004 Exonerados | postulante, admin | M03, M05 | eventos | — |
+| 005 Pagos | postulante, admin | M04 | outbox | Pasarela (sim.) |
+| 006 Examen y aulas | public, admin | M06 | publicación programada | — |
+| 007 Resultados | public, postulante, admin | M07 | publicación programada | archivo de calificación |
+| 008 Panel | admin | M01, M10, M11, M12 | — | — |
+| 009 Chatbot | todas | M08 | — | OpenRouter |
+| 010 Notificaciones | postulante, admin | M09 | envíos, recordatorios | SES |

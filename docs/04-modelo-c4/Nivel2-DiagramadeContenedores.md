@@ -43,7 +43,9 @@ flowchart TB
 
         DB[("Base de Datos<br/>Amazon RDS PostgreSQL<br/>Información de admisión")]
 
-        WORKER["Worker de tareas<br/>AWS Lambda + EventBridge Scheduler<br/>Outbox, recordatorios y publicaciones"]
+        WORKER["Worker de tareas<br/>AWS Lambda + EventBridge Scheduler<br/>Eventos, recordatorios y publicaciones"]
+
+        QUEUE["Cola de Mensajes<br/>Amazon SQS<br/>Solo ID de eventos"]
 
         STORAGE[("Almacenamiento de Archivos<br/>Amazon S3<br/>Expedientes y documentos")]
 
@@ -75,6 +77,8 @@ flowchart TB
 
     API -->|"SQL / TLS"| DB
     API -->|"AWS SDK / HTTPS"| STORAGE
+    API -->|"AWS SDK / HTTPS"| QUEUE
+    QUEUE -->|"Entrega de mensajes"| WORKER
     WORKER -->|"SQL / TLS"| DB
     WORKER -->|"AWS SDK"| EMAIL
 
@@ -93,12 +97,13 @@ flowchart TB
     class P,PA,ADM,OTROS persona
     class WEB,API aplicacion
     class DB,STORAGE datos
+    class QUEUE datos
     class WORKER aplicacion
     class CDN,GATEWAY infraestructura
     class RENIEC,PAYMENT,OPENROUTER,EMAIL,SMS externo
 ```
 
-**Descripción:** El sistema utiliza una aplicación web que se comunica mediante HTTPS con un backend REST implementado como Monolito Modular. El backend se ejecuta en AWS Lambda y utiliza PostgreSQL y Amazon S3 para gestionar la información y los procesos de admisión. Las tareas asíncronas se guardan en una bandeja de eventos dentro de PostgreSQL y las despacha un segundo Lambda (worker) programado con EventBridge Scheduler.
+**Descripción:** El sistema utiliza una aplicación web que se comunica mediante HTTPS con un backend REST implementado como Monolito Modular. El backend se ejecuta en AWS Lambda y utiliza PostgreSQL y Amazon S3 para gestionar la información y los procesos de admisión. Las tareas asíncronas se guardan en una bandeja de eventos dentro de PostgreSQL, se envían a Amazon SQS y las procesa un segundo Lambda (worker).
 
 **Nota:** Amazon CloudFront y API Gateway se muestran como servicios de entrada y distribución. La aplicación web estática se almacenará en Amazon S3 y será entregada al navegador mediante CloudFront. Los servicios de infraestructura se detallan aquí para contextualizar el despliegue; no representan módulos internos del backend.
 
@@ -109,9 +114,10 @@ flowchart TB
 | **Contenedor** | **Tecnología** | **Responsabilidad** | **Datos que maneja** |
 |---|---|---|---|
 | **Aplicación Web** | SPA, tecnología frontend por definir, Amazon S3 y CloudFront | Proporcionar interfaces para postulantes, personal de admisión y administradores. Se ejecuta en el navegador. | Estado temporal de formularios, sesiones y datos de consulta. |
-| **Backend API REST** | Node.js + TypeScript + Express, AWS Lambda | Exponer los endpoints REST, ejecutar las reglas de negocio, gestionar los 14 módulos funcionales e integrar servicios externos. | Procesa datos de postulantes, inscripciones, pagos, expedientes, exámenes y resultados. |
+| **Backend API REST** | Node.js + TypeScript + Express, AWS Lambda | Exponer los endpoints REST, ejecutar las reglas de negocio, gestionar los 12 módulos funcionales e integrar servicios externos. | Procesa datos de postulantes, inscripciones, pagos, expedientes, exámenes y resultados. |
 | **Base de Datos** | Amazon RDS PostgreSQL | Almacenar de forma persistente la información del proceso de admisión. | Usuarios, convocatorias, postulantes, inscripciones, pagos, expedientes, aulas, exámenes y resultados. |
 | **Almacenamiento de Archivos** | Amazon S3 | Guardar documentos digitales, expedientes y archivos generados por el sistema. | Documentos de inscripción, comprobantes autorizados, fichas y archivos PDF. |
+| **Cola de Mensajes** | Amazon SQS | Transportar los ID de los eventos hasta el worker, con reintentos y cola de errores. | Solo identificadores: sin datos personales. |
 | **Worker de tareas** | AWS Lambda (`lambda-worker.ts`) + Amazon SQS + EventBridge Scheduler | Procesar los eventos que llegan por la cola SQS (ADR-021), vencer órdenes de pago, enviar recordatorios y publicar resultados a la hora aprobada. | Eventos de dominio, correos pendientes y tareas programadas. |
 
 ### Servicios de infraestructura complementarios
@@ -141,6 +147,8 @@ flowchart TB
 | Backend API REST | PostgreSQL | Consulta y registra información institucional. | PostgreSQL / TLS |
 | Backend API REST | Amazon S3 | Guarda y recupera documentos autorizados. | AWS SDK / HTTPS |
 | Backend API REST | Bandeja de eventos | Guarda eventos en la misma transacción que el cambio de estado. | SQL / TLS |
+| Backend API REST | Amazon SQS | Envía el ID de cada evento pendiente. | AWS SDK / HTTPS |
+| Amazon SQS | Worker de tareas | Entrega los mensajes; los que fallan se reintentan. | Integración AWS Lambda |
 | Worker de tareas | PostgreSQL y Amazon SES | Despacha eventos y envía correos pendientes. | SQL / TLS y AWS SDK |
 | Backend API REST | RENIEC | Solicita validación de identidad de postulantes. | HTTPS / API autorizada |
 | Backend API REST | Pasarela de Pagos | Solicita operaciones de pago y procesa confirmaciones verificadas. | HTTPS / REST |
@@ -162,7 +170,7 @@ flowchart TB
 | **PostgreSQL como base de datos principal** | Base de datos NoSQL como almacenamiento principal | Los procesos de inscripción, pagos y resultados requieren relaciones e integridad transaccional. |
 | **Sin caché por ahora** | Redis con ElastiCache | Las consultas frecuentes son livianas; Redis se agrega solo si la prueba de carga lo exige. |
 | **Amazon S3 para documentos** | Guardar archivos directamente en PostgreSQL | Facilita el almacenamiento y la gestión de archivos digitales. |
-| **Bandeja de eventos (outbox) para tareas asíncronas** | Amazon SQS | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica, y no requiere otro servicio. |
+| **Outbox con Amazon SQS para tareas asíncronas** | Publicar directamente en SQS | El evento se guarda en la misma transacción que el cambio, así no se pierde si SQS falla; SQS aporta reintentos y cola de errores. |
 | **Integraciones externas desde el backend** | Invocar servicios externos directamente desde el navegador | Evita exponer credenciales y centraliza la validación de respuestas. |
 
 ---
@@ -176,6 +184,7 @@ flowchart TB
 | API Gateway → Backend AWS Lambda | Permisos de invocación controlados mediante políticas de AWS. |
 | Backend → PostgreSQL | Conexiones cifradas mediante TLS, credenciales protegidas y acceso restringido desde la red autorizada. |
 | Backend → Amazon S3 | Permisos mínimos mediante IAM, cifrado de objetos y acceso privado a documentos. |
+| Backend y Worker → Amazon SQS | Permisos IAM mínimos, cifrado y solo identificadores en los mensajes. |
 | Worker → PostgreSQL | Mismas credenciales protegidas y red privada que el backend. |
 | Backend → RENIEC | Comunicación segura y uso de credenciales institucionales autorizadas. |
 | Backend → Pasarela de Pagos | HTTPS, verificación de confirmaciones e idempotencia de operaciones. |
@@ -203,8 +212,9 @@ flowchart TB
 | Aplicación Web (Angular) | ✅ Implementada; se publica en S3 + CloudFront en el Paso 11 |
 | Backend API REST | ✅ Implementado (`server.ts` en local, `lambda-api.ts` para Lambda) |
 | Worker de tareas | ✅ Código listo (`lambda-worker.ts`); en local las tareas corren en el mismo proceso |
+| Cola de Mensajes (Amazon SQS) | ✅ Código y pruebas listos (ADR-021); ⏳ la cola se crea en el Paso 11. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso |
 | Base de datos | ✅ Amazon RDS PostgreSQL en uso |
 | Almacenamiento de archivos | ✅ Amazon S3 en uso |
 | API Gateway, CloudFront, Route 53, ACM | ⏳ Paso 11 |
 
-Esta versión reemplaza Redis y Amazon SQS de la propuesta inicial; el motivo de cada cambio está en `01-analisis-del-sistema/07-decisiones-arquitectonicas.md`.
+Esta versión reemplaza Redis de la propuesta inicial; el motivo está en `01-analisis-del-sistema/07-decisiones-arquitectonicas.md`.

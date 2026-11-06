@@ -1,6 +1,8 @@
 # Trazabilidad de requerimientos funcionales
 
 Los **143 requerimientos** de los **14 módulos** (fuente: [guía maestra](fuentes/guia-maestra-arquitectura-implementacion-unsch.md)) enlazados con la spec y el requisito FR que los cubre, y su estado en el código.
+Esta matriz conserva la numeración del catálogo original. El sistema trabaja con 12 módulos: la equivalencia está en el [diseño interno](03-diseño-de-software/diseño-interno-modulos.md).
+
 Generado con `node scripts/trazabilidad.mjs`; el estado se actualiza al cerrar cada paso.
 
 ✅ implementado y probado · 🟡 parcial (lo que falta está anotado) · ⏳ especificado, pendiente de implementar

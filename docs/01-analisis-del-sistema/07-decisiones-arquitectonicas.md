@@ -6,7 +6,7 @@ Las decisiones arquitectónicas se establecen a partir de los veinte drivers arq
 
 | Identificación | Decisión arquitectónica | Conductor relacionado | Justificación | Resultado |
 |---|---|---|---|---|
-| ADR-001 | Monolito Modular por Capas | DA05 - Arquitectura, DA09 - Mantenibilidad, DA17 - Modularidad | Organizar las funcionalidades en módulos independientes a nivel lógico, manteniendo una única aplicación desplegable para reducir la complejidad operativa. | Aplicación monolítica modular con 14 módulos funcionales, organizados por responsabilidades y contratos internos. |
+| ADR-001 | Monolito Modular por Capas | DA05 - Arquitectura, DA09 - Mantenibilidad, DA17 - Modularidad | Organizar las funcionalidades en módulos independientes a nivel lógico, manteniendo una única aplicación desplegable para reducir la complejidad operativa. | Aplicación monolítica modular con 12 módulos funcionales, organizados por responsabilidades y contratos internos. |
 | ADR-002 | Clean Architecture (Arquitectura Limpia) | DA05 - Arquitectura, DA09 - Mantenibilidad | Separar las reglas de negocio de los detalles tecnológicos para facilitar las pruebas, modificaciones y mantenimiento. | Módulos organizados en capas de Dominio, Aplicación, Presentación e Infraestructura, con dependencias orientadas hacia el dominio. |
 | ADR-003 | Despliegue mediante AWS Lambda | DA01 - Escalabilidad, DA10 - Disponibilidad, DA20 - Presupuesto | Ejecutar el backend monolítico modular mediante una función Serverless, aprovechando el escalamiento automático y el pago por uso. | Una aplicación backend desplegada como una función AWS Lambda, sin dividir los módulos en microservicios independientes. |
 | ADR-004 | Persistencia mediante PostgreSQL | DA04 - Integridad, DA15 - Base de datos | Garantizar la consistencia de inscripciones, pagos, expedientes y resultados mediante transacciones y restricciones relacionales. | Amazon RDS PostgreSQL con separación lógica de datos por módulos y repositorios de persistencia. |
@@ -35,7 +35,7 @@ Durante la implementación (Pasos 3 a 10.2) cada decisión se detalló en un ADR
 
 | Decisión de este documento | Qué se implementó | ADR vigente | Estado |
 |---|---|---|---|
-| ADR-001 Monolito Modular por Capas | Un backend Express con 12 carpetas de módulo que cubren los 14 módulos funcionales (Inscripción Ordinaria y Exonerados comparten `inscripciones`; Exámenes y Sedes y Aulas comparten `examenes`). | ADR-001 | ✅ |
+| ADR-001 Monolito Modular por Capas | Un backend Express con 12 módulos funcionales, uno por carpeta. Inscripción Ordinaria y Exonerados son un solo módulo (`inscripciones`), igual que Exámenes, Sedes y Aulas (`examenes`). | ADR-001 | ✅ |
 | ADR-002 Clean Architecture | Capas `presentation`, `application`, `domain` e `infrastructure` por módulo; los controladores no tocan la base de datos. **Desviación:** la mayoría de los servicios de aplicación usan Prisma sin repositorio intermedio (ver 03, patrones). | ADR-002 | 🟡 |
 | ADR-003 Despliegue con AWS Lambda | Diseñado (API Gateway HTTP API + Lambda ARM64); aún no desplegado. | ADR-009 | ⏳ Paso 11 |
 | ADR-004 PostgreSQL | Amazon RDS PostgreSQL con Prisma 7, un esquema por módulo y SSL verificado. | ADR-005 | ✅ |

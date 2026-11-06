@@ -80,7 +80,7 @@ apps/backend/src/
 ├── modules/
 │   ├── convocatorias/        M01 (repositorio PrismaConvocatoriasRepository)
 │   ├── usuarios/             M02 (identidad RENIEC, cuentas, personal)
-│   ├── inscripciones/        M03 y M04
+│   ├── inscripciones/        M03
 │   │   ├── domain/
 │   │   │   └── inscription-rules.ts        estados, estado inicial, enmascarado del DNI
 │   │   ├── application/
@@ -92,15 +92,15 @@ apps/backend/src/
 │   │   ├── presentation/
 │   │   │   └── routes.ts                   rutas REST y validación con Zod
 │   │   └── index.ts                        raíz de composición y API pública del módulo
-│   ├── pagos/                M05 (domain/ports.ts + infrastructure/ con 4 pasarelas)
-│   ├── expedientes/          M06
-│   ├── examenes/             M07 y M08 (exámenes, sedes, pabellones y aulas)
-│   ├── resultados/           M09
-│   ├── asistente/            M10 (Chatbot IA con OpenRouter)
-│   ├── notificaciones/       M11
-│   ├── reportes/             M12
-│   ├── seguridad/            M13 (permisos, tokens, TOTP)
-│   └── configuracion/        M14
+│   ├── pagos/                M04 (domain/ports.ts + infrastructure/ con 4 pasarelas)
+│   ├── expedientes/          M05
+│   ├── examenes/             M06 (exámenes, sedes, pabellones y aulas)
+│   ├── resultados/           M07
+│   ├── asistente/            M08 (Chatbot IA con OpenRouter)
+│   ├── notificaciones/       M09
+│   ├── reportes/             M10
+│   ├── seguridad/            M11 (permisos, tokens, TOTP)
+│   └── configuracion/        M12
 ├── shared/                   audit, clock, config, db, email, events (outbox), http,
 │                             rate-limit, storage (S3), telemetry, text
 ├── app.ts                    composición de la aplicación Express
@@ -137,24 +137,34 @@ Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO** (Ordinario y 
 
 ## 7.6. Módulos funcionales del sistema
 
-El sistema estará compuesto por 14 módulos funcionales, organizados dentro de una única aplicación backend.
+El sistema está compuesto por 12 módulos funcionales, uno por carpeta, dentro de una única aplicación backend.
 
 | Código | Módulo | Responsabilidad principal | Carpeta |
 |---|---|---|---|
 | M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. | `convocatorias` |
 | M02 | Usuarios | Registrar usuarios y gestionar sus datos. | `usuarios` |
-| M03 | Inscripción Ordinaria | Administrar postulaciones de la modalidad ordinaria. | `inscripciones` |
-| M04 | Inscripción Exonerados | Gestionar postulaciones de modalidades especiales. | `inscripciones` |
-| M05 | Pagos | Registrar y verificar los pagos de inscripción. | `pagos` |
-| M06 | Expedientes | Administrar documentos y observaciones. | `expedientes` |
-| M07 | Exámenes | Programar las evaluaciones de admisión. | `examenes` |
-| M08 | Sedes y Aulas | Gestionar ambientes y asignaciones. | `examenes` |
-| M09 | Resultados | Procesar y publicar resultados de admisión. | `resultados` |
-| M10 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. | `asistente` |
-| M11 | Notificaciones | Enviar avisos y correos electrónicos. | `notificaciones` |
-| M12 | Reportes | Generar estadísticas e informes. | `reportes` |
-| M13 | Seguridad | Administrar autenticación, roles y permisos. | `seguridad` |
-| M14 | Configuración | Gestionar parámetros generales del sistema. | `configuracion` |
+| M03 | Inscripciones: Ordinaria y Exonerados | Administrar las postulaciones de todas las modalidades. | `inscripciones` |
+| M04 | Pagos | Registrar y verificar los pagos de inscripción. | `pagos` |
+| M05 | Expedientes | Administrar documentos y observaciones. | `expedientes` |
+| M06 | Exámenes, Sedes y Aulas | Programar las evaluaciones, y gestionar ambientes y asignaciones. | `examenes` |
+| M07 | Resultados | Procesar y publicar resultados de admisión. | `resultados` |
+| M08 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. | `asistente` |
+| M09 | Notificaciones | Enviar avisos y correos electrónicos. | `notificaciones` |
+| M10 | Reportes | Generar estadísticas e informes. | `reportes` |
+| M11 | Seguridad | Administrar autenticación, roles y permisos. | `seguridad` |
+| M12 | Configuración | Gestionar parámetros generales del sistema. | `configuracion` |
+
+**Equivalencia con la numeración anterior.** Las specs, los ADR, los comentarios del código y los códigos RF conservan los números del catálogo original de 14 módulos:
+
+| Antes | Ahora | Antes | Ahora |
+|---|---|---|---|
+| M01 Convocatorias | M01 | M08 Sedes y Aulas | M06 |
+| M02 Usuarios | M02 | M09 Resultados | M07 |
+| M03 Inscripción Ordinaria | M03 | M10 Chatbot IA | M08 |
+| M04 Inscripción Exonerados | M03 | M11 Notificaciones | M09 |
+| M05 Pagos | M04 | M12 Reportes | M10 |
+| M06 Expedientes | M05 | M13 Seguridad | M11 |
+| M07 Exámenes | M06 | M14 Configuración | M12 |
 
 Cada módulo tendrá responsabilidades específicas y se comunicará con los demás mediante interfaces definidas, evitando dependencias directas innecesarias.
 
@@ -170,7 +180,8 @@ El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funci
 | AWS Lambda | Ejecución del backend. |
 | Amazon RDS PostgreSQL | Almacenamiento de información. |
 | Amazon S3 | Almacenamiento de documentos y fichas PDF. |
-| Bandeja de eventos (outbox) en PostgreSQL + EventBridge Scheduler | Procesamiento de tareas asíncronas y eventos entre módulos. |
+| Bandeja de eventos (outbox) en PostgreSQL + Amazon SQS | Procesamiento de tareas asíncronas y eventos entre módulos. |
+| Amazon EventBridge Scheduler | Tareas programadas. |
 | RENIEC (vía apiperu.dev) | Validación de identidad. |
 | Izipay micuentaweb y Culqi | Pago con tarjeta y con Yape. |
 | OpenRouter API | Integración del chatbot de inteligencia artificial. |
@@ -206,7 +217,7 @@ Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sist
 
 | Regla de diseño (7.8) | Estado |
 |---|---|
-| 1. Responsabilidades claras por módulo | ✅ 14 módulos en 12 carpetas |
+| 1. Responsabilidades claras por módulo | ✅ 12 módulos, uno por carpeta |
 | 2. Lógica de negocio separada de la infraestructura | 🟡 Las reglas están en `domain/` y los proveedores externos detrás de puertos; pero los servicios de aplicación consultan la base de datos con Prisma directamente |
 | 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos |
 | 4. Los casos de uso coordinan los procesos | ✅ Servicios de aplicación por módulo |

@@ -73,13 +73,13 @@
 
 - Total de historias de usuario: 24
 - Total de requisitos funcionales: 35
-- Módulos del sistema: 14
+- Módulos del sistema: 12
 - Arquitectura: Monolito Modular por Capas
 - Enfoque arquitectónico: Clean Architecture
 
 ## Estado de implementación (02/11/2026)
 
-Los 35 requisitos funcionales están implementados. Durante la especificación se desglosaron en el catálogo oficial de 143 RF (14 módulos), con este avance:
+Los 35 requisitos funcionales están implementados. Durante la especificación se desglosaron en el catálogo oficial de 143 RF, con este avance. El catálogo conserva sus códigos (RF-01 a RF-14), organizados antes en 14 grupos; el sistema trabaja con 12 módulos:
 
 | Estado | RF del catálogo |
 |---|---|

@@ -34,3 +34,5 @@ Construiremos **un solo backend desplegable** organizado en **14 módulos** con 
 **Cómo verificamos que se cumple:**
 - Regla de ESLint que prohíbe importar archivos internos de otro módulo.
 - Revisión de cada `design.md` en la *Verificación de la constitución*.
+
+**Actualización (06/11/2026):** el sistema trabaja con 12 módulos. Inscripción Ordinaria y Exonerados son un solo módulo; también Exámenes, Sedes y Aulas. La decisión de monolito modular no cambia. Numeración y equivalencia: [diseño interno](../03-diseño-de-software/diseño-interno-modulos.md).

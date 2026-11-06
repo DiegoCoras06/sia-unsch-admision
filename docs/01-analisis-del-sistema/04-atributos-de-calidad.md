@@ -18,7 +18,7 @@
 | AC12 | Recuperabilidad | El sistema debe realizar copias de seguridad periódicas y disponer de procedimientos de recuperación ante fallas para restaurar la información y continuidad del servicio. |
 | AC13 | Accesibilidad | El sistema debe facilitar su utilización por personas con diferentes capacidades, considerando criterios de accesibilidad web como WCAG 2.2 nivel AA. |
 | AC14 | Observabilidad | El sistema debe permitir monitorear errores, tiempos de respuesta, transacciones, disponibilidad de integraciones y consumo de OpenRouter API. |
-| AC15 | Modularidad | Los 14 módulos funcionales deben mantener responsabilidades claramente definidas y comunicarse mediante interfaces internas, respetando las dependencias establecidas por Clean Architecture. |
+| AC15 | Modularidad | Los 12 módulos funcionales deben mantener responsabilidades claramente definidas y comunicarse mediante interfaces internas, respetando las dependencias establecidas por Clean Architecture. |
 
 ## Resumen
 

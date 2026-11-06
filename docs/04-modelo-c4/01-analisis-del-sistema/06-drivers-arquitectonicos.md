@@ -20,7 +20,7 @@
 | DA14 | El sistema debe permitir recuperar la información ante fallas del servidor o base de datos. | AC12 - Recuperabilidad | Influye en las estrategias de respaldo, restauración y recuperación ante desastres. |
 | DA15 | El sistema debe utilizar PostgreSQL como base de datos relacional. | RC06 - Base de datos | Condiciona el diseño de persistencia, relaciones, índices, restricciones y transacciones. |
 | DA16 | El sistema debe monitorear el funcionamiento de sus módulos e integraciones externas. | AC14 - Observabilidad | Influye en la implementación de logs, métricas, alertas y monitoreo de servicios. |
-| DA17 | El sistema debe organizar sus 14 módulos funcionales con responsabilidades y contratos internos definidos. | AC15 - Modularidad | Influye en la estructura del código, comunicación entre módulos y reducción del acoplamiento. |
+| DA17 | El sistema debe organizar sus 12 módulos funcionales con responsabilidades y contratos internos definidos. | AC15 - Modularidad | Influye en la estructura del código, comunicación entre módulos y reducción del acoplamiento. |
 | DA18 | El sistema debe permitir programar exámenes y asignar aulas evitando conflictos y sobreocupación. | RF19, RF20, RF21 | Influye en las reglas de negocio, validaciones de capacidad y control de concurrencia. |
 | DA19 | El sistema debe garantizar que los resultados oficiales sean validados y autorizados antes de publicarse. | RF23, RF24, RF25 | Influye en los flujos de aprobación, permisos, trazabilidad y protección de calificaciones. |
 | DA20 | El sistema debe priorizar tecnologías de código abierto y servicios de bajo costo para su implementación académica. | RC19 - Presupuesto | Influye en la selección de tecnologías, infraestructura y servicios externos. |
