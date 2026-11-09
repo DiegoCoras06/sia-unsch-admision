@@ -33,6 +33,7 @@
 .quick__item { display: grid; gap: 0.25rem; padding: 1rem 1.25rem; background: var(--ground); font-weight: 700; text-decoration: none; height: 100%;
   transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease); }
 .quick__item span { font-weight: 500; font-size: var(--size-note); color: var(--ink-soft); }
+.quick__item[data-icon]::before { width: 1.5rem; height: 1.5rem; margin-bottom: 0.35rem; }
 .quick__item.is-on { background: var(--accent); color: var(--accent-ink); }
 .quick__item.is-on span { color: var(--accent-ink); opacity: 0.85; }
 a.quick__item:hover { background: var(--accent-press); }

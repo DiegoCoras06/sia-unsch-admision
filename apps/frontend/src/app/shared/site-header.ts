@@ -38,30 +38,30 @@ type Menu = 'contenido' | 'pasos' | null;
                   <div class="mega__col">
                     <p class="mega__head" id="mega-tramites">Mis trámites</p>
                     <ul aria-labelledby="mega-tramites">
-                      <li><a routerLink="/mi-inscripcion">Mi inscripción: pagar e imprimir</a></li>
-                      <li><a routerLink="/buscar-aula">Buscar mi aula</a></li>
-                      <li><a routerLink="/resultados">Ver puntaje</a></li>
-                      <li><a routerLink="/observados">Relación de observados</a></li>
-                      <li><a routerLink="/mi-cuenta">Mi cuenta</a></li>
+                      <li><a routerLink="/mi-inscripcion" data-icon="pagar">Mi inscripción: pagar e imprimir</a></li>
+                      <li><a routerLink="/buscar-aula" data-icon="aula">Buscar mi aula</a></li>
+                      <li><a routerLink="/resultados" data-icon="puntaje">Ver puntaje</a></li>
+                      <li><a routerLink="/observados" data-icon="observados">Relación de observados</a></li>
+                      <li><a routerLink="/mi-cuenta" data-icon="cuenta">Mi cuenta</a></li>
                     </ul>
                   </div>
                   <div class="mega__col">
                     <p class="mega__head" id="mega-info">Antes de postular</p>
                     <ul aria-labelledby="mega-info">
-                      <li><a routerLink="/documentos/reglamento">Reglamento</a></li>
-                      <li><a routerLink="/programas">Programas de estudios</a></li>
-                      <li><a routerLink="/cronograma">Cronograma</a></li>
-                      <li><a routerLink="/requisitos">Requisitos</a></li>
-                      <li><a routerLink="/tasas">Tasa de pagos</a></li>
+                      <li><a routerLink="/documentos/reglamento" data-icon="reglamento">Reglamento</a></li>
+                      <li><a routerLink="/programas" data-icon="programas">Programas de estudios</a></li>
+                      <li><a routerLink="/cronograma" data-icon="cronograma">Cronograma</a></li>
+                      <li><a routerLink="/requisitos" data-icon="requisitos">Requisitos</a></li>
+                      <li><a routerLink="/tasas" data-icon="tasas">Tasa de pagos</a></li>
                     </ul>
                   </div>
                   <div class="mega__col">
                     <p class="mega__head" id="mega-pub">Publicaciones</p>
                     <ul aria-labelledby="mega-pub">
-                      <li><a routerLink="/documentos/vacantes">Vacantes <span class="badge">Nuevo</span></a></li>
-                      <li><a routerLink="/temario">Temario</a></li>
-                      <li><a routerLink="/comunicados" [queryParams]="{ tipo: 'FE_ERRATAS' }">Fe de erratas</a></li>
-                      <li><a routerLink="/carta-aval">Modelo de carta aval <span class="badge">Nuevo</span></a></li>
+                      <li><a routerLink="/documentos/vacantes" data-icon="vacantes">Vacantes <span class="badge">Nuevo</span></a></li>
+                      <li><a routerLink="/temario" data-icon="temario">Temario</a></li>
+                      <li><a routerLink="/comunicados" [queryParams]="{ tipo: 'FE_ERRATAS' }" data-icon="erratas">Fe de erratas</a></li>
+                      <li><a routerLink="/carta-aval" data-icon="carta">Modelo de carta aval <span class="badge">Nuevo</span></a></li>
                     </ul>
                   </div>
                   <img class="mega__crest" src="img/escudo-unsch-1677-500.webp" loading="lazy" alt="Escudo de la UNSCH: Real, Pontificia y Nacional, 1677" width="330" height="307">
@@ -116,6 +116,9 @@ type Menu = 'contenido' | 'pasos' | null;
     .mega li { border-bottom: 1px dashed #dcdcdc; }
     .mega a { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.8rem 1rem; font-weight: 600; color: #333; text-decoration: none; }
     .mega a:hover { color: var(--accent); background: #faf6f6; }
+    .mega a[data-icon] { justify-content: flex-start; }
+    .mega a[data-icon]::before { color: var(--accent); }
+    .mega a .badge { margin-left: auto; }
     .badge { background: #2a6fb0; color: #fff; font-size: 0.8125rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; }
     .mega__crest { width: 100%; max-width: 330px; height: auto; align-self: center; justify-self: center; }
     .has-menu { position: relative; }

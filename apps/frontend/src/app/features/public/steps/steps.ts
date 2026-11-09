@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { PhotoDirective } from '../../../shared/photo.directive';
 import { RouterLink } from '@angular/router';
 import type { HomeContentDto } from '@sia/contracts';
 import { ApiService } from '../../../core/api.service';
@@ -7,7 +8,7 @@ import { MarkdownPipe } from '../../../shared/markdown.pipe';
 /** Spec 001, FR-009: las infografías de pasos del portal actual, como listas accesibles. */
 @Component({
   selector: 'app-steps',
-  imports: [RouterLink, MarkdownPipe],
+  imports: [RouterLink, MarkdownPipe, PhotoDirective],
   template: `
     <header class="frame page-head">
       <h1>Cómo inscribirte</h1>
@@ -16,7 +17,7 @@ import { MarkdownPipe } from '../../../shared/markdown.pipe';
     <section id="ordinario" class="section--tight mod" aria-labelledby="ord-title">
       <div class="frame mod__grid">
         <figure class="mod__info">
-          <img src="img/pasos-ordinario-1040.webp" srcset="img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" decoding="async"
+          <img appPhoto src="img/pasos-ordinario-1040.webp" srcset="img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" decoding="async"
             alt="Infografía oficial del proceso de inscripción en la modalidad Ordinario, en cuatro pasos">
         </figure>
         <div class="mod__text stack-lg">
@@ -29,7 +30,7 @@ import { MarkdownPipe } from '../../../shared/markdown.pipe';
     <section id="exonerados" class="section--tight mod field-accent" aria-labelledby="exo-title">
       <div class="frame mod__grid mod__grid--flip">
         <figure class="mod__info">
-          <img src="img/pasos-exonerado-1040.webp" srcset="img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
+          <img appPhoto src="img/pasos-exonerado-1040.webp" srcset="img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
             alt="Infografía oficial del proceso de inscripción en la modalidad Exonerado, en cinco pasos">
         </figure>
         <div class="mod__text stack-lg">

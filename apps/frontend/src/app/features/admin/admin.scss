@@ -68,7 +68,7 @@
 .adm-bars .bar > i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; }
 .adm-bars b { text-align: right; font-variant-numeric: tabular-nums; }
 
-.adm-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
+.adm-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; padding: 0.75rem 0.9rem; background: var(--stone); border-radius: var(--radius-lg); }
 .adm-filters .field { min-width: 9rem; }
 .adm-filters .field label { font-size: 0.8125rem; }
 .adm .input, .adm .select { padding: 0.5rem 0.65rem; font-size: 0.9375rem; }
@@ -76,13 +76,15 @@
 .adm-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .adm-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
-.adm-table-wrap { overflow-x: auto; }
-.adm-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-.adm-table th { text-align: left; font-weight: 700; padding: 0.6rem 0.65rem; background: var(--stone); white-space: nowrap; }
+/* Tablas largas: el encabezado queda a la vista al bajar y las cifras se alinean por columnas. */
+.adm-table-wrap { overflow: auto; max-height: min(72vh, 52rem); }
+.adm-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.adm-table th { position: sticky; top: 0; z-index: 2; text-align: left; font-weight: 700; padding: 0.6rem 0.65rem; background: var(--stone); white-space: nowrap; }
 .adm-table th:first-child { border-radius: var(--radius) 0 0 var(--radius); }
 .adm-table th:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
 .adm-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--stone); vertical-align: top; }
-.adm-table tr:hover td { background: #fbf9f6; }
+.adm-table tbody tr:nth-child(even) td { background: #fcfbf9; }
+.adm-table tr:hover td { background: #f8f4ef; }
 .adm-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Estados de las tablas (una sola regla para las 20 pantallas). Sin filas y sin mensaje propio: mensaje común. */
@@ -130,6 +132,8 @@
 .adm-msg.err { background: #f7e3e3; color: #6d1212; }
 .adm-msg.warn { background: #fbf1d9; color: #6b4a00; }
 .adm-msg.warn a { color: inherit; font-weight: 700; }
+.adm-msg { padding-left: 2.6rem; }
+.adm-msg::before { left: 0.8rem; top: 0.72rem; width: 1.15rem; height: 1.15rem; }
 .adm-check { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.9375rem; }
 details.adm-json summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: var(--stone); padding: 0.5rem; margin: 0.35rem 0 0; }

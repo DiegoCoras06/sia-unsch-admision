@@ -47,9 +47,9 @@
         @for (q of otherQuick(); track q.key) {
           <li>
             @if (q.enabled) {
-              <a class="quick__item is-on" [routerLink]="quick[q.key].route">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></a>
+              <a class="quick__item is-on" [routerLink]="quick[q.key].route" [attr.data-icon]="quick[q.key].icon">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></a>
             } @else {
-              <span class="quick__item" aria-disabled="true">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></span>
+              <span class="quick__item" aria-disabled="true" [attr.data-icon]="quick[q.key].icon">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></span>
             }
           </li>
         }
@@ -135,7 +135,7 @@
 
     <ul class="campus" aria-label="Pabellones de la Ciudad Universitaria de Ayacucho">
       @for (c of campus; track c.src) {
-        <li><img [src]="c.src" [alt]="c.alt" [attr.width]="c.w" [attr.height]="c.h" loading="lazy" decoding="async"></li>
+        <li><img appPhoto [src]="c.src" [alt]="c.alt" [attr.width]="c.w" [attr.height]="c.h" loading="lazy" decoding="async"></li>
       }
     </ul>
   </div>
@@ -151,12 +151,12 @@
     <div class="steps">
       <a class="steps__card" routerLink="/pasos" fragment="ordinario" appReveal="60">
         <h3>Ordinario, en 4 pasos</h3>
-        <img [src]="img.src('portada.ordinario', 'img/pasos-ordinario-1040.webp')" [attr.srcset]="img.srcset('portada.ordinario', 'img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" loading="lazy" decoding="async"
+        <img appPhoto [src]="img.src('portada.ordinario', 'img/pasos-ordinario-1040.webp')" [attr.srcset]="img.srcset('portada.ordinario', 'img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" loading="lazy" decoding="async"
           [alt]="img.alt('portada.ordinario', 'Infografía del proceso de inscripción en la modalidad Ordinario: registro de datos y orden de pago, pago por admisión, impresión de la ficha de inscripción y publicación de estudiantes aptos')">
       </a>
       <a class="steps__card" routerLink="/pasos" fragment="exonerados" appReveal="120">
         <h3>Exonerados, en 5 pasos</h3>
-        <img [src]="img.src('portada.exonerado', 'img/pasos-exonerado-1040.webp')" [attr.srcset]="img.srcset('portada.exonerado', 'img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
+        <img appPhoto [src]="img.src('portada.exonerado', 'img/pasos-exonerado-1040.webp')" [attr.srcset]="img.srcset('portada.exonerado', 'img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
           [alt]="img.alt('portada.exonerado', 'Infografía del proceso de inscripción en la modalidad Exonerado: obtención de autorización, registro de datos, pago por admisión, impresión de la ficha y publicación de estudiantes aptos')">
       </a>
     </div>
@@ -182,7 +182,7 @@
 <section class="section rector" aria-labelledby="rector-title">
   <div class="frame rector__grid">
     <figure class="rector__photo" appReveal>
-      <img [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')" [attr.srcset]="img.srcset('portada.rector', 'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w')" sizes="(max-width: 760px) 100vw, 40vw" [alt]="img.alt('portada.rector', 'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad')"
+      <img appPhoto [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')" [attr.srcset]="img.srcset('portada.rector', 'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w')" sizes="(max-width: 760px) 100vw, 40vw" [alt]="img.alt('portada.rector', 'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad')"
         width="709" height="768" loading="lazy" decoding="async">
     </figure>
     <div class="rector__text">

@@ -1,3 +1,4 @@
+import { PhotoDirective } from '../../../shared/photo.directive';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { AnnouncementDto, HomeContentDto, OptionSummaryDto, QuickAccessKey } from '@sia/contracts';
@@ -12,12 +13,12 @@ import { StageTrack } from '../../../shared/stage-track';
 import { ApplicationFinder } from './application-finder';
 
 /** Página de cada acceso rápido y texto del botón principal cuando ese trámite es el de la etapa. */
-const QUICK: Record<QuickAccessKey, { route: string; cta: string; label?: string }> = {
-  INSCRIPCION: { route: '/inscripcion', cta: 'Inscribirme' },
-  REINSCRIPCION: { route: '/reinscripcion', cta: 'Reinscribirme' },
-  BUSCAR_AULA: { route: '/buscar-aula', cta: 'Buscar mi aula' },
-  VER_PUNTAJE: { route: '/resultados', cta: 'Ver mi puntaje' },
-  IMPRIMIR_DOCUMENTOS: { route: '/mi-inscripcion', cta: 'Ir a mi inscripción', label: 'Mi inscripción: pagar e imprimir' },
+const QUICK: Record<QuickAccessKey, { route: string; cta: string; label?: string; icon: string }> = {
+  INSCRIPCION: { route: '/inscripcion', cta: 'Inscribirme', icon: 'inscripcion' },
+  REINSCRIPCION: { route: '/reinscripcion', cta: 'Reinscribirme', icon: 'reinscripcion' },
+  BUSCAR_AULA: { route: '/buscar-aula', cta: 'Buscar mi aula', icon: 'aula' },
+  VER_PUNTAJE: { route: '/resultados', cta: 'Ver mi puntaje', icon: 'puntaje' },
+  IMPRIMIR_DOCUMENTOS: { route: '/mi-inscripcion', cta: 'Ir a mi inscripción', label: 'Mi inscripción: pagar e imprimir', icon: 'pagar' },
 };
 /** Si hay varios abiertos, el que más busca la gente en esa etapa. */
 const PRIORITY: QuickAccessKey[] = ['VER_PUNTAJE', 'BUSCAR_AULA', 'INSCRIPCION', 'REINSCRIPCION', 'IMPRIMIR_DOCUMENTOS'];
@@ -46,7 +47,7 @@ const CAMPUS = [
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Countdown, ApplicationFinder, MarkdownPipe, RevealDirective, StageTrack],
+  imports: [RouterLink, Countdown, ApplicationFinder, MarkdownPipe, RevealDirective, StageTrack, PhotoDirective],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
