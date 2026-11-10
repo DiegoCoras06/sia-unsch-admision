@@ -32,7 +32,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
     <header class="adm-head">
       <div><h1>Convocatoria</h1><p>Los cambios se aplican al portal al instante y quedan en la auditoría con el valor anterior y el nuevo.</p></div>
       <div class="field"><label for="c-sel">Convocatoria</label>
-        <select id="c-sel" class="select" [(ngModel)]="code" (ngModelChange)="load()">@for (c of calls(); track c.code) {<option [value]="c.code">{{ c.code }} · {{ c.status === 'PUBLISHED' ? 'publicada' : c.status === 'DRAFT' ? 'borrador' : c.status.toLowerCase() }}</option>}</select></div>
+        <select id="c-sel" class="select" [(ngModel)]="code" (ngModelChange)="load()">@for (c of calls(); track c.code) {<option [value]="c.code">{{ c.code }}, {{ c.status === 'PUBLISHED' ? 'publicada' : c.status === 'DRAFT' ? 'borrador' : c.status.toLowerCase() }}</option>}</select></div>
     </header>
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="tab.set(t.id)">{{ t.label }}</button> }
@@ -68,12 +68,12 @@ const fromLima = (local: string) => `${local}:00-05:00`;
           </section>
         }
         @case ('vacantes') {
-          <section class="adm-panel"><h2>Cuadro de vacantes · {{ d.vacancies.total }} en total</h2>
+          <section class="adm-panel"><h2>Cuadro de vacantes, {{ d.vacancies.total }} en total</h2>
             @if (d.status === 'PUBLISHED') { <p class="adm-msg">Convocatoria publicada: cada cambio exige resolución y motivo (RN-03).</p>
               <div class="adm-form two"><div class="field"><label for="v-res">Resolución</label><input id="v-res" class="input" [(ngModel)]="resolution" placeholder="R.R. N.° 000-2026-UNSCH-R"></div>
                 <div class="field"><label for="v-why">Motivo</label><input id="v-why" class="input" [(ngModel)]="reason" placeholder="Empate en el último puesto"></div></div> }
             <details class="vac-import" [open]="!!preview()">
-              <summary><strong>Importar el cuadro desde Excel</strong> <span class="adm-muted">· descarga la plantilla, corrígela y súbela; cada fila debe sumar su TOTAL</span></summary>
+              <summary><strong>Importar el cuadro desde Excel</strong> <span class="adm-muted">descarga la plantilla, corrígela y súbela; cada fila debe sumar su TOTAL</span></summary>
               <div class="vac-import__actions">
                 <button class="btn btn--quiet" type="button" (click)="template()" data-icon="descargar">Descargar plantilla (.xlsx)</button>
                 <label class="btn btn--quiet" for="v-file">Elegir archivo…</label>
@@ -85,7 +85,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
               </div>
               @if (preview(); as p) {
                 <p class="adm-msg" [class.err]="!p.valid">{{ p.valid ? 'Archivo válido.' : 'El archivo tiene errores: corrígelos y vuelve a subirlo. No se guardó nada.' }}
-                  Total actual {{ p.totals.before }} a {{ p.totals.after }} · {{ p.totals.changedCells }} celda(s) cambian.</p>
+                  Total actual {{ p.totals.before }} a {{ p.totals.after }}, {{ p.totals.changedCells }} celda(s) cambian.</p>
                 @for (e of p.errors; track e) { <p class="adm-msg err">{{ e }}</p> }
                 <div class="adm-table-wrap"><table class="adm-table">
                   <thead><tr><th>Fila</th><th>Programa</th><th class="num">Suma</th><th class="num">TOTAL</th><th>Cambios</th><th>Errores</th></tr></thead>
@@ -117,7 +117,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
             <div class="vac-import__actions">
               <label class="btn" for="ce-file">Subir lista (.csv)</label>
               <input id="ce-file" type="file" accept=".csv,text/csv" hidden (change)="pickAwardees($any($event.target))">
-              @if (awardees(); as a) { <span class="adm-muted">{{ a.total }} adjudicados · {{ a.registered }} ya inscritos</span> }
+              @if (awardees(); as a) { <span class="adm-muted">{{ a.total }} adjudicados, {{ a.registered }} ya inscritos</span> }
             </div>
             @if (awardeeErrors().length) { <ul class="adm-msg err">@for (e of awardeeErrors(); track e) { <li>{{ e }}</li> }</ul> }
             @if (awardees(); as a) {

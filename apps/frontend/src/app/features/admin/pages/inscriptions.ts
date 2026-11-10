@@ -43,7 +43,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
               @if (open() === r.applicantCode) {
                 <tr class="ins-docs"><td colspan="9">
                   @for (d of docs(); track d.kind) {
-                    <div class="ins-doc"><span>{{ d.name }}@if (d.required) { <span class="adm-muted"> · obligatorio</span> }</span>
+                    <div class="ins-doc"><span>{{ d.name }}@if (d.required) { <span class="adm-muted"> (obligatorio)</span> }</span>
                       @if (d.uploaded; as u) { <button type="button" class="adm-link" (click)="openDoc(r.applicantCode, d.kind)">Ver {{ u.fileName }}</button> <span class="adm-muted">{{ when(u.uploadedAt) }}</span> }
                       @else { <span class="adm-tag" [class.warn]="d.required">Sin subir</span> }</div>
                   } @empty { <p class="adm-muted">Cargando…</p> }
@@ -54,7 +54,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
         </table>
       </div>
       @if (page(); as p) {
-        <div class="adm-pager"><span>{{ p.total }} resultados · página {{ p.page }} de {{ pages() }}</span>
+        <div class="adm-pager"><span>{{ p.total }} resultados, página {{ p.page }} de {{ pages() }}</span>
           <button class="btn btn--quiet" type="button" [disabled]="p.page <= 1" (click)="go(p.page - 1)">Anterior</button>
           <button class="btn btn--quiet" type="button" [disabled]="p.page >= pages()" (click)="go(p.page + 1)">Siguiente</button></div>
       }

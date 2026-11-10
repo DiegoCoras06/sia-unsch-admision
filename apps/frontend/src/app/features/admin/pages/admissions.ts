@@ -17,7 +17,7 @@ const LABEL = { PENDIENTE: 'Admitido: por entregar', INGRESANTE: 'Ingresante', P
     <header class="adm-head"><div><h1>Ingreso</h1>
       <p>Registra la entrega de documentos originales y el recibo de la constancia de ingreso. Vencido el plazo, el admitido sin entrega pierde la vacante automáticamente (Art. 34) y no se cubre (Disp. Final 4.ª).</p></div></header>
     @if (data()?.window; as w) {
-      <p class="adm-panel">Plazo: {{ when(w.start) }} al {{ when(w.end) }} · extemporánea hasta el {{ when(w.lateEnd) }} con recargo de S/ 65.00.</p>
+      <p class="adm-panel">Plazo: {{ when(w.start) }} al {{ when(w.end) }}, extemporánea hasta el {{ when(w.lateEnd) }} con recargo de S/ 65.00.</p>
     }
     <form class="adm-panel adm-filters" (ngSubmit)="load()">
       <div class="field"><label for="ad-st">Estado</label><select id="ad-st" class="select" name="st" [(ngModel)]="status"><option value="">Todos</option>
@@ -32,7 +32,7 @@ const LABEL = { PENDIENTE: 'Admitido: por entregar', INGRESANTE: 'Ingresante', P
         <tbody>@for (r of data()?.rows ?? []; track r.applicantCode) {
           <tr><td><strong>{{ r.applicantCode }}</strong></td><td>{{ r.fullName }}<br><span class="adm-muted">{{ r.document }}</span></td><td>{{ r.program }}</td>
             <td><span class="adm-tag" [class.ok]="r.status === 'INGRESANTE'" [class.warn]="r.status === 'PENDIENTE'" [class.bad]="r.status === 'PERDIDA'">{{ label[r.status] }}</span></td>
-            <td>@if (r.receivedAt) { {{ when(r.receivedAt) }}<br><span class="adm-muted">Recibo {{ r.receiptNumber }} · S/ {{ r.amountPaid }}{{ r.late ? ' (extemporánea)' : '' }}</span> } @else { {{ r.note ?? '-' }} }</td>
+            <td>@if (r.receivedAt) { {{ when(r.receivedAt) }}<br><span class="adm-muted">Recibo {{ r.receiptNumber }}, S/ {{ r.amountPaid }}{{ r.late ? ' (extemporánea)' : '' }}</span> } @else { {{ r.note ?? '-' }} }</td>
             <td>@if (r.status === 'PENDIENTE') {
                 <div class="adm-row"><input class="input" style="width:9rem" [(ngModel)]="receipts[r.applicantCode]" [name]="'rc' + r.applicantCode" placeholder="N.° de recibo" [attr.aria-label]="'Recibo de ' + r.applicantCode">
                 <button type="button" class="btn btn--quiet" (click)="deliver(r.applicantCode)">Registrar entrega</button></div>

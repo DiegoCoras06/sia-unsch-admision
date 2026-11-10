@@ -15,7 +15,7 @@ interface SystemInfo {
   selector: 'app-admin-system',
   imports: [FormsModule],
   template: `
-    <header class="adm-head"><div><h1>Configuración</h1><p>Las credenciales viven solo en el servidor (variables de entorno o AWS Secrets Manager) y aquí se muestran enmascaradas.</p></div></header>
+    <header class="adm-head"><div><h1>Configuración</h1><p>Las credenciales viven solo en el servidor (variables de entorno o AWS Systems Manager Parameter Store) y aquí se muestran enmascaradas.</p></div></header>
     @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
     @if (info(); as s) {
       <section class="adm-panel"><h2>Integraciones</h2>
@@ -41,7 +41,7 @@ interface SystemInfo {
         <section class="adm-panel"><h2>Fallas de integración ({{ s.failures.length }})</h2>
           <div class="adm-table-wrap"><table class="adm-table"><tbody>
             @for (f of s.failures; track f.id) {
-              <tr><td><strong>{{ f.eventType }}</strong><br><span class="adm-muted">{{ when(f.occurredAt) }} · {{ f.attempts }} intentos</span><br><span class="adm-muted">{{ f.lastError }}</span></td>
+              <tr><td><strong>{{ f.eventType }}</strong><br><span class="adm-muted">{{ when(f.occurredAt) }}, {{ f.attempts }} intentos</span><br><span class="adm-muted">{{ f.lastError }}</span></td>
                 <td><button class="btn btn--quiet" type="button" (click)="retry(f.id)">Reintentar</button></td></tr>
             } @empty { <tr class="adm-none"><td>Sin fallas pendientes. Todas las notificaciones se entregaron.</td></tr> }
           </tbody></table></div>

@@ -35,7 +35,7 @@ const TAG: Record<string, string> = { ADMITIDO: 'ok', NO_ADMITIDO: '', AUSENTE: 
       @for (e of exams(); track e.id) {
         <section class="adm-panel">
           <div class="adm-row" style="justify-content:space-between">
-            <div><h2>{{ e.name }}</h2><p class="adm-muted">{{ when(e.date) }} · {{ e.examStatus === 'FINALIZADO' ? 'asistencia cerrada' : 'asistencia abierta: ciérrala antes de importar' }}</p></div>
+            <div><h2>{{ e.name }}</h2><p class="adm-muted">{{ when(e.date) }}, {{ e.examStatus === 'FINALIZADO' ? 'asistencia cerrada' : 'asistencia abierta: ciérrala antes de importar' }}</p></div>
           </div>
           <form class="adm-filters" (ngSubmit)="upload(e.id)">
             <div class="field"><label [for]="'f-' + e.id">Archivo CSV: codigo, conocimientos, aptitud, actitud, observacion</label>
@@ -71,7 +71,7 @@ const TAG: Record<string, string> = { ADMITIDO: 'ok', NO_ADMITIDO: '', AUSENTE: 
       @let v = sel()!;
       <section class="adm-panel">
         <div class="adm-row" style="justify-content:space-between">
-          <div><button type="button" class="adm-link" (click)="back()">← Volver</button><h2 class="rs-title">{{ v.exam }} · versión {{ v.version }} · {{ label(v.status) }}</h2>
+          <div><button type="button" class="adm-link" (click)="back()">Volver</button><h2 class="rs-title">{{ v.exam }}, versión {{ v.version }}, {{ label(v.status) }}</h2>
             @if (v.reason) { <p class="adm-muted">Rectificación: {{ v.reason }}</p> }</div>
           <div class="adm-row">
             <button type="button" class="btn btn--quiet" (click)="report('xlsx', 'resultados')">Resultados (Excel)</button>

@@ -329,21 +329,21 @@ function integrationStatus(env: Env): Record<string, { label: string; value: str
   return {
     identidad: {
       label: 'Consulta de identidad (RENIEC)',
-      value: env.IDENTITY_PROVIDER === 'apiperu' ? `apiperu.dev · token ${mask(env.APIPERU_TOKEN)}` : 'Simulado con DNI de prueba',
+      value: env.IDENTITY_PROVIDER === 'apiperu' ? `apiperu.dev, token ${mask(env.APIPERU_TOKEN)}` : 'Simulado con DNI de prueba',
       ok: env.IDENTITY_PROVIDER === 'apiperu',
     },
     pagos: {
       label: 'Pasarela de pagos',
       value: env.PAYMENTS_PROVIDER === 'micuentaweb'
-        ? `Izipay micuentaweb ${env.MICUENTAWEB_ENV} · tienda ${mask(env.MICUENTAWEB_SHOP_ID)}`
+        ? `Izipay micuentaweb ${env.MICUENTAWEB_ENV}, tienda ${mask(env.MICUENTAWEB_SHOP_ID)}`
         : env.PAYMENTS_PROVIDER === 'izipay'
-        ? `Izipay ${env.IZIPAY_ENV} · comercio ${mask(env.IZIPAY_MERCHANT_CODE)}`
-        : `Simulada · Izipay: clave de API ${mask(env.IZIPAY_API_KEY)}, comercio ${mask(env.IZIPAY_MERCHANT_CODE)}, clave hash ${mask(env.IZIPAY_HASH_KEY)}`,
+        ? `Izipay ${env.IZIPAY_ENV}, comercio ${mask(env.IZIPAY_MERCHANT_CODE)}`
+        : `Simulada. Izipay: clave de API ${mask(env.IZIPAY_API_KEY)}, comercio ${mask(env.IZIPAY_MERCHANT_CODE)}, clave hash ${mask(env.IZIPAY_HASH_KEY)}`,
       ok: env.PAYMENTS_PROVIDER === 'izipay' || env.PAYMENTS_PROVIDER === 'micuentaweb',
     },
     ia: {
       label: 'Asistente con IA (OpenRouter)',
-      value: env.OPENROUTER_API_KEY ? `${env.OPENROUTER_MODEL} · clave ${mask(env.OPENROUTER_API_KEY)} · tope US$ ${env.CHAT_DAILY_BUDGET_USD}/día` : 'Modo básico (sin clave)',
+      value: env.OPENROUTER_API_KEY ? `${env.OPENROUTER_MODEL}, clave ${mask(env.OPENROUTER_API_KEY)}, tope US$ ${env.CHAT_DAILY_BUDGET_USD}/día` : 'Modo básico (sin clave)',
       ok: Boolean(env.OPENROUTER_API_KEY),
     },
     correo: { label: 'Correo', value: env.EMAIL_PROVIDER === 'ses' ? 'Amazon SES' : 'Archivos locales (.dev-mail)', ok: env.EMAIL_PROVIDER === 'ses' },

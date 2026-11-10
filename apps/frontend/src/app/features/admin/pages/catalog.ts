@@ -53,7 +53,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
                 <h3 class="kt-h3">Submodalidades</h3>
                 @for (s of m.submodalities; track s.code) {
                   <details class="kt-sub">
-                    <summary><strong>{{ s.name }}</strong> <span class="adm-muted">{{ s.code }} · {{ s.requirements.length }} requisitos propios</span></summary>
+                    <summary><strong>{{ s.name }}</strong> <span class="adm-muted">{{ s.code }}, {{ s.requirements.length }} requisitos propios</span></summary>
                     <form class="adm-form" (ngSubmit)="saveSub(s)">
                       <div class="two">
                         <div class="field"><label [for]="'sn-' + s.code">Nombre</label><input [id]="'sn-' + s.code" class="input" [name]="'sn-' + s.code" [(ngModel)]="s.name"></div>
@@ -83,7 +83,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
                 <thead><tr><th>Pide</th><th>Documento</th><th>Obligatorio</th></tr></thead>
                 <tbody>@for (r of ownReqs(); track r.id) {
                   <tr><td><input type="checkbox" [checked]="picked()[r.id] !== undefined" (change)="toggle(r.id)" [attr.aria-label]="'Pedir ' + r.name"></td>
-                    <td>{{ r.name }}<br><span class="adm-muted">{{ r.code }} · {{ r.article }}</span></td>
+                    <td>{{ r.name }}<br><span class="adm-muted">{{ r.code }}, {{ r.article }}</span></td>
                     <td><input type="checkbox" [disabled]="picked()[r.id] === undefined" [checked]="picked()[r.id] === true" (change)="toggleMandatory(r.id)" [attr.aria-label]="r.name + ' obligatorio'"></td></tr>
                 }</tbody>
               </table></div>
@@ -95,7 +95,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
             <div class="adm-table-wrap"><table class="adm-table">
               <thead><tr><th>Documento</th><th>Formatos</th><th></th></tr></thead>
               <tbody>@for (r of d.requirements; track r.id) {
-                <tr><td>{{ r.name }}@if (r.isBase) { <span class="adm-tag">común</span> }<br><span class="adm-muted">{{ r.code }} · {{ r.article }}</span></td>
+                <tr><td>{{ r.name }}@if (r.isBase) { <span class="adm-tag">común</span> }<br><span class="adm-muted">{{ r.code }}, {{ r.article }}</span></td>
                   <td>{{ r.acceptedFormats.join(', ') }}</td>
                   <td><button class="btn btn--quiet" type="button" (click)="editReq(r)">Editar</button></td></tr>
               }</tbody>
@@ -133,7 +133,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
           <section class="adm-panel"><h2>Áreas académicas</h2>
             @for (a of d.areas; track a.id) {
               <form class="kt-line" (ngSubmit)="put('/admin/catalog/areas/' + a.code, { name: a.name }, 'Área guardada.')">
-                <div class="field"><label [for]="'a-' + a.code">Área {{ a.code }} · {{ a.programs }} programas</label><input [id]="'a-' + a.code" class="input" [name]="'a-' + a.code" [(ngModel)]="a.name"></div>
+                <div class="field"><label [for]="'a-' + a.code">Área {{ a.code }}, {{ a.programs }} programas</label><input [id]="'a-' + a.code" class="input" [name]="'a-' + a.code" [(ngModel)]="a.name"></div>
                 <button class="btn btn--quiet" type="submit">Guardar</button>
               </form>
             }
@@ -157,7 +157,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
                 <div class="field"><label for="p-fac">Facultad</label>
                   <select id="p-fac" class="select" name="p-fac" [(ngModel)]="prog.facultyId"><option value="">Elige…</option>@for (f of d.faculties; track f.id) { <option [value]="f.id">{{ f.name }}</option> }</select></div>
                 <div class="field"><label for="p-area">Área</label>
-                  <select id="p-area" class="select" name="p-area" [(ngModel)]="prog.areaId"><option value="">Elige…</option>@for (a of d.areas; track a.id) { <option [value]="a.id">{{ a.code }} · {{ a.name }}</option> }</select></div>
+                  <select id="p-area" class="select" name="p-area" [(ngModel)]="prog.areaId"><option value="">Elige…</option>@for (a of d.areas; track a.id) { <option [value]="a.id">{{ a.code }}, {{ a.name }}</option> }</select></div>
               </div>
               @if (!prog.id) { <p class="adm-muted">Un programa nuevo no recibe postulantes hasta que tenga una opción de postulación y vacantes en «Convocatoria».</p> }
               <div class="adm-row"><button class="btn" type="submit">{{ prog.id ? 'Guardar cambios' : 'Agregar programa' }}</button>

@@ -21,7 +21,7 @@ interface Venue { id: string; code: string; name: string; address: string; activ
     @for (v of venues(); track v.id) {
       <section class="adm-panel">
         <div class="adm-row" style="justify-content:space-between">
-          <div><h2>{{ v.name }}</h2><p class="adm-muted">{{ v.address }} · {{ v.rooms.length }} aulas · {{ v.capacity }} asientos activos</p></div>
+          <div><h2>{{ v.name }}</h2><p class="adm-muted">{{ v.address }}, {{ v.rooms.length }} aulas, {{ v.capacity }} asientos activos</p></div>
         </div>
         <div class="adm-table-wrap"><table class="adm-table">
           <thead><tr><th>Pabellón</th><th class="num">Piso</th><th>Aula</th><th class="num">Capacidad</th><th>Puerta</th><th>Accesible</th><th>Activa</th><th></th></tr></thead>

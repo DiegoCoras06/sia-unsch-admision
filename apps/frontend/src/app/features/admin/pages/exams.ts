@@ -42,11 +42,11 @@ const SCORING = [
       @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
       <section class="adm-panel">
         <div class="adm-table-wrap"><table class="adm-table">
-          <thead><tr><th>Examen</th><th>Fecha e ingreso</th><th class="num">Aptos</th><th class="num">Asignados</th><th class="num">Aulas · capacidad</th><th>Estado</th><th></th></tr></thead>
+          <thead><tr><th>Examen</th><th>Fecha e ingreso</th><th class="num">Aptos</th><th class="num">Asignados</th><th class="num">Aulas (capacidad)</th><th>Estado</th><th></th></tr></thead>
           <tbody>@for (e of list(); track e.id) {
             <tr><td><strong>{{ e.name }}</strong><br><span class="adm-muted">{{ e.modalities.join(', ') }}</span></td>
               <td class="nowrap">{{ when(e.entryOpensAt) }}<br><span class="adm-muted">cierra el ingreso: {{ hourOf(e.entryClosesAt) }}</span></td>
-              <td class="num">{{ e.eligible }}</td><td class="num">{{ e.assigned }}</td><td class="num">{{ e.rooms }} · {{ e.capacity }}</td>
+              <td class="num">{{ e.eligible }}</td><td class="num">{{ e.assigned }}</td><td class="num">{{ e.rooms }} ({{ e.capacity }})</td>
               <td><span class="adm-tag" [class.ok]="e.visible" [class.warn]="e.status === 'DISTRIBUIDO'">{{ e.statusLabel }}</span>
                 <br><span class="adm-muted">{{ e.visible ? 'Publicada' : 'Se publica: ' + when(e.publishAt) }}</span></td>
               <td><button type="button" class="adm-link" (click)="open(e.id)">Gestionar</button></td></tr>
@@ -57,10 +57,10 @@ const SCORING = [
     } @else {
       @let d = sel()!;
       <header class="adm-head">
-        <div><button type="button" class="adm-link" (click)="back()">← Volver a los exámenes</button>
+        <div><button type="button" class="adm-link" (click)="back()">Volver a los exámenes</button>
           <h1>{{ d.name || 'Nuevo examen' }}</h1>
-          @if (d.id) { <p>{{ when(d.entryOpensAt) }} · {{ d.assigned }} asignados de {{ d.eligible }} aptos · versión {{ d.version }}</p> }</div>
-        @if (d.id) { <span class="adm-tag" [class.ok]="d.visible" [class.warn]="d.status === 'DISTRIBUIDO'">{{ d.statusLabel }}{{ d.visible ? ' · publicada' : '' }}</span> }
+          @if (d.id) { <p>{{ when(d.entryOpensAt) }}, {{ d.assigned }} asignados de {{ d.eligible }} aptos, versión {{ d.version }}</p> }</div>
+        @if (d.id) { <span class="adm-tag" [class.ok]="d.visible" [class.warn]="d.status === 'DISTRIBUIDO'">{{ d.statusLabel }}{{ d.visible ? ', publicada' : '' }}</span> }
       </header>
       @if (d.id) {
         <div class="adm-tabs" role="tablist">
@@ -125,7 +125,7 @@ const SCORING = [
       @if (d.id && tab() === 'rooms') {
         <section class="adm-panel">
           <div class="adm-row" style="justify-content:space-between">
-            <h2>Aulas habilitadas: {{ picked().size }} · {{ pickedCapacity() }} asientos</h2>
+            <h2>Aulas habilitadas: {{ picked().size }} ({{ pickedCapacity() }} asientos)</h2>
             <div class="adm-row">
               <button type="button" class="btn btn--quiet" (click)="pickAll(true)">Todas</button>
               <button type="button" class="btn btn--quiet" (click)="pickAll(false)">Ninguna</button>
@@ -134,12 +134,12 @@ const SCORING = [
           </div>
           <p class="adm-muted">Un aula no puede estar en dos exámenes con horarios que se cruzan. Para crear o editar aulas usa «Sedes y aulas».</p>
           @for (b of buildings(); track b.name) {
-            <fieldset class="ex-building"><legend><strong>{{ b.name }}</strong> <span class="adm-muted">· {{ b.venue }}</span></legend>
+            <fieldset class="ex-building"><legend><strong>{{ b.name }}</strong> <span class="adm-muted">{{ b.venue }}</span></legend>
               <div class="ex-rooms">@for (r of b.rooms; track r.id) {
                 <label class="ex-room" [class.is-on]="picked().has(r.id)">
                   <input type="checkbox" [checked]="picked().has(r.id)" (change)="pick(r.id)">
-                  <span><strong>{{ r.code }}</strong> · {{ r.capacity }}</span>
-                  <span class="adm-muted">Piso {{ r.floor }} · {{ r.gate }}{{ r.accessible ? ' · accesible' : '' }}</span>
+                  <span><strong>{{ r.code }}</strong>, {{ r.capacity }}</span>
+                  <span class="adm-muted">Piso {{ r.floor }}, {{ r.gate }}{{ r.accessible ? ', accesible' : '' }}</span>
                 </label>
               }</div>
             </fieldset>
@@ -165,7 +165,7 @@ const SCORING = [
               @if (d.assigned) { <button type="button" class="btn btn--quiet" (click)="eligiblePdf()">Relación de aptos (PDF)</button> }
               @if (d.status === 'CONFIRMADO') { <button type="button" class="btn btn--quiet" (click)="closeAttendance()">Cerrar asistencia</button> }
             </div>
-            @if (d.distributedAt) { <p class="adm-muted">Última distribución: {{ when(d.distributedAt) }}@if (d.confirmedAt) { · confirmada el {{ when(d.confirmedAt) }} } · visible para el postulante desde el {{ when(d.publishAt) }}</p> }
+            @if (d.distributedAt) { <p class="adm-muted">Última distribución: {{ when(d.distributedAt) }}@if (d.confirmedAt) {, confirmada el {{ when(d.confirmedAt) }} }, visible para el postulante desde el {{ when(d.publishAt) }}</p> }
             @if (d.unassigned.length) { <p class="adm-msg err">Aptos sin aula (pagaron después de distribuir): {{ codesOf(d.unassigned) }}. Vuelve a distribuir o asígnalos con «Cambiar de aula».</p> }
             @if (d.released.length) { <p class="adm-msg err">Asientos de quienes ya no son aptos: {{ d.released.join(', ') }}. Se liberan al volver a distribuir; no pueden ingresar.</p> }
           </section>
@@ -175,7 +175,7 @@ const SCORING = [
             <div class="two">
               <input class="input" [(ngModel)]="mv.code" name="mc" placeholder="Código de postulante" maxlength="8" aria-label="Código de postulante">
               <select class="select" [(ngModel)]="mv.roomId" name="mr" aria-label="Aula de destino"><option value="">Aula de destino</option>
-                @for (r of d.rooms; track r.id) { <option [value]="r.id" [disabled]="r.used >= r.capacity">{{ r.building }} · {{ r.code }} ({{ r.used }}/{{ r.capacity }})</option> }</select>
+                @for (r of d.rooms; track r.id) { <option [value]="r.id" [disabled]="r.used >= r.capacity">{{ r.building }}, {{ r.code }} ({{ r.used }}/{{ r.capacity }})</option> }</select>
             </div>
             <input class="input" [(ngModel)]="mv.reason" name="mrs" placeholder="Motivo del cambio" maxlength="400" aria-label="Motivo del cambio">
             <button type="button" class="btn btn--quiet" style="justify-self:start" (click)="move()">Cambiar de aula</button>
@@ -184,14 +184,14 @@ const SCORING = [
         <section class="adm-panel">
           <h2>Ocupación por aula</h2>
           <ul class="adm-bars">@for (r of usedRooms(); track r.id) {
-            <li><span>{{ r.building }} · <strong>{{ r.code }}</strong>{{ r.accessible ? ' · accesible' : '' }}</span><span class="bar"><i [style.width.%]="100 * r.used / r.capacity"></i></span><b>{{ r.used }}/{{ r.capacity }}</b></li>
+            <li><span>{{ r.building }}, <strong>{{ r.code }}</strong>{{ r.accessible ? ', accesible' : '' }}</span><span class="bar"><i [style.width.%]="100 * r.used / r.capacity"></i></span><b>{{ r.used }}/{{ r.capacity }}</b></li>
           } @empty { <li>Aún no hay distribución.</li> }</ul>
         </section>
         <div class="adm-grid">
           <section class="adm-panel">
             <h2>Solicitudes de adecuación</h2>
             <ul class="adm-form" style="list-style:none;margin:0;padding:0">@for (a of d.accommodations; track a.applicantCode) {
-              <li><strong>{{ a.applicantCode }}</strong> · {{ a.fullName }} @if (a.late) { <span class="adm-tag warn">Fuera de plazo (menos de 72 h)</span> }<br>{{ a.needs }}</li>
+              <li><strong>{{ a.applicantCode }}</strong>, {{ a.fullName }} @if (a.late) { <span class="adm-tag warn">Fuera de plazo (menos de 72 h)</span> }<br>{{ a.needs }}</li>
             } @empty { <li class="adm-muted">Sin solicitudes.</li> }</ul>
           </section>
           <section class="adm-panel">

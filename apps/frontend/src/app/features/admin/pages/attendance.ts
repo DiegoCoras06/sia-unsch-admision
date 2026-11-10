@@ -46,7 +46,7 @@ const INCIDENTS = [
           @for (e of board(); track e.id) { <option [value]="e.id">{{ e.name }}{{ e.closed ? ' (cerrada)' : '' }}</option> }</select></div>
       <div class="field"><label for="at-room">Aula</label>
         <select id="at-room" class="select" name="rm" [(ngModel)]="roomId" (ngModelChange)="loadRoom()"><option value="">Todas (puerta)</option>
-          @for (r of exam()?.rooms ?? []; track r.id) { <option [value]="r.id">{{ r.building }} · {{ r.code }} ({{ r.present }}/{{ r.assigned }})</option> }</select></div>
+          @for (r of exam()?.rooms ?? []; track r.id) { <option [value]="r.id">{{ r.building }}, {{ r.code }} ({{ r.present }}/{{ r.assigned }})</option> }</select></div>
       @if (roomId) { <button type="button" class="btn btn--quiet" (click)="pdf()">Lista de asistencia (PDF)</button> }
     </form>
     @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
@@ -70,7 +70,7 @@ const INCIDENTS = [
           <article class="at-card is-other">
             <div>
               <p class="at-code">{{ o.code }}</p>
-              @if (o.row) { <h3>{{ o.row.fullName }}</h3><p>{{ o.row.document }} · asiento {{ o.row.seat }}</p> }
+              @if (o.row) { <h3>{{ o.row.fullName }}</h3><p>{{ o.row.document }}, asiento {{ o.row.seat }}</p> }
               @else { <h3>Código fuera de la lista de esta aula</h3> }
               <p class="at-state">Sin conexión: lectura guardada a las {{ when(o.at) }} - Compara el DNI con la persona; la foto y el estado de apto se confirman al enviar.</p>
             </div>
@@ -83,8 +83,8 @@ const INCIDENTS = [
             <div>
               <p class="at-code">{{ c.applicantCode }}</p>
               <h3>{{ c.fullName }}</h3>
-              <p>{{ c.document }} · {{ c.program }}</p>
-              <p class="at-room">{{ c.room.building }} · aula <strong>{{ c.room.code }}</strong> · asiento {{ c.room.seat }}</p>
+              <p>{{ c.document }}, {{ c.program }}</p>
+              <p class="at-room">{{ c.room.building }}, aula <strong>{{ c.room.code }}</strong>, asiento {{ c.room.seat }}</p>
               <p class="at-state">
                 @if (c.already) { Ya había ingresado ({{ when(c.checkedInAt) }}). } @else { Ingreso registrado. }
                 @if (c.late) { <strong>Fuera de hora.</strong> }
@@ -104,7 +104,7 @@ const INCIDENTS = [
         <textarea class="input" rows="3" [(ngModel)]="inc.description" name="id" maxlength="1000" placeholder="Qué pasó, dónde y quién lo detectó" aria-label="Descripción"></textarea>
         <button type="button" class="btn btn--quiet" style="justify-self:start" (click)="report()">Registrar y avisar a la Comisión</button>
         <ul class="adm-form" style="list-style:none;margin:0;padding:0">@for (i of incidents(); track i.id) {
-          <li><span class="adm-muted">{{ when(i.at) }}{{ i.room ? ' · aula ' + i.room : '' }}{{ i.applicantCode ? ' · ' + i.applicantCode : '' }}</span><br><strong>{{ i.typeLabel }}</strong> - {{ i.description }}</li>
+          <li><span class="adm-muted">{{ when(i.at) }}{{ i.room ? ', aula ' + i.room : '' }}{{ i.applicantCode ? ', ' + i.applicantCode : '' }}</span><br><strong>{{ i.typeLabel }}</strong> - {{ i.description }}</li>
         }</ul>
       </section>
     </div>
@@ -175,7 +175,7 @@ export class AttendanceAdminPage implements OnInit, OnDestroy {
   protected readonly exam = computed(() => this.board().find((e) => e.id === this.examId) ?? null);
   protected readonly room = computed(() => this.exam()?.rooms.find((r) => r.id === this.roomId) ?? null);
   protected readonly presentCount = computed(() => this.rows().filter((r) => r.attendance === 'PRESENTE').length);
-  protected readonly label = (r: Row) => (r.attendance === 'PRESENTE' ? (r.late ? 'Presente · fuera de hora' : 'Presente') : r.attendance === 'AUSENTE' ? 'Ausente' : 'Por ingresar');
+  protected readonly label = (r: Row) => (r.attendance === 'PRESENTE' ? (r.late ? 'Presente, fuera de hora' : 'Presente') : r.attendance === 'AUSENTE' ? 'Ausente' : 'Por ingresar');
 
   async ngOnInit() {
     addEventListener('online', this.onOnline);

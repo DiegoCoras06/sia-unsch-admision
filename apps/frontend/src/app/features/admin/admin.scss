@@ -23,7 +23,9 @@
 .adm-head h1 { font-size: clamp(1.75rem, 2.6vw, 2.25rem); letter-spacing: -0.03em; line-height: 1.05; }
 .adm-head p { color: var(--ink-soft); max-width: 60ch; }
 .adm-panel { background: var(--ground); border-radius: var(--radius-lg); padding: 1.25rem; display: grid; gap: 1rem; min-width: 0; align-content: start; }
-.adm-panel > h2 { font-size: 1.125rem; letter-spacing: -0.01em; }
+.adm-panel h2 { font-size: 1.125rem; letter-spacing: -0.01em; }
+/* Filtros sueltos sobre una tabla: separados de ella, como en las demás páginas. */
+:not([class]) > .adm-filters + .adm-panel { margin-top: 1rem; }
 .adm-panel--wide { grid-column: 1 / -1; }
 .adm-grid { display: grid; gap: 1.25rem; align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr)); }
 .adm-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }

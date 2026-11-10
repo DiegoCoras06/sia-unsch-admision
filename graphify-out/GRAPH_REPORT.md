@@ -1,17 +1,17 @@
 # Graph Report - proyectofinal  (2026-11-09)
 
 ## Corpus Check
-- 297 files · ~198,710 words
+- 297 files · ~198,655 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: .scss 5, (none) 4, .woff 4)
 
 ## Summary
-- 3113 nodes · 7522 edges · 157 communities (113 shown, 44 thin omitted)
+- 3114 nodes · 7523 edges · 148 communities (111 shown, 37 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 229 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `181325c0`
+- Built from commit: `bdbbc6ef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -32,19 +32,19 @@
 - Configuración de Angular
 - InscriptionService
 - inscription-service.ts
-- AdminSession
+- dossier-service.ts
 - lambda-worker.ts
-- scripts
+- package.json
 - Dependencias de desarrollo backend
 - Servicio de expedientes
 - middleware.ts
 - Db
 - Revisión de resultados
-- email-sender.ts
+- env.ts
 - Rutas del panel (backend)
 - micuentaweb.ts
 - rds.ts
-- treasury.test.ts
+- scripts
 - pagos/index.ts
 - dependencies
 - Exámenes (panel)
@@ -56,7 +56,7 @@
 - ConvocatoriasRepository
 - ficha-service.ts
 - Convocatoria (panel)
-- ref_node_path
+- prisma.ts
 - admin.test.ts: movableClock()
 - .now
 - ref_node_path
@@ -128,12 +128,12 @@
 - portal admin: AdmissionsAdminPage
 - portal cuenta: AccountLoginPage
 - site-header.ts: SiteHeader
-- prisma.ts
+- audit/audit.ts
 - e2e-expediente.mjs: e2e-expediente.mjs
-- pages/exams.ts
+- allowScripts
 - CasesAdminPage
 - content.ts: seed/content.ts
-- resultados/presentation/routes.ts
+- e2e-inscripcion.mjs
 - FichaService
 - staff-recovery.test.ts
 - portal admin: DisqualifiedAdminPage
@@ -145,34 +145,25 @@
 - portal public: AnnouncementsPage
 - portal public: ProgramsPage
 - format.ts
-- portal public: SyllabusPage
+- e2e-panel.mjs
 - optimizar-imagenes.mjs
-- MyResultPage
+- @angular/forms
 - ngsw-config.json
 - screenshots-panel.mjs
 - inbox.ts
 - accounts.test.ts
 - results.ts
 - assistant.test.ts
-- AdminShell
+- s3.test.ts
 - global-setup.ts
 - VacancyImport
 - SecurityPage
-- treasury.ts
 - expedientes/presentation/routes.ts
 - SiteAssets
 - scripts
-- LocalFileStorage
 - KrClient
 - e2e-cuenta.mjs
-- assistant.ts
-- @aws-sdk/client-sesv2
-- prisma.config.ts
 - Stage
-- VerifyFichaPage
-- CartaAvalPage
-- RequirementsPage
-- exceljs
 
 ## God Nodes (most connected - your core abstractions)
 1. `RequestMeta` - 156 edges
@@ -201,55 +192,55 @@
 ## Import Cycles
 - None detected.
 
-## Communities (157 total, 44 thin omitted)
+## Communities (148 total, 37 thin omitted)
 
 ### Community 0 - "api.service.ts"
-Cohesion: 0.03
-Nodes (79): CLIENT, ADR-0015, apiErrorCode(), apiErrorDetails(), ApiHttpError, FichaVerification, ReinscriptionCheck, ADR-0010 (+71 more)
+Cohesion: 0.04
+Nodes (61): CLIENT, ADR-0015, ApiHttpError, FichaVerification, ReinscriptionCheck, ADR-0010, ADR-0015, ADR-0016 (+53 more)
 
 ### Community 1 - "Sesión del panel (frontend)"
-Cohesion: 0.04
-Nodes (66): CLIENT, Query, StaffMe, StaffStep, ADR-0018, ADR-0022, BY_EXTENSION, fileType() (+58 more)
+Cohesion: 0.03
+Nodes (62): AdminSession, CLIENT, Query, StaffMe, StaffStep, ADR-0018, ADR-0022, shortDateTime() (+54 more)
 
 ### Community 2 - "@angular/core"
 Cohesion: 0.05
-Nodes (38): App, appConfig, ADR-0023, routes, ADR-0015, ADR-0018, SubmodalityDto, CallStore (+30 more)
+Nodes (43): ADR-0015, ADR-0018, apiErrorCode(), apiErrorDetails(), SubmodalityDto, CallStore, KEY_STAGES, AREA_NAMES (+35 more)
 
 ### Community 3 - "attendance.ts"
 Cohesion: 0.08
 Nodes (15): @angular/common@22.2.3, AssetMap, Department, District, Province, UbigeoService, BoardExam, BoardRoom (+7 more)
 
 ### Community 4 - "NotificationService"
-Cohesion: 0.21
-Nodes (4): day(), hour(), NotificationService, notificacionesRoutes()
+Cohesion: 0.17
+Nodes (7): day(), hour(), NotificationService, applicant, meta(), notificacionesRoutes(), segment
 
 ### Community 5 - "usuariosRoutes"
 Cohesion: 0.18
-Nodes (6): AuthService, sha256(), StaffSession, normalizeEmail(), usuariosRoutes(), TokenDto
+Nodes (7): AuthService, sha256(), StaffSession, normalizeEmail(), createUsuariosModule(), usuariosRoutes(), TokenDto
 
 ### Community 6 - "Páginas del panel y errores"
 Cohesion: 0.04
-Nodes (16): apiErrorMessage(), ExamRoomDto, AuditAdminPage, InscriptionsAdminPage, PaymentsAdminPage, FindRoomPage, DossierPanel, MyInscriptionPage (+8 more)
+Nodes (33): apiErrorMessage(), BY_EXTENSION, fileType(), openDocument(), postToS3(), toBase64(), ADR-0010, UploadTicket (+25 more)
 
 ### Community 8 - "exam-service.ts"
 Cohesion: 0.10
 Nodes (24): ExamInfo, RoomInfo, ExamInput, ExamInscriptions, ExamPerson, ExamRow, ExamStructure, MODALITY_LABEL (+16 more)
 
 ### Community 9 - "seguridad/index.ts"
-Cohesion: 0.08
-Nodes (29): EVIDENCE, EvidenceInput, SupportCases, ALL, byRole, hasPermission(), PERMISSIONS, permissionsOf() (+21 more)
+Cohesion: 0.10
+Nodes (20): SupportCases, ALL, byRole, hasPermission(), PERMISSIONS, permissionsOf(), STAFF_ROLES, ADR-0018 (+12 more)
 
 ### Community 10 - "Contenido del portal (admin)"
 Cohesion: 0.07
-Nodes (14): AdminDeps, ContentAdmin, sniff(), CallAdmin, iso(), CatalogAdmin, FORMATS, Column (+6 more)
+Nodes (13): AdminDeps, ContentAdmin, sniff(), CallAdmin, iso(), CatalogAdmin, FORMATS, Column (+5 more)
 
 ### Community 11 - "Servicio de asistencia"
 Cohesion: 0.09
 Nodes (17): AttendanceService, iso(), ExamService, iso(), roomInfo(), roomOrder(), codeFromScan(), INCIDENT_TYPES (+9 more)
 
 ### Community 12 - "frontend/package.json"
-Cohesion: 0.09
-Nodes (30): dependencies, @angular/compiler@22.2.3, @angular/core@22.2.3, @angular/forms@22.2.3, @angular/platform-browser@22.2.3, @angular/router@22.2.3, @angular/service-worker@22.2.3, rxjs@7.8.2 (+22 more)
+Cohesion: 0.05
+Nodes (40): dependencies, @angular/compiler@22.2.3, @angular/core@22.2.3, @angular/forms@22.2.3, @angular/platform-browser@22.2.3, @angular/router@22.2.3, @angular/service-worker@22.2.3, rxjs@7.8.2 (+32 more)
 
 ### Community 13 - "Configuración de Angular"
 Cohesion: 0.05
@@ -263,37 +254,41 @@ Nodes (9): CepreAwardees, InscriptionService, OrdenPagoService, createInscripcio
 Cohesion: 0.11
 Nodes (24): InscriptionInput, InscriptionSummary, longDate(), NO_REINSCRIPTION, shortDate(), ADR-0015, ADR-0017, CAMPUSES (+16 more)
 
-### Community 17 - "lambda-worker.ts"
-Cohesion: 0.06
-Nodes (35): application, handler, ADR-0009, application, handler(), processQueue(), SqsEvent, ADR-0012 (+27 more)
+### Community 16 - "dossier-service.ts"
+Cohesion: 0.15
+Nodes (15): Doc, DossierContext, Row, ADR-0010, COMPLEMENTARY_FIELDS, DOSSIER_STATUS_LABEL, DossierStatus, OBSERVE_HOURS (+7 more)
 
-### Community 18 - "scripts"
-Cohesion: 0.05
-Nodes (38): allowScripts, argon2@0.45.1, @embedded-postgres/linux-x64@16.14.0-beta.17, @embedded-postgres/windows-x64@16.14.0-beta.17, esbuild@0.28.2, lmdb, msgpackr-extract, @parcel/watcher (+30 more)
+### Community 17 - "lambda-worker.ts"
+Cohesion: 0.10
+Nodes (19): application, handler(), processQueue(), SqsEvent, ADR-0012, ADR-0021, application, env (+11 more)
+
+### Community 18 - "package.json"
+Cohesion: 0.15
+Nodes (14): description, devDependencies, concurrently@10.0.6, playwright-core@1.64.1, typescript@6.0.3, engines, node, concurrently (+6 more)
 
 ### Community 19 - "Dependencias de desarrollo backend"
-Cohesion: 0.09
-Nodes (31): devDependencies, concurrently@10.0.6, esbuild@0.28.2, pino-pretty@13.2.0, supertest@7.3.1, tsx@4.23.15, @types/cookie-parser@1.4.10, @types/express@5.0.6 (+23 more)
+Cohesion: 0.08
+Nodes (33): devDependencies, concurrently@10.0.6, esbuild@0.28.2, pino-pretty@13.2.0, prisma@7.10.1, supertest@7.3.1, tsx@4.23.15, @types/cookie-parser@1.4.10 (+25 more)
 
 ### Community 20 - "Servicio de expedientes"
-Cohesion: 0.21
+Cohesion: 0.22
 Nodes (4): DossierService, iso(), latest(), expedientesRoutes()
 
 ### Community 21 - "middleware.ts"
-Cohesion: 0.11
-Nodes (26): asistenteRoutes(), meta(), ADR-0017, announcementsQuery, configuracionRoutes(), booleanish, callCode, callParams (+18 more)
+Cohesion: 0.09
+Nodes (30): asistenteRoutes(), meta(), ADR-0017, announcementsQuery, configuracionRoutes(), booleanish, callCode, callParams (+22 more)
 
 ### Community 22 - "Db"
-Cohesion: 0.11
-Nodes (10): Application, AppOverrides, AccessService, AuthDeps, AuditLog, Clock, Db, Outbox (+2 more)
+Cohesion: 0.09
+Nodes (19): Application, AppOverrides, ConfiguracionQueries, DEFAULT_PARAMETERS, SITE_SLOTS, SiteSlot, TYPES, createConfiguracionModule() (+11 more)
 
 ### Community 23 - "Revisión de resultados"
 Cohesion: 0.09
 Nodes (21): MODALITY_LABEL, ResultPerson, ResultsPorts, Answers, computeScore(), Condition, CONDITION_LABEL, Contender (+13 more)
 
-### Community 24 - "email-sender.ts"
-Cohesion: 0.15
-Nodes (10): RecordingEmailSender, limaTime(), subscribeAccountNotifications(), EmailExtras, EmailMessage, EmailSender, FileEmailSender, ADR-0007 (+2 more)
+### Community 24 - "env.ts"
+Cohesion: 0.11
+Nodes (15): application, handler, ADR-0009, Env, schema, ADR-0010, ADR-0016, ADR-0017 (+7 more)
 
 ### Community 25 - "Rutas del panel (backend)"
 Cohesion: 0.13
@@ -304,12 +299,12 @@ Cohesion: 0.16
 Nodes (12): PaymentSessionDto, CheckoutSession, SignedMessage, isValidHex(), KrAnswer, KrTransaction, MiCuentaWebConfig, MiCuentaWebGateway (+4 more)
 
 ### Community 27 - "rds.ts"
-Cohesion: 0.29
-Nodes (9): backendDir, caFile, check(), client(), envFile, migrate(), setup(), ADR-0009 (+1 more)
+Cohesion: 0.23
+Nodes (11): pg@8.23.1, backendDir, caFile, check(), client(), envFile, migrate(), setup() (+3 more)
 
-### Community 28 - "treasury.test.ts"
-Cohesion: 0.20
-Nodes (7): box, clock, duplicate, paid, secrets, t, today
+### Community 28 - "scripts"
+Cohesion: 0.14
+Nodes (14): scripts, build, db:setup, db:start, db:stop, dev, dev:rds, izipay:check (+6 more)
 
 ### Community 29 - "pagos/index.ts"
 Cohesion: 0.10
@@ -317,7 +312,11 @@ Nodes (16): YapeSessionDto, YapeChargeRequest, YapeGateway, CulqiCharge, CulqiCo
 
 ### Community 30 - "dependencies"
 Cohesion: 0.07
-Nodes (30): dependencies, argon2@0.45.1, @aws-sdk/client-s3@^3.1158.0, @aws-sdk/s3-presigned-post@^3.1158.0, @aws-sdk/s3-request-presigner@^3.1158.0, @codegenie/serverless-express@5.0.0, cookie-parser@1.4.7, express@5.3.0 (+22 more)
+Nodes (28): dependencies, argon2@0.45.1, @aws-sdk/client-sqs@^3.1161.0, @aws-sdk/s3-presigned-post@^3.1158.0, @aws-sdk/s3-request-presigner@^3.1158.0, @codegenie/serverless-express@5.0.0, cookie-parser@1.4.7, express@5.3.0 (+20 more)
+
+### Community 31 - "Exámenes (panel)"
+Cohesion: 0.13
+Nodes (3): ExamsAdminPage, fromLima(), toLima()
 
 ### Community 32 - "Formulario de inscripción"
 Cohesion: 0.12
@@ -325,19 +324,19 @@ Nodes (3): clearDraft(), InscriptionPage, readDraft()
 
 ### Community 33 - "validationError"
 Cohesion: 0.09
-Nodes (21): Doc, DossierContext, Row, ADR-0010, COMPLEMENTARY_FIELDS, DOSSIER_STATUS_LABEL, DossierStatus, OBSERVE_HOURS (+13 more)
+Nodes (19): VacancyImportPreview, VacancyImportRow, ApplicationDocuments, AppRow, KINDS, ADR-0010, TYPES, ROLE_CODES (+11 more)
 
 ### Community 34 - "src/app.ts"
-Cohesion: 0.06
-Nodes (38): backendDir, createApplication(), integrationStatus(), ADR-0002, ADR-0010, ADR-0012, ADR-0019, ADR-0021 (+30 more)
+Cohesion: 0.07
+Nodes (37): backendDir, createApplication(), integrationStatus(), ADR-0002, ADR-0010, ADR-0012, ADR-0019, ADR-0021 (+29 more)
 
 ### Community 35 - "asistente/index.ts"
 Cohesion: 0.15
 Nodes (17): KnowledgeAdmin, LlmMessage, LlmProvider, LlmResponse, LlmToolCall, ToolSpec, ADR-0007, ADR-0017 (+9 more)
 
 ### Community 36 - "Pruebas E2E con Playwright"
-Cohesion: 0.09
-Nodes (11): playwright-core, [dni = '99900025', code = '27000025', out = '.screens/asistente'], errors, ADR-0015, photo, width, [dni = '99900050', email = 'e2e.micuentaweb@example.com', card = '4970100000000055', out = '.screens/pago-sandbox'], jobs (+3 more)
+Cohesion: 0.12
+Nodes (7): playwright-core, [dni = '99900025', code = '27000025', out = '.screens/asistente'], [dni = '99900050', email = 'e2e.micuentaweb@example.com', card = '4970100000000055', out = '.screens/pago-sandbox'], jobs, [out = '.screens', ...routes], report, widths
 
 ### Community 37 - "ConvocatoriasRepository"
 Cohesion: 0.16
@@ -351,25 +350,25 @@ Nodes (21): ENTRY, admissionCertificatePdf(), assets, BOLD, ESCUDO, FONTS, GOLD,
 Cohesion: 0.12
 Nodes (12): Awardee, Awardees, CallAdminPage, CallDetail, Fee, fromLima(), ImportPreview, ImportRow (+4 more)
 
-### Community 40 - "ref_node_path"
-Cohesion: 0.14
-Nodes (7): apply, db, db, [email, file = '.admin-inicial.txt'], db, PasswordHasher, createPrismaClient()
+### Community 40 - "prisma.ts"
+Cohesion: 0.09
+Nodes (12): apply, db, db, [email, file = '.admin-inicial.txt'], db, AwardeeRowError, CYCLES, AccessService (+4 more)
 
 ### Community 41 - "admin.test.ts: movableClock()"
 Cohesion: 0.10
-Nodes (16): FIRST, scenarioFor(), SURNAMES, syntheticCheckDigit(), syntheticIdentities, SyntheticIdentity, fixedClock(), MemoryEmailSender (+8 more)
+Nodes (17): FIRST, scenarioFor(), SURNAMES, syntheticCheckDigit(), syntheticIdentities, SyntheticIdentity, fixedClock(), loadEnv() (+9 more)
 
 ### Community 42 - ".now"
 Cohesion: 0.10
-Nodes (16): SessionMeta, SessionService, sha256(), ADR-0006, deviceLabel(), evaluateRefresh(), IDLE_LIMIT_SECONDS, RefreshDecision (+8 more)
+Nodes (14): SessionMeta, SessionService, sha256(), ADR-0006, deviceLabel(), evaluateRefresh(), IDLE_LIMIT_SECONDS, RefreshDecision (+6 more)
 
 ### Community 43 - "ref_node_path"
-Cohesion: 0.18
-Nodes (9): dotenv@18.0.9, api, backendDir, envFile, ADR-0019, backendDir, envFile, ses (+1 more)
+Cohesion: 0.13
+Nodes (11): @aws-sdk/client-sesv2@^3.1158.0, dotenv@18.0.9, api, backendDir, envFile, ADR-0019, backendDir, envFile (+3 more)
 
 ### Community 45 - "notifications.test.ts"
-Cohesion: 0.13
-Nodes (7): db, [role = 'ADMISION', email = 'comision.local@unsch.test', file = '.comision-local.txt'], totpService, SecretBox, box, clock, t
+Cohesion: 0.08
+Nodes (14): db, [role = 'ADMISION', email = 'comision.local@unsch.test', file = '.comision-local.txt'], totpService, SecretBox, box, clock, t, box (+6 more)
 
 ### Community 46 - "package.json: scripts"
 Cohesion: 0.10
@@ -396,8 +395,8 @@ Cohesion: 0.14
 Nodes (12): Argon2Hasher, staff(), staff(), staff(), staff(), box, CHROME_WIN_NUEVO, clock (+4 more)
 
 ### Community 53 - "usuarios/index.ts"
-Cohesion: 0.08
-Nodes (28): token, IdentityTokenPayload, ADR-0018, applicantCodeFromSequence(), COMMON, EDITABLE_FIELDS, isMinor(), isValidApplicantCode() (+20 more)
+Cohesion: 0.07
+Nodes (35): token, Totp, IdentityTokenPayload, ADR-0018, ChallengePayload, StaffChallenge, StaffStep, ADR-0018 (+27 more)
 
 ### Community 54 - "fee-calculator.test.ts"
 Cohesion: 0.09
@@ -424,8 +423,8 @@ Cohesion: 0.11
 Nodes (15): call, feeRules, fees, FeeSeed, Kind, officialDocuments, officialTotals, ReqSeed (+7 more)
 
 ### Community 61 - "admin-login.ts"
-Cohesion: 0.20
-Nodes (4): ADR-0022, RecoveryCodes, ADR-0022, ActiveSessions
+Cohesion: 0.10
+Nodes (8): dateTime(), ADR-0022, RecoveryCodes, ADR-0022, ContactForm, InscriptionReceipt, ActiveSessions, SessionDto
 
 ### Community 64 - "db.ts: db.ts"
 Cohesion: 0.19
@@ -440,8 +439,8 @@ Cohesion: 0.29
 Nodes (3): loadScript(), OnlinePayment, PaymentSessionDto
 
 ### Community 67 - "s3-file-storage.ts: s3-check.ts"
-Cohesion: 0.11
-Nodes (10): s3, files, root, s3, TYPES, PresignedUpload, S3FileStorage, ADR-0010 (+2 more)
+Cohesion: 0.09
+Nodes (11): s3, files, root, s3, TYPES, LocalFileStorage, PresignedUpload, ADR-0010 (+3 more)
 
 ### Community 69 - "AssistantTools"
 Cohesion: 0.29
@@ -456,20 +455,12 @@ Cohesion: 0.14
 Nodes (14): description, devDependencies, typescript@6.0.3, exports, typescript, main, name, private (+6 more)
 
 ### Community 73 - "businessRule"
-Cohesion: 0.19
+Cohesion: 0.20
 Nodes (4): iso(), ResultsService, resultadosRoutes(), businessRule()
 
 ### Community 74 - "exams.test.ts: exams.test.ts"
 Cohesion: 0.16
 Nodes (10): box, clock, codes, DNIS, fakeJpeg(), jump(), registerOrd(), secrets (+2 more)
-
-### Community 78 - "portal cuenta: MyAccountPage"
-Cohesion: 0.14
-Nodes (4): MyAccountPage, base32Decode(), text, totp()
-
-### Community 79 - "StaffAuthService"
-Cohesion: 0.19
-Nodes (8): StaffAuthService, AppError, forbidden(), locked(), tooManyRequests(), ADR-0006, ADR-0007, unauthorized()
 
 ### Community 80 - "assistant-service.ts"
 Cohesion: 0.29
@@ -484,11 +475,11 @@ Cohesion: 0.18
 Nodes (9): box, clock, fakeJpeg(), pdf(), registerExo(), secrets, t, upload() (+1 more)
 
 ### Community 83 - "pending-features.test.ts: pending-featur"
-Cohesion: 0.19
-Nodes (10): as(), binary(), box, clock, exo, fakeJpeg(), inscription(), secrets (+2 more)
+Cohesion: 0.16
+Nodes (12): exceljs@^4.4.0, as(), binary(), box, clock, exo, fakeJpeg(), inscription() (+4 more)
 
 ### Community 84 - "pagos: money()"
-Cohesion: 0.20
+Cohesion: 0.19
 Nodes (11): ANNULMENT_REASONS, money(), PAID, providerPaid(), Reason, RECONCILIATION_LABEL, Result, TreasuryService (+3 more)
 
 ### Community 85 - "e2e-examen.mjs"
@@ -533,7 +524,7 @@ Nodes (19): stages, shortDate(), CallSummary, SubmodalityRecord, nextMilestone()
 
 ### Community 100 - "usuarios/presentation/routes.ts"
 Cohesion: 0.09
-Nodes (19): Permission, ACTIONS, describeDevice(), ProfileService, StaffAdmin, temporaryPassword(), IDENTITY_FIELDS, createUsuariosModule() (+11 more)
+Nodes (17): Permission, ACTIONS, describeDevice(), StaffAdmin, temporaryPassword(), IDENTITY_FIELDS, lookupSchema, phone (+9 more)
 
 ### Community 101 - "payments.test.ts: payments.test.ts"
 Cohesion: 0.32
@@ -555,25 +546,25 @@ Nodes (7): clock, failFor, FakeQueue, handled, queue, t, ADR-0021
 Cohesion: 0.14
 Nodes (19): backendDir, envFile, gw, missing, ADR-0016, Attempt, AttemptResultDto, PaymentStatusDto (+11 more)
 
-### Community 112 - "prisma.ts"
-Cohesion: 0.08
-Nodes (27): DEFAULT_PARAMETERS, SITE_SLOTS, SiteSlot, TYPES, createExamenesModule(), createExpedientesModule(), AwardeeRowError, CYCLES (+19 more)
+### Community 112 - "audit/audit.ts"
+Cohesion: 0.09
+Nodes (23): createExamenesModule(), createExpedientesModule(), NoticeSources, Recipient, RecordingEmailSender, Segment, DEFAULT_TEMPLATES, escape() (+15 more)
 
 ### Community 113 - "e2e-expediente.mjs: e2e-expediente.mjs"
 Cohesion: 0.33
 Nodes (3): admin, base32Decode(), totp()
 
-### Community 114 - "pages/exams.ts"
+### Community 114 - "allowScripts"
 Cohesion: 0.20
-Nodes (9): ExamDetail, ExamRow, fromLima(), MODALITIES, RoomUse, SCORING, STRUCTURE, toLima() (+1 more)
+Nodes (10): allowScripts, argon2@0.45.1, @embedded-postgres/linux-x64@16.14.0-beta.17, @embedded-postgres/windows-x64@16.14.0-beta.17, esbuild@0.28.2, lmdb, msgpackr-extract, @parcel/watcher (+2 more)
 
 ### Community 116 - "content.ts: seed/content.ts"
 Cohesion: 0.33
 Nodes (5): announcements, authorityMessages, contentBlocks, featureFlags, heroSlides
 
-### Community 117 - "resultados/presentation/routes.ts"
-Cohesion: 0.25
-Nodes (7): applicant, Column, COVERAGE_COLUMNS, meta(), RESULT_COLUMNS, send(), ADR-0020
+### Community 117 - "e2e-inscripcion.mjs"
+Cohesion: 0.29
+Nodes (4): errors, ADR-0015, photo, width
 
 ### Community 118 - "FichaService"
 Cohesion: 0.36
@@ -596,16 +587,20 @@ Cohesion: 0.40
 Nodes (4): consentDocument, disqualifiedPersons, permissions, roles
 
 ### Community 128 - "format.ts"
-Cohesion: 0.05
-Nodes (30): closesIn(), dateRange(), daysUntil(), limaDay(), longDate(), shortDate(), STAGE_STATUS_LABEL, time() (+22 more)
+Cohesion: 0.06
+Nodes (26): closesIn(), dateRange(), daysUntil(), limaDay(), longDate(), shortDate(), STAGE_STATUS_LABEL, time() (+18 more)
+
+### Community 129 - "e2e-panel.mjs"
+Cohesion: 0.40
+Nodes (3): base32Decode(), text, totp()
 
 ### Community 130 - "optimizar-imagenes.mjs"
 Cohesion: 0.22
 Nodes (7): sharp@^0.34.5, sharp, base, dir, require, sharp, WIDTHS
 
-### Community 131 - "MyResultPage"
-Cohesion: 0.20
-Nodes (3): AdmittedListDto, MyResultDto, MyResultPage
+### Community 131 - "@angular/forms"
+Cohesion: 0.06
+Nodes (17): AdmittedListDto, ExamRoomDto, MyResultDto, ExamTicket, ExamTicketData, FindRoomPage, ADR-0023, ADR-0015 (+9 more)
 
 ### Community 132 - "ngsw-config.json"
 Cohesion: 0.40
@@ -627,17 +622,13 @@ Nodes (7): Batch, ExamResults, Issue, STATUS, TAG, VersionDetail, VersionSummary
 Cohesion: 0.29
 Nodes (5): ai, basic, scripted, toolCall(), usage
 
+### Community 138 - "s3.test.ts"
+Cohesion: 0.40
+Nodes (4): @aws-sdk/client-s3@^3.1158.0, client, storage, @aws-sdk/client-s3
+
 ### Community 139 - "global-setup.ts"
 Cohesion: 0.25
 Nodes (5): embedded-postgres@16.14.0-beta.17, backendDir, dataDir, TEST_DATABASE_URL, embedded-postgres
-
-### Community 140 - "VacancyImport"
-Cohesion: 0.39
-Nodes (3): VacancyImport, VacancyImportPreview, VacancyImportRow
-
-### Community 142 - "treasury.ts"
-Cohesion: 0.29
-Nodes (6): Annulment, Item, RESULTS, Run, RunDetail, Summary
 
 ### Community 143 - "expedientes/presentation/routes.ts"
 Cohesion: 0.33
@@ -647,33 +638,25 @@ Nodes (5): applicant, meta(), sendFile(), ADR-0010, ADR-0018
 Cohesion: 0.33
 Nodes (6): scripts, build, ng, start, test, watch
 
-### Community 149 - "assistant.ts"
-Cohesion: 0.33
-Nodes (5): Line, Msg, Panel, toLines(), ADR-0017
-
-### Community 150 - "@aws-sdk/client-sesv2"
-Cohesion: 0.33
-Nodes (4): @aws-sdk/client-sesv2@^3.1158.0, @aws-sdk/client-sqs@^3.1161.0, @aws-sdk/client-sesv2, @aws-sdk/client-sqs
-
 ## Knowledge Gaps
 - **135 isolated node(s):** `ADR-0018`, `ADR-0017`, `ADR-0017`, `ADR-0019`, `ADR-0014` (+130 more)
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 1239 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 1240 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `apiErrorMessage()` connect `Páginas del panel y errores` to `api.service.ts`, `Sesión del panel (frontend)`, `@angular/core`, `attendance.ts`, `MyResultPage`, `inbox.ts`, `results.ts`, `SecurityPage`, `treasury.ts`, `assistant.ts`, `Exámenes (panel)`, `Formulario de inscripción`, `Convocatoria (panel)`, `portal admin: AttendanceAdminPage`, `portal admin: ResultsAdminPage`, `portal admin: blankProgram()`, `admin-login.ts`, `portal admin: DossiersAdminPage`, `portal admin: NotificationsAdminPage`, `OnlinePayment`, `assistant.ts: Assistant`, `portal admin: ContentAdminPage`, `portal admin: TreasuryAdminPage`, `portal admin: Component`, `portal cuenta: MyAccountPage`, `portal admin: AdminLoginPage`, `portal admin: DashboardPage`, `portal admin: KnowledgeAdminPage`, `portal admin: SystemAdminPage`, `portal admin: Component`, `portal cuenta: CreateAccountPage`, `portal public: ComplaintsPage`, `portal admin: AdmissionsAdminPage`, `portal cuenta: AccountLoginPage`, `pages/exams.ts`, `CasesAdminPage`, `portal admin: DisqualifiedAdminPage`?**
-  _High betweenness centrality (0.108) - this node is a cross-community bridge._
+- **Why does `apiErrorMessage()` connect `Páginas del panel y errores` to `api.service.ts`, `Sesión del panel (frontend)`, `@angular/core`, `attendance.ts`, `@angular/forms`, `inbox.ts`, `results.ts`, `SecurityPage`, `Exámenes (panel)`, `Formulario de inscripción`, `Convocatoria (panel)`, `portal admin: AttendanceAdminPage`, `portal admin: ResultsAdminPage`, `portal admin: blankProgram()`, `admin-login.ts`, `portal admin: DossiersAdminPage`, `portal admin: NotificationsAdminPage`, `OnlinePayment`, `assistant.ts: Assistant`, `portal admin: ContentAdminPage`, `portal admin: TreasuryAdminPage`, `portal admin: Component`, `portal cuenta: MyAccountPage`, `portal admin: AdminLoginPage`, `portal admin: DashboardPage`, `portal admin: KnowledgeAdminPage`, `portal admin: SystemAdminPage`, `portal admin: Component`, `portal cuenta: CreateAccountPage`, `portal public: ComplaintsPage`, `portal admin: AdmissionsAdminPage`, `portal cuenta: AccountLoginPage`, `CasesAdminPage`, `portal admin: DisqualifiedAdminPage`?**
+  _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **What connects `ADR-0018`, `ADR-0017`, `ADR-0017` to the rest of the system?**
   _135 weakly-connected nodes found - possible missing edges._
 - **Should `api.service.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.03080657206870799 - nodes in this community are weakly interconnected._
-- **Why does `RequestMeta` connect `Contenido del portal (admin)` to `NotificationService`, `usuariosRoutes`, `exam-service.ts`, `seguridad/index.ts`, `Servicio de asistencia`, `VacancyImport`, `InscriptionService`, `expedientes/presentation/routes.ts`, `SiteAssets`, `inscription-service.ts`, `Servicio de expedientes`, `middleware.ts`, `Db`, `Revisión de resultados`, `Rutas del panel (backend)`, `validationError`, `ficha-service.ts`, `AssistantService`, `usuarios/index.ts`, `pagos: PaymentService`, `businessRule`, `StaffAuthService`, `assistant-service.ts`, `pagos: money()`, `exam-pdf.ts`, `usuarios/presentation/routes.ts`, `payment-rules.ts`, `prisma.ts`, `resultados/presentation/routes.ts`, `FichaService`?**
+  _Cohesion score 0.036036036036036036 - nodes in this community are weakly interconnected._
+- **Why does `RequestMeta` connect `Contenido del portal (admin)` to `NotificationService`, `usuariosRoutes`, `exam-service.ts`, `Servicio de asistencia`, `VacancyImport`, `InscriptionService`, `expedientes/presentation/routes.ts`, `SiteAssets`, `dossier-service.ts`, `inscription-service.ts`, `Servicio de expedientes`, `middleware.ts`, `Db`, `Revisión de resultados`, `Rutas del panel (backend)`, `validationError`, `ficha-service.ts`, `prisma.ts`, `AssistantService`, `usuarios/index.ts`, `pagos: PaymentService`, `businessRule`, `StaffAuthService`, `assistant-service.ts`, `pagos: money()`, `exam-pdf.ts`, `usuarios/presentation/routes.ts`, `payment-rules.ts`, `audit/audit.ts`, `FichaService`?**
   _High betweenness centrality (0.049) - this node is a cross-community bridge._
 - **Should `Sesión del panel (frontend)` be split into smaller, more focused modules?**
-  _Cohesion score 0.035232212308396245 - nodes in this community are weakly interconnected._
-- **Why does `playwright-core` connect `Pruebas E2E con Playwright` to `screenshots-panel.mjs`, `portal cuenta: MyAccountPage`, `e2e-expediente.mjs: e2e-expediente.mjs`, `scripts`, `e2e-cuenta.mjs`, `e2e-examen.mjs`, `e2e-resultados.mjs: e2e-resultados.mjs`?**
+  _Cohesion score 0.029190992493744787 - nodes in this community are weakly interconnected._
+- **Why does `playwright-core` connect `Pruebas E2E con Playwright` to `e2e-panel.mjs`, `screenshots-panel.mjs`, `e2e-expediente.mjs: e2e-expediente.mjs`, `package.json`, `e2e-cuenta.mjs`, `e2e-inscripcion.mjs`, `e2e-examen.mjs`, `e2e-resultados.mjs: e2e-resultados.mjs`?**
   _High betweenness centrality (0.041) - this node is a cross-community bridge._
 - **Should `@angular/core` be split into smaller, more focused modules?**
-  _Cohesion score 0.046760710553814006 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04691358024691358 - nodes in this community are weakly interconnected._

@@ -50,12 +50,12 @@ const INS_STATUS = [
           <tbody>@for (n of l.items; track n.id) {
             <tr><td class="nowrap">{{ when(n.createdAt) }}</td><td>{{ n.email }}</td><td>{{ ev(n.event) }}</td><td>{{ n.subject }}</td>
               <td><span class="adm-tag" [class.ok]="n.status === 'ENVIADA'" [class.warn]="n.status === 'PENDIENTE'" [class.bad]="n.status === 'FALLIDA' || n.status === 'REBOTADA'">{{ st(n.status) }}</span>
-                @if (n.attempts > 1 || n.lastError) { <br><span class="adm-muted">{{ n.attempts }} intentos{{ n.lastError ? ' · ' + n.lastError : '' }}</span> }</td></tr>
+                @if (n.attempts > 1 || n.lastError) { <br><span class="adm-muted">{{ n.attempts }} intentos{{ n.lastError ? ', ' + n.lastError : '' }}</span> }</td></tr>
           } @empty { <tr class="adm-none"><td colspan="5">Sin notificaciones.</td></tr> }</tbody>
         </table></div>
         <div class="adm-pager">
           <button type="button" class="btn btn--quiet" [disabled]="l.page <= 1" (click)="loadLog(l.page - 1)">Anterior</button>
-          <span>Página {{ l.page }} de {{ pages(l) }} · {{ l.total }} registros</span>
+          <span>Página {{ l.page }} de {{ pages(l) }}, {{ l.total }} registros</span>
           <button type="button" class="btn btn--quiet" [disabled]="l.page >= pages(l)" (click)="loadLog(l.page + 1)">Siguiente</button>
         </div>
       </section>
@@ -81,8 +81,8 @@ const INS_STATUS = [
         <section class="adm-panel">
           <h2>Comunicados enviados</h2>
           <ul class="adm-form" style="list-style:none;margin:0;padding:0">@for (x of campaigns(); track x.id) {
-            <li><strong>{{ x.subject }}</strong><br><span class="adm-muted">{{ when(x.createdAt) }} · {{ segText(x.segment) }}</span><br>
-              {{ x.recipients }} destinatarios · <span class="adm-tag ok">{{ x.sent }} enviados</span> @if (x.pending) { <span class="adm-tag warn">{{ x.pending }} en cola</span> } @if (x.failed) { <span class="adm-tag bad">{{ x.failed }} fallidos</span> }</li>
+            <li><strong>{{ x.subject }}</strong><br><span class="adm-muted">{{ when(x.createdAt) }}, {{ segText(x.segment) }}</span><br>
+              {{ x.recipients }} destinatarios, <span class="adm-tag ok">{{ x.sent }} enviados</span> @if (x.pending) { <span class="adm-tag warn">{{ x.pending }} en cola</span> } @if (x.failed) { <span class="adm-tag bad">{{ x.failed }} fallidos</span> }</li>
           } @empty { <li class="adm-muted">Aún no hay comunicados.</li> }</ul>
         </section>
       </div>
@@ -139,7 +139,7 @@ export class NotificationsAdminPage implements OnInit {
   protected async dispatchNow() {
     try {
       const r = await this.session.postAuth<{ queued: number; sent: number }>('/admin/notifications/dispatch');
-      this.ok(`${r.queued} avisos nuevos en cola · ${r.sent} enviados.`);
+      this.ok(`${r.queued} avisos nuevos en cola, ${r.sent} enviados.`);
       await this.loadLog(1);
     } catch (e) { this.fail(e); }
   }
@@ -174,7 +174,7 @@ export class NotificationsAdminPage implements OnInit {
 
   protected segText(s: Record<string, string>) {
     const parts = [s['modality'] ? `Modalidad ${s['modality']}` : 'Todas las modalidades', s['status'] ? INS_STATUS.find((x) => x.v === s['status'])?.l ?? s['status'] : '', s['optionCode'] ?? ''];
-    return parts.filter(Boolean).join(' · ');
+    return parts.filter(Boolean).join(', ');
   }
 
   protected async saveTpl(x: Template) {

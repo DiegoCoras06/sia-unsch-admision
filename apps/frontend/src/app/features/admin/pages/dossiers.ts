@@ -47,8 +47,8 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
     } @else {
       @let d = sel()!;
       <header class="adm-head">
-        <div><button type="button" class="adm-link" (click)="back()">← Volver a la bandeja</button>
-          <h1>{{ d.fullName }}</h1><p>Código {{ d.applicantCode }} · {{ d.document }} · {{ d.category }} · {{ d.program }}</p></div>
+        <div><button type="button" class="adm-link" (click)="back()">Volver a la bandeja</button>
+          <h1>{{ d.fullName }}</h1><p>Código {{ d.applicantCode }}, {{ d.document }}, {{ d.category }}, {{ d.program }}</p></div>
         <span class="adm-tag" [class]="'adm-tag ' + tag(d.status)">{{ d.statusLabel }}</span>
       </header>
       @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
@@ -63,7 +63,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
               <tr><td><strong>{{ r.name }}</strong>@if (!r.mandatory) { <span class="adm-muted"> (opcional)</span> }<br><span class="adm-muted">{{ r.article }}</span></td>
                 <td>@if (r.current; as c) {
                     <button type="button" class="adm-link" (click)="file(d.id!, c.id, c.fileName)">{{ c.fileName }}</button>
-                    <br><span class="adm-muted">v{{ c.version }} · {{ when(c.uploadedAt) }}</span>
+                    <br><span class="adm-muted">v{{ c.version }}, {{ when(c.uploadedAt) }}</span>
                   } @else { <span class="adm-muted">No adjuntado</span> }</td>
                 <td>@if (r.current; as c) {
                     <span class="adm-tag" [class]="'adm-tag ' + (c.status === 'CONFORME' ? 'ok' : c.status === 'OBSERVADO' ? 'bad' : '')">{{ c.status === 'CARGADO' ? 'Por revisar' : c.status === 'CONFORME' ? 'Conforme' : 'Observado' }}</span>
@@ -112,7 +112,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
           }
           <section class="adm-panel adm-form">
             <h2>Evaluación especial</h2>
-            @if (d.specialEvaluation; as s) { <p>Programada: {{ s.date }} · {{ s.place }}@if (s.note) { · {{ s.note }} }</p> }
+            @if (d.specialEvaluation; as s) { <p>Programada: {{ s.date }}, {{ s.place }}@if (s.note) {, {{ s.note }} }</p> }
             <div class="two">
               <input class="input" [(ngModel)]="special.date" name="sd" placeholder="Fecha y hora" aria-label="Fecha y hora">
               <input class="input" [(ngModel)]="special.place" name="sp" placeholder="Lugar" aria-label="Lugar">
@@ -131,7 +131,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
           <section class="adm-panel">
             <h2>Historial</h2>
             <ul class="adm-form" style="list-style:none; margin:0; padding:0">
-              @for (e of d.events; track $index) { <li><span class="adm-muted">{{ when(e.at) }}{{ e.byStaff ? ' · personal' : ' · postulante' }}</span><br>{{ label(e.action) }}@if (e.note) { - {{ e.note }} }</li> }
+              @for (e of d.events; track $index) { <li><span class="adm-muted">{{ when(e.at) }}{{ e.byStaff ? ', personal' : ', postulante' }}</span><br>{{ label(e.action) }}@if (e.note) { - {{ e.note }} }</li> }
             </ul>
           </section>
         </div>

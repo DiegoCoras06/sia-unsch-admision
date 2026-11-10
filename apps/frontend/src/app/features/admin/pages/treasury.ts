@@ -60,9 +60,9 @@ const RESULTS = [
       } @else {
         @let d = run()!;
         <section class="adm-panel">
-          <div class="adm-row" style="justify-content:space-between"><div><button type="button" class="adm-link" (click)="run.set(null)">← Volver</button>
-            <h2>{{ d.source }} · {{ d.periodFrom.slice(0, 10) }} – {{ d.periodTo.slice(0, 10) }}</h2></div>
-            <p>Reporte: <strong>S/ {{ d.summary['providerTotal'] }}</strong> · Sistema: <strong>S/ {{ d.summary['systemTotal'] }}</strong></p></div>
+          <div class="adm-row" style="justify-content:space-between"><div><button type="button" class="adm-link" (click)="run.set(null)">Volver</button>
+            <h2>{{ d.source }}, {{ d.periodFrom.slice(0, 10) }} – {{ d.periodTo.slice(0, 10) }}</h2></div>
+            <p>Reporte: <strong>S/ {{ d.summary['providerTotal'] }}</strong>, Sistema: <strong>S/ {{ d.summary['systemTotal'] }}</strong></p></div>
           <div class="adm-kpis">@for (x of results; track x.k) {
             <button type="button" class="adm-kpi tr-kpi" [class.is-on]="filter === x.k" (click)="filterBy(x.k)"><strong>{{ d.summary[x.k] ?? 0 }}</strong><span>{{ x.l }}</span></button>
           }</div>
@@ -102,9 +102,9 @@ const RESULTS = [
         <section class="adm-panel">
           <h2>Solicitudes</h2>
           <ul class="adm-form" style="list-style:none;margin:0;padding:0">@for (x of annulments(); track x.id) {
-            <li><strong>{{ x.kind === 'DEVOLUCION' ? 'Devolución' : 'Anulación' }} · S/ {{ x.amount }}</strong> · {{ x.applicantCode }} · {{ x.transactionId }}
+            <li><strong>{{ x.kind === 'DEVOLUCION' ? 'Devolución' : 'Anulación' }}, S/ {{ x.amount }}</strong>, {{ x.applicantCode }}, {{ x.transactionId }}
               <span class="adm-tag" [class.ok]="x.status === 'APROBADA'" [class.warn]="x.status === 'SOLICITADA'" [class.bad]="x.status === 'RECHAZADA'">{{ x.status === 'SOLICITADA' ? 'Por aprobar' : x.status === 'APROBADA' ? 'Aprobada' : 'Rechazada' }}</span>
-              <br><span class="adm-muted">{{ when(x.createdAt) }} · {{ x.reasonLabel }} · {{ x.resolution }}</span><br>{{ x.detail }}
+              <br><span class="adm-muted">{{ when(x.createdAt) }}, {{ x.reasonLabel }}, {{ x.resolution }}</span><br>{{ x.detail }}
               @if (x.decisionNote) { <br><span class="adm-muted">Decisión: {{ x.decisionNote }}</span> }
               @if (x.status === 'SOLICITADA') {
                 <div class="adm-row" style="margin-top:0.4rem"><input class="input" [(ngModel)]="notes[x.id]" [name]="'d' + x.id" placeholder="Nota de la decisión" [attr.aria-label]="'Nota para ' + x.transactionId">

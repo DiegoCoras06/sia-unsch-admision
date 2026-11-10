@@ -6,10 +6,10 @@ import type { FileStorage } from '../../../shared/storage/file-storage.js';
 
 /** Imágenes de la portada que el personal puede reemplazar (RF-14.01). La original queda como respaldo. */
 export const SITE_SLOTS = {
-  'portada.fachada': { label: 'Portada · fachada (primera imagen)', fallback: 'img/campus-fachada.jpg' },
-  'portada.ordinario': { label: 'Pasos · infografía de la inscripción ordinaria', fallback: 'img/pasos-ordinario.jpg' },
-  'portada.exonerado': { label: 'Pasos · infografía de la inscripción de exonerados', fallback: 'img/pasos-exonerado.jpg' },
-  'portada.rector': { label: 'Portada · retrato del rector', fallback: 'img/rector-ramirez-roca.jpg' },
+  'portada.fachada': { label: 'Portada: fachada (primera imagen)', fallback: 'img/campus-fachada.jpg' },
+  'portada.ordinario': { label: 'Pasos: infografía de la inscripción ordinaria', fallback: 'img/pasos-ordinario.jpg' },
+  'portada.exonerado': { label: 'Pasos: infografía de la inscripción de exonerados', fallback: 'img/pasos-exonerado.jpg' },
+  'portada.rector': { label: 'Portada: retrato del rector', fallback: 'img/rector-ramirez-roca.jpg' },
 } as const;
 export type SiteSlot = keyof typeof SITE_SLOTS;
 
