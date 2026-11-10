@@ -33,7 +33,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
                 <td>{{ r.applicantCode }}</td><td>{{ r.orderNumber }}</td><td class="adm-muted">{{ r.transactionId }}</td><td>{{ r.provider }}</td>
                 <td><span class="adm-tag" [class.ok]="r.status === 'AUTORIZADO'" [class.warn]="r.status === 'INICIADO' || r.status === 'DUPLICADO'" [class.bad]="r.status === 'RECHAZADO'">{{ r.status }}</span></td>
                 <td class="num">S/ {{ r.amount }}</td><td>{{ r.payMethod ?? '-' }}@if (r.cardMasked) {<br><span class="adm-muted">{{ r.cardMasked }}</span>}</td>
-                <td>{{ r.operationNumber ?? '-' }}</td><td>{{ r.confirmedVia ?? '-' }}</td><td>{{ when(r.createdAt) }}</td>
+                <td>{{ r.operationNumber ?? '-' }}</td><td>{{ r.confirmedVia ?? '-' }}</td><td class="nowrap">{{ when(r.createdAt) }}</td>
               </tr>
             } @empty { <tr class="adm-none"><td colspan="10">Aún no hay pagos en línea.</td></tr> }
           </tbody>

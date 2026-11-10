@@ -36,7 +36,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
                 <td><strong>{{ r.applicantCode }}</strong></td><td class="ins-name">{{ r.fullName }}<br><span class="adm-muted">{{ r.documentType }} {{ r.documentNumber }}</span></td>
                 <td>{{ r.email }}<br><span class="adm-muted">{{ r.mobile }}</span></td><td>{{ r.modality }}</td><td>{{ r.optionCode }}</td>
                 <td><span class="adm-tag" [class.ok]="r.status === 'APTA'" [class.warn]="r.status.startsWith('PENDIENTE')" [class.bad]="r.status === 'ANULADA'" [title]="r.statusLabel">{{ short(r.status) }}</span></td>
-                <td class="num">S/ {{ r.fee }}</td><td>{{ when(r.createdAt) }}</td>
+                <td class="num">S/ {{ r.fee }}</td><td class="nowrap">{{ when(r.createdAt) }}</td>
                 <td><button type="button" class="adm-link" (click)="toggleDocs(r.applicantCode)" [attr.aria-expanded]="open() === r.applicantCode">Documentos</button>
                   @if (session.can('inscripciones.anular') && r.status !== 'ANULADA') {<br><button type="button" class="adm-link" (click)="annul(r)">Anular</button>}</td>
               </tr>

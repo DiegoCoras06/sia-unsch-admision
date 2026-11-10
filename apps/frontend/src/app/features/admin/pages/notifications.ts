@@ -48,7 +48,7 @@ const INS_STATUS = [
         <div class="adm-table-wrap"><table class="adm-table">
           <thead><tr><th>Fecha</th><th>Destinatario</th><th>Tipo</th><th>Asunto</th><th>Estado</th></tr></thead>
           <tbody>@for (n of l.items; track n.id) {
-            <tr><td>{{ when(n.createdAt) }}</td><td>{{ n.email }}</td><td>{{ ev(n.event) }}</td><td>{{ n.subject }}</td>
+            <tr><td class="nowrap">{{ when(n.createdAt) }}</td><td>{{ n.email }}</td><td>{{ ev(n.event) }}</td><td>{{ n.subject }}</td>
               <td><span class="adm-tag" [class.ok]="n.status === 'ENVIADA'" [class.warn]="n.status === 'PENDIENTE'" [class.bad]="n.status === 'FALLIDA' || n.status === 'REBOTADA'">{{ st(n.status) }}</span>
                 @if (n.attempts > 1 || n.lastError) { <br><span class="adm-muted">{{ n.attempts }} intentos{{ n.lastError ? ' · ' + n.lastError : '' }}</span> }</td></tr>
           } @empty { <tr class="adm-none"><td colspan="5">Sin notificaciones.</td></tr> }</tbody>

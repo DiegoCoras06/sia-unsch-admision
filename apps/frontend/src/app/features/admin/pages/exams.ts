@@ -45,7 +45,7 @@ const SCORING = [
           <thead><tr><th>Examen</th><th>Fecha e ingreso</th><th class="num">Aptos</th><th class="num">Asignados</th><th class="num">Aulas · capacidad</th><th>Estado</th><th></th></tr></thead>
           <tbody>@for (e of list(); track e.id) {
             <tr><td><strong>{{ e.name }}</strong><br><span class="adm-muted">{{ e.modalities.join(', ') }}</span></td>
-              <td>{{ when(e.entryOpensAt) }}<br><span class="adm-muted">cierra el ingreso: {{ hourOf(e.entryClosesAt) }}</span></td>
+              <td class="nowrap">{{ when(e.entryOpensAt) }}<br><span class="adm-muted">cierra el ingreso: {{ hourOf(e.entryClosesAt) }}</span></td>
               <td class="num">{{ e.eligible }}</td><td class="num">{{ e.assigned }}</td><td class="num">{{ e.rooms }} · {{ e.capacity }}</td>
               <td><span class="adm-tag" [class.ok]="e.visible" [class.warn]="e.status === 'DISTRIBUIDO'">{{ e.statusLabel }}</span>
                 <br><span class="adm-muted">{{ e.visible ? 'Publicada' : 'Se publica: ' + when(e.publishAt) }}</span></td>

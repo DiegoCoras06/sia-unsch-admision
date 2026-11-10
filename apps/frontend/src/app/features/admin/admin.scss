@@ -68,7 +68,7 @@
 .adm-bars .bar > i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; }
 .adm-bars b { text-align: right; font-variant-numeric: tabular-nums; }
 
-.adm-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; padding: 0.75rem 0.9rem; background: var(--stone); border-radius: var(--radius-lg); }
+.adm-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; padding: 0.75rem 0.9rem; background: var(--ground); border-radius: var(--radius-lg); }
 .adm-filters .field { min-width: 9rem; }
 .adm-filters .field label { font-size: 0.8125rem; }
 .adm .input, .adm .select { padding: 0.5rem 0.65rem; font-size: 0.9375rem; }
@@ -85,7 +85,9 @@
 .adm-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--stone); vertical-align: top; }
 .adm-table tbody tr:nth-child(even) td { background: #fcfbf9; }
 .adm-table tr:hover td { background: #f8f4ef; }
-.adm-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.adm-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Montos y fechas en una sola línea: «S/ 250.00» o «1 nov. 2026, 1:45 a. m.» no se parten. */
+.adm-table .nowrap { white-space: nowrap; }
 
 /* Estados de las tablas (una sola regla para las 20 pantallas). Sin filas y sin mensaje propio: mensaje común. */
 .adm-table tr.adm-none td { padding: 1.25rem 0.65rem; color: var(--ink-soft); font-size: 0.9375rem; background: none; }

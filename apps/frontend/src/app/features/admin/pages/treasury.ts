@@ -51,7 +51,7 @@ const RESULTS = [
             <div class="adm-table-wrap"><table class="adm-table">
               <thead><tr><th>Fecha</th><th>Fuente</th><th>Periodo</th><th class="num">Diferencias</th><th></th></tr></thead>
               <tbody>@for (x of runs(); track x.id) {
-                <tr><td>{{ when(x.createdAt) }}<br><span class="adm-muted">{{ x.fileName }}</span></td><td>{{ x.source }}</td><td>{{ x.periodFrom.slice(0, 10) }} – {{ x.periodTo.slice(0, 10) }}</td>
+                <tr><td class="nowrap">{{ when(x.createdAt) }}<br><span class="adm-muted">{{ x.fileName }}</span></td><td>{{ x.source }}</td><td>{{ x.periodFrom.slice(0, 10) }} – {{ x.periodTo.slice(0, 10) }}</td>
                   <td class="num">{{ diffs(x.summary) }}</td><td><button type="button" class="adm-link" (click)="open(x.id)">Ver</button></td></tr>
               } @empty { <tr class="adm-none"><td colspan="5">Aún no hay conciliaciones.</td></tr> }</tbody>
             </table></div>

@@ -27,7 +27,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
       <div class="adm-table-wrap"><table class="adm-table">
         <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Recurso</th><th>Cambio</th><th>Origen</th></tr></thead>
         <tbody>@for (e of page()?.items ?? []; track e.id) {
-          <tr><td>{{ when(e.occurredAt) }}</td><td>{{ e.actor }}</td>
+          <tr><td class="nowrap">{{ when(e.occurredAt) }}</td><td>{{ e.actor }}</td>
             <td><span class="adm-tag" [class.bad]="e.action === 'access.denied' || e.action.includes('failed')">{{ e.action }}</span></td>
             <td>{{ e.resourceType }}<br><span class="adm-muted">{{ e.resourceId }}</span></td>
             <td>@if (e.before || e.after) {<details class="adm-json"><summary>Ver</summary>@if (e.before) {<pre>Antes: {{ e.before | json }}</pre>}@if (e.after) {<pre>Después: {{ e.after | json }}</pre>}</details>}</td>
