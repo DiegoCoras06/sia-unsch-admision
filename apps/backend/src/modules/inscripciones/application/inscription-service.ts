@@ -60,6 +60,9 @@ export interface InscriptionInput {
 export interface InscriptionSummary {
   applicantCode: string;
   fullName: string;
+  /** Apellidos y nombres por separado, para los documentos impresos. */
+  surnames: string;
+  firstNames: string;
   maskedDocument: string;
   maskedEmail: string;
   modality: string;
@@ -763,6 +766,8 @@ export class InscriptionService {
     return {
       applicantCode: row.applicantCode,
       fullName: `${row.firstNames} ${row.paternalSurname} ${row.maternalSurname}`.trim(),
+      surnames: `${row.paternalSurname} ${row.maternalSurname}`.trim(),
+      firstNames: row.firstNames,
       maskedDocument: maskDocument(row.documentNumber),
       maskedEmail: maskEmail(row.email),
       modality: MODALITIES[row.modality as keyof typeof MODALITIES] ?? row.modality,

@@ -74,7 +74,7 @@ export class FichaService {
       const L = 40;
       const R = W - 40;
 
-      const top = letterhead(doc, { title: 'Ficha de inscripción', subtitle: `Dirección de Admisión, ${call.name}` });
+      const top = letterhead(doc, { title: 'Ficha de inscripción', subtitle: call.name });
 
       // Código de postulante y foto.
       doc.roundedRect(L, top, 132, 176, 6).fill(PAPER);

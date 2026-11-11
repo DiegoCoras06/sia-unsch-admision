@@ -21,7 +21,7 @@ export function examSlipPdf(p: {
     const W = doc.page.width;
     const L = 40;
     const R = W - 40;
-    const top = letterhead(doc, { title: 'Ficha de examen', subtitle: `Dirección de Admisión, ${p.exam.callName}, ${p.exam.name}` });
+    const top = letterhead(doc, { title: 'Ficha de examen', subtitle: `${p.exam.callName}, ${p.exam.name}` });
 
     doc.roundedRect(L, top, 112, 148, 6).fill(STONE);
     if (p.photo) doc.image(p.photo, L + 6, top + 6, { width: 100, height: 133 });

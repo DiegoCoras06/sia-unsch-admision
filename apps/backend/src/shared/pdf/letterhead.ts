@@ -51,31 +51,36 @@ export function renderPdf(
 }
 
 /**
- * Membrete sobre papel blanco, como un oficio: escudo, institución y título, con la doble línea guinda y dorada.
+ * Membrete oficial sobre papel blanco, como los documentos de la Dirección de Admisión: escudo a la izquierda,
+ * institución centrada y el título del documento debajo, con la doble línea guinda y dorada.
  * Gasta poco tóner y se lee igual en una impresora en blanco y negro. Devuelve la altura desde donde sigue el contenido.
  */
 export function letterhead(doc: PDFKit.PDFDocument, p: { title: string; subtitle: string; note?: { label: string; value: string } }, margin = 40): number {
   const W = doc.page.width;
   const R = W - margin;
-  const x = margin + 74;
-  doc.image(ESCUDO, margin, 26, { fit: [64, 62], align: 'center', valign: 'center' });
-  doc.fillColor(INK).font(BOLD).fontSize(10.5).text('Universidad Nacional de San Cristóbal de Huamanga', x, 28, { lineBreak: false });
-  doc.fillColor(SOFT).font(REGULAR).fontSize(9).text(p.subtitle, x, 42, { width: R - x, lineBreak: false, ellipsis: true });
-  doc.fillColor(GUINDA).font(HEAVY).fontSize(21).text(p.title, x, 57, { width: R - x, lineBreak: false, ellipsis: true });
-  if (p.note) {
-    doc.fillColor(SOFT).font(REGULAR).fontSize(7.5).text(p.note.label, R - 190, 62, { width: 190, align: 'right', lineBreak: false });
-    doc.fillColor(INK).font(SEMIBOLD).fontSize(8.5).text(p.note.value, R - 190, 72, { width: 190, align: 'right', lineBreak: false });
-  }
-  doc.rect(margin, 96, R - margin, 2).fill(GUINDA);
-  doc.rect(margin, 99.5, R - margin, 0.8).fill(GOLD);
-  return 116;
+  const CW = R - margin;
+  const center = (text: string, y: number, font: string, size: number, color: string, spacing = 0) =>
+    doc.fillColor(color).font(font).fontSize(size).text(text, margin + 66, y, { width: CW - 132, align: 'center', lineBreak: false, ellipsis: true, characterSpacing: spacing });
+  doc.image(ESCUDO, margin, 20, { fit: [58, 58], align: 'center', valign: 'center' });
+  center('UNIVERSIDAD NACIONAL DE SAN CRISTÓBAL DE HUAMANGA', 24, BOLD, 12, INK, 0.2);
+  center('VICERRECTORADO ACADÉMICO', 41, SEMIBOLD, 8.5, SOFT, 0.6);
+  center('DIRECCIÓN DE ADMISIÓN', 53, SEMIBOLD, 8.5, SOFT, 0.6);
+  doc.rect(margin, 74, CW, 1.6).fill(GUINDA);
+  doc.rect(margin, 77, CW, 0.6).fill(GOLD);
+  doc.fillColor(GUINDA).font(HEAVY).fontSize(17).text(p.title.toUpperCase(), margin, 88, { width: CW, align: 'center', characterSpacing: 0.8, lineBreak: false, ellipsis: true });
+  doc.fillColor(SOFT).font(REGULAR).fontSize(8.5).text(p.subtitle, margin, 108, { width: CW, align: 'center', lineBreak: false, ellipsis: true });
+  // Dato complementario (por ejemplo, la fecha de emisión) a la derecha, a la altura del subtítulo.
+  if (p.note) doc.fillColor(SOFT).font(REGULAR).fontSize(7.5).text(`${p.note.label}: ${p.note.value}`, R - 170, 108, { width: 170, align: 'right', lineBreak: false });
+  return 128;
 }
 
-/** Título de sección: guinda con una línea fina hasta el margen. */
+/** Título de sección: en mayúsculas pequeñas y espaciadas, guinda, con una línea fina hasta el margen. */
 export function sectionTitle(doc: PDFKit.PDFDocument, title: string, y: number, margin = 40) {
   const R = doc.page.width - margin;
-  doc.fillColor(GUINDA).font(BOLD).fontSize(10).text(title, margin, y, { lineBreak: false });
-  doc.moveTo(margin + doc.widthOfString(title) + 10, y + 6).lineTo(R, y + 6).lineWidth(0.6).strokeColor(LINE).stroke();
+  const text = title.toUpperCase();
+  doc.fillColor(GUINDA).font(BOLD).fontSize(9).text(text, margin, y, { lineBreak: false, characterSpacing: 0.8 });
+  const w = doc.widthOfString(text, { characterSpacing: 0.8 });
+  doc.moveTo(margin + w + 10, y + 5.5).lineTo(R, y + 5.5).lineWidth(0.6).strokeColor(LINE).stroke();
 }
 
 /** Pie de página. Sin margen inferior, PDFKit no abre una hoja nueva por escribirlo. */
