@@ -98,14 +98,15 @@ export class InscriptionTrack {
     const steps: Step[] = [{ key: 'reg', label: 'Inscripción registrada', state: 'done', detail: dateTime(s.createdAt) }];
     if (s.modalityCode === 'EXO') {
       steps.push({
-        key: 'exp', label: 'Expediente revisado',
+        key: 'exp', label: observed || inReview ? 'Revisión del expediente' : 'Expediente revisado',
         state: observed ? 'warn' : inReview ? 'now' : 'done',
         detail: observed ? 'Tiene observaciones: corrígelas abajo' : inReview ? 'Un evaluador lo está revisando' : 'Autorizado',
       });
     }
     const canPay = !inReview && !observed;
     steps.push({
-      key: 'pay', label: 'Pago confirmado',
+      // El título dice el estado real: «Pago confirmado» solo cuando ya se pagó.
+      key: 'pay', label: paid ? 'Pago confirmado' : canPay ? 'Pago pendiente' : 'Pago',
       state: paid ? 'done' : canPay ? 'now' : 'next',
       detail: paid ? 'Inscripción Apta' : canPay ? `Paga ${'S/ ' + s.fee.total} abajo` : 'Después de la revisión',
     });
@@ -117,7 +118,7 @@ export class InscriptionTrack {
     if (s.modalityCode !== 'CEPRE' && examAt && roomAt) {
       const roomOpen = now >= roomAt;
       steps.push({
-        key: 'aula', label: 'Aula asignada',
+        key: 'aula', label: roomOpen && paid ? 'Aula asignada' : 'Asignación de aula',
         state: roomOpen && paid ? 'done' : 'next',
         detail: roomOpen ? 'Publicada en «Buscar aula»' : `Desde el ${longDate(roomAt.toISOString())}`,
       });
