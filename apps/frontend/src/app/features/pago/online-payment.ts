@@ -140,7 +140,13 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
                 @if (yapeEnv() === 'sandbox') { <p class="ck__sandbox">Ambiente de pruebas de Culqi: usa el celular 900 000 001 y cualquier código de 6 dígitos.</p> }
               </div>
             }
-            <div id="kr-form" class="ck__form" [hidden]="payWith() !== 'card'">
+            @if (cardDown() && payWith() === 'card') {
+              <div class="ck__down" role="status">
+                <p>{{ cardDown() }}</p>
+                <button type="button" class="btn btn--quiet" (click)="retryCard()" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Reintentando…' : 'Reintentar con tarjeta' }}</button>
+              </div>
+            }
+            <div id="kr-form" class="ck__form" [hidden]="payWith() !== 'card' || !!cardDown()">
               <div class="kr-embedded" kr-placeholder-pan="Número de tarjeta" kr-placeholder-expiry="Caducidad" kr-placeholder-security-code="CVV">
                 <div class="kr-pan"></div>
                 <div class="ck__pair">
@@ -151,7 +157,7 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
                 <button class="kr-payment-button"></button>
               </div>
             </div>
-            @if (env() === 'sandbox' && payWith() === 'card') { <p class="ck__sandbox">Ambiente de pruebas: no se realizan cobros reales.</p> }
+            @if (env() === 'sandbox' && payWith() === 'card' && !cardDown()) { <p class="ck__sandbox">Ambiente de pruebas: no se realizan cobros reales.</p> }
           </div>
 
           <footer class="ck__foot">
@@ -233,6 +239,8 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
     .ck__who dt { color: #4a5562; }
     .ck__who dd { margin: 0; font-weight: 600; }
     .ck__sandbox { margin: 0; font-size: 0.875rem; color: #8a5a00; font-weight: 600; }
+    .ck__down { display: grid; gap: 0.75rem; padding: 1rem; border-radius: 10px; background: #fbf1d9; color: #6b4a00; font-weight: 500; }
+    .ck__down p { margin: 0; }
     .ck__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; padding: 1rem 2.25rem 1.25rem; border-top: 1px solid var(--line); font-size: 0.8125rem; color: #4a5562; }
     .ck__brand { letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; }
     .ck__brand b { font-size: 1rem; letter-spacing: 0; color: #00807b; }
@@ -294,6 +302,8 @@ export class OnlinePayment implements OnInit {
   protected readonly order = signal('');
   /** Medio elegido en la ventana: tarjeta (Izipay) o Yape (Culqi, ADR-019). */
   protected readonly payWith = signal<'card' | 'yape'>('card');
+  /** La pasarela de tarjeta no respondió: la ventana se abre igual con Yape (Culqi es independiente, ADR-019). */
+  protected readonly cardDown = signal<string | null>(null);
   protected readonly yapeEnv = computed(() => this.status()?.yape?.environment ?? null);
   private readonly checkout = viewChild<ElementRef<HTMLDialogElement>>('checkout');
   protected readonly busy = signal(false);
@@ -330,7 +340,8 @@ export class OnlinePayment implements OnInit {
       if (!Izipay) throw new Error('El formulario de Izipay no está disponible.');
       new Izipay({ config }).LoadForm({ authorization, keyRSA, callbackResponse: (r) => void this.onIzipay(s, r) });
     } catch (e) {
-      this.fail(e);
+      if ((e as { status?: number }).status === 502 && this.status()?.yape) this.openWithoutCard(e);
+      else this.fail(e);
     } finally {
       this.busy.set(false);
     }
@@ -339,6 +350,20 @@ export class OnlinePayment implements OnInit {
   protected chooseCard(): void {
     this.payWith.set('card');
     if (!this.krypton()) void this.start();
+  }
+
+  /** Abre la ventana con Yape elegido y explica que la tarjeta no está disponible por ahora. */
+  private openWithoutCard(e: unknown): void {
+    this.cardDown.set(`${apiErrorMessage(e)} Mientras tanto, puedes pagar con Yape.`);
+    this.order.set('Se asigna al pagar');
+    this.payWith.set('yape');
+    this.krypton.set(true);
+    this.checkout()?.nativeElement.showModal();
+  }
+
+  protected async retryCard(): Promise<void> {
+    this.closeCheckout();
+    await this.start();
   }
 
   /**
@@ -448,6 +473,7 @@ export class OnlinePayment implements OnInit {
     const d = this.checkout()?.nativeElement;
     if (d?.open) d.close();
     this.krypton.set(false);
+    this.cardDown.set(null);
   }
 
   private async onIzipay(s: PaymentSessionDto, r: IzipayResponse): Promise<void> {
