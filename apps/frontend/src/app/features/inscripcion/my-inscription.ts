@@ -14,7 +14,7 @@ import { ExtraDocuments } from './extra-documents';
   selector: 'app-my-inscription',
   imports: [FormsModule, RouterLink, InscriptionReceipt, DocsSidebar, InboxPanel, ExtraDocuments, CodeReminder],
   template: `
-    <section class="page field-accent">
+    <section class="page field-accent field-glow">
       <div class="frame grid">
         <div class="main">
           <header class="tool-head">
@@ -27,7 +27,7 @@ import { ExtraDocuments } from './extra-documents';
               <li data-icon="imprimir">Imprimir tu ficha</li>
             </ul>
           </header>
-          <form class="box" (ngSubmit)="search()">
+          <form class="box lookup" (ngSubmit)="search()">
             <div class="field">
               <label for="m-doc">DNI o carné de extranjería</label>
               <input id="m-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required>
@@ -60,9 +60,7 @@ import { ExtraDocuments } from './extra-documents';
     .main { display: grid; gap: 1.5rem; min-width: 0; }
     h1 { font-size: clamp(2.25rem, 5vw, 4rem); }
     .code-note { margin: 0.6rem 0 0; font-size: var(--size-note); color: rgb(255 255 255 / 0.85); }
-    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; background: var(--accent-press); padding: 1.5rem; }
-    .box .input { background: #fff; border-color: #fff; }
-    .box .input:focus { border-color: var(--gold); }
+    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; }
     .main > p a { color: var(--gold); font-weight: 700; }
     app-inscription-receipt { color: var(--ink); }
     @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }

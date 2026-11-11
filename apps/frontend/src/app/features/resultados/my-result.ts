@@ -13,7 +13,7 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
   selector: 'app-my-result',
   imports: [FormsModule, DocsSidebar, CodeReminder],
   template: `
-    <section class="page field-accent">
+    <section class="page field-accent field-glow">
       <div class="frame grid">
         <div class="main">
           <header class="tool-head">
@@ -31,7 +31,7 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
               }
             </ul>
           }
-          <form class="box" (ngSubmit)="search()">
+          <form class="box lookup" (ngSubmit)="search()">
             <div class="field"><label for="r-doc">DNI o carné de extranjería</label>
               <input id="r-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required></div>
             <div class="field"><label for="r-code">Código de postulante</label>
@@ -152,9 +152,7 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
     .main { display: grid; gap: 1.5rem; min-width: 0; }
     h1 { font-size: clamp(2.25rem, 5vw, 4rem); }
-    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; background: var(--accent-press); padding: 1.5rem; }
-    .box .input { background: #fff; border-color: #fff; }
-    .box .input:focus { border-color: var(--gold); }
+    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; }
     .card, .list { background: var(--ground); color: var(--ink); padding: clamp(1.25rem, 3vw, 2rem); display: grid; gap: 1.25rem; }
     .card__who { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; }
     .card__code { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: 0.04em; color: var(--accent); font-variant-numeric: tabular-nums; }

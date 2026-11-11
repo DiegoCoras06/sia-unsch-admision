@@ -35,7 +35,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
   selector: 'app-find-room',
   imports: [FormsModule, RouterLink, DocsSidebar, CodeReminder, ExamTicket],
   template: `
-    <section class="page field-accent">
+    <section class="page field-accent field-glow">
       <div class="frame grid">
         <div class="main">
           <header class="tool-head">
@@ -63,7 +63,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
               <p class="keep"><button type="button" class="keep__out" (click)="forget()">Quitar de este dispositivo</button></p>
             </article>
           }
-          <form class="box" (ngSubmit)="search()">
+          <form class="box lookup" (ngSubmit)="search()">
             <div class="field">
               <label for="a-doc">DNI o carné de extranjería</label>
               <input id="a-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required>
@@ -164,9 +164,7 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
     .main { display: grid; gap: 1.5rem; min-width: 0; }
     h1 { font-size: clamp(2.25rem, 5vw, 4rem); }
-    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; background: var(--accent-press); padding: 1.5rem; }
-    .box .input { background: #fff; border-color: #fff; }
-    .box .input:focus { border-color: var(--gold); }
+    .box { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; }
     .main > p a { color: var(--gold); font-weight: 700; }
     .card { background: var(--ground); color: var(--ink); padding: clamp(1.25rem, 3vw, 2rem); display: grid; gap: 1.25rem; }
     .card__who { display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; }
