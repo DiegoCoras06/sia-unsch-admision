@@ -10,6 +10,7 @@ import { CallStore } from '../../../core/call.store';
   imports: [RouterLink],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="temario">Para prepararte</p>
       <h1>Temario del examen</h1>
       <p class="lead">Cinco áreas curriculares del Ministerio de Educación (Tabla N.° 1). Busca un curso para saber en qué área está.</p>
     </header>

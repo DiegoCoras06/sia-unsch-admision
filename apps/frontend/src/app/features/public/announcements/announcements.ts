@@ -13,6 +13,7 @@ const TYPE_LABEL: Record<string, string> = { COMUNICADO: 'Comunicado', FE_ERRATA
   imports: [MarkdownPipe],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="carta">Avisos oficiales</p>
       <h1>Comunicados</h1>
       <p class="lead">Avisos oficiales del concurso, del más reciente al más antiguo. Las fe de erratas señalan qué sección cambia.</p>
     </header>

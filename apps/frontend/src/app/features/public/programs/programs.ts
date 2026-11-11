@@ -11,6 +11,7 @@ import { AREA_NAMES } from '../../../core/format';
   imports: [RouterLink],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="programas">Oferta académica 2027-I</p>
       <h1>Programas y vacantes</h1>
       <p class="lead">{{ meta()?.totalVacancies ?? 1803 }} vacantes en 40 opciones de postulación. Busca tu carrera y mira cuántas hay en tu modalidad.</p>
     </header>
@@ -57,14 +58,14 @@ import { AREA_NAMES } from '../../../core/format';
               @for (o of results(); track o.internalCode) {
                 <tr>
                   <td><a [routerLink]="['/programas', o.internalCode]">{{ o.displayName }}</a></td>
-                  <td data-label="Área">{{ areaName(o.area) }}</td>
+                  <td data-label="Área"><span class="area-tag" [attr.data-area]="o.area">{{ areaName(o.area) }}</span></td>
                   @if (category()) {
                     <td class="num" [attr.data-label]="categoryName()">
                       @if (o.categoryVacancies === 0) { <span class="none">Sin vacantes en esta modalidad</span> } @else { {{ o.categoryVacancies }} }
                     </td>
                   }
                   <td class="num" data-label="Ordinario">{{ o.ordinaryVacancies }}</td>
-                  <td class="num" data-label="Total">{{ o.totalVacancies }}</td>
+                  <td class="num total" data-label="Total">{{ o.totalVacancies }}</td>
                 </tr>
               }
             </tbody>
@@ -88,6 +89,17 @@ import { AREA_NAMES } from '../../../core/format';
     .seg label:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
     .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
     .results-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
+    /* Tabla en tarjeta: filas que se marcan al pasar, área en etiqueta de color y el total destacado. */
+    .table-wrap { border: 1px solid var(--stone-deep); border-radius: var(--radius-lg); overflow: hidden; }
+    .list tbody tr { transition: background-color var(--fast) var(--ease); }
+    .list tbody tr:hover td { background: #f6efe9; }
+    .list td { vertical-align: middle; border-top: 1px solid var(--stone); }
+    .list th:last-child, .list td:last-child { padding-right: 1.5rem; }
+    .area-tag { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: var(--size-note); font-weight: 700; background: var(--stone); color: var(--ink-soft); }
+    .area-tag[data-area='I'] { background: #e6eef8; color: #1d4f86; }
+    .area-tag[data-area='II'] { background: #f3e8ee; color: #7a1c22; }
+    .area-tag[data-area='III'] { background: #e3f1e8; color: #164d2a; }
+    .list .total { color: var(--accent); font-size: 1.125rem; font-weight: 800; }
     .list a { font-weight: 700; text-decoration: none; }
     .list a:hover { text-decoration: underline; color: var(--accent); }
     .none { font-weight: 500; color: var(--ink-soft); font-size: var(--size-note); }

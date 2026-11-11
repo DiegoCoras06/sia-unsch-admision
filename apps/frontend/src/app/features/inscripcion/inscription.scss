@@ -116,6 +116,8 @@
 .summary dd { margin: 0; font-weight: 700; }
 .summary__fee { background: var(--accent); color: var(--accent-ink); padding: 1.25rem; display: grid; gap: 0.25rem; }
 .summary__total { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 800; color: var(--gold); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.summary__empty { margin: 0.25rem 0 0; font-size: var(--size-note); line-height: 1.45; opacity: 0.9; }
+.summary dd.is-empty { color: var(--ink-soft); font-weight: 500; font-style: italic; }
 .summary__line { font-size: var(--size-note); opacity: 0.9; }
 .demo { font-size: var(--size-note); }
 .demo summary { font-weight: 700; cursor: pointer; }

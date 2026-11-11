@@ -12,6 +12,7 @@ import { StageTrack } from '../../../shared/stage-track';
   imports: [RouterLink, Countdown, RevealDirective, StageTrack],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="cronograma">Fechas del concurso</p>
       <h1>Cronograma 2027-I</h1>
       <p class="lead">Las etapas se abren y cierran solas en hora de Lima. La que está en curso aparece resaltada.</p>
     </header>

@@ -11,6 +11,7 @@ import { MarkdownPipe } from '../../../shared/markdown.pipe';
   imports: [RouterLink, MarkdownPipe, PhotoDirective],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="inscripcion">Guía paso a paso</p>
       <h1>Cómo inscribirte</h1>
       <p class="lead">Ordinario en cuatro pasos y Exonerados en cinco. Te inscribes en línea, sin crear cuenta, y consultas tu avance con tu DNI y tu código de postulante.</p>
     </header>

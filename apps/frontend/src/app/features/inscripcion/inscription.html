@@ -476,20 +476,18 @@
       <aside class="summary" aria-label="Resumen de tu inscripción">
         <h2 class="summary__title">Tu inscripción</h2>
         <dl>
-          <div><dt>Postulante</dt><dd>{{ fullName() || '-' }}</dd></div>
-          <div><dt>Modalidad</dt><dd>{{ category()?.name ?? '-' }}</dd></div>
-          <div><dt>Programa</dt><dd>{{ selectedProgram()?.displayName ?? '-' }}</dd></div>
+          <div><dt>Postulante</dt><dd [class.is-empty]="!fullName()">{{ fullName() || 'Por completar' }}</dd></div>
+          <div><dt>Modalidad</dt><dd [class.is-empty]="!category()">{{ category()?.name ?? 'Por elegir' }}</dd></div>
+          <div><dt>Programa</dt><dd [class.is-empty]="!selectedProgram()">{{ selectedProgram()?.displayName ?? 'Por elegir' }}</dd></div>
           @if (selectedProgram(); as p) {
             <div><dt>Vacantes en tu modalidad</dt><dd>{{ p.categoryVacancies }}</dd></div>
           }
         </dl>
         <div class="summary__fee" aria-live="polite">
           <p>Pagarás</p>
-          <p class="summary__total">{{ quote() ? money(quote()!.total) : 'S/ -' }}</p>
+          @if (quote(); as q) { <p class="summary__total">{{ money(q.total) }}</p> } @else { <p class="summary__empty">Elige tu modalidad y la gestión de tu colegio para ver el monto.</p> }
           @if (quote(); as q) {
             @for (l of q.lines; track l.code) { <p class="summary__line">{{ l.concept }}: {{ money(l.amount) }}</p> }
-          } @else {
-            <p class="summary__line">Elige la gestión de tu colegio para calcularlo.</p>
           }
         </div>
         @if (options()?.identitySimulated) {

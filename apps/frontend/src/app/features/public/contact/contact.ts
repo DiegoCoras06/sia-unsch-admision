@@ -102,19 +102,19 @@ const TEAM: Member[] = [
     </div>
   `,
   styles: `
-    :host { --b: #0b6fb8; --b-dark: #095c98; --b-soft: #e8f2fb; --navy: #0f1b33; --g: #800020; display: block; background: #f0f0f0; }
+    :host { --b: var(--accent); --b-dark: var(--accent-press); --b-soft: var(--stone); --navy: var(--ink); --g: var(--accent); display: block; background: var(--stone); }
     .page { padding: clamp(2.5rem, 6vw, 4.5rem) 0 clamp(3rem, 6vw, 5rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(2.5rem, 5vw, 4rem); }
-    h1 { text-align: center; margin: 0 0 2.75rem; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; text-transform: uppercase; color: var(--navy); letter-spacing: 0.04em; }
+    h1 { text-align: center; margin: 0 0 2.75rem; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 800; color: var(--navy); letter-spacing: -0.02em; }
     h1::after { content: ''; display: block; width: 3.75rem; height: 4px; background: var(--b); border-radius: 2px; margin: 1rem auto 0; }
     .team__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1.75rem 2.5rem; }
     .member { grid-column: span 2; background: #fff; border-radius: 12px; border-top: 5px solid var(--b); padding: 1.6rem 1.4rem; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06); }
     .member--half { grid-column: span 3; }
     .member__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .member__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 8px; background: var(--b-soft); color: var(--b); }
-    .member__role { background: #eef4fa; color: var(--b); font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #dbe7f3; }
+    .member__role { background: var(--stone); color: var(--b); font-size: 0.875rem; font-weight: 700; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #dbe7f3; }
     .member h2 { margin: 0 0 0.35rem; font-size: 1.25rem; color: var(--navy); }
-    .member p { margin: 0; color: #5a6b80; }
-    .info { display: flex; align-items: center; gap: 0.75rem; margin-top: 2.75rem; padding: 1.1rem 1.5rem; border-radius: 8px; background: linear-gradient(90deg, #0b6fb8, #0a5f9e); color: #fff; }
+    .member p { margin: 0; color: var(--ink-soft); }
+    .info { display: flex; align-items: center; gap: 0.75rem; margin-top: 2.75rem; padding: 1.1rem 1.5rem; border-radius: 8px; background: var(--accent); color: #fff; }
     .info p { margin: 0; flex: 1; font-weight: 600; max-width: none; }
     .info button { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; background: none; border: 0; color: #fff; font-size: 1.5rem; line-height: 1; cursor: pointer; }
     .cols { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 2.5rem; align-items: start; }
@@ -129,13 +129,13 @@ const TEAM: Member[] = [
     .channels strong { margin-right: 0.3em; }
     .channels a { color: inherit; text-decoration: none; }
     .channels a:hover { color: var(--b); text-decoration: underline; }
-    .mpv { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.1rem 1.4rem; background: #f1f5fa; border-radius: 8px; }
+    .mpv { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.1rem 1.4rem; background: var(--stone); border-radius: 8px; }
     .mpv div { display: grid; gap: 0.2rem; }
-    .mpv span { color: #5a6b80; font-size: 0.9375rem; }
+    .mpv span { color: var(--ink-soft); font-size: 0.9375rem; }
     .btn-blue { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.75rem; padding: 0 1.1rem; border: 0; border-radius: 6px; background: var(--b); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
     .btn-blue:hover { background: var(--b-dark); }
     .btn-blue[disabled] { opacity: 0.7; cursor: progress; }
-    .slot { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; padding: 0.95rem 1.25rem; background: #f6f8fb; border-left: 4px solid var(--b); border-radius: 0 6px 6px 0; }
+    .slot { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; padding: 0.95rem 1.25rem; background: var(--stone); border-left: 4px solid var(--b); border-radius: 0 6px 6px 0; }
     .slot strong { text-transform: uppercase; font-size: 0.9375rem; color: var(--navy); }
     .slot--closed { background: #fdf1f3; border-left-color: var(--g); }
     .slot--closed strong { color: var(--g); }

@@ -13,6 +13,7 @@ const NEEDS_SCHOOL = new Set(['ORD', 'EXO-PSP', 'EXO-COAR']);
   imports: [RouterLink],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="tasas">Derecho de inscripción</p>
       <h1>Tasas y simulador</h1>
       <p class="lead">Responde unas preguntas y te mostramos el monto exacto, con el concepto del prospecto que lo respalda.</p>
     </header>

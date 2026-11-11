@@ -10,6 +10,7 @@ import { CallStore } from '../../../core/call.store';
   imports: [RouterLink],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="requisitos">Antes de postular</p>
       <h1>Requisitos por modalidad</h1>
       <p class="lead">Elige tu modalidad y verás exactamente qué documentos necesitas, con el artículo del reglamento que los exige.</p>
     </header>

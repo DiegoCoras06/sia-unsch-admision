@@ -118,7 +118,7 @@ function toLines(text: string): Line[] {
     :host(.is-tucked) { transform: translateY(calc(100% + 2rem)); opacity: 0; pointer-events: none; }
     /* Mascota del asistente: el águila sin fondo, con una sombra que la separa del contenido. */
     .launcher { display: flex; align-items: center; gap: 0.25rem; padding: 0; background: transparent; border: 0; font: inherit; cursor: pointer; }
-    .launcher img { width: 88px; height: 88px; filter: drop-shadow(0 6px 14px rgba(29, 20, 21, 0.35)); transition: transform var(--fast) var(--ease); }
+    .launcher img { width: 64px; height: 64px; filter: drop-shadow(0 6px 14px rgba(29, 20, 21, 0.35)); transition: transform var(--fast) var(--ease); }
     .launcher:hover img { transform: translateY(-3px) rotate(-3deg); }
     .launcher:active img { transform: scale(0.96); }
     .launcher:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }

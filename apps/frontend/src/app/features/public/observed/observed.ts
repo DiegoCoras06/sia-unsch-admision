@@ -11,6 +11,7 @@ const MODALITY: Record<string, string> = { ORD: 'Ordinario', EXO: 'Exonerados', 
   imports: [RouterLink],
   template: `
     <header class="frame page-head">
+      <p class="page-kicker" data-icon="observados">Publicaciones</p>
       <h1>Relación de observados</h1>
       <p class="lead">Si tu código aparece aquí, tu inscripción o tu expediente tiene una observación. Revisa el detalle en «Mi inscripción» con tu DNI y tu código, y subsánala dentro del plazo.</p>
     </header>

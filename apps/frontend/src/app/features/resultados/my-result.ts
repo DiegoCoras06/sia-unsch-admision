@@ -16,11 +16,19 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
     <section class="page field-accent">
       <div class="frame grid">
         <div class="main">
-          <h1>Ver puntaje</h1>
-          <p class="lead">Los resultados oficiales se publican el mismo día del examen, a la hora que autoriza la Comisión. Consulta con tu documento y tu código de postulante.</p>
+          <header class="tool-head">
+            <p class="tool-head__kicker" data-icon="puntaje">Resultados oficiales</p>
+            <h1>Ver puntaje</h1>
+            <p class="lead">Los resultados oficiales se publican el mismo día del examen, a la hora que autoriza la Comisión. Consulta con tu documento y tu código de postulante.</p>
+          </header>
           @if (dates().length) {
             <ul class="pubdates" aria-label="Fechas de publicación de resultados">
-              @for (d of dates(); track d.name) { <li><strong>{{ d.name }}:</strong> resultados el {{ d.exam }}@if (d.past) { <span class="pubdates__ok">examen rendido</span> }</li> }
+              @for (d of dates(); track d.name) {
+                <li class="pubdates__card">
+                  <p class="pubdates__head"><strong>{{ d.name }}</strong><span class="pubdates__state" [class.is-ready]="d.past">{{ d.past ? 'Examen rendido' : 'Próximamente' }}</span></p>
+                  <dl><div><dt>Resultados</dt><dd>{{ d.exam }}</dd></div></dl>
+                </li>
+              }
             </ul>
           }
           <form class="box" (ngSubmit)="search()">
@@ -131,8 +139,15 @@ const day = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDat
     </section>
   `,
   styles: `
-    .pubdates { list-style: none; margin: 0; padding: 0.9rem 1.1rem; display: grid; gap: 0.35rem; background: var(--accent-press); }
-    .pubdates__ok { margin-left: 0.4rem; padding: 0.1rem 0.45rem; background: var(--gold); color: var(--ink); font-size: var(--size-note); font-weight: 700; }
+    .pubdates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0.75rem; }
+    .pubdates__card { display: grid; gap: 0.6rem; padding: 1rem 1.15rem; border-radius: var(--radius-lg); background: var(--accent-press); border: 1px solid rgb(255 255 255 / 0.12); }
+    .pubdates__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin: 0; }
+    .pubdates__head strong { font-size: 1.125rem; }
+    .pubdates__state { padding: 0.15rem 0.6rem; border-radius: 999px; background: rgb(255 255 255 / 0.12); font-size: var(--size-note); font-weight: 700; }
+    .pubdates__state.is-ready { background: var(--gold); color: var(--ink); }
+    .pubdates dl { margin: 0; }
+    .pubdates dt { font-size: var(--size-note); color: var(--gold); font-weight: 600; }
+    .pubdates dd { margin: 0.15rem 0 0; font-weight: 600; }
     .page { padding-block: clamp(2.5rem, 6vw, 5rem); }
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
     .main { display: grid; gap: 1.5rem; min-width: 0; }
