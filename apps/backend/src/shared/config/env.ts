@@ -18,26 +18,13 @@ const schema = z
     APIPERU_URL: z.url().optional(),
     /** Ruta al certificado raíz de RDS (global-bundle.pem) para verificar SSL. */
     DB_SSL_CA: z.string().optional(),
-    /** Pasarela de pagos (ADR-016): simulada o Izipay. */
     // Archivos privados (ADR-010): 'local' en desarrollo (apps/backend/.dev-storage) o 's3' (bucket privado).
     FILE_STORAGE: z.enum(['local', 's3']).default('local'),
     S3_BUCKET: z.string().min(3).max(63).optional(),
     S3_REGION: z.string().default('us-east-2'),
-    PAYMENTS_PROVIDER: z.enum(['mock', 'izipay', 'micuentaweb']).default('mock'),
-    // Izipay «micuentaweb» (API REST V4 + formulario Krypton): Back Office > Configuración > Tienda > Claves de API REST.
-    MICUENTAWEB_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
-    MICUENTAWEB_API_URL: z.url().optional(),
-    MICUENTAWEB_SHOP_ID: z.string().optional(),
-    MICUENTAWEB_PASSWORD: z.string().optional(),
-    MICUENTAWEB_PUBLIC_KEY: z.string().optional(),
-    MICUENTAWEB_HMAC_KEY: z.string().optional(),
-    IZIPAY_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
-    IZIPAY_API_URL: z.url().optional(),
-    IZIPAY_MERCHANT_CODE: z.string().optional(),
-    IZIPAY_API_KEY: z.string().optional(),
-    IZIPAY_HASH_KEY: z.string().optional(),
-    IZIPAY_PUBLIC_KEY: z.string().optional(),
-    // Yape con Culqi (ADR-019): CulqiPanel > Desarrollo > API Keys. Sin las dos llaves, Yape no se ofrece.
+    /** Pasarela de pagos (ADR-024): 'culqi' cobra tarjeta y Yape; 'mock' la simula en desarrollo y pruebas. */
+    PAYMENTS_PROVIDER: z.enum(['mock', 'culqi']).default('mock'),
+    // Culqi (ADR-024): CulqiPanel > Desarrollo > API Keys.
     CULQI_PUBLIC_KEY: z.string().regex(/^pk_(test|live)_/, 'CULQI_PUBLIC_KEY empieza con pk_test_ o pk_live_').optional().or(z.literal('').transform(() => undefined)),
     CULQI_SECRET_KEY: z.string().regex(/^sk_(test|live)_/, 'CULQI_SECRET_KEY empieza con sk_test_ o sk_live_').optional().or(z.literal('').transform(() => undefined)),
     CULQI_API_URL: z.url().optional(),
@@ -73,12 +60,8 @@ const schema = z
     message: 'IDENTITY_PROVIDER=apiperu requiere APIPERU_TOKEN (token de apiperu.dev, sección «Api Tokens»)',
     path: ['IDENTITY_PROVIDER'],
   })
-  .refine((e) => e.PAYMENTS_PROVIDER !== 'micuentaweb' || (e.MICUENTAWEB_SHOP_ID && e.MICUENTAWEB_PASSWORD && e.MICUENTAWEB_PUBLIC_KEY && e.MICUENTAWEB_HMAC_KEY), {
-    message: 'PAYMENTS_PROVIDER=micuentaweb requiere MICUENTAWEB_SHOP_ID, MICUENTAWEB_PASSWORD, MICUENTAWEB_PUBLIC_KEY y MICUENTAWEB_HMAC_KEY (Back Office > Claves de API REST)',
-    path: ['PAYMENTS_PROVIDER'],
-  })
-  .refine((e) => e.PAYMENTS_PROVIDER !== 'izipay' || (e.IZIPAY_MERCHANT_CODE && e.IZIPAY_API_KEY && e.IZIPAY_HASH_KEY), {
-    message: 'PAYMENTS_PROVIDER=izipay requiere IZIPAY_MERCHANT_CODE, IZIPAY_API_KEY e IZIPAY_HASH_KEY (Panel de comercio > Desarrolladores > Claves)',
+  .refine((e) => e.PAYMENTS_PROVIDER !== 'culqi' || (e.CULQI_PUBLIC_KEY && e.CULQI_SECRET_KEY), {
+    message: 'PAYMENTS_PROVIDER=culqi requiere CULQI_PUBLIC_KEY y CULQI_SECRET_KEY (CulqiPanel > Desarrollo > API Keys)',
     path: ['PAYMENTS_PROVIDER'],
   })
   .refine((e) => !(e.APP_ENV === 'demo' && e.APP_FIXED_NOW), {

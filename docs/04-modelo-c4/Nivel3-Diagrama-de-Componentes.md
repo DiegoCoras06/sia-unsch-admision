@@ -64,7 +64,7 @@ flowchart TB
         OUTBOX["Amazon SQS<br/>(con outbox en PostgreSQL)"]
     end
 
-    EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
+    EXT["Servicios externos<br/>RENIEC (apiperu), Culqi,<br/>OpenRouter y Amazon SES"]
 
     WEB -->|"HTTPS / JSON"| API
     API -->|"Invoca AWS Lambda"| CTRL
@@ -140,7 +140,7 @@ flowchart TB
 |---|---|---|---|---|
 | Módulos con persistencia | Amazon RDS PostgreSQL | Cada módulo accede a su propio esquema de PostgreSQL; Convocatorias lo hace mediante su repositorio y los demás con Prisma desde el servicio. | PostgreSQL / TLS | Repositorio (parcial) |
 | Usuarios | RENIEC (apiperu) | Solicita la validación de identidad de postulantes. | HTTPS / API autorizada | Adaptador + Fábrica |
-| Pagos | Izipay micuentaweb y Culqi | Gestiona pagos con tarjeta y Yape y verifica confirmaciones firmadas. | HTTPS / REST | Adaptador + Fábrica |
+| Pagos | Culqi | Cobra con tarjeta y Yape: el servidor crea el cargo con el token del formulario. | HTTPS / REST | Adaptador + Fábrica |
 | Chatbot IA | OpenRouter API | Solicita respuestas de modelos de inteligencia artificial. | HTTPS / REST | Adaptador |
 | Notificaciones | Amazon SES | Solicita el envío de mensajes electrónicos. | AWS SDK / HTTPS | Adaptador |
 | Pagos, Expedientes, Inscripciones | Bandeja de eventos y Amazon SQS | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan. | SQL / TLS y AWS SDK | Observador |
@@ -209,7 +209,7 @@ src/
 | **Patrón** | **Aplicación en el sistema** | **Beneficio** |
 |---|---|---|
 | Repositorio | Persistencia de convocatorias (pendiente en inscripciones, pagos y resultados). | Separar las reglas de negocio de PostgreSQL. |
-| Adaptador | Integraciones con RENIEC, Izipay, Culqi, OpenRouter API, Amazon SES y S3. | Evitar dependencia directa de proveedores externos. |
+| Adaptador | Integraciones con RENIEC, Culqi, OpenRouter API, Amazon SES y S3. | Evitar dependencia directa de proveedores externos. |
 | Observador | Bandeja de eventos entre módulos (`Outbox.publish` / `subscribe`). | Reaccionar a pagos y dictámenes sin acoplar los módulos. |
 | Fábrica | Selección del adaptador real o simulado según la configuración. | Usar los mismos casos de uso en pruebas y en producción. |
 | Inyección de Dependencias | Composición de casos de uso, repositorios y adaptadores. | Facilitar las pruebas y el mantenimiento. |

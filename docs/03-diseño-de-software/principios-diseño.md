@@ -104,7 +104,7 @@ Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`,
 |---|---|---|---|
 | **S** | Rutas solo validan con Zod y responden; los servicios coordinan; las reglas están en `domain/`; cada pasarela tiene su propio adaptador. Los servicios de aplicación son grandes (agrupan varios casos de uso). | `modules/pagos/presentation/routes.ts`, `modules/pagos/application/payment-service.ts`, `modules/pagos/domain/payment-rules.ts` | 🟡 |
 | **O** | Para agregar Yape con Culqi se creó un adaptador nuevo (`CulqiYapeGateway`) sin modificar las reglas de pago con tarjeta. | `modules/pagos/infrastructure/culqi-gateway.ts` | ✅ |
-| **L** | `MiCuentaWebGateway`, `IzipayPaymentGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real. | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts` | ✅ |
+| **L** | `CulqiGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real. | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts` | ✅ |
 | **I** | `PaymentService` no depende de todo el módulo de inscripciones, sino de una interfaz con un solo método: `inscriptions: { paymentContext(...) }`. | `modules/pagos/application/payment-service.ts` | ✅ |
 | **D** | Los servicios reciben puertos (`PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. **Desviación:** también reciben el cliente de Prisma (`db`) y consultan la base de datos directamente; solo Convocatorias tiene un repositorio. | `modules/*/index.ts`, `modules/convocatorias/infrastructure/prisma-convocatorias-repository.ts` | 🟡 |
 

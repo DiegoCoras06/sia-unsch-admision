@@ -46,7 +46,7 @@ Durante la implementación (Pasos 3 a 10.2) cada decisión se detalló en un ADR
 | ADR-009 Eventos con Amazon SQS | Transactional Outbox en PostgreSQL (`shared.outbox`) que envía los ID a **Amazon SQS**; el Lambda worker los procesa una sola vez, con reintentos y cola de errores. Sin `SQS_QUEUE_URL` (local) se procesa en el mismo proceso. | ADR-008, ADR-012, ADR-021 | ✅ (código listo; la cola se crea en el Paso 11) |
 | ADR-010 CDN | S3 + CloudFront diseñados; dominio propio con Route 53 opcional. | ADR-009 | ⏳ Paso 11 |
 | ADR-011 Chatbot con OpenRouter | Asistente con herramientas sobre datos oficiales, pase firmado para datos personales, presupuesto diario y modo básico sin clave. | ADR-017 | ✅ |
-| ADR-012 Pagos seguros | Izipay micuentaweb (tarjeta) y Culqi (Yape) en sandbox, firma HMAC verificada en el servidor, confirmación idempotente por SDK, IPN o consulta. | ADR-016, ADR-019 | ✅ sandbox |
+| ADR-012 Pagos seguros | Culqi cobra tarjeta y Yape (ADR-024): el navegador solo obtiene un token y el servidor crea el cargo con su llave secreta; la respuesta del cargo confirma el pago, de forma idempotente | ADR-016, ADR-019 | ✅ sandbox |
 | ADR-013 Documentos digitales | Amazon S3 privado con URL prefirmadas; fichas, constancias y órdenes de pago en PDF con QR firmado. | ADR-010 | ✅ |
 | ADR-014 Auditoría | Registro de auditoría de operaciones críticas y accesos denegados, consultable en el panel. | ADR-006, ADR-018 | ✅ |
 | ADR-015 Monitoreo con CloudWatch | **Cambió:** OpenTelemetry + Grafana Cloud (sin CloudWatch). El código ya está instrumentado; falta el destino. | ADR-013 | 🟡 |

@@ -836,7 +836,7 @@ model Application {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// M05 Pagos con Izipay (ADR-016) — esquema "pagos"
+// M04 Pagos con Culqi: tarjeta y Yape (ADR-024) — esquema "pagos"
 // ════════════════════════════════════════════════════════════════════
 
 enum PaymentOrderStatus {
@@ -874,7 +874,7 @@ model PaymentOrder {
   @@schema("pagos")
 }
 
-/// Cada apertura del formulario de pago (RF-05.07). Sin datos de tarjeta salvo la máscara de Izipay.
+/// Cada apertura del formulario de pago (RF-05.07). Sin datos de tarjeta salvo la máscara que devuelve Culqi.
 model PaymentAttempt {
   id                String               @id @default(uuid()) @db.Uuid
   orderId           String               @map("order_id") @db.Uuid

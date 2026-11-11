@@ -87,7 +87,7 @@ flowchart TB
 
     subgraph EXTERNOS["Integraciones externas"]
         ID["RENIEC vía apiperu"]
-        PG["Izipay micuentaweb y Culqi (Yape)"]
+        PG["Culqi<br/>Tarjeta y Yape"]
         AI["OpenRouter API"]
         SES["Amazon SES"]
     end
@@ -189,7 +189,7 @@ La arquitectura se implementó con estos ajustes respecto de la vista inicial:
 | ElastiCache Redis | Retirado del diagrama; previsto solo si la prueba de carga lo exige | Las consultas frecuentes son livianas y el límite de intentos funciona con PostgreSQL; Redis añade un costo fijo |
 | Amazon EventBridge como bus de eventos | Bandeja de eventos (Transactional Outbox) en PostgreSQL que envía los ID a Amazon SQS; un worker los procesa. EventBridge Scheduler queda para las tareas programadas | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 y ADR-021 del repositorio) |
 | Validación de identidad | RENIEC por medio de apiperu.dev | Proveedor autorizado y de bajo costo para el proyecto académico |
-| Pasarela de pagos | Izipay micuentaweb (tarjeta) y Culqi (Yape) | Yape no estaba disponible en la cuenta de Izipay (ADR-019) |
+| Pasarela de pagos | Culqi para tarjeta y Yape | Izipay cerró la tienda de pruebas; Culqi cubre los dos medios con un solo flujo (ADR-024) |
 | Route 53, CloudFront, API Gateway, Lambda | Diseñados, pendientes del despliegue | Paso 11 de la hoja de ruta |
 
 Hoy el sistema funciona en local (Node.js + Angular) conectado a los servicios reales de AWS: RDS PostgreSQL, S3 y SES.

@@ -1,6 +1,6 @@
 import { gatewayUnavailable } from '../../../shared/http/errors.js';
 import type { ProviderResult } from '../domain/payment-rules.js';
-import type { YapeChargeRequest, YapeGateway } from '../domain/ports.js';
+import type { ChargeRequest, PaymentGateway } from '../domain/ports.js';
 
 export interface CulqiConfig {
   /** Llave pública (pk_test_… o pk_live_…): va al navegador para Culqi Checkout. */
@@ -19,6 +19,7 @@ interface CulqiCharge {
   reference_code?: string;
   authorization_code?: string;
   outcome?: { type?: string; code?: string; user_message?: string; merchant_message?: string };
+  source?: { card_number?: string; iin?: { card_brand?: string } };
   type?: string;
   code?: string;
   decline_code?: string;
@@ -26,8 +27,11 @@ interface CulqiCharge {
   merchant_message?: string;
 }
 
-/** Adaptador real de `YapeGateway` (ADR-019): cargo de Culqi con un token de Yape. */
-export class CulqiYapeGateway implements YapeGateway {
+/** Token de Culqi Checkout: tarjeta (`tkn_`) o Yape (`ype_`), de pruebas o de producción. */
+const CULQI_TOKEN = /^(tkn|ype)_(test|live)_[A-Za-z0-9]+$/;
+
+/** Adaptador real de `PaymentGateway` (ADR-024): un solo proveedor para tarjeta y Yape. */
+export class CulqiGateway implements PaymentGateway {
   readonly provider = 'culqi' as const;
   readonly environment: 'sandbox' | 'production';
   private readonly apiUrl: string;
@@ -41,7 +45,11 @@ export class CulqiYapeGateway implements YapeGateway {
     return this.cfg.publicKey;
   }
 
-  async charge(r: YapeChargeRequest): Promise<ProviderResult> {
+  acceptsToken(token: string): boolean {
+    return CULQI_TOKEN.test(token);
+  }
+
+  async charge(r: ChargeRequest): Promise<ProviderResult> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     let status: number;
@@ -68,7 +76,7 @@ export class CulqiYapeGateway implements YapeGateway {
       }
     } catch (error) {
       if ((error as { status?: number }).status) throw error;
-      throw gatewayUnavailable('No pudimos comunicarnos con Culqi. Si se debitó tu Yape, Tesorería lo verificará; no vuelvas a pagar todavía.');
+      throw gatewayUnavailable('No pudimos comunicarnos con Culqi. Si se debitó tu pago, Tesorería lo verificará; no vuelvas a pagar todavía.');
     } finally {
       clearTimeout(timer);
     }
@@ -76,24 +84,28 @@ export class CulqiYapeGateway implements YapeGateway {
   }
 }
 
-/** Normaliza la respuesta del cargo (respuesta servidor a servidor con nuestra llave secreta: confiable sin firma). */
-export function parseCulqiCharge(status: number, b: CulqiCharge, r: YapeChargeRequest): ProviderResult {
+/** Normaliza la respuesta del cargo (servidor a servidor con nuestra llave secreta: confiable sin firma). */
+export function parseCulqiCharge(status: number, b: CulqiCharge, r: ChargeRequest): ProviderResult {
   const approved = status >= 200 && status < 300 && b.object === 'charge' && b.outcome?.type === 'venta_exitosa';
   // Un 5xx no dice si se cobró: el intento queda en proceso y Tesorería lo concilia.
   const inconclusive = status >= 500;
+  const yape = r.token.startsWith('ype_');
+  const brand = b.source?.iin?.card_brand;
+  const card = b.source?.card_number;
   return {
     transactionId: r.transactionId,
     approved,
     inconclusive,
     code: (approved ? b.outcome?.code : b.decline_code ?? b.code ?? b.outcome?.code) ?? String(status),
-    message: (approved ? b.outcome?.user_message : b.user_message ?? b.outcome?.user_message) ?? (approved ? 'Pago aprobado' : 'Culqi no aprobó el pago con Yape.'),
+    message: (approved ? b.outcome?.user_message : b.user_message ?? b.outcome?.user_message)
+      ?? (approved ? 'Pago aprobado' : yape ? 'Culqi no aprobó el pago con Yape.' : 'Culqi no aprobó el pago con tarjeta.'),
     orderNumber: r.orderNumber,
     amount: typeof b.amount === 'number' ? (b.amount / 100).toFixed(2) : null,
     currency: b.currency_code ?? null,
-    payMethod: 'YAPE',
+    payMethod: yape ? 'YAPE' : 'CARD',
     authorizationCode: b.authorization_code ?? null,
     operationNumber: b.reference_code ?? b.id ?? null,
     referenceNumber: b.id ?? null,
-    cardMasked: null,
+    cardMasked: yape || !card ? null : [brand, card].filter(Boolean).join(' '),
   };
 }

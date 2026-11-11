@@ -28,7 +28,7 @@ Esta tabla muestra los patrones como están **implementados en el código** al 0
 | Patrón | Dónde se usa | Problema que resuelve | Se implementa con | Archivos en el código |
 |---|---|---|---|---|
 | Adaptador | Usuarios → RENIEC | El servicio de identidad tiene su propia interfaz. | Puerto `IdentityProvider` con adaptadores `ApiPeruIdentityProvider` (apiperu.dev) y `MockIdentityProvider`. | `modules/usuarios/domain/ports.ts`, `modules/usuarios/infrastructure/apiperu-identity-provider.ts` |
-| Adaptador | Pagos → pasarelas | Cada pasarela tiene su propio protocolo y su firma. | Puertos `PaymentGateway` y `YapeGateway`; adaptadores `MiCuentaWebGateway`, `IzipayPaymentGateway`, `CulqiYapeGateway` y `MockPaymentGateway`. | `modules/pagos/domain/ports.ts`, `modules/pagos/infrastructure/*-gateway.ts` |
+| Adaptador | Pagos → pasarela | El proveedor de pagos tiene su propio protocolo. | Puerto `PaymentGateway`; adaptadores `CulqiGateway` (tarjeta y Yape) y `MockPaymentGateway` (simulada). |
 | Adaptador | Chatbot IA → OpenRouter | La API de IA usa solicitudes y respuestas propias. | Puerto `LlmProvider` con `OpenRouterProvider` y `RuleBasedProvider` (modo básico sin clave). | `modules/asistente/domain/ports.ts`, `modules/asistente/infrastructure/openrouter-provider.ts` |
 | Adaptador | Notificaciones y documentos → AWS | SES y S3 tienen sus propios SDK. | Puertos `EmailSender` y `FileStorage`; adaptadores para SES, S3, archivos locales y memoria (pruebas). | `shared/email/`, `shared/storage/` |
 | Repositorio | Convocatorias → PostgreSQL | Evitar que las reglas de negocio dependan de consultas SQL. | Interfaz `ConvocatoriasRepository` implementada por `PrismaConvocatoriasRepository`. | `modules/convocatorias/domain/ports.ts`, `modules/convocatorias/infrastructure/prisma-convocatorias-repository.ts` |
@@ -44,7 +44,7 @@ Esta tabla muestra los patrones como están **implementados en el código** al 0
 | Adaptador | El caso de uso pide `lookupDni(dni)` al puerto `IdentityProvider`; el adaptador de apiperu lo convierte en una petición HTTPS y normaliza la respuesta. |
 | Adaptador | El módulo Pagos pide `createCheckout(...)` y `verify(...)` al puerto `PaymentGateway`; cada adaptador habla con su pasarela y verifica su firma. |
 | Repositorio | El servicio de Convocatorias pide la convocatoria vigente al repositorio, que ejecuta la consulta con Prisma. |
-| Fábrica | Con `PAYMENTS_PROVIDER=micuentaweb` la fábrica devuelve `MiCuentaWebGateway`; con `mock`, la pasarela simulada. |
+| Fábrica | Con `PAYMENTS_PROVIDER=culqi` la fábrica devuelve `CulqiGateway`; con `mock`, la pasarela simulada. |
 | Inyección de dependencias | `new PaymentService({ db, clock, outbox, gateway, ... })`: el servicio no crea conexiones ni clientes externos. |
 | Fachada | Inscripciones usa `convocatorias.queries` para consultar tasas y vacantes, sin importar clases internas de Convocatorias. |
 | Observador | Pagos guarda `PagoConfirmado` en la misma transacción que el pago; Inscripciones, suscrito al evento, cambia el estado a APTA y envía el correo. |
@@ -84,7 +84,7 @@ flowchart TB
     DB[("Amazon RDS PostgreSQL")]
 
     RENIEC["RENIEC (apiperu)"]
-    PAGOS["Izipay micuentaweb<br/>Culqi (Yape)"]
+    PAGOS["Culqi<br/>Tarjeta y Yape"]
     IA["OpenRouter API"]
     AWS["Amazon SES y S3"]
 
@@ -128,7 +128,7 @@ flowchart TB
 
 ## 6. Beneficios de los patrones
 
-- **Adaptador:** cambiar de pasarela (de Izipay Web Core a micuentaweb, y agregar Culqi para Yape) no obligó a modificar las reglas de pago.
+- **Adaptador:** cambiar de pasarela (de Izipay a Culqi, ADR-024) no obligó a modificar las reglas de pago: solo cambió el adaptador.
 - **Fábrica:** el mismo código corre con proveedores simulados en las pruebas y reales con `.env.rds`.
 - **Repositorio:** mantiene el acceso a PostgreSQL de Convocatorias separado del dominio.
 - **Inyección de dependencias:** las 239 pruebas usan relojes, correos y pasarelas simulados sin conexiones reales.
@@ -169,7 +169,7 @@ flowchart TB
 | Despliegue | AWS Lambda (`lambda-api.ts`, `lambda-worker.ts`), pendiente del Paso 11 |
 | Comunicación | API REST mediante HTTPS |
 | Base de datos | Amazon RDS PostgreSQL |
-| Integraciones | RENIEC (apiperu), Izipay micuentaweb, Culqi, OpenRouter API, Amazon SES y S3 |
+| Integraciones | RENIEC (apiperu), Culqi, OpenRouter API, Amazon SES y S3 |
 
 ## 10. Conclusión
 

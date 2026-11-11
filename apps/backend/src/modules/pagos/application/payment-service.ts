@@ -3,31 +3,19 @@ import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db, Tx } from '../../../shared/db/prisma.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
-import { AppError, businessRule, conflict, gatewayUnavailable, notFound } from '../../../shared/http/errors.js';
+import { AppError, businessRule, conflict, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { PaymentContext } from '../../inscripciones/index.js';
 import {
   ATTEMPT_LABEL, ATTEMPT_TTL_SECONDS, YAPE_MAX_AMOUNT, formatAmount, newTransactionId, orderNumberFor,
   type AttemptStatus, type OrderStatus, type ProviderResult,
 } from '../domain/payment-rules.js';
-import type { CheckoutSession, PaymentGateway, SignedMessage, YapeGateway } from '../domain/ports.js';
-import { MockPaymentGateway } from '../infrastructure/mock-gateway.js';
-import { sha256Hex } from '../infrastructure/signature.js';
+import type { PaymentGateway } from '../domain/ports.js';
 
+/** Lo que el navegador necesita para abrir Culqi Checkout (tarjeta y Yape), sin la llave secreta (ADR-024). */
 export interface PaymentSessionDto {
   provider: PaymentGateway['provider'];
   environment: PaymentGateway['environment'];
-  transactionId: string;
-  orderNumber: string;
-  amount: string;
-  currency: 'PEN';
-  checkout: CheckoutSession | null;
-}
-
-/** Lo que el navegador necesita para abrir Culqi Checkout con Yape (sin la llave secreta). */
-export interface YapeSessionDto {
-  provider: 'culqi';
-  environment: YapeGateway['environment'];
   publicKey: string;
   transactionId: string;
   orderNumber: string;
@@ -35,6 +23,8 @@ export interface YapeSessionDto {
   /** Monto en céntimos, como lo pide Culqi. */
   amountCents: number;
   currency: 'PEN';
+  /** Yape solo acepta hasta S/ 2000 por pago (ADR-019). */
+  yape: boolean;
 }
 
 export interface AttemptResultDto {
@@ -56,14 +46,14 @@ export interface PaymentStatusDto {
     receipt: { operationNumber: string | null; authorizationCode: string | null; payMethod: string | null; cardMasked: string | null; transactionId: string } | null;
   };
   attempts: { transactionId: string; orderNumber: string; status: AttemptStatus; label: string; message: string | null; payMethod: string | null; createdAt: string }[];
-  /** Yape con Culqi (ADR-019): `null` si no está configurado. */
-  yape: { environment: YapeGateway['environment']; maxAmount: string } | null;
+  /** Tope de Yape por pago. */
+  yapeMaxAmount: string;
 }
 
-type Via = 'SDK' | 'IPN' | 'CONSULTA';
+type Via = 'SDK' | 'CONSULTA';
 type Attempt = NonNullable<Awaited<ReturnType<Db['paymentAttempt']['findUnique']>>>;
 
-/** Casos de uso de M05 Pagos (spec 005 iteración 1, ADR-016). */
+/** Casos de uso de M04 Pagos (spec 005, ADR-024): Culqi cobra con tarjeta y con Yape. */
 export class PaymentService {
   constructor(
     private readonly d: {
@@ -73,83 +63,45 @@ export class PaymentService {
       audit: AuditLog;
       limiter: RateLimiter;
       gateway: PaymentGateway;
-      /** Segunda pasarela, solo para Yape (ADR-019); sin llaves no se ofrece. */
-      yape?: YapeGateway | null;
       logger: Logger;
       inscriptions: { paymentContext(documentNumber: string, applicantCode: string): Promise<PaymentContext> };
     },
   ) {}
 
-  /** H1: abre un intento de pago y pide a la pasarela el token de sesión. */
+  /** H1: abre un intento de pago; el navegador abre Culqi Checkout con la llave pública y el monto de la orden. */
   async startSession(documentNumber: string, applicantCode: string, meta: RequestMeta): Promise<PaymentSessionDto> {
-    const { ctx, attempt, amount, now } = await this.openAttempt(documentNumber, applicantCode, this.d.gateway.provider, meta);
-
-    let checkout: CheckoutSession | null;
-    try {
-      checkout = await this.d.gateway.createCheckout({
-        transactionId: attempt.transactionId,
-        orderNumber: attempt.orderNumber,
-        amount,
-        currency: 'PEN',
-        createdAt: now,
-        buyer: {
-          applicantCode, firstNames: ctx.firstNames, surnames: ctx.surnames, email: ctx.email, mobile: ctx.mobile,
-          address: ctx.address, city: ctx.city, state: ctx.state, documentType: ctx.documentType, documentNumber: ctx.documentNumber,
-        },
-      });
-    } catch (error) {
-      await this.d.db.paymentAttempt.update({ where: { id: attempt.id }, data: { status: 'VENCIDO', providerMessage: 'No se generó el token de sesión' } });
-      if (error instanceof AppError) throw error;
-      // La causa técnica queda en el registro; al postulante se le ofrece una salida (ADR-007).
-      this.d.logger.error({ err: error, transactionId: attempt.transactionId }, 'la pasarela no creó la sesión de pago');
-      throw gatewayUnavailable('El pago en línea no está disponible en este momento. Inténtalo más tarde o descarga tu orden de pago y paga en ventanilla.');
-    }
+    const g = this.d.gateway;
+    const { attempt, amount } = await this.openAttempt(documentNumber, applicantCode, meta);
     await this.d.audit.record({
       actorUserId: null, action: 'payment.started', resourceType: 'payment_attempt', resourceId: attempt.transactionId,
-      after: { applicantCode, orderNumber: attempt.orderNumber, amount, provider: this.d.gateway.provider }, ...meta,
+      after: { applicantCode, orderNumber: attempt.orderNumber, amount, provider: g.provider }, ...meta,
     });
     return {
-      provider: this.d.gateway.provider,
-      environment: this.d.gateway.environment,
-      transactionId: attempt.transactionId,
-      orderNumber: attempt.orderNumber,
-      amount,
-      currency: 'PEN',
-      checkout,
-    };
-  }
-
-  /** FR-013 (ADR-019): abre un intento para pagar con Yape mediante Culqi. */
-  async startYape(documentNumber: string, applicantCode: string, meta: RequestMeta): Promise<YapeSessionDto> {
-    const yape = this.d.yape;
-    if (!yape) throw businessRule('YAPE_NOT_AVAILABLE', 'El pago con Yape no está disponible por ahora. Paga con tarjeta o en ventanilla.');
-    const { attempt, amount } = await this.openAttempt(documentNumber, applicantCode, yape.provider, meta, (value) => {
-      if (Number(value) > YAPE_MAX_AMOUNT) {
-        throw businessRule('YAPE_LIMIT', `Yape acepta pagos de hasta S/ ${YAPE_MAX_AMOUNT}. Paga con tarjeta o en ventanilla.`);
-      }
-    });
-    return {
-      provider: yape.provider, environment: yape.environment, publicKey: yape.publicKey,
+      provider: g.provider, environment: g.environment, publicKey: g.publicKey,
       transactionId: attempt.transactionId, orderNumber: attempt.orderNumber,
       amount, amountCents: Math.round(Number(amount) * 100), currency: 'PEN',
+      yape: Number(amount) <= YAPE_MAX_AMOUNT,
     };
   }
 
   /**
-   * FR-013 (ADR-019): el navegador entrega el token de Yape y el servidor crea el cargo en Culqi.
-   * El resultado es la respuesta del cargo (servidor a servidor); un intento se cobra una sola vez.
+   * H1 (ADR-024): el navegador entrega el token de Culqi (tarjeta o Yape) y el servidor crea el cargo.
+   * El resultado es la respuesta del cargo, servidor a servidor; un intento se cobra una sola vez.
    */
-  async chargeYape(documentNumber: string, applicantCode: string, transactionId: string, token: string, meta: RequestMeta): Promise<AttemptResultDto> {
-    const yape = this.d.yape;
-    if (!yape) throw businessRule('YAPE_NOT_AVAILABLE', 'El pago con Yape no está disponible por ahora.');
-    await this.d.limiter.consume(`payment-yape:${meta.ipHash}`, 10, 3600);
+  async charge(documentNumber: string, applicantCode: string, transactionId: string, token: string, meta: RequestMeta): Promise<AttemptResultDto> {
+    const g = this.d.gateway;
+    if (!g.acceptsToken(token)) throw validationError('El token de pago no es válido.', [{ field: 'token', issue: 'formato' }]);
+    await this.d.limiter.consume(`payment-charge:${meta.ipHash}`, 10, 3600);
     // DNI + código: solo el postulante cobra su propio intento; el correo del cargo es el de la inscripción.
     const ctx = await this.d.inscriptions.paymentContext(documentNumber, applicantCode);
     const attempt = await this.d.db.paymentAttempt.findUnique({ where: { transactionId }, include: { order: true } });
-    if (!attempt || attempt.provider !== yape.provider || attempt.order.applicantCode !== applicantCode) {
-      throw notFound('No encontramos ese intento de pago con Yape.');
+    if (!attempt || attempt.provider !== g.provider || attempt.order.applicantCode !== applicantCode) {
+      throw notFound('No encontramos ese intento de pago.');
     }
     if (attempt.expiresAt < this.d.clock.now()) throw businessRule('ATTEMPT_EXPIRED', 'Pasó el tiempo para este pago. Vuelve a pulsar «Pagar».');
+    if (token.startsWith('ype_') && Number(attempt.amount) > YAPE_MAX_AMOUNT) {
+      throw businessRule('YAPE_LIMIT', `Yape acepta pagos de hasta S/ ${YAPE_MAX_AMOUNT}. Paga con tarjeta o en ventanilla.`);
+    }
     // Reserva el intento: dos tokens para el mismo intento no generan dos cargos.
     const claimed = await this.d.db.paymentAttempt.updateMany({
       where: { id: attempt.id, status: 'INICIADO', providerCode: null },
@@ -159,7 +111,7 @@ export class PaymentService {
 
     let result: ProviderResult;
     try {
-      result = await yape.charge({
+      result = await g.charge({
         transactionId: attempt.transactionId, orderNumber: attempt.orderNumber, applicantCode: attempt.order.applicantCode,
         amountCents: Math.round(Number(attempt.amount) * 100), email: ctx.email,
         token, description: `Admisión UNSCH - pedido ${attempt.orderNumber}`,
@@ -169,68 +121,18 @@ export class PaymentService {
       throw error;
     }
     if (!this.matches(attempt, result)) {
-      this.d.logger.warn({ transactionId: attempt.transactionId }, 'cargo de Yape con monto o moneda distintos');
-      throw new AppError(400, 'PAYMENT_MISMATCH', 'La respuesta de Culqi no corresponde a tu orden.');
+      this.d.logger.warn({ transactionId: attempt.transactionId }, 'cargo con monto o moneda distintos');
+      throw new AppError(400, 'PAYMENT_MISMATCH', 'La respuesta de la pasarela no corresponde a tu orden.');
     }
     return this.apply(attempt, result, 'SDK', meta);
   }
 
-  /** H1: mensaje firmado del proveedor, por el navegador (SDK) o servidor a servidor (IPN). */
-  async confirm(message: SignedMessage, via: 'SDK' | 'IPN', meta: RequestMeta): Promise<AttemptResultDto> {
-    const result = this.d.gateway.verify(message);
-    const log = (outcome: string) => this.d.db.paymentNotification.create({
-      data: {
-        source: via, transactionId: message.transactionId.slice(0, 40), signatureValid: Boolean(result),
-        providerCode: (result?.code ?? message.code ?? '').slice(0, 30) || null, payloadHash: sha256Hex(message.payloadHttp), outcome,
-      },
-    });
-    if (!result || result.transactionId !== message.transactionId) {
-      await log('FIRMA_INVALIDA');
-      this.d.logger.warn({ transactionId: message.transactionId, via }, 'mensaje de pago con firma inválida');
-      throw new AppError(400, 'INVALID_SIGNATURE', 'No pudimos verificar la respuesta de la pasarela.');
-    }
-    const attempt = await this.d.db.paymentAttempt.findUnique({ where: { transactionId: result.transactionId } });
-    if (!attempt) {
-      await log('DESCONOCIDO');
-      throw notFound('No encontramos ese intento de pago.');
-    }
-    if (!this.matches(attempt, result)) {
-      await log('NO_COINCIDE');
-      this.d.logger.warn({ transactionId: attempt.transactionId, via }, 'mensaje de pago con pedido o monto distinto');
-      throw new AppError(400, 'PAYMENT_MISMATCH', 'La respuesta de la pasarela no corresponde a tu orden.');
-    }
-    // Una aprobación que llega por el navegador no basta: se confirma consultando a la pasarela servidor a servidor.
-    // Si la consulta no la ratifica, el intento sigue «En proceso» y lo resuelven la IPN o la conciliación de status().
-    if (via === 'SDK' && result.approved && this.d.gateway.environment !== 'simulated') {
-      const server = await this.d.gateway.query({ transactionId: attempt.transactionId, orderNumber: attempt.orderNumber, amount: formatAmount(attempt.amount) });
-      if (!server || server.inconclusive || !server.approved || server.orderNumber !== attempt.orderNumber || !this.matches(attempt, server)) {
-        await log('POR_VERIFICAR');
-        this.d.logger.warn({ transactionId: attempt.transactionId, serverCode: server?.code ?? null }, 'aprobación del navegador sin ratificar por la pasarela');
-        const current = await this.d.db.paymentAttempt.findUniqueOrThrow({ where: { id: attempt.id }, include: { order: true } });
-        return {
-          transactionId: current.transactionId, status: current.status, label: ATTEMPT_LABEL[current.status],
-          message: current.status === 'INICIADO' ? 'Estamos verificando tu pago con la pasarela. Revisa el estado en unos minutos.' : current.providerMessage,
-          orderStatus: current.order.status,
-        };
-      }
-      const outcome = await this.apply(attempt, server, 'CONSULTA', meta);
-      await log(outcome.status);
-      return outcome;
-    }
-    const outcome = await this.apply(attempt, result, via, meta);
-    await log(outcome.status);
-    return outcome;
-  }
-
-  /** H2: estado de la orden e historial; resuelve intentos sin respuesta consultando al proveedor. */
+  /** H2: estado de la orden e historial; los intentos sin respuesta vencen. */
   async status(documentNumber: string, applicantCode: string, meta: RequestMeta): Promise<PaymentStatusDto> {
     await this.d.limiter.consume(`payment-status:${meta.ipHash}`, 30, 3600);
     const ctx = await this.d.inscriptions.paymentContext(documentNumber, applicantCode);
-    let order = await this.d.db.paymentOrder.findUnique({ where: { applicantCode } });
-    if (order) {
-      await this.reconcile(order.id, meta);
-      order = await this.d.db.paymentOrder.findUniqueOrThrow({ where: { id: order.id } });
-    }
+    const order = await this.d.db.paymentOrder.findUnique({ where: { applicantCode } });
+    if (order) await this.expireStale(order.id);
     const attempts = order
       ? await this.d.db.paymentAttempt.findMany({ where: { orderId: order.id }, orderBy: { createdAt: 'desc' } })
       : [];
@@ -251,7 +153,7 @@ export class PaymentService {
         transactionId: a.transactionId, orderNumber: a.orderNumber, status: a.status, label: ATTEMPT_LABEL[a.status],
         message: a.providerMessage, payMethod: a.payMethod, createdAt: a.createdAt.toISOString(),
       })),
-      yape: this.d.yape ? { environment: this.d.yape.environment, maxAmount: formatAmount(YAPE_MAX_AMOUNT) } : null,
+      yapeMaxAmount: formatAmount(YAPE_MAX_AMOUNT),
     };
   }
 
@@ -272,16 +174,8 @@ export class PaymentService {
     };
   }
 
-  /** Solo con la pasarela simulada: el mensaje firmado que daría el formulario. */
-  async mockComplete(transactionId: string, approve: boolean): Promise<SignedMessage> {
-    if (!(this.d.gateway instanceof MockPaymentGateway)) throw notFound();
-    const attempt = await this.d.db.paymentAttempt.findUnique({ where: { transactionId } });
-    if (!attempt) throw notFound('No encontramos ese intento de pago.');
-    return this.d.gateway.complete({ transactionId, orderNumber: attempt.orderNumber, amount: formatAmount(attempt.amount) }, approve, this.d.clock.now());
-  }
-
   /** Abre un intento de la orden de la inscripción (reglas comunes a tarjeta y Yape). */
-  private async openAttempt(documentNumber: string, applicantCode: string, provider: string, meta: RequestMeta, check?: (amount: string) => void) {
+  private async openAttempt(documentNumber: string, applicantCode: string, meta: RequestMeta) {
     await this.d.limiter.consume(`payment-session:${meta.ipHash}`, 10, 3600);
     const ctx = await this.d.inscriptions.paymentContext(documentNumber, applicantCode);
     if (ctx.status === 'ANULADA') throw businessRule('PAYMENT_NOT_REQUIRED', 'La inscripción está anulada; no corresponde pagar.');
@@ -297,7 +191,6 @@ export class PaymentService {
     });
     if (order.status === 'PAGADA') throw conflict('ALREADY_PAID', 'Tu pago ya fue confirmado. Descarga tu constancia en «Mi inscripción».');
     const amount = formatAmount(order.amount);
-    check?.(amount);
     await this.expireStale(order.id);
 
     const now = this.d.clock.now();
@@ -306,19 +199,13 @@ export class PaymentService {
     const attempt = await this.d.db.paymentAttempt.create({
       data: {
         orderId: order.id,
-        provider,
+        provider: this.d.gateway.provider,
         transactionId: newTransactionId(now),
         orderNumber: orderNumberFor(applicantCode, index),
         amount: order.amount,
         expiresAt: new Date(now.getTime() + ATTEMPT_TTL_SECONDS * 1000),
       },
     });
-    if (provider !== this.d.gateway.provider) {
-      await this.d.audit.record({
-        actorUserId: null, action: 'payment.started', resourceType: 'payment_attempt', resourceId: attempt.transactionId,
-        after: { applicantCode, orderNumber: attempt.orderNumber, amount, provider }, ...meta,
-      });
-    }
     return { ctx, attempt, amount, now };
   }
 
@@ -382,22 +269,6 @@ export class PaymentService {
       message: current.providerMessage,
       orderStatus: current.order.status,
     };
-  }
-
-  /** Intentos sin respuesta: se consulta al proveedor (servidor a servidor) y, si no hay respuesta, vencen. */
-  private async reconcile(orderId: string, meta: RequestMeta): Promise<void> {
-    const now = this.d.clock.now();
-    const pending = await this.d.db.paymentAttempt.findMany({
-      where: { orderId, status: 'INICIADO', createdAt: { lt: new Date(now.getTime() - 60_000) } },
-    });
-    for (const attempt of pending) {
-      if (attempt.provider !== this.d.gateway.provider) continue;
-      const r = await this.d.gateway.query({ transactionId: attempt.transactionId, orderNumber: attempt.orderNumber, amount: formatAmount(attempt.amount) });
-      if (r && !r.inconclusive && r.orderNumber === attempt.orderNumber && this.matches(attempt, r)) {
-        await this.apply(attempt, r, 'CONSULTA', meta);
-      }
-    }
-    await this.expireStale(orderId);
   }
 
   private async expireStale(orderId: string): Promise<void> {

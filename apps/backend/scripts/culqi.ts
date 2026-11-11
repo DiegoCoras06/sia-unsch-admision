@@ -29,7 +29,7 @@ const env = sk.startsWith('sk_live') ? 'producción' : 'pruebas';
 const api = (process.env['CULQI_API_URL'] ?? 'https://api.culqi.com').replace(/\/$/, '');
 const res = await fetch(`${api}/v2/charges?limit=1`, { headers: { Authorization: `Bearer ${sk}`, Accept: 'application/json' } });
 if (res.ok) {
-  console.log(`Culqi ${env}: llave secreta aceptada (${pk.slice(0, 8)}••• / ${sk.slice(0, 8)}•••). Yape quedará disponible al reiniciar la API.`);
+  console.log(`Culqi ${env}: llave secreta aceptada (${pk.slice(0, 8)}••• / ${sk.slice(0, 8)}•••). Con PAYMENTS_PROVIDER=culqi, tarjeta y Yape quedan disponibles al reiniciar la API.`);
 } else {
   const body = (await res.json().catch(() => ({}))) as { merchant_message?: string; user_message?: string };
   console.error(`Culqi respondió ${res.status}: ${body.merchant_message ?? body.user_message ?? 'sin detalle'}. Revisa la llave secreta.`);

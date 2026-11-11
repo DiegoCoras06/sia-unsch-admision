@@ -106,7 +106,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | El sistema intercambia información mediante conexiones HTTPS y gestiona las respuestas de los proveedores. |
 | **Medida** | El 100 % de los casos de integración definidos debe producir la respuesta esperada o un error controlado. |
 | **Verificación** | Ejecutar pruebas de integración utilizando servicios autorizados o entornos de prueba. |
-| **Estado** | ✅ Cumplido en sandbox. RENIEC (apiperu), micuentaweb (tarjeta), Culqi (Yape), Amazon SES, Amazon S3 y OpenRouter conectados; cada uno tiene su script de verificación en `apps/backend/scripts/`. Las claves de producción dependen de los contratos de la UNSCH. |
+| **Estado** | ✅ Cumplido en sandbox. RENIEC (apiperu), Culqi (tarjeta y Yape), Amazon SES, Amazon S3 y OpenRouter conectados; cada uno tiene su script de verificación en `apps/backend/scripts/`. Las claves de producción dependen de los contratos de la UNSCH. |
 
 ## EQ-09. Confiabilidad: fallas en servicios externos
 

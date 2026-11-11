@@ -24,7 +24,7 @@ import { createConvocatoriasModule } from './modules/convocatorias/index.js';
 import { createSeguridadModule } from './modules/seguridad/index.js';
 import { createIdentityProvider, createUsuariosModule } from './modules/usuarios/index.js';
 import { createInscripcionesModule } from './modules/inscripciones/index.js';
-import { createPagosModule, createPaymentGateway, createTesoreria, createYapeGateway, type PaymentGateway, type YapeGateway } from './modules/pagos/index.js';
+import { createPagosModule, createPaymentGateway, createTesoreria, type PaymentGateway } from './modules/pagos/index.js';
 import { createAsistenteModule, type LlmProvider } from './modules/asistente/index.js';
 import { LocalFileStorage, type FileStorage } from './shared/storage/file-storage.js';
 import { S3FileStorage } from './shared/storage/s3-file-storage.js';
@@ -45,8 +45,6 @@ export interface AppOverrides {
   logger?: Logger;
   storage?: FileStorage;
   paymentGateway?: PaymentGateway;
-  /** Yape (ADR-019) en pruebas; `null` lo desactiva. */
-  yapeGateway?: YapeGateway | null;
   /** Proveedor de IA del asistente (pruebas); `null` fuerza el modo básico. */
   assistantAi?: LlmProvider | null;
   /** Cola de eventos (ADR-021) en pruebas; `null` fuerza el modo local. */
@@ -86,8 +84,6 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const limiter = new RateLimiter(db, clock);
   const audit = new AuditLog(db);
 
-  if (env.PAYMENTS_PROVIDER === 'izipay') logger.info({ environment: env.IZIPAY_ENV }, 'Pasarela de pagos: Izipay');
-  if (env.PAYMENTS_PROVIDER === 'micuentaweb') logger.info({ environment: env.MICUENTAWEB_ENV }, 'Pasarela de pagos: Izipay micuentaweb');
   if (env.APP_FIXED_NOW) logger.warn({ now: clock.now().toISOString() }, 'Reloj simulado activo (APP_FIXED_NOW)');
 
   // ── Módulos ──────────────────────────────────────────────────────────
@@ -121,34 +117,12 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   });
   const paymentGateway = overrides.paymentGateway ?? createPaymentGateway({
     provider: env.PAYMENTS_PROVIDER,
-    mockHashKey: `mock-gateway:${env.HMAC_SECRET}`,
-    izipay: {
-      environment: env.IZIPAY_ENV,
-      apiUrl: env.IZIPAY_API_URL,
-      merchantCode: env.IZIPAY_MERCHANT_CODE,
-      apiKey: env.IZIPAY_API_KEY,
-      hashKey: env.IZIPAY_HASH_KEY,
-      rsaPublicKey: env.IZIPAY_PUBLIC_KEY,
-      // Izipay solo puede notificar a una URL pública con HTTPS (en local se confirma con la respuesta del SDK).
-      ipnUrl: env.PUBLIC_API_URL?.startsWith('https://') ? `${env.PUBLIC_API_URL.replace(/\/$/, '')}/api/v1/payments/izipay/notify` : undefined,
-    },
-    micuentaweb: {
-      environment: env.MICUENTAWEB_ENV,
-      apiUrl: env.MICUENTAWEB_API_URL,
-      shopId: env.MICUENTAWEB_SHOP_ID,
-      password: env.MICUENTAWEB_PASSWORD,
-      publicKey: env.MICUENTAWEB_PUBLIC_KEY,
-      hmacKey: env.MICUENTAWEB_HMAC_KEY,
-      ipnUrl: env.PUBLIC_API_URL?.startsWith('https://') ? `${env.PUBLIC_API_URL.replace(/\/$/, '')}/api/v1/payments/micuentaweb/notify` : undefined,
-    },
+    culqi: { publicKey: env.CULQI_PUBLIC_KEY, secretKey: env.CULQI_SECRET_KEY, apiUrl: env.CULQI_API_URL },
   });
-  const yapeGateway = overrides.yapeGateway !== undefined
-    ? overrides.yapeGateway
-    : createYapeGateway({ publicKey: env.CULQI_PUBLIC_KEY, secretKey: env.CULQI_SECRET_KEY, apiUrl: env.CULQI_API_URL });
+  logger.info({ provider: paymentGateway.provider, environment: paymentGateway.environment }, 'Pasarela de pagos');
   const pagos = createPagosModule({
     db, clock, outbox, audit, limiter, logger,
     gateway: paymentGateway,
-    yape: yapeGateway,
     inscriptions: inscripciones.service,
   });
   const asistente = createAsistenteModule({
@@ -255,8 +229,6 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const dossierJson = express.json({ limit: '8mb' });
   // Archivos CSV de la lectora óptica (M09) y de conciliación (M05), enviados como texto.
   const csvJson = express.json({ limit: '4mb' });
-  // Notificación instantánea de micuentaweb: campos kr-answer y kr-hash en un formulario.
-  const ipnForm = express.urlencoded({ extended: false, limit: '200kb' });
   app.use((req, res, next) => {
     if (req.method === 'POST' && (/^\/api\/v1\/admin\/results\/exams\/[^/]+\/batches$/.test(req.path) || req.path === '/api/v1/admin/reconciliations')) return csvJson(req, res, next);
     // Lista de adjudicados CEPRE (CSV) y cuadro de vacantes (.xlsx en base64).
@@ -264,7 +236,6 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     // Denuncia con evidencia: hasta 5 MB en total, en base64.
     if (req.method === 'POST' && req.path === '/api/v1/support/complaint') return dossierJson(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/inscriptions') return photoJson(req, res, next);
-    if (req.method === 'POST' && req.path === '/api/v1/payments/micuentaweb/notify') return ipnForm(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/dossier/documents') return dossierJson(req, res, next);
     // Imágenes del portal (≤ 3 MB) y documentos adicionales de la inscripción (≤ 5 MB), en base64.
     if (req.method === 'PUT' && req.path.startsWith('/api/v1/admin/site-assets/')) return dossierJson(req, res, next);
@@ -334,12 +305,10 @@ function integrationStatus(env: Env): Record<string, { label: string; value: str
     },
     pagos: {
       label: 'Pasarela de pagos',
-      value: env.PAYMENTS_PROVIDER === 'micuentaweb'
-        ? `Izipay micuentaweb ${env.MICUENTAWEB_ENV}, tienda ${mask(env.MICUENTAWEB_SHOP_ID)}`
-        : env.PAYMENTS_PROVIDER === 'izipay'
-        ? `Izipay ${env.IZIPAY_ENV}, comercio ${mask(env.IZIPAY_MERCHANT_CODE)}`
-        : `Simulada. Izipay: clave de API ${mask(env.IZIPAY_API_KEY)}, comercio ${mask(env.IZIPAY_MERCHANT_CODE)}, clave hash ${mask(env.IZIPAY_HASH_KEY)}`,
-      ok: env.PAYMENTS_PROVIDER === 'izipay' || env.PAYMENTS_PROVIDER === 'micuentaweb',
+      value: env.PAYMENTS_PROVIDER === 'culqi'
+        ? `Culqi ${env.CULQI_SECRET_KEY?.startsWith('sk_live') ? 'producción' : 'pruebas'} (tarjeta y Yape), llave ${mask(env.CULQI_PUBLIC_KEY)}`
+        : 'Simulada (sin cobros)',
+      ok: env.PAYMENTS_PROVIDER === 'culqi',
     },
     ia: {
       label: 'Asistente con IA (OpenRouter)',

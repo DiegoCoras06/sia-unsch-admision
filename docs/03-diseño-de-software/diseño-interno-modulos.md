@@ -183,7 +183,7 @@ El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funci
 | Bandeja de eventos (outbox) en PostgreSQL + Amazon SQS | Procesamiento de tareas asíncronas y eventos entre módulos. |
 | Amazon EventBridge Scheduler | Tareas programadas. |
 | RENIEC (vía apiperu.dev) | Validación de identidad. |
-| Izipay micuentaweb y Culqi | Pago con tarjeta y con Yape. |
+| Culqi | Pago con tarjeta y con Yape (ADR-024). |
 | OpenRouter API | Integración del chatbot de inteligencia artificial. |
 | Amazon SES | Envío de correos electrónicos. |
 

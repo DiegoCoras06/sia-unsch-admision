@@ -1,6 +1,6 @@
 # ADR-019: Yape con Culqi junto al checkout de Izipay
 
-**Estado:** Aceptado
+**Estado:** Ampliada por [ADR-024](ADR-024-pasarela-culqi-tarjeta-y-yape.md) (11/11/2026): Culqi cobra ahora también con tarjeta y es la única pasarela; lo de Izipay quedó sin efecto.
 **Fecha:** 29/10/2026
 **Modifica:** [ADR-016](ADR-016-pasarela-izipay.md) (se suma una segunda pasarela solo para Yape) y la spec [005](../../specs/005-pagos/requirements.md) (FR-013)
 **Impulsores:** pedido del cliente del 29/10/2026: ofrecer Yape al lado del pago con tarjeta; RF-05.03, RF-05.04, RF-05.06

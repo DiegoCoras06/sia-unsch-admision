@@ -364,38 +364,22 @@ export interface ActivityDto {
   description: string;
 }
 
-// ── 005 Pagos en línea con Izipay (ADR-016) ────────────────────────
+// ── 005 Pagos en línea con Culqi: tarjeta y Yape (ADR-024) ─────────
 export type PaymentAttemptStatus = 'INICIADO' | 'AUTORIZADO' | 'RECHAZADO' | 'VENCIDO' | 'DUPLICADO';
 
+/** Lo que el navegador necesita para abrir Culqi Checkout, sin la llave secreta. */
 export interface PaymentSessionDto {
-  provider: 'izipay' | 'micuentaweb' | 'mock';
+  provider: 'culqi' | 'mock';
   environment: 'sandbox' | 'production' | 'simulated';
-  transactionId: string;
-  orderNumber: string;
-  amount: string;
-  currency: 'PEN';
-  /** Solo con Izipay: lo necesario para abrir el formulario certificado (sin claves secretas). */
-  checkout: { scriptUrl: string; authorization: string; keyRSA: string; config: Record<string, unknown> } | null;
-}
-
-/** Respuesta firmada del formulario (SDK) que el servidor verifica. */
-export interface SignedPaymentMessageDto {
-  code?: string;
-  transactionId: string;
-  payloadHttp: string;
-  signature: string;
-}
-
-/** Yape con Culqi (ADR-019): lo necesario para abrir Culqi Checkout, sin la llave secreta. */
-export interface YapeSessionDto {
-  provider: 'culqi';
-  environment: 'sandbox' | 'production';
   publicKey: string;
   transactionId: string;
   orderNumber: string;
   amount: string;
+  /** Monto en céntimos, como lo pide Culqi. */
   amountCents: number;
   currency: 'PEN';
+  /** Yape solo acepta hasta S/ 2000 por pago. */
+  yape: boolean;
 }
 
 export interface PaymentAttemptResultDto {
@@ -407,7 +391,7 @@ export interface PaymentAttemptResultDto {
 }
 
 export interface PaymentStatusDto {
-  provider: 'izipay' | 'micuentaweb' | 'mock';
+  provider: 'culqi' | 'mock';
   environment: 'sandbox' | 'production' | 'simulated';
   order: {
     orderNumber: string | null;
@@ -417,8 +401,8 @@ export interface PaymentStatusDto {
     receipt: { operationNumber: string | null; authorizationCode: string | null; payMethod: string | null; cardMasked: string | null; transactionId: string } | null;
   };
   attempts: { transactionId: string; orderNumber: string; status: PaymentAttemptStatus; label: string; message: string | null; payMethod: string | null; createdAt: string }[];
-  /** Yape con Culqi: `null` si no está configurado. */
-  yape: { environment: 'sandbox' | 'production'; maxAmount: string } | null;
+  /** Tope de Yape por pago. */
+  yapeMaxAmount: string;
 }
 
 // ── 009 Asistente virtual (ADR-017) ─────────────────────────────────

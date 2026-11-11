@@ -205,11 +205,11 @@ describe('Reportes, inhabilitados, contenido, asistente y casos', () => {
 
   it('nueva entrada de conocimiento: el asistente la usa al instante (RF-10.12)', async () => {
     await t.request.post('/api/v1/admin/knowledge').set(as(admin)).send({
-      topic: 'pagos', question: '¿Puedo pagar con transferencia interbancaria?', answer: 'No. Paga en línea con Izipay o en las ventanillas autorizadas.',
+      topic: 'pagos', question: '¿Puedo pagar con transferencia interbancaria?', answer: 'No. Paga en línea con Culqi o en las ventanillas autorizadas.',
       source: 'Dirección de Admisión - prueba', extraKeywords: 'transferencia interbancaria cci',
     }).expect(201);
     const r = (await t.request.post('/api/v1/assistant/messages').send({ message: '¿acepta transferencia interbancaria?' }).expect(200)).body.data;
-    expect(r.reply).toContain('Paga en línea con Izipay');
+    expect(r.reply).toContain('Paga en línea con Culqi');
   });
 
   it('un caso cambia de estado y el ciudadano lo ve con su número (Historia 7)', async () => {

@@ -53,31 +53,23 @@ classDiagram
     class pagosRoutes {
         <<presentation/routes.ts>>
         POST /payments/session
-        POST /payments/confirm
-        POST /payments/micuentaweb/notify
-        POST /payments/yape/charge
+        POST /payments/charge
+        GET /payments/status
     }
     class PaymentService {
         <<application>>
         +startSession(dni, codigo, meta)
-        +confirm(mensaje, via, meta)
-        +startYape(dni, codigo, meta)
-        +chargeYape(dni, codigo, transaccion, token, meta)
+        +charge(dni, codigo, transaccion, token, meta)
         +status(dni, codigo, meta)
     }
     class PaymentGateway {
         <<interface>>
-        +createCheckout(request) CheckoutSession
-        +verify(mensaje) ProviderResult
-        +query(intento) ProviderResult
+        +publicKey
+        +acceptsToken(token) boolean
+        +charge(request) ProviderResult
     }
-    class YapeGateway {
-        <<interface>>
-    }
-    class MiCuentaWebGateway
-    class IzipayPaymentGateway
+    class CulqiGateway
     class MockPaymentGateway
-    class CulqiYapeGateway
     class Outbox {
         <<shared/events/outbox.ts>>
         +publish(tx, tipo, datos)
@@ -92,15 +84,12 @@ classDiagram
 
     pagosRoutes --> PaymentService
     PaymentService --> PaymentGateway
-    PaymentService --> YapeGateway
     PaymentService ..> InscriptionService : solo paymentContext()
     PaymentService --> Outbox : publica PagoConfirmado
     Outbox ..> InscriptionService : PagoConfirmado → markPaid()
 
-    MiCuentaWebGateway ..|> PaymentGateway
-    IzipayPaymentGateway ..|> PaymentGateway
+    CulqiGateway ..|> PaymentGateway
     MockPaymentGateway ..|> PaymentGateway
-    CulqiYapeGateway ..|> YapeGateway
 ```
 
 ## 3. Diferencias con el diseño del sprint 1
@@ -109,7 +98,7 @@ classDiagram
 |---|---|
 | Una clase por caso de uso (`RegistrarInscripcionUseCase`, `ProcesarPagoUseCase`) | Un servicio por módulo (`InscriptionService`, `PaymentService`) con un método por caso de uso |
 | `InscripcionRepository` / `PostgresInscripcionRepository`, `PagoRepository` | No existen: los servicios usan Prisma directamente (pendiente) |
-| `PaymentPort` y `PaymentGatewayAdapter` | `PaymentGateway` con 3 adaptadores, y `YapeGateway` con `CulqiYapeGateway` |
+| `PaymentPort` y `PaymentGatewayAdapter` | `PaymentGateway` con 2 adaptadores: `CulqiGateway` (tarjeta y Yape) y `MockPaymentGateway` |
 | `ElegibilidadPort` | La elegibilidad se valida en `InscriptionService` con datos de `ConvocatoriasQueries` |
 | `ConfirmarPagoInscripcionUseCase` llamado por Pagos | Pagos publica `PagoConfirmado` y Inscripciones reacciona (Observador), sin llamada directa |
 | Entidad `Inscripcion` con estados | Tipo `InscriptionStatus` (generado por Prisma) + reglas en `inscription-rules.ts` |
@@ -125,7 +114,8 @@ sequenceDiagram
     participant DB as PostgreSQL
     participant RP as pagosRoutes
     participant PS as PaymentService
-    participant GW as MiCuentaWebGateway
+    participant CK as Culqi Checkout
+    participant GW as CulqiGateway
     participant OB as Outbox
 
     P->>W: Completa la inscripción
@@ -135,31 +125,31 @@ sequenceDiagram
     IS-->>W: Código de postulante
     OB-->>P: Correo con el código y la orden de pago
 
-    P->>W: Pagar con tarjeta
+    P->>W: Pagar
     W->>RP: POST /api/v1/payments/session
     RP->>PS: startSession(dni, código)
     PS->>IS: paymentContext(dni, código)
-    PS->>GW: createCheckout(monto, pedido)
-    GW-->>W: formToken del formulario de Izipay
-    W->>GW: El postulante paga en el formulario incrustado
-    GW-->>W: Respuesta firmada
-    W->>RP: POST /api/v1/payments/confirm
-    RP->>PS: confirm(mensaje, SDK)
-    PS->>GW: verify(firma HMAC)
+    PS-->>W: Llave pública, pedido y monto en céntimos
+    W->>CK: Abre el formulario (tarjeta o Yape)
+    CK-->>W: Token tkn_… o ype_…
+    W->>RP: POST /api/v1/payments/charge
+    RP->>PS: charge(dni, código, transacción, token)
+    PS->>GW: charge(token, monto) con la llave secreta
+    GW-->>PS: Cargo aprobado o rechazado
     PS->>DB: Transacción: intento y orden PAGADOS + evento PagoConfirmado
     OB->>IS: PagoConfirmado → markPaid()
     IS->>DB: Inscripción APTA
     OB-->>P: Correo «Pago confirmado»
 ```
 
-Si el navegador se cierra antes de confirmar, el pago se confirma por la notificación IPN (`/payments/micuentaweb/notify`, al tener URL pública) o por la consulta al proveedor (`query`); las tres vías son idempotentes.
+La tarjeta y el código de Yape van directo a Culqi; el servidor solo recibe un token y crea el cargo. Un intento se cobra una sola vez y, si Culqi no responde, queda en proceso para la conciliación de Tesorería.
 
 ## 5. Patrones y principios visibles
 
 | Patrón o principio | Dónde |
 |---|---|
-| Adaptador | `PaymentGateway` y `YapeGateway` con sus adaptadores |
-| Fábrica | `createPaymentGateway` elige micuentaweb, Izipay o la simulada según `PAYMENTS_PROVIDER` |
+| Adaptador | `PaymentGateway` con `CulqiGateway` y `MockPaymentGateway` |
+| Fábrica | `createPaymentGateway` elige Culqi o la simulada según `PAYMENTS_PROVIDER` |
 | Observador | `PagoConfirmado` en la bandeja de eventos; Inscripciones lo escucha |
 | Segregación de interfaces | `PaymentService` solo conoce `paymentContext()` de Inscripciones |
 | Inversión de dependencias | Cumplida para los servicios externos; pendiente para la base de datos (sin repositorios) |

@@ -31,7 +31,7 @@ import { InscriptionTrack } from './inscription-track';
       <!-- El trámite completo: dónde está el postulante y qué sigue (reemplaza la línea de estado). -->
       <app-inscription-track [summary]="s" />
       @switch (payState()) {
-        @case ('confirming') { <p class="receipt__confirm" role="status">Confirmando tu pago con Izipay… No cierres esta página.</p> }
+        @case ('confirming') { <p class="receipt__confirm" role="status">Confirmando tu pago con Culqi… No cierres esta página.</p> }
         @case ('slow') { <p class="receipt__confirm is-slow" role="status">Tu pago se está procesando y puede tardar unos minutos. Vuelve a consultar con tu DNI y tu código en «Mi inscripción»; también te avisaremos por correo.</p> }
       }
       @if (s.noVacancyRight) {

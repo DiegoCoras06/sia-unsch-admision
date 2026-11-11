@@ -79,19 +79,19 @@ El botón **Asistente de Admisión** aparece en todas las páginas. Sin clave re
 2. Opcional: `OPENROUTER_MODEL` (por defecto `anthropic/claude-haiku-5.5`) y `CHAT_DAILY_BUDGET_USD` (tope diario, por defecto US$ 1).
 3. Reinicia la API. Prueba: `node scripts/e2e-asistente.mjs`.
 
-### Pagos en línea con Izipay (ADR-016)
+### Pagos en línea con Culqi: tarjeta y Yape (ADR-024)
 
-1. En `apps/backend/.env.rds` completa `IZIPAY_MERCHANT_CODE`, `IZIPAY_API_KEY` (clave de API del nuevo botón de pagos), `IZIPAY_HASH_KEY` y, si la tienes, `IZIPAY_PUBLIC_KEY` (*sandbox-panel.izipay.pe → Desarrolladores → Claves*). **Guarda el archivo.**
-2. Comprueba las credenciales (pide un token de sesión de prueba; no cobra nada):
+1. En `apps/backend/.env.rds` completa `CULQI_PUBLIC_KEY` y `CULQI_SECRET_KEY` (*CulqiPanel → Desarrollo → API Keys*; en pruebas empiezan con `pk_test_` y `sk_test_`) y pon `PAYMENTS_PROVIDER=culqi`. **Guarda el archivo.**
+2. Comprueba las llaves (no cobra nada):
 
 ```bash
-npm run izipay:check
+npm run culqi:check -w @sia/backend
 ```
 
-3. Cambia `PAYMENTS_PROVIDER=mock` por `PAYMENTS_PROVIDER=izipay` y vuelve a ejecutar `npm run dev:rds`. En «Imprimir documentos», el botón **Pagar** abre el formulario de Izipay (ambiente de pruebas).
+3. Vuelve a ejecutar `npm run dev:rds`. En «Mi inscripción», el botón **Pagar** abre el formulario de Culqi con tarjeta y Yape. Datos de prueba: tarjeta Visa `4111 1111 1111 1111`, vencimiento futuro y CVV `123`; Yape con el celular `900 000 001` y cualquier código de 6 dígitos.
 4. Para aplicar migraciones nuevas en RDS sin recargar la semilla: `npm run rds:migrate`.
 
-Sin credenciales (`PAYMENTS_PROVIDER=mock`) el mismo botón abre una **pasarela simulada** que firma la respuesta igual que Izipay; así se prueba todo el flujo (`node scripts/e2e-pago.mjs`).
+Sin llaves (`PAYMENTS_PROVIDER=mock`), el mismo botón abre una **pasarela simulada** que cobra igual que Culqi (tarjeta, Yape o rechazo); así se prueba todo el flujo (`node scripts/e2e-pago.mjs`).
 
 ### Correo real con Amazon SES
 
@@ -216,14 +216,14 @@ flowchart LR
   OR(["📊 Operador resultados"]) --> F7
   AD(["🛠️ Admisión / Admin"]) --> F8["008 Panel administrativo"]
   F3 & F4 & F5 & F6 & F7 -.-> F10["010 Notificaciones"]
-  F5 -.-> PG[["Izipay<br/>(sandbox)"]]
+  F5 -.-> PG[["Culqi<br/>(tarjeta y Yape)"]]
   F3 -.-> RE[["RENIEC<br/>(simulado + adaptador HTTP)"]]
   F9 -.-> OA[["OpenRouter"]]
 ```
 
 ### Recorrido del MVP (solo historias P1)
 
-Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuenta y sube foto (003; la cuenta de 002 es opcional) o envía expediente y es autorizado (004) → paga en línea con Izipay sandbox (005) → descarga ficha con QR → consulta su aula (006) → ve su resultado (007).
+Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuenta y sube foto (003; la cuenta de 002 es opcional) o envía expediente y es autorizado (004) → paga en línea con Culqi, tarjeta o Yape (005) → descarga ficha con QR → consulta su aula (006) → ve su resultado (007).
 
 ---
 
@@ -237,8 +237,8 @@ Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuent
 | 4 | `/plan` de [001](specs/001-portal-publico/design.md) y [002](specs/002-cuentas-identidad/design.md): diseño técnico, decisiones, modelo de datos, `contracts/openapi.yaml` y guía de validación | ✅ Aprobado |
 | **5** | **`/tasks` + `/implement` de 001 y 002: monorepo, PostgreSQL embebido, API (M01, M02, M11, M12), portal público y cuentas en Angular con sistema de diseño UNSCH; 92 pruebas del backend y E2E de cuentas por la interfaz** | ✅ Listo para revisión |
 | **5.1** | **Ajustes pedidos: inscripción pública sin cuenta ([ADR-015](docs/adr/ADR-015-inscripcion-sin-cuenta.md)) con el formulario oficial y autocompletado por DNI, documentos oficiales como PDF dentro de la web con menú «Contenido», consulta con DNI + código, conexión a RDS con SSL verificado** | ✅ Listo para revisión |
-| **5.2** | **Catálogo oficial de 14 módulos y 143 RF: [matriz de trazabilidad](docs/trazabilidad-requisitos.md) con estado por requisito; [ADR-016](docs/adr/ADR-016-pasarela-izipay.md) Izipay sandbox; enmienda de ADR-015 (cuenta opcional del postulante); RF-14.10 respaldos en spec 008** | ✅ Listo para revisión |
-| **5.3** | **Pagos en línea (spec 005, iteración 1): módulo M04 con Izipay ([ADR-016](docs/adr/ADR-016-pasarela-izipay.md)) y pasarela simulada, firma HMAC verificada en el servidor, IPN idempotente, constancia e historial en «Imprimir documentos»; inscripción a Apta por evento. Falta el pago real en sandbox (faltan credenciales)** | 🟡 Listo, salvo sandbox |
+| **5.2** | **Catálogo oficial de 14 módulos y 143 RF: [matriz de trazabilidad](docs/trazabilidad-requisitos.md) con estado por requisito; [ADR-016](docs/adr/ADR-016-pasarela-izipay.md) Izipay sandbox (reemplazado por [ADR-024](docs/adr/ADR-024-pasarela-culqi-tarjeta-y-yape.md)); enmienda de ADR-015 (cuenta opcional del postulante); RF-14.10 respaldos en spec 008** | ✅ Listo para revisión |
+| **5.3** | **Pagos en línea (spec 005, iteración 1): módulo M04 con pasarela simulada (hoy Culqi, [ADR-024](docs/adr/ADR-024-pasarela-culqi-tarjeta-y-yape.md)), cobro verificado en el servidor, confirmación idempotente, constancia e historial en «Imprimir documentos»; inscripción a Apta por evento. Falta el pago real en sandbox (faltan credenciales)** | 🟡 Listo, salvo sandbox |
 | **5.4** | **Asistente virtual (spec 009, M08): OpenRouter con herramientas sobre datos oficiales ([ADR-017](docs/adr/ADR-017-asistente-ia-herramientas.md)), modo básico sin clave, «Consultar mi proceso» con pase firmado, derivación a una persona, control de uso y retención; 128 pruebas del backend y E2E del asistente** | ✅ Listo para revisión |
 | **5.5** | **Panel administrativo (spec 008, adelantado a pedido): ingreso del personal con contraseña + TOTP ([ADR-018](docs/adr/ADR-018-panel-acceso-personal.md)), 8 roles con permisos verificados y auditados, convocatoria (fechas, tasas, vacantes con resolución, copia), inscripciones, pagos, contenido, asistente, casos, inhabilitados, usuarios, auditoría, configuración e indicadores exportables a Excel y PDF; 143 pruebas del backend y E2E del panel** | ✅ Listo para revisión |
 | 6 | Cuenta opcional del postulante (crear con DNI + dígito verificador, código por correo, ingresar, recuperar, «Mi cuenta» con las inscripciones del mismo DNI), borrador automático de la inscripción y ficha de inscripción en PDF con QR firmado y verificación pública; 147 pruebas del backend y E2E de pago, ficha y cuenta | ✅ Aprobado |
@@ -260,7 +260,7 @@ Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuent
 | Despliegue | Debe quedar desplegado en AWS | Constitución IV, ADR-009 |
 | Observabilidad | Sin CloudWatch: OpenTelemetry + Grafana Cloud (registros, trazas, métricas y alertas) | ADR-013 |
 | Cuenta del postulante | No se exige para inscribirse; «Mi cuenta» opcional para borrador, historial y chatbot | ADR-015 (enmienda) |
-| Pasarela de pagos | Izipay, ambiente sandbox para la demo | ADR-016, spec 005 |
+| Pasarela de pagos | Culqi (tarjeta y Yape), ambiente de pruebas para la demo | ADR-024, spec 005 |
 
 ---
 

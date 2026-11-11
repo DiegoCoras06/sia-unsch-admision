@@ -1,5 +1,7 @@
 # Diseño — Pagos y conciliación
 
+> **Actualización (11/11/2026, [ADR-024](../../docs/adr/ADR-024-pasarela-culqi-tarjeta-y-yape.md)):** la pasarela es **Culqi**, con tarjeta y Yape en el mismo formulario. Lo que este documento describe sobre Izipay (formulario Krypton, firma HMAC, IPN y consulta al proveedor) quedó reemplazado: el navegador obtiene un token en Culqi Checkout, `POST /payments/charge` lo envía y el servidor crea el cargo con su llave secreta. El contrato vigente está en `contracts/openapi.yaml`.
+
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 

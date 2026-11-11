@@ -15,7 +15,7 @@ Cada integración es un **puerto** (interfaz en `domain/ports`) con un adaptador
 | Puerto | Simulado (demo) | Real (futuro) | Variable |
 |---|---|---|---|
 | `IdentityProvider` | `MockIdentityProvider`: 50 DNI sintéticos en un archivo semilla | Proveedor autorizado de RENIEC | `IDENTITY_PROVIDER=mock` |
-| `PaymentGateway` | `MockPaymentGateway`: página de pago propia marcada "SIMULADA", que envía un webhook firmado con HMAC | `IzipayPaymentGateway` en sandbox ([ADR-016](ADR-016-pasarela-izipay.md)) | `PAYMENTS_PROVIDER=mock\|izipay` |
+| `PaymentGateway` | `MockPaymentGateway`: recuadro de pago marcado "SIMULADA" que cobra como Culqi, sin cobros reales | `CulqiGateway`, tarjeta y Yape ([ADR-024](ADR-024-pasarela-culqi-tarjeta-y-yape.md)) | `PAYMENTS_PROVIDER=mock\|izipay` |
 | `BankStatementParser` | Formato CSV propio documentado | Formato de cada banco | — |
 | `EmailSender` | `FileEmailSender` en local (archivos `.html` en `apps/backend/.dev-mail/`); SES en `demo` | SES producción | `EMAIL_PROVIDER` |
 | `SmsSender` | Registro en consola | Proveedor autorizado | `SMS_PROVIDER=none` |

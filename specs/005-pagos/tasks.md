@@ -1,5 +1,7 @@
 # Tareas: Pagos en línea con Izipay (iteración 1)
 
+> **Actualización (11/11/2026, [ADR-024](../../docs/adr/ADR-024-pasarela-culqi-tarjeta-y-yape.md)):** la pasarela es **Culqi**, con tarjeta y Yape en el mismo formulario. Lo que este documento describe sobre Izipay (formulario Krypton, firma HMAC, IPN y consulta al proveedor) quedó reemplazado: el navegador obtiene un token en Culqi Checkout, `POST /payments/charge` lo envía y el servidor crea el cargo con su llave secreta. El contrato vigente está en `contracts/openapi.yaml`.
+
 > **SDD (Spec-Driven Development) · artefacto 3 de 3: tareas** (pasos de implementación verificables).
 > Anterior: [requirements.md](requirements.md) · [design.md](design.md).
 

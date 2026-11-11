@@ -1,6 +1,6 @@
 # ADR-016: Izipay como pasarela de pagos (sandbox para la demo)
 
-**Estado:** Aceptado
+**Estado:** Reemplazada por [ADR-024](ADR-024-pasarela-culqi-tarjeta-y-yape.md) (11/11/2026): Izipay cerró la tienda de pruebas y Culqi pasó a cobrar tarjeta y Yape. Se conserva como registro histórico; su código se eliminó.
 **Fecha:** 25/10/2026
 **Modifica:** [ADR-007](ADR-007-puertos-adaptadores-integraciones.md) (adaptador real de `PaymentGateway`) y la spec [005](../../specs/005-pagos/requirements.md) (FR-003)
 **Impulsores:** decisión del equipo del 25/10/2026: usar Izipay; RF-05.03 a RF-05.06, RF-05.09, RF-05.11, RF-14.05

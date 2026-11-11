@@ -17,7 +17,7 @@ Como postulante con orden de pago, quiero pagar con tarjeta o billetera digital 
 
 **Por qué esta prioridad:** desbloquea la ficha sin esperar 24 horas.
 
-**Prueba independiente:** pagar una orden en el sandbox de Izipay con una tarjeta de prueba y verificar que la inscripción pasa a Apta.
+**Prueba independiente:** pagar una orden en el ambiente de pruebas de Culqi con una tarjeta o un Yape de prueba y verificar que la inscripción pasa a Apta.
 
 **Escenarios de aceptación:**
 
@@ -25,7 +25,7 @@ Como postulante con orden de pago, quiero pagar con tarjeta o billetera digital 
 2. **Dado** que el proveedor confirma el pago, **cuando** regreso a la plataforma, **entonces** veo "Pago confirmado", el número de operación y mi inscripción como **Apta**.
 3. **Dado** que el pago es rechazado, **cuando** regreso, **entonces** veo "Pago rechazado" con el motivo genérico y puedo reintentar con la misma orden.
 4. **Dado** que cierro la ventana antes de terminar, **cuando** vuelvo a mi panel, **entonces** el estado refleja lo que el proveedor confirmó al servidor, no lo que mostró el navegador.
-5. **Dado** el entorno académico, **cuando** se muestra la página de pago, **entonces** se identifica claramente como **"Ambiente de pruebas Izipay — no se realizan cobros reales"**.
+5. **Dado** el entorno académico, **cuando** se muestra la página de pago, **entonces** se identifica claramente como **"Ambiente de pruebas de Culqi: no se realizan cobros reales"**.
 
 ---
 
@@ -80,7 +80,7 @@ Como postulante sin tarjeta, quiero pagar en ventanilla o agente con mi código 
 
 - **FR-001**: El sistema DEBE calcular el monto con la regla de tasas vigente y fijarlo en la orden. *(RF-05.01)*
 - **FR-002**: El sistema DEBE generar una orden única por inscripción y concepto, con código de postulante, monto y vencimiento. *(RF-05.02)*
-- **FR-003**: El sistema DEBE integrarse con una pasarela de pagos mediante redirección o formulario certificado del proveedor; la pasarela es **Izipay en ambiente sandbox** ([ADR-016](../../docs/adr/ADR-016-pasarela-izipay.md)), etiquetada como ambiente de pruebas; la simulada queda para pruebas automáticas. *(RF-05.03, RF-05.04, Constitución II.3)*
+- **FR-003**: El sistema DEBE integrarse con una pasarela de pagos mediante el formulario certificado del proveedor; la pasarela es **Culqi**, con tarjeta y Yape en el mismo formulario ([ADR-024](../../docs/adr/ADR-024-pasarela-culqi-tarjeta-y-yape.md)). El navegador solo obtiene un token y el servidor crea el cargo con su llave secreta.
 - **FR-004**: El sistema DEBE confirmar pagos únicamente por notificación firmada del proveedor o por conciliación de Tesorería, nunca por el navegador. *(RF-05.05, RF-05.06)*
 - **FR-005**: El sistema DEBE procesar cada notificación del proveedor una sola vez. *(RF-05.09, RNF-09)*
 - **FR-006**: El sistema DEBE registrar número de operación, monto, moneda, fecha, medio y estado. *(RF-05.07)*
@@ -108,7 +108,7 @@ Como postulante sin tarjeta, quiero pagar en ventanilla o agente con mi código 
 
 ## Supuestos
 
-- La pasarela es Izipay (ADR-016, 25/10/2026): sandbox para la demo, producción solo con convenio de la UNSCH. Los formatos de archivo de cada banco se definirán con Tesorería; mientras tanto se usa un formato de archivo simulado.
+- La pasarela es Culqi (ADR-024, 11/11/2026; reemplaza a Izipay, ADR-016): ambiente de pruebas para la demo, producción solo con convenio de la UNSCH. Los formatos de archivo de cada banco se definirán con Tesorería.
 
 ## Fuera de alcance
 
@@ -123,15 +123,15 @@ Como postulante sin tarjeta, quiero pagar en ventanilla o agente con mi código 
 |---|---|---|
 | RF-05.01 | ✅ | Simulador y cálculo de tasa en el servidor |
 | RF-05.02 | ✅ | Orden única por inscripción, con número de pedido por intento |
-| RF-05.03 | ✅ | Izipay micuentaweb probado en sandbox con tarjeta de prueba (01/11/2026), confirmado por consulta servidor a servidor; Yape con Culqi integrado |
-| RF-05.04 | ✅ | Formulario certificado de Izipay en pop-up; la tarjeta nunca pasa por el servidor |
-| RF-05.05 | 🟡 | IPN firmada en /payments/micuentaweb/notify; mientras no haya URL pública, el pago se confirma por consulta Order/Get, nunca solo por el navegador; prueba de la IPN al desplegar (Paso 11) |
+| RF-05.03 | ✅ | Culqi integrado (ADR-024): tarjeta y Yape en el mismo formulario; pasarela simulada para desarrollo y pruebas |
+| RF-05.04 | ✅ | Formulario de Culqi Checkout; la tarjeta nunca pasa por el servidor, que solo recibe un token |
+| RF-05.05 | ✅ | El servidor cobra el token en Culqi y su respuesta, servidor a servidor, confirma el pago; no depende del navegador |
 | RF-05.06 | ✅ | Confirmación solo con firma HMAC verificada; la inscripción pasa a Apta por evento |
 | RF-05.07 | ✅ | Intento con transacción, operación, autorización, medio, monto, fecha y estado |
 | RF-05.08 | ✅ | Constancia de pago en «Imprimir documentos» (no es comprobante SUNAT) |
 | RF-05.09 | ✅ | Idempotente (IPN ×10), intentos vencidos y pagos duplicados marcados |
 | RF-05.10 | ✅ | Historial de intentos con DNI + código |
-| RF-05.11 | ✅ | Conciliación con el reporte de Izipay, banco o Tesorería: conciliado, diferencias de monto o estado, solo en reporte o en sistema; resolución auditada |
+| RF-05.11 | ✅ | Conciliación con el reporte de Culqi, banco o Tesorería: conciliado, diferencias de monto o estado, solo en reporte o en sistema; resolución auditada |
 | RF-05.12 | ✅ | Anulación o devolución solo por error de cobro (RN-08), con resolución y aprobación de otra persona; el dinero lo mueve Tesorería |
 | RF-12.03 | ✅ | Recaudación, órdenes pendientes, intentos rechazados, vencidos y duplicados |
 

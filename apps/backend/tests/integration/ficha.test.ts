@@ -49,8 +49,7 @@ describe('Ficha de inscripción con QR (spec 003, Historia 5)', () => {
 
     // Pago con la pasarela simulada → evento → Apta.
     const s = (await t.request.post('/api/v1/payments/session').send({ documentNumber: '99900017', applicantCode: code }).expect(201)).body.data;
-    const signed = (await t.request.post('/api/v1/payments/mock/complete').send({ transactionId: s.transactionId, approve: true }).expect(200)).body.data;
-    await t.request.post('/api/v1/payments/confirm').send(signed).expect(200);
+    await t.request.post('/api/v1/payments/charge').send({ documentNumber: '99900017', applicantCode: code, transactionId: s.transactionId, token: 'mock_tarjeta_aprobada' }).expect(200);
     // La outbox es compartida por todos los archivos de prueba: se vacía en bucle.
     for (let i = 0; i < 50 && (await t.outbox.dispatch()) > 0; i++);
 

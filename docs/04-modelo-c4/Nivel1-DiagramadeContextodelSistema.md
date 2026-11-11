@@ -103,7 +103,7 @@ flowchart TB
 |---|---|---|---|
 | **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** | Sistema en alcance | Gestionar convocatorias, postulantes, inscripciones ordinarias y de exonerados, pagos, expedientes, exámenes, resultados, reportes y atención mediante chatbot inteligente. | Equipo de desarrollo del proyecto. |
 | **RENIEC** | Sistema externo | Validar los datos de identidad de los postulantes mediante servicios autorizados. | Registro Nacional de Identificación y Estado Civil; se consulta por medio de apiperu.dev. |
-| **Pasarela de Pagos** | Sistema externo | Procesar pagos de inscripción y proporcionar información sobre su estado. | Izipay micuentaweb (tarjeta) y Culqi (Yape), en ambiente de pruebas. |
+| **Pasarela de Pagos** | Sistema externo | Procesar pagos de inscripción y proporcionar información sobre su estado. | Culqi (tarjeta y Yape), en ambiente de pruebas. |
 | **OpenRouter API** | Sistema externo | Proporcionar acceso a modelos de inteligencia artificial para responder consultas del chatbot. | OpenRouter. |
 | **Servicio de Correo Electrónico** | Sistema externo | Enviar confirmaciones, observaciones y notificaciones a los postulantes. | Amazon SES (región us-east-2). |
 | **Servicio SMS** | Sistema externo opcional | Enviar avisos y recordatorios mediante mensajes de texto. | No implementado; los avisos llegan por correo. |
@@ -154,7 +154,7 @@ flowchart TB
 | **Tema** | **Detalle** | **Resolución (02/11/2026)** |
 |---|---|---|
 | **Acceso a RENIEC** | Confirmar los requisitos institucionales, credenciales y servicios disponibles para validar el DNI de los postulantes. | ✅ apiperu.dev con token; simulador para desarrollo |
-| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. | ✅ Izipay micuentaweb para tarjeta (ADR-016) y Culqi para Yape (ADR-019); conciliación en Tesorería. Faltan las claves de producción |
+| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. | ✅ Culqi para tarjeta y Yape (ADR-024), en ambiente de pruebas |
 | **Servicio de correo** | Definir el proveedor encargado de enviar confirmaciones y notificaciones. | ✅ Amazon SES |
 | **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. | No se implementa por ahora (opcional, RC16) |
 | **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. | ✅ Modelo configurable (`OPENROUTER_MODEL`), presupuesto diario y modo básico sin clave (ADR-017) |

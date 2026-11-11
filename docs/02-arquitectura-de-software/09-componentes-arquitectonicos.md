@@ -49,7 +49,7 @@ flowchart TB
     S3["Amazon S3<br/>Documentos"]
     OUTBOX["Amazon SQS<br/>con Outbox en PostgreSQL"]
 
-    EXT["Servicios externos<br/>RENIEC (apiperu), Izipay, Culqi,<br/>OpenRouter y Amazon SES"]
+    EXT["Servicios externos<br/>RENIEC (apiperu), Culqi,<br/>OpenRouter y Amazon SES"]
 
     U --> FE
     FE --> API
@@ -127,5 +127,5 @@ Por estas razones, se considera adecuada para el Sistema Integral de Gestión de
 - **Redis se retiró del diagrama:** no se usa; queda como opción si la prueba de carga lo justifica.
 - **Mensajería con Amazon SQS:** los eventos se guardan en una bandeja (outbox) en PostgreSQL, se envían a SQS y los procesa un worker (ADR-021). El código está listo; la cola se crea en el despliegue. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso.
 - **SMS no se implementó** (opcional según RC16): los avisos van por correo.
-- La pasarela de pagos son dos adaptadores: Izipay micuentaweb para tarjeta y Culqi para Yape.
+- La pasarela de pagos es Culqi, que cobra tarjeta y Yape con un solo adaptador (ADR-024); la pasarela simulada se usa en desarrollo y pruebas.
 

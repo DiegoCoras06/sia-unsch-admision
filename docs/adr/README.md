@@ -21,13 +21,14 @@ Cada ADR documenta **una** decisión significativa: el contexto, lo que se decid
 | [013](ADR-013-observabilidad.md) | Observabilidad con OpenTelemetry + Grafana Cloud, sin CloudWatch | Aceptado | 25/10/2026 |
 | [014](ADR-014-entorno-local-sin-docker.md) | Entorno local sin Docker: PostgreSQL embebido, archivos y correo en disco | Aceptado | 25/10/2026 |
 | [015](ADR-015-inscripcion-sin-cuenta.md) | Inscripción pública sin cuenta; seguimiento con DNI + código de postulante (enmienda: cuenta opcional) | Aceptado | 25/10/2026 |
-| [016](ADR-016-pasarela-izipay.md) | Izipay como pasarela de pagos (sandbox para la demo) | Aceptado | 25/10/2026 |
+| [016](ADR-016-pasarela-izipay.md) | Izipay como pasarela de pagos (sandbox para la demo) | Reemplazada por 024 | 25/10/2026 |
 | [017](ADR-017-asistente-ia-herramientas.md) | Asistente con OpenRouter que responde solo con herramientas internas | Aceptado | 26/10/2026 |
 | [018](ADR-018-panel-acceso-personal.md) | Panel administrativo: acceso del personal con segundo factor y permisos por rol | Aceptado | 26/10/2026 |
-| [019](ADR-019-yape-con-culqi.md) | Yape con Culqi junto al checkout de Izipay | Aceptado | 29/10/2026 |
+| [019](ADR-019-yape-con-culqi.md) | Yape con Culqi junto al checkout de Izipay | Ampliada por 024 | 29/10/2026 |
 | [020](ADR-020-picos-de-demanda-cache-cloudfront.md) | Picos de demanda con caché en CloudFront antes que Redis | Aceptado | 03/11/2026 |
 | [021](ADR-021-cola-de-eventos-sqs.md) | Cola de eventos con Amazon SQS detrás de la bandeja de eventos | Aceptado | 03/11/2026 |
 | [022](ADR-022-codigos-de-respaldo-personal.md) | Códigos de respaldo para el segundo factor del personal | Aceptado | 03/11/2026 |
 | [023](ADR-023-portal-instalable-boleto-sin-conexion.md) | Portal instalable y boleto de examen sin conexión | Aceptado | 05/11/2026 |
+| [024](ADR-024-pasarela-culqi-tarjeta-y-yape.md) | Culqi como única pasarela de pagos, con tarjeta y Yape | Aceptado | 11/11/2026 |
 
 Plantilla: [`plantilla.md`](plantilla.md)

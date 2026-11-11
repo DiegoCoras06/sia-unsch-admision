@@ -1,6 +1,6 @@
 // E2E del pago en línea (spec 005, T330) por la interfaz, con la pasarela que tenga configurada la API.
 // Registra una inscripción por la API, la busca en «Mi inscripción», paga y verifica «Pago confirmado» y estado Apta.
-// Con la pasarela simulada aprueba en el diálogo simulado; con Izipay se detiene al abrir el formulario (pago manual).
+// Con la pasarela simulada paga con tarjeta en el recuadro simulado; con Culqi se detiene al abrir su formulario (pago manual).
 // Uso: node scripts/e2e-pago.mjs [DNI sintético 99900020-99900040] [carpeta-capturas]
 import { mkdirSync, readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
@@ -50,15 +50,15 @@ try {
 
   await payButton.click();
   const mock = page.locator('.pay__mock');
-  const izipayFrame = page.locator('iframe[src*="izipay"], #iframe-payment, .izipay-modal');
-  await Promise.race([mock.waitFor({ timeout: 30000 }), izipayFrame.first().waitFor({ timeout: 30000 })]);
+  const culqiFrame = page.locator('iframe[src*="culqi"]');
+  await Promise.race([mock.waitFor({ timeout: 30000 }), culqiFrame.first().waitFor({ timeout: 30000 })]);
   if (!(await mock.isVisible())) {
-    await page.screenshot({ path: `${out}/2-formulario-izipay.png`, fullPage: true });
-    step('Se abrió el formulario de Izipay (sandbox): completa el pago con una tarjeta de prueba');
+    await page.screenshot({ path: `${out}/2-formulario-culqi.png`, fullPage: true });
+    step('Se abrió el formulario de Culqi (pruebas): completa el pago con la tarjeta o el Yape de prueba');
     process.exit(0);
   }
   step('Se abrió la pasarela simulada');
-  await page.click('button:has-text("Aprobar pago")');
+  await page.click('button:has-text("Pagar con tarjeta")');
   await page.locator('.pay__ok').waitFor({ timeout: 20000 });
   step(`Constancia: ${(await page.locator('.pay__ok dl').innerText()).replace(/\s+/g, ' ').slice(0, 140)}`);
   await page.locator('.receipt__status:not(.is-wait)').waitFor({ timeout: 15000 });

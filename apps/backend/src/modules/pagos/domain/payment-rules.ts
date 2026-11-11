@@ -1,4 +1,4 @@
-/** Reglas del módulo M05 Pagos (spec 005, ADR-016). */
+/** Reglas del módulo M04 Pagos (spec 005, ADR-024). */
 
 export type AttemptStatus = 'INICIADO' | 'AUTORIZADO' | 'RECHAZADO' | 'VENCIDO' | 'DUPLICADO';
 export type OrderStatus = 'PENDIENTE' | 'PAGADA';
@@ -6,7 +6,7 @@ export type OrderStatus = 'PENDIENTE' | 'PAGADA';
 /** Yape solo acepta pagos de hasta S/ 2000 (ADR-019). */
 export const YAPE_MAX_AMOUNT = 2000;
 
-/** El token de sesión de Izipay vale 15 minutos; damos 5 más para que llegue la notificación. */
+/** Un intento de pago vale 20 minutos: tiempo de sobra para completar Culqi Checkout. */
 export const ATTEMPT_TTL_SECONDS = 20 * 60;
 
 export const ATTEMPT_LABEL: Record<AttemptStatus, string> = {
@@ -17,7 +17,7 @@ export const ATTEMPT_LABEL: Record<AttemptStatus, string> = {
   DUPLICADO: 'Pago duplicado - se gestionará la devolución',
 };
 
-/** Montos con 2 decimales y punto, sin separador de miles, como los pide Izipay. */
+/** Montos con 2 decimales y punto, sin separador de miles. */
 export function formatAmount(value: { toString(): string } | number): string {
   return Number(value.toString()).toFixed(2);
 }
@@ -35,11 +35,11 @@ export function newTransactionId(now: Date, random: () => number = Math.random):
   return `${now.getTime()}${String(Math.floor(random() * 10_000)).padStart(4, '0')}`;
 }
 
-/** Resultado normalizado de un mensaje firmado del proveedor. */
+/** Resultado normalizado del cargo en la pasarela. */
 export interface ProviderResult {
   transactionId: string;
   approved: boolean;
-  /** Error de comunicación: no hay resultado todavía (Izipay `021` / `COMMUNICATION_ERROR`). */
+  /** Error de comunicación: no hay resultado todavía (por ejemplo, un 5xx de Culqi). */
   inconclusive: boolean;
   code: string;
   message: string;

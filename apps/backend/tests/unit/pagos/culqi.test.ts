@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CulqiYapeGateway, parseCulqiCharge } from '../../../src/modules/pagos/infrastructure/culqi-gateway.js';
+import { CulqiGateway, parseCulqiCharge } from '../../../src/modules/pagos/infrastructure/culqi-gateway.js';
 
 // Llaves inventadas solo para la prueba.
-const gw = new CulqiYapeGateway({ publicKey: 'pk_test_prueba', secretKey: 'sk_test_prueba' });
+const gw = new CulqiGateway({ publicKey: 'pk_test_prueba', secretKey: 'sk_test_prueba' });
 const req = { transactionId: 'T2026000001', orderNumber: '2700001701', applicantCode: '27000017', amountCents: 25000, email: 'p@example.com', token: 'ype_test_abc', description: 'Admisión' };
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe('Culqi: cargo con token de Yape (ADR-019)', () => {
+describe('Culqi: cargo con token de tarjeta o de Yape (ADR-024)', () => {
   it('un cargo exitoso se normaliza como aprobado con medio YAPE y número de operación', () => {
     const r = parseCulqiCharge(201, {
       object: 'charge', id: 'chr_test_1', amount: 25000, currency_code: 'PEN', reference_code: 'REF123', authorization_code: 'AUT9',
@@ -40,5 +40,20 @@ describe('Culqi: cargo con token de Yape (ADR-019)', () => {
   it('sin conexión con Culqi responde 502 con un mensaje claro', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
     await expect(gw.charge(req)).rejects.toMatchObject({ status: 502 });
+  });
+
+  it('un cargo con tarjeta guarda el medio CARD y la tarjeta enmascarada con su marca', () => {
+    const r = parseCulqiCharge(201, {
+      object: 'charge', id: 'chr_test_3', amount: 25000, currency_code: 'PEN', reference_code: 'REF7',
+      outcome: { type: 'venta_exitosa', code: 'AUT0000', user_message: 'Su compra ha sido exitosa.' },
+      source: { card_number: '411111******1111', iin: { card_brand: 'Visa' } },
+    }, { ...req, token: 'tkn_test_abc' });
+    expect(r).toMatchObject({ approved: true, payMethod: 'CARD', cardMasked: 'Visa 411111******1111' });
+  });
+
+  it('solo acepta tokens de Culqi de tarjeta o de Yape', () => {
+    expect(gw.acceptsToken('tkn_test_abc123')).toBe(true);
+    expect(gw.acceptsToken('ype_live_XYZ9')).toBe(true);
+    expect(gw.acceptsToken('token-invalido')).toBe(false);
   });
 });

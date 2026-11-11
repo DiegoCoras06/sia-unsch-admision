@@ -19,7 +19,7 @@ export function treasuryRoutes(service: TreasuryService, staff: { authenticate: 
   r.get('/admin/reconciliations', ...c, handle(async (_req, res) => res.json({ data: await service.runs() })));
   r.post('/admin/reconciliations', ...c, handle(async (req, res) => {
     const b = parse(z.object({
-      source: z.enum(['IZIPAY', 'TESORERIA', 'BANCO']), fileName: z.string().trim().min(1).max(160), content: z.string().min(10).max(3_000_000), from: day, to: day,
+      source: z.enum(['CULQI', 'TESORERIA', 'BANCO']), fileName: z.string().trim().min(1).max(160), content: z.string().min(10).max(3_000_000), from: day, to: day,
     }), req.body);
     res.status(201).json({ data: await service.reconcile(b, actor(req), meta(req)) });
   }));

@@ -1,4 +1,4 @@
-// API pública del módulo M05 Pagos (spec 005, ADR-016).
+// API pública del módulo M04 Pagos (spec 005, ADR-024).
 import type { Logger } from 'pino';
 import type { AuditLog } from '../../shared/audit/audit.js';
 import type { Clock } from '../../shared/clock/clock.js';
@@ -7,34 +7,20 @@ import type { Outbox } from '../../shared/events/outbox.js';
 import type { RateLimiter } from '../../shared/rate-limit/rate-limiter.js';
 import type { PaymentContext } from '../inscripciones/index.js';
 import { PaymentService } from './application/payment-service.js';
-import type { PaymentGateway, YapeGateway } from './domain/ports.js';
-import { CulqiYapeGateway, type CulqiConfig } from './infrastructure/culqi-gateway.js';
-import { IzipayPaymentGateway, type IzipayConfig } from './infrastructure/izipay-gateway.js';
-import { MiCuentaWebGateway, type MiCuentaWebConfig } from './infrastructure/micuentaweb-gateway.js';
+import type { PaymentGateway } from './domain/ports.js';
+import { CulqiGateway, type CulqiConfig } from './infrastructure/culqi-gateway.js';
 import { MockPaymentGateway } from './infrastructure/mock-gateway.js';
 import { pagosRoutes } from './presentation/routes.js';
 import { TreasuryService } from './application/treasury-service.js';
 import { treasuryRoutes } from './presentation/treasury-routes.js';
 import type { RequestHandler } from 'express';
 
-/** Elige el adaptador de la pasarela; solo app.ts lo llama (ADR-007). */
-export function createPaymentGateway(cfg: { provider: 'mock' | 'izipay' | 'micuentaweb'; mockHashKey: string; izipay: Partial<IzipayConfig>; micuentaweb?: Partial<MiCuentaWebConfig> }): PaymentGateway {
-  if (cfg.provider === 'mock') return new MockPaymentGateway(cfg.mockHashKey);
-  if (cfg.provider === 'micuentaweb') {
-    const { shopId, password, publicKey, hmacKey } = cfg.micuentaweb ?? {};
-    if (!shopId || !password || !publicKey || !hmacKey) throw new Error('Faltan credenciales de micuentaweb');
-    return new MiCuentaWebGateway({ ...cfg.micuentaweb, environment: cfg.micuentaweb?.environment ?? 'sandbox', shopId, password, publicKey, hmacKey });
-  }
-  const { merchantCode, apiKey, hashKey } = cfg.izipay;
-  if (!merchantCode || !apiKey || !hashKey) throw new Error('Faltan credenciales de Izipay');
-  return new IzipayPaymentGateway({ ...cfg.izipay, environment: cfg.izipay.environment ?? 'sandbox', merchantCode, apiKey, hashKey });
-}
-
-/** Yape con Culqi (ADR-019): solo si están las dos llaves; si no, Yape no se ofrece. */
-export function createYapeGateway(cfg: Partial<CulqiConfig>): YapeGateway | null {
-  const { publicKey, secretKey } = cfg;
-  if (!publicKey || !secretKey) return null;
-  return new CulqiYapeGateway({ ...cfg, publicKey, secretKey });
+/** Elige el adaptador de la pasarela; solo app.ts lo llama (ADR-007). Culqi cobra tarjeta y Yape (ADR-024). */
+export function createPaymentGateway(cfg: { provider: 'mock' | 'culqi'; culqi: Partial<CulqiConfig> }): PaymentGateway {
+  if (cfg.provider === 'mock') return new MockPaymentGateway();
+  const { publicKey, secretKey } = cfg.culqi;
+  if (!publicKey || !secretKey) throw new Error('Faltan las llaves de Culqi');
+  return new CulqiGateway({ ...cfg.culqi, publicKey, secretKey });
 }
 
 export function createPagosModule(deps: {
@@ -45,7 +31,6 @@ export function createPagosModule(deps: {
   limiter: RateLimiter;
   logger: Logger;
   gateway: PaymentGateway;
-  yape?: YapeGateway | null;
   inscriptions: { paymentContext(documentNumber: string, applicantCode: string): Promise<PaymentContext> };
 }) {
   const service = new PaymentService(deps);
@@ -64,4 +49,4 @@ export function createTesoreria(deps: { db: Db; audit: AuditLog; authenticate: R
   return { service, router: treasuryRoutes(service, deps) };
 }
 
-export type { PaymentGateway, YapeGateway } from './domain/ports.js';
+export type { PaymentGateway } from './domain/ports.js';

@@ -76,7 +76,7 @@ Servicio externo que permite enviar códigos de verificación y recordatorios. E
 | A01 Postulante | Portal público: inscripción sin cuenta, pago, «Imprimir documentos», «Buscar aula», «Ver puntaje», asistente y cuenta opcional. |
 | A02 a A08 Personal | Panel administrativo con 8 roles (Administrador general, Oficina de Admisión, Tesorería, Evaluador documental, Coordinador de examen, Operador de resultados, Soporte y Auditor), contraseña + segundo factor TOTP (ADR-018). |
 | A09 RENIEC | Por medio de apiperu.dev (`ApiPeruIdentityProvider`); con simulador para desarrollo. |
-| A10 Pasarela de pagos | Tarjeta con Izipay micuentaweb (ADR-016) y Yape con Culqi (ADR-019), en ambiente de pruebas. |
+| A10 Pasarela de pagos | Culqi: tarjeta y Yape en el mismo formulario (ADR-024), en ambiente de pruebas. |
 | A11 Servicio de correo | Amazon SES (`SesEmailSender`). |
 | A12 OpenRouter API | Asistente virtual con herramientas sobre datos oficiales (ADR-017); modo básico por reglas si no hay clave. |
 | A13 Servicio SMS | No implementado (opcional). |

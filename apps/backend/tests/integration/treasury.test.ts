@@ -47,8 +47,7 @@ beforeAll(async () => {
   }).expect(201);
   const code = r.body.data.applicantCode;
   const s = (await t.request.post('/api/v1/payments/session').send({ documentNumber: DNI, applicantCode: code }).expect(201)).body.data;
-  const msg = (await t.request.post('/api/v1/payments/mock/complete').send({ transactionId: s.transactionId, approve: true }).expect(200)).body.data;
-  await t.request.post('/api/v1/payments/confirm').send(msg).expect(200);
+  await t.request.post('/api/v1/payments/charge').send({ documentNumber: DNI, applicantCode: code, transactionId: s.transactionId, token: 'mock_tarjeta_aprobada' }).expect(200);
   const a = await t.db.paymentAttempt.findUniqueOrThrow({ where: { transactionId: s.transactionId } });
   paid = { orderNumber: a.orderNumber, transactionId: a.transactionId, amount: Number(a.amount).toFixed(2) };
   // Segundo cobro de la misma orden (en banco y en línea): la pasarela lo marca Duplicado (probado en payments.test.ts).
@@ -61,7 +60,7 @@ beforeAll(async () => {
 describe('Conciliación (Historia 4, RF-05.11)', () => {
   it('cruza el reporte con el sistema y clasifica cada partida', async () => {
     const content = `pedido;monto;estado;fecha\n${paid.orderNumber};${paid.amount};PAGADO;${today}\n${duplicate.orderNumber};1.00;PAGADO;${today}\nZZ9999999;250.00;PAGADO;${today}\n`;
-    const run = (await t.request.post('/api/v1/admin/reconciliations').set(as(tes1)).send({ source: 'IZIPAY', fileName: 'izipay.csv', content, from: today, to: today }).expect(201)).body.data;
+    const run = (await t.request.post('/api/v1/admin/reconciliations').set(as(tes1)).send({ source: 'CULQI', fileName: 'izipay.csv', content, from: today, to: today }).expect(201)).body.data;
     const by = (ref: string) => run.items.find((i: { reference: string }) => i.reference === ref);
     expect(by(paid.orderNumber).result).toBe('CONCILIADO');
     expect(by(duplicate.orderNumber).result).toBe('DIFERENCIA_MONTO');

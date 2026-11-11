@@ -6,7 +6,7 @@ import type {
   AnnouncementDto, ApiResponse, AssistantPassDto, AssistantReplyDto, DossierDto, AreaDto, ContactRequestDto, CurrentCallDto, FeeDto, FeeQuoteDto, HomeContentDto,
   IdentityResultDto, InscriptionOptionsDto, InscriptionRequestDto, InscriptionSummaryDto, OfficialDocumentDto,
   OptionDetailDto, OptionSummaryDto, OptionsMeta, PageMeta, PaymentAttemptResultDto, PaymentSessionDto, PaymentStatusDto,
-  QuotaCategoryDto, RequirementDto, SignedPaymentMessageDto, StatsDto, SyllabusNodeDto, YapeSessionDto,
+  QuotaCategoryDto, RequirementDto, StatsDto, SyllabusNodeDto,
 } from '@sia/contracts';
 import { map, type Observable } from 'rxjs';
 
@@ -163,16 +163,12 @@ export class ApiService {
   inboxReminders = (documentNumber: string, applicantCode: string, reminders: boolean) =>
     this.http.put<ApiResponse<InboxDto>>(`${API}/notifications/preferences`, { documentNumber, applicantCode, reminders }).pipe(map((r) => r.data));
 
-  // ── 005 Pagos en línea (ADR-016) ─────────────────────────────────
+  // ── 005 Pagos en línea con Culqi: tarjeta y Yape (ADR-024) ─────────
   paymentSession = (documentNumber: string, applicantCode: string) =>
     this.http.post<ApiResponse<PaymentSessionDto>>(`${API}/payments/session`, { documentNumber, applicantCode }).pipe(map((r) => r.data));
-  paymentConfirm = (message: SignedPaymentMessageDto) =>
-    this.http.post<ApiResponse<PaymentAttemptResultDto>>(`${API}/payments/confirm`, message).pipe(map((r) => r.data));
-  /** Yape con Culqi (ADR-019): abre el intento y luego cobra el token de Culqi Checkout. */
-  yapeSession = (documentNumber: string, applicantCode: string) =>
-    this.http.post<ApiResponse<YapeSessionDto>>(`${API}/payments/yape/session`, { documentNumber, applicantCode }).pipe(map((r) => r.data));
-  yapeCharge = (documentNumber: string, applicantCode: string, transactionId: string, token: string) =>
-    this.http.post<ApiResponse<PaymentAttemptResultDto>>(`${API}/payments/yape/charge`, { documentNumber, applicantCode, transactionId, token }).pipe(map((r) => r.data));
+  /** Cobra el token que entregó Culqi Checkout (o el de la pasarela simulada). */
+  paymentCharge = (documentNumber: string, applicantCode: string, transactionId: string, token: string) =>
+    this.http.post<ApiResponse<PaymentAttemptResultDto>>(`${API}/payments/charge`, { documentNumber, applicantCode, transactionId, token }).pipe(map((r) => r.data));
   paymentStatus = (documentNumber: string, applicantCode: string) =>
     this.get<PaymentStatusDto>('/payments/status', { documentNumber, applicantCode });
   // ── 009 Asistente virtual (ADR-017) ──────────────────────────────
@@ -184,8 +180,6 @@ export class ApiService {
   assistantHandoff = (body: { conversationId: string; name: string; email: string }) =>
     this.http.post<ApiResponse<{ caseNumber: string }>>(`${API}/assistant/handoff`, body).pipe(map((r) => r.data));
 
-  paymentMockComplete = (transactionId: string, approve: boolean) =>
-    this.http.post<ApiResponse<SignedPaymentMessageDto>>(`${API}/payments/mock/complete`, { transactionId, approve }).pipe(map((r) => r.data));
 }
 
 /** Error HTTP de Angular cuyo cuerpo es el sobre de error de la API (contrato compartido con el backend). */

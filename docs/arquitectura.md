@@ -39,7 +39,7 @@ flowchart TB
 
   subgraph Externos["Sistemas externos"]
     RENIEC["🪪 Proveedor de identidad<br/>RENIEC <i>(simulado)</i>"]
-    PAY["💳 Izipay<br/><i>pasarela de pagos (sandbox)</i>"]
+    PAY["💳 Culqi<br/><i>tarjeta y Yape (pruebas)</i>"]
     BANK["🏦 Entidades financieras<br/>Caja SMM · BN · Interbank<br/><i>archivos de recaudación</i>"]
     LLM["🤖 OpenRouter<br/><i>modelo de lenguaje</i>"]
     MAIL["✉️ Amazon SES<br/><i>correo</i>"]
@@ -76,7 +76,7 @@ flowchart TB
     FILES[("<b>Almacén de documentos</b><br/>Amazon S3 privado<br/><i>fotos, expedientes, PDF</i>")]
   end
 
-  EXT["Sistemas externos<br/>RENIEC · Izipay · OpenRouter · SES"]
+  EXT["Sistemas externos<br/>RENIEC, Culqi, OpenRouter y SES"]
 
   USER -->|"HTTPS"| SPA
   SPA -->|"JSON / HTTPS<br/>JWT + cookie HttpOnly"| API
@@ -261,7 +261,7 @@ sequenceDiagram
   actor P as Postulante
   participant W as Aplicación web
   participant API as API (M04 Pagos)
-  participant PG as Izipay (sandbox)
+  participant PG as Culqi (pruebas)
   participant DB as PostgreSQL
   participant Q as Amazon SQS
   participant WK as Worker
@@ -269,15 +269,15 @@ sequenceDiagram
   participant M09 as M09 Notificaciones
 
   P->>W: "Pagar en línea"
-  W->>API: POST /api/v1/payments/orders/{id}/checkout
-  API->>PG: Crear sesión de pago (monto fijado en servidor)
-  PG-->>API: URL de pago
-  API-->>W: Redirigir
-  P->>PG: Paga
-  PG->>API: Webhook firmado (eventId)
-  API->>API: Verificar firma, monto y moneda
-  API->>DB: BEGIN · registrar eventId (único) · pago=CONFIRMADO · outbox(PagoConfirmado) · COMMIT
-  API-->>PG: 200 OK (también si el eventId ya existía)
+  W->>API: POST /api/v1/payments/session
+  API-->>W: Llave pública, pedido y monto (fijado en el servidor)
+  P->>PG: Paga con tarjeta o Yape en Culqi Checkout
+  PG-->>W: Token del pago
+  W->>API: POST /api/v1/payments/charge (token)
+  API->>PG: Crear el cargo con la llave secreta
+  PG-->>API: Cargo aprobado
+  API->>API: Verificar monto y moneda contra la orden
+  API->>DB: BEGIN, intento AUTORIZADO, orden PAGADA, outbox(PagoConfirmado), COMMIT
   API->>Q: Enviar ID del evento
   Q->>WK: Entregar ID del evento
   WK->>DB: Leer y reservar el evento

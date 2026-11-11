@@ -25,7 +25,7 @@ const RESULTS = [
   selector: 'app-admin-treasury',
   imports: [FormsModule, AdmToast],
   template: `
-    <header class="adm-head"><div><h1>Tesorería</h1><p>Concilia los pagos con el reporte de Izipay, del banco o de Tesorería, y registra anulaciones solo por error de cobro: el pago válido de la inscripción no se devuelve (Art. 18).</p></div></header>
+    <header class="adm-head"><div><h1>Tesorería</h1><p>Concilia los pagos con el reporte de Culqi, del banco o de Tesorería, y registra anulaciones solo por error de cobro: el pago válido de la inscripción no se devuelve (Art. 18).</p></div></header>
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { @if (session.can(t.perm)) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="go(t.id)">{{ t.label }}</button> } }
     </div>
@@ -37,7 +37,7 @@ const RESULTS = [
           <form class="adm-panel adm-form" (ngSubmit)="reconcile()">
             <h2>Nueva conciliación</h2>
             <div class="two">
-              <div class="field"><label for="t-src">Fuente</label><select id="t-src" class="select" name="src" [(ngModel)]="r.source"><option value="IZIPAY">Izipay</option><option value="BANCO">Banco</option><option value="TESORERIA">Tesorería UNSCH</option></select></div>
+              <div class="field"><label for="t-src">Fuente</label><select id="t-src" class="select" name="src" [(ngModel)]="r.source"><option value="CULQI">Culqi</option><option value="BANCO">Banco</option><option value="TESORERIA">Tesorería UNSCH</option></select></div>
               <div class="field"><label for="t-file">Reporte CSV</label><input id="t-file" class="input" type="file" accept=".csv,text/csv" (change)="pick($event)"></div>
             </div>
             <div class="two">
@@ -135,7 +135,7 @@ export class TreasuryAdminPage implements OnInit {
   protected file: File | null = null;
   protected filter = '';
   protected notes: Record<string, string> = {};
-  protected r = { source: 'IZIPAY', from: today(), to: today() };
+  protected r = { source: 'CULQI', from: today(), to: today() };
   protected a = { reference: '', kind: 'DEVOLUCION', reason: 'COBRO_DUPLICADO', detail: '', resolution: '' };
 
   ngOnInit() {

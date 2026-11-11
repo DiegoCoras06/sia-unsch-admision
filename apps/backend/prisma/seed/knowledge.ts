@@ -62,9 +62,9 @@ export const knowledgeEntries: { topic: string; question: string; answer: string
   {
     topic: 'pagos',
     question: '¿Cómo y dónde pago?',
-    answer: 'Paga en línea desde «Imprimir documentos» (tarjeta, Yape o Plin con el formulario seguro de Izipay) o en ventanilla de Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante. Con el pago en línea, tu inscripción queda Apta en cuanto se confirma.',
+    answer: 'Paga en línea desde «Imprimir documentos» (tarjeta o Yape con el formulario seguro de Culqi) o en ventanilla de Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante. Con el pago en línea, tu inscripción queda Apta en cuanto se confirma.',
     source: 'Reglamento 2027-I, Art. 18; Pasos de inscripción',
-    keywords: 'pagar pago donde como banco ventanilla yape plin tarjeta izipay linea',
+    keywords: 'pagar pago donde como banco ventanilla yape tarjeta culqi linea',
   },
   {
     topic: 'pagos',

@@ -57,7 +57,7 @@ flowchart TB
 
     RENIEC["RENIEC vía apiperu<br/>Validación de identidad"]
 
-    PAYMENT["Izipay micuentaweb y Culqi<br/>Tarjeta y Yape"]
+    PAYMENT["Culqi<br/>Tarjeta y Yape"]
 
     OPENROUTER["OpenRouter API<br/>Inteligencia Artificial"]
 
