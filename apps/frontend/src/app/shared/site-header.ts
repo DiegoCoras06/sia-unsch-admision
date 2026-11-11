@@ -21,8 +21,8 @@ type Menu = 'contenido' | 'pasos' | null;
 
         <!-- Pantallas angostas: los dos botones del portal oficial siguen a la vista junto a «Menú». -->
         <div class="bar__cta">
-          <a routerLink="/inscripcion" class="act act--green">Inscripción</a>
-          <a routerLink="/reinscripcion" class="act act--blue">Reinscripción</a>
+          <a routerLink="/inscripcion" class="act act--green" data-icon="inscripcion">Inscripción</a>
+          <a routerLink="/reinscripcion" class="act act--blue" data-icon="reinscripcion">Reinscripción</a>
         </div>
         <button class="menu-btn" type="button" (click)="mobile.set(!mobile())" [attr.aria-expanded]="mobile()" aria-controls="nav-principal">
           {{ mobile() ? 'Cerrar' : 'Menú' }}
@@ -82,8 +82,8 @@ type Menu = 'contenido' | 'pasos' | null;
             <li><a routerLink="/contacto" routerLinkActive="is-active" ariaCurrentWhenActive="page">Contactos</a></li>
           </ul>
           <div class="nav__actions">
-            <a routerLink="/inscripcion" class="act act--green">Inscripción</a>
-            <a routerLink="/reinscripcion" class="act act--blue">Reinscripción</a>
+            <a routerLink="/inscripcion" class="act act--green" data-icon="inscripcion">Inscripción</a>
+            <a routerLink="/reinscripcion" class="act act--blue" data-icon="reinscripcion">Reinscripción</a>
           </div>
         </nav>
       </div>
@@ -130,18 +130,30 @@ type Menu = 'contenido' | 'pasos' | null;
     .drop a:hover { color: var(--accent); background: #faf6f6; }
 
     .nav__actions { display: flex; gap: 2.25rem; margin-left: auto; }
-    .act { display: inline-flex; align-items: center; min-height: 2.6rem; padding: 0 1rem; font-size: 1.0625rem; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; color: #1f1f1f; }
-    .act--green { background: #5cb85c; }
-    .act--green:hover { background: #4cae4c; }
-    .act--blue { background: #5bc0de; }
-    .act--blue:hover { background: #46b8da; }
+    /* Botones del portal oficial (verde y celeste), con relieve sutil, ícono y brillo al pasar el puntero.
+       Tonos más profundos que el original para que el texto blanco cumpla el contraste (WCAG AA). */
+    .act { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 0.55rem; min-height: 2.75rem; padding: 0 1.15rem;
+      border-radius: 8px; border: 1px solid var(--act-edge); color: #fff; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none;
+      background: linear-gradient(180deg, var(--act-top), var(--act-bottom));
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 6px 14px -8px var(--act-glow);
+      transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), filter var(--fast) var(--ease); }
+    .act::before { width: 1.05em; height: 1.05em; }
+    .act::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
+      transform: translateX(-120%); transition: transform 600ms var(--ease); }
+    .act:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 10px 20px -10px var(--act-glow); }
+    .act:hover::after { transform: translateX(120%); }
+    .act:active { transform: translateY(0); filter: brightness(0.97); box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.18); }
+    .act:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    .act--green { --act-top: #1c7f42; --act-bottom: #166b37; --act-edge: #145f31; --act-glow: rgb(22 107 55 / 0.7); }
+    .act--blue { --act-top: #1b7bb5; --act-bottom: #145f8f; --act-edge: #11547f; --act-glow: rgb(20 95 143 / 0.7); }
+    @media (prefers-reduced-motion: reduce) { .act, .act::after { transition: none; } .act:hover { transform: none; } .act:hover::after { transform: translateX(-120%); } }
     .menu-btn { display: none; }
     .bar__cta { display: none; }
     @media (max-width: 1280px) {
       .bar__inner { min-height: 4.75rem; gap: 0.5rem; }
       .brand { margin-right: auto; }
       .bar__cta { display: flex; gap: 0.4rem; }
-      .bar__cta .act { min-height: 2.75rem; padding: 0 0.75rem; font-size: 0.875rem; }
+      .bar__cta .act { min-height: 2.75rem; padding: 0 0.8rem; font-size: 0.8125rem; gap: 0.4rem; }
       .nav__actions { display: none; }
       .menu-btn { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; font: inherit; font-weight: 700; background: #f1f1f1; border: 0; cursor: pointer; }
       .nav { display: none; position: absolute; inset: 4.75rem 0 auto 0; background: #fff; padding: 1rem var(--margin) 2rem; flex-direction: column; align-items: stretch; gap: 1.5rem; max-height: calc(100vh - 4.75rem); overflow: auto; box-shadow: 0 16px 32px rgb(0 0 0 / 0.14); }
@@ -154,7 +166,8 @@ type Menu = 'contenido' | 'pasos' | null;
     }
     @media (max-width: 480px) {
       .brand img { width: 44px; }
-      .bar__cta .act { padding: 0 0.5rem; font-size: 0.75rem; letter-spacing: 0; }
+      .bar__cta .act { padding: 0 0.55rem; font-size: 0.75rem; letter-spacing: 0.01em; }
+      .bar__cta .act::before { display: none; }
       .menu-btn { padding: 0 0.75rem; }
     }
   `,
