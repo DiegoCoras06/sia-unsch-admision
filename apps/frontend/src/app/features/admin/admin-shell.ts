@@ -52,7 +52,7 @@ const ROLE_NAMES: Record<string, string> = {
     <div class="adm">
       <aside class="adm-side" [class.is-open]="menu()">
         <a routerLink="/admin" class="adm-brand">
-          <img src="img/escudo-unsch-80.webp" alt="" width="34" height="41">
+          <img src="img/escudo-unsch-oficial-120.webp" srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x" alt="" width="34" height="46">
           <span><strong>Panel de Admisión</strong><small>UNSCH, proceso 2027-I</small></span>
         </a>
         <nav aria-label="Secciones del panel">

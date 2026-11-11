@@ -15,7 +15,7 @@ import { InscriptionTrack } from './inscription-track';
     @let s = summary();
     <article class="receipt" aria-labelledby="rc-title">
       <header class="receipt__head">
-        <img src="img/escudo-unsch-240.webp" alt="" width="56" height="68">
+        <img src="img/escudo-unsch-oficial-120.webp" srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x" alt="" width="51" height="68">
         <div>
           <p class="receipt__org">Universidad Nacional de San Cristóbal de Huamanga, Admisión 2027-I</p>
           <h2 id="rc-title">Orden de pago y constancia de inscripción</h2>

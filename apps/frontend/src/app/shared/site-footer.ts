@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
     <footer class="foot field-accent">
       <div class="frame">
         <div class="foot__brand">
-          <img src="img/escudo-unsch-1677-500.webp" alt="" width="96" height="89" loading="lazy">
+          <img src="img/escudo-unsch-oficial-240.webp" srcset="img/escudo-unsch-oficial-240.webp 1x, img/escudo-unsch-oficial.png 2x" alt="" width="72" height="97" loading="lazy">
           <div>
             <p class="foot__uni">Universidad Nacional de San Cristóbal de Huamanga</p>
             <p class="foot__dir">Dirección de Admisión, fundada en 1677</p>
@@ -69,7 +69,7 @@ import { RouterLink } from '@angular/router';
   styles: `
     .foot { padding-block: clamp(3.5rem, 7vw, 5.5rem) 2rem; }
     .foot__brand { display: flex; align-items: center; gap: clamp(1rem, 2.5vw, 1.75rem); padding-bottom: clamp(2rem, 4vw, 3rem); margin-bottom: clamp(2rem, 4vw, 3rem); border-bottom: 1px solid rgb(255 255 255 / 0.18); }
-    .foot__brand img { width: clamp(4rem, 7vw, 6rem); height: auto; flex: none; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.25)); }
+    .foot__brand img { width: clamp(3.5rem, 5vw, 4.75rem); height: auto; flex: none; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.25)); }
     .foot__brand p { margin: 0; max-width: none; }
     .foot__uni { font-size: clamp(1.25rem, 2.4vw, 1.875rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
     .foot__dir { margin-top: 0.35rem !important; font-weight: 600; color: var(--gold); }

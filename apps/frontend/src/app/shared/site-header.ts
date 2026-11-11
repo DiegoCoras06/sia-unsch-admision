@@ -16,7 +16,7 @@ type Menu = 'contenido' | 'pasos' | null;
     <header class="bar">
       <div class="frame bar__inner">
         <a routerLink="/" class="brand" aria-label="Admisión UNSCH 2027-I, inicio">
-          <img src="img/escudo-unsch-1677-112.webp" alt="" width="56" height="52">
+          <img src="img/escudo-unsch-oficial-120.webp" srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x" alt="" width="47" height="63">
         </a>
 
         <!-- Pantallas angostas: los dos botones del portal oficial siguen a la vista junto a «Menú». -->
@@ -64,7 +64,7 @@ type Menu = 'contenido' | 'pasos' | null;
                       <li><a routerLink="/carta-aval" data-icon="carta">Modelo de carta aval <span class="badge">Nuevo</span></a></li>
                     </ul>
                   </div>
-                  <img class="mega__crest" src="img/escudo-unsch-1677-500.webp" loading="lazy" alt="Escudo de la UNSCH: Real, Pontificia y Nacional, 1677" width="330" height="307">
+                  <img class="mega__crest" src="img/escudo-unsch-oficial-240.webp" srcset="img/escudo-unsch-oficial-240.webp 1x, img/escudo-unsch-oficial.png 2x" loading="lazy" alt="Escudo de la UNSCH: Real, Pontificia y Nacional, 1677" width="330" height="307">
                 </div>
               }
             </li>
@@ -93,7 +93,7 @@ type Menu = 'contenido' | 'pasos' | null;
     .bar { background: #fff; position: sticky; top: 0; z-index: 30; box-shadow: 0 1px 0 #e6e6e6, 0 8px 18px -14px rgb(29 20 21 / 0.35); }
     .bar__inner { display: flex; align-items: center; gap: 2rem; min-height: 5.75rem; position: relative; }
     .brand { display: flex; align-items: center; text-decoration: none; margin-right: 1.5rem; }
-    .brand img { width: 56px; height: auto; }
+    .brand img { width: auto; height: 63px; filter: drop-shadow(0 2px 3px rgb(29 20 21 / 0.18)); }
     .nav { display: flex; align-items: center; gap: 2rem; flex: 1; }
     .nav__list { display: flex; gap: 0.25rem; list-style: none; margin: 0; padding: 0; align-items: center; }
     .nav__list > li > a, .nav__list > li > button {
@@ -120,7 +120,7 @@ type Menu = 'contenido' | 'pasos' | null;
     .mega a[data-icon]::before { color: var(--accent); }
     .mega a .badge { margin-left: auto; }
     .badge { background: #2a6fb0; color: #fff; font-size: 0.8125rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; }
-    .mega__crest { width: 100%; max-width: 330px; height: auto; align-self: center; justify-self: center; }
+    .mega__crest { width: 100%; max-width: 220px; height: auto; align-self: center; justify-self: center; }
     .has-menu { position: relative; }
     .has-menu.is-wide { position: static; }
     .drop { position: absolute; top: 100%; left: 0; min-width: 13rem; background: #fff; border-top: 2px solid #222; padding: 0.25rem 0; box-shadow: 0 16px 32px rgb(0 0 0 / 0.14); }
@@ -165,7 +165,7 @@ type Menu = 'contenido' | 'pasos' | null;
       .mega__crest { display: none; }
     }
     @media (max-width: 480px) {
-      .brand img { width: 44px; }
+      .brand img { height: 50px; }
       .bar__cta .act { padding: 0 0.55rem; font-size: 0.75rem; letter-spacing: 0.01em; }
       .bar__cta .act::before { display: none; }
       .menu-btn { padding: 0 0.75rem; }

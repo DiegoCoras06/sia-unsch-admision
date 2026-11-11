@@ -24,7 +24,7 @@ const LEAD = {
       <div class="frame">
         <div class="lg">
           <aside class="lg__side" aria-label="Tu cuenta de postulante">
-            <img class="lg__crest" src="img/escudo-unsch-1677-112.webp" alt="" width="56" height="52">
+            <img class="lg__crest" src="img/escudo-unsch-oficial-120.webp" srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x" alt="" width="47" height="63">
             <p class="lg__kicker">Admisión UNSCH 2027-I</p>
             <p class="lg__title">Tu cuenta de postulante</p>
             <ul class="lg__list">
@@ -101,7 +101,7 @@ const LEAD = {
       background: var(--ground); border-radius: var(--radius-lg); overflow: hidden;
       box-shadow: 0 0 0 1px rgb(29 20 21 / 0.06), 0 1px 2px -1px rgb(29 20 21 / 0.08), 0 12px 32px -12px rgb(29 20 21 / 0.18); }
     .lg__side { display: grid; align-content: start; gap: 0.9rem; padding: clamp(1.75rem, 4vw, 2.75rem); background: var(--accent); color: var(--accent-ink); }
-    .lg__crest { width: 56px; height: auto; }
+    .lg__crest { width: 47px; height: auto; }
     .lg__kicker { margin: 0.5rem 0 0; font-size: var(--size-note); font-weight: 600; color: var(--gold); }
     .lg__title { margin: 0; font-size: clamp(1.625rem, 2.6vw, 2.125rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
     .lg__list { margin: 0.5rem 0 0; padding: 0; list-style: none; display: grid; gap: 0; border-top: 1px solid rgb(255 255 255 / 0.22); }

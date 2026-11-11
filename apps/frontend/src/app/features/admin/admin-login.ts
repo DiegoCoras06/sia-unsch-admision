@@ -28,7 +28,7 @@ const STEP_LABEL: Record<string, string> = {
     <main class="login">
       <aside class="cover" aria-label="Dirección de Admisión">
         <div class="cover__top">
-          <img class="cover__crest" src="img/escudo-unsch-1677-500.webp" alt="Escudo de la UNSCH" width="500" height="465">
+          <img class="cover__crest" src="img/escudo-unsch-oficial-240.webp" srcset="img/escudo-unsch-oficial-240.webp 1x, img/escudo-unsch-oficial.png 2x" alt="Escudo de la UNSCH" width="500" height="465">
           <p class="cover__uni">Universidad Nacional de San Cristóbal de Huamanga</p>
           <p class="cover__office">Dirección de Admisión</p>
         </div>

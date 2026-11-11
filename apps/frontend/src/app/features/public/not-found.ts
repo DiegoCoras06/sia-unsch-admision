@@ -15,7 +15,7 @@ const LINKS = [
   template: `
     <section class="frame section nf">
       <div class="nf__head">
-        <img src="img/escudo-unsch-240.webp" alt="" width="120" height="112">
+        <img src="img/escudo-unsch-oficial-240.webp" srcset="img/escudo-unsch-oficial-240.webp 1x, img/escudo-unsch-oficial.png 2x" alt="" width="90" height="121">
         <div>
           <p class="nf__code">Error 404</p>
           <h1>No encontramos esa página</h1>
