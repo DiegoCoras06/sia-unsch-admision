@@ -44,10 +44,10 @@ export class AssistantTools {
       function: { name, description, parameters: { type: 'object', properties, required, additionalProperties: false } },
     });
     return [
-      fn('buscar_conocimiento', 'Busca en la base de conocimientos oficial (reglamento, pasos, examen, pagos, contacto). Úsala para cualquier duda general.',
+      fn('buscar_conocimiento', 'Busca en la base de conocimientos oficial (reglamento, pasos, examen, cómo y dónde pagar, contacto). Úsala para cualquier duda general y para todo «cómo» o «dónde».',
         { consulta: { type: 'string', description: 'La duda del postulante en pocas palabras' } }, ['consulta']),
       fn('consultar_cronograma', 'Fechas oficiales de cada etapa de la convocatoria vigente (inscripciones, exámenes, publicación, entrega de constancias) y su estado.'),
-      fn('consultar_tasas', 'Montos oficiales del derecho de inscripción por modalidad y tipo de colegio, recargos y otros pagos (Tabla N.° 3).'),
+      fn('consultar_tasas', 'Montos oficiales del derecho de inscripción por modalidad y tipo de colegio, recargos y otros pagos (Tabla N.° 3). Solo montos: para cómo y dónde pagar, usa buscar_conocimiento.'),
       fn('consultar_vacantes', 'Vacantes de un programa de estudios en la convocatoria vigente.',
         { programa: { type: 'string', description: 'Nombre o parte del nombre del programa, p. ej. "medicina" o "sistemas"' } }, ['programa']),
       fn('consultar_requisitos', 'Requisitos documentales generales y de las submodalidades de exonerados.'),
