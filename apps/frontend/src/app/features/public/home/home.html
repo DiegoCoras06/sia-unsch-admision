@@ -170,11 +170,18 @@
       <h2 id="exam-title" appReveal>El día del examen</h2>
       <div class="md md--light" appReveal="60" [innerHTML]="content()?.blocks?.['exam_day'] | md"></div>
     </div>
-    <div class="exam__score" appReveal="120">
-      <p><span class="exam__num">450</span> de 1000 puntos es el mínimo para alcanzar vacante.</p>
-      <p>100 preguntas de conocimientos, 10 de aptitud vocacional y 10 de actitud personal. Las respuestas incorrectas no restan.</p>
-      <img src="img/escudo-unsch-240.webp" alt="Escudo de la UNSCH: San Cristóbal cruzando el río con el Niño" width="120" height="146" loading="lazy">
-    </div>
+    <aside class="exam__score" appReveal="120" aria-label="Puntaje mínimo y estructura del examen">
+      <p class="exam__label">Puntaje mínimo para alcanzar vacante</p>
+      <p class="exam__value"><span class="exam__num">450</span><span class="exam__of">de 1000 puntos</span></p>
+      <div class="exam__bar" role="img" aria-label="450 de 1000 puntos, el 45 % del puntaje máximo"><span style="width: 45%"></span></div>
+      <p class="exam__label exam__label--gap">Estructura del examen</p>
+      <ul class="exam__parts">
+        <li><strong>100</strong><span>preguntas de conocimientos</span></li>
+        <li><strong>10</strong><span>de aptitud vocacional</span></li>
+        <li><strong>10</strong><span>de actitud personal</span></li>
+      </ul>
+      <p class="exam__note">Las respuestas incorrectas no restan puntos.</p>
+    </aside>
   </div>
 </section>
 
