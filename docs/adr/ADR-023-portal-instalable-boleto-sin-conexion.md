@@ -21,7 +21,7 @@ El postulante necesita su aula y asiento justo en la puerta del campus, donde mi
 
 | Alternativa | A favor | En contra | Motivo del descarte |
 |---|---|---|---|
-| Guardar las respuestas del API en el service worker | Sin botón | Deja datos personales en el dispositivo sin que el usuario lo decida | Incumple AC11 Privacidad |
+| Guardar las respuestas del API en el service worker | Sin botón | Deja datos personales en el dispositivo sin que el usuario lo decida | Incumple AC04 Seguridad (privacidad) |
 | Guardar el boleto automáticamente | Un paso menos | En un equipo compartido o una cabina, el siguiente lo vería | El guardado debe ser una decisión |
 | Solo el PDF | Ya existe | Hay que descargarlo antes y buscarlo en el celular | Se mantiene como respaldo |
 

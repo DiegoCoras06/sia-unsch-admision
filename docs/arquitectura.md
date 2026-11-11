@@ -295,15 +295,15 @@ sequenceDiagram
 |---|---|---|---|
 | Rendimiento | 2 000 consultas de resultados simultáneas → p95 < 3 s | Escalado de Lambda, índices, consultas de solo lectura, caché HTTP en CloudFront para contenido público | RNF-04, RNF-05 |
 | Disponibilidad | Falla de una zona de AWS → el servicio continúa | Lambda multi-AZ; RDS con respaldo automático; en `demo`, RDS en una sola AZ (riesgo aceptado, ADR-009) | RNF-06, RNF-12 |
-| Observabilidad | Error 500 en producción → el equipo recibe alerta en menos de 5 min con la traza | OpenTelemetry + Grafana Cloud, alertas y comprobación sintética (ADR-013) | RNF-12 |
+| Disponibilidad (monitoreo) | Error 500 en producción → el equipo recibe alerta en menos de 5 min con la traza | OpenTelemetry + Grafana Cloud, alertas y comprobación sintética (ADR-013) | RNF-12 |
 | Integridad | Webhook repetido 10 veces → un solo pago | Restricción única por `eventId`, transacciones, outbox | RNF-09 |
 | Seguridad | Postulante cambia el ID en la URL → 404 | Autorización por propietario en cada caso de uso, IDs no secuenciales (UUID) | RNF-03 |
 | Seguridad | Robo de contraseña de personal → sin acceso | MFA TOTP obligatorio para personal | RF-13.06 |
 | Auditabilidad | Cambio de vacantes → quién, cuándo, antes y después | `audit_events` solo de inserción; rol de base de datos sin UPDATE ni DELETE en esa tabla | RNF-10 |
-| Modificabilidad | Nueva convocatoria 2027-II → sin cambiar código | Configuración como datos y copia de convocatoria | RNF-07 |
-| Modificabilidad | Contratar RENIEC real → sin tocar el dominio | Puerto `IdentityProvider` con adaptador nuevo | RNF-07 |
-| Privacidad | Pregunta al chatbot con DNI → el proveedor no lo recibe | Enmascarado antes de enviar; herramientas internas autorizadas | RNF-11 |
-| Facilidad de prueba | Simular el 08/11 para probar el recargo | Reloj inyectable (`shared/clock`) | — |
+| Mantenibilidad | Nueva convocatoria 2027-II → sin cambiar código | Configuración como datos y copia de convocatoria | RNF-07 |
+| Mantenibilidad | Contratar RENIEC real → sin tocar el dominio | Puerto `IdentityProvider` con adaptador nuevo | RNF-07 |
+| Seguridad (privacidad) | Pregunta al chatbot con DNI → el proveedor no lo recibe | Enmascarado antes de enviar; herramientas internas autorizadas | RNF-11 |
+| Mantenibilidad (pruebas) | Simular el 08/11 para probar el recargo | Reloj inyectable (`shared/clock`) | — |
 
 ---
 

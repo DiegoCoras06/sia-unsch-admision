@@ -28,5 +28,5 @@ Comparación entre lo comprometido en `docs/01` a `docs/04` y el código impleme
 ## Pendientes
 
 1. **Repositorios:** 29 de 30 servicios usan Prisma directamente; extraer `InscripcionRepository` y `PagoRepository` primero.
-2. **Pruebas de calidad:** carga con 200 usuarios (EQ-01), accesibilidad automática con axe (EQ-13) y reglas de dependencia automáticas (EQ-15).
+2. **Pruebas de calidad:** carga con 200 usuarios (EQ-01), accesibilidad automática con axe (EQ-07) y reglas de dependencia automáticas (EQ-05).
 3. **Despliegue en AWS (Paso 11):** Lambda, API Gateway, CloudFront, respaldos, Grafana Cloud y URL pública para la IPN de pagos.
