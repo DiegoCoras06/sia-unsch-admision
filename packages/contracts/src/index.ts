@@ -334,6 +334,9 @@ export interface InscriptionRequestDto {
 export interface InscriptionSummaryDto {
   applicantCode: string;
   fullName: string;
+  /** Apellidos y nombres por separado, para la orden de pago. */
+  surnames: string;
+  firstNames: string;
   maskedDocument: string;
   maskedEmail: string;
   modality: string;
