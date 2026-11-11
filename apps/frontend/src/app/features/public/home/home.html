@@ -201,30 +201,48 @@
 <!-- Comunicados y palabra institucional -->
 <section class="section field-stone" aria-labelledby="news-title">
   <div class="frame news">
-    <div class="stack-lg">
-      <h2 id="news-title" appReveal>Comunicados</h2>
+    <div class="news__main">
+      <header class="news__head">
+        <div>
+          <p class="news__kicker">Novedades del concurso</p>
+          <h2 id="news-title" appReveal>Comunicados</h2>
+        </div>
+        <a routerLink="/comunicados" class="news__all">Todos los comunicados</a>
+      </header>
       <ul class="news__list">
         @for (n of news(); track n.id) {
           <li appReveal="60">
-            <p class="note">{{ longDate(n.publishedAt) }}</p>
-            <h3>{{ n.title }}</h3>
-            <p>{{ n.bodyMarkdown }}</p>
+            <article class="news__card">
+              <time class="news__date" [attr.datetime]="n.publishedAt" [attr.aria-label]="longDate(n.publishedAt)">
+                <span class="news__day">{{ day(n.publishedAt) }}</span>
+                <span class="news__month">{{ month(n.publishedAt) }}</span>
+              </time>
+              <div class="news__body">
+                <p class="news__meta"><span class="news__tag" [attr.data-type]="n.type">{{ newsType[n.type] }}</span>{{ longDate(n.publishedAt) }}</p>
+                <h3>{{ n.title }}</h3>
+                <p class="news__text">{{ n.bodyMarkdown }}</p>
+                <a routerLink="/comunicados" class="news__more">Leer el comunicado</a>
+              </div>
+            </article>
           </li>
         } @empty {
           @switch (newsState()) {
             @case ('loading') { <li><div class="skel" role="status" aria-label="Cargando comunicados"><span></span><span></span><span></span></div></li> }
-            @case ('error') { <li><p role="status">No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.</p></li> }
-            @default { <li><p>No hay comunicados publicados.</p></li> }
+            @case ('error') { <li class="news__empty"><p role="status">No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.</p></li> }
+            @default { <li class="news__empty"><p>No hay comunicados publicados.</p></li> }
           }
         }
       </ul>
-      <a routerLink="/comunicados" class="link-arrow">Todos los comunicados</a>
     </div>
     @if (content()?.authorities?.[0]; as a) {
-      <blockquote class="quote" appReveal="120">
-        <p>{{ a.message }}</p>
-        <footer><strong>{{ a.name }}</strong>, {{ a.position }}</footer>
-      </blockquote>
+      <figure class="quote" appReveal="120">
+        <svg class="quote__mark" viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><path fill="currentColor" d="M0 36V22C0 9.6 6.4 2.2 19.2 0l1.6 4.4C13.4 6.6 10 11 9.6 18H19v18H0Zm28 0V22C28 9.6 34.4 2.2 47.2 0l1.6 4.4C41.4 6.6 38 11 37.6 18H47v18H28Z"/></svg>
+        <blockquote class="quote__text"><p>{{ a.message }}</p></blockquote>
+        <figcaption class="quote__by">
+          <span class="quote__name">{{ a.name }}</span>
+          <span class="quote__role">{{ a.position }}</span>
+        </figcaption>
+      </figure>
     }
   </div>
 </section>

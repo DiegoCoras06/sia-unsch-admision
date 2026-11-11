@@ -87,6 +87,10 @@ export class HomePage {
   }
 
   protected readonly longDate = longDate;
+  /** Día y mes abreviado para la fecha destacada de cada comunicado (hora de Lima). */
+  protected day = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', timeZone: 'America/Lima' });
+  protected month = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { month: 'short', timeZone: 'America/Lima' }).replace('.', '');
+  protected readonly newsType: Record<string, string> = { COMUNICADO: 'Comunicado', FE_ERRATAS: 'Fe de erratas', RESULTADO: 'Resultados' };
   protected left = (endsAt: string) => closesIn(endsAt, this.store.call()!.now);
   /** Tres días o menos: se resalta para que nadie se quede fuera. */
   protected soon = (endsAt: string) => daysUntil(endsAt, this.store.call()!.now) <= 3;
