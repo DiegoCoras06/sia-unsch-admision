@@ -15,7 +15,7 @@
 /* Degradado fijo: funde la foto con el campo guinda y le da profundidad, sin animación. */
 .hero__media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(122 28 34 / 0.75), rgb(122 28 34 / 0) 34%), linear-gradient(0deg, rgb(29 20 21 / 0.22), rgb(29 20 21 / 0) 30%); }
 .hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: 30% center; animation: drift 24s var(--ease) both; }
-@keyframes drift { from { transform: scale(1.08); } to { transform: scale(1); } }
+@keyframes drift { from { transform: scale(1.03); } to { transform: scale(1); } }
 
 /* Ahora en curso */
 .now { padding-block: clamp(2rem, 4vw, 3rem); }
