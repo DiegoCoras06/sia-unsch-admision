@@ -38,11 +38,22 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     <section class="page field-accent">
       <div class="frame grid">
         <div class="main">
-          <h1>Buscar aula</h1>
-          <p class="lead">La relación de aptos y tu aula se publican 24 horas antes del examen. Consulta con tu documento y tu código de postulante.</p>
+          <header class="tool-head">
+            <p class="tool-head__kicker" data-icon="aula">Día del examen</p>
+            <h1>Buscar aula</h1>
+            <p class="lead">La relación de aptos y tu aula se publican 24 horas antes del examen. Consulta con tu documento y tu código de postulante.</p>
+          </header>
           @if (dates().length) {
             <ul class="pubdates" aria-label="Fechas de publicación de aulas">
-              @for (d of dates(); track d.name) { <li><strong>{{ d.name }}:</strong> aulas desde el {{ d.publish }} · examen el {{ d.exam }}@if (d.ready) { <span class="pubdates__ok">publicado</span> }</li> }
+              @for (d of dates(); track d.name) {
+                <li class="pubdates__card">
+                  <p class="pubdates__head"><strong>{{ d.name }}</strong><span class="pubdates__state" [class.is-ready]="d.ready">{{ d.ready ? 'Aulas publicadas' : 'Próximamente' }}</span></p>
+                  <dl>
+                    <div><dt>Aulas desde</dt><dd>{{ d.publish }}</dd></div>
+                    <div><dt>Examen</dt><dd>{{ d.exam }}</dd></div>
+                  </dl>
+                </li>
+              }
             </ul>
           }
           @if (shownKept(); as t) {
@@ -139,8 +150,16 @@ const hour = (iso: string) => new Date(iso).toLocaleTimeString('es-PE', { timeZo
     .keep { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; max-width: none; font-size: var(--size-note); color: var(--ink-soft); }
     .keep__out { min-height: 2.75rem; padding: 0; font: inherit; color: var(--ink-soft); background: none; border: 0; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
     @media print { .keep { display: none; } }
-    .pubdates { list-style: none; margin: 0; padding: 0.9rem 1.1rem; display: grid; gap: 0.35rem; background: var(--accent-press); }
-    .pubdates__ok { margin-left: 0.4rem; padding: 0.1rem 0.45rem; background: var(--gold); color: var(--ink); font-size: var(--size-note); font-weight: 700; }
+    /* Una tarjeta por modalidad: cuándo se publican las aulas y cuándo es el examen. */
+    .pubdates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0.75rem; }
+    .pubdates__card { display: grid; gap: 0.75rem; padding: 1rem 1.15rem; border-radius: var(--radius-lg); background: var(--accent-press); border: 1px solid rgb(255 255 255 / 0.12); }
+    .pubdates__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin: 0; }
+    .pubdates__head strong { font-size: 1.125rem; }
+    .pubdates__state { padding: 0.15rem 0.6rem; border-radius: 999px; background: rgb(255 255 255 / 0.12); font-size: var(--size-note); font-weight: 700; }
+    .pubdates__state.is-ready { background: var(--gold); color: var(--ink); }
+    .pubdates dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .pubdates dt { font-size: var(--size-note); color: var(--gold); font-weight: 600; }
+    .pubdates dd { margin: 0.15rem 0 0; font-weight: 600; line-height: 1.35; }
     .page { padding-block: clamp(2.5rem, 6vw, 5rem); }
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
     .main { display: grid; gap: 1.5rem; min-width: 0; }

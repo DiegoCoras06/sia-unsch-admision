@@ -95,6 +95,16 @@ strong { font-weight: 700; }
 .field-accent { background: var(--accent); color: var(--accent-ink); }
 .field-stone { background: var(--stone); }
 .lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.45; max-width: 46ch; }
+/* Cabecera de las páginas de trámites: etiqueta con ícono, título y una línea de lo que se puede hacer. */
+.tool-head { display: grid; gap: 1rem; }
+.tool-head__kicker { display: inline-flex; align-items: center; gap: 0.55rem; justify-self: start; margin: 0; padding: 0.35rem 0.8rem 0.35rem 0.6rem;
+  border-radius: 999px; background: rgb(255 255 255 / 0.1); border: 1px solid rgb(255 255 255 / 0.18); font-size: var(--size-note); font-weight: 700; color: var(--gold); }
+.tool-head__kicker::before { width: 1.05rem; height: 1.05rem; }
+.tool-head .lead { margin: 0; max-width: 52ch; opacity: 0.94; }
+.tool-head__chips { list-style: none; margin: 0.25rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tool-head__chips li { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.8rem; border-radius: var(--radius); background: rgb(255 255 255 / 0.08);
+  font-size: var(--size-note); font-weight: 600; }
+.tool-head__chips li::before { width: 1rem; height: 1rem; color: var(--gold); background: var(--gold); }
 .note { font-size: var(--size-note); color: var(--ink-soft); }
 .stack > * + * { margin-top: 1rem; }
 .stack-lg > * + * { margin-top: 2rem; }
@@ -180,6 +190,7 @@ strong { font-weight: 700; }
 .field { display: grid; gap: 0.4rem; }
 .field label { font-weight: 600; }
 .field .hint { font-size: var(--size-note); color: var(--ink-soft); }
+.field-accent .field .hint { color: rgb(255 255 255 / 0.85); }
 .input, .select {
   width: 100%; min-height: 3.25rem; padding: 0.75rem 1rem; font: inherit; color: var(--ink);
   background: var(--ground); border: 1px solid var(--field-line); border-radius: var(--radius);
