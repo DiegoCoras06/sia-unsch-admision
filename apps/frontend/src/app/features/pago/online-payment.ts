@@ -353,8 +353,8 @@ export class OnlinePayment implements OnInit {
   }
 
   /** Abre la ventana con Yape elegido y explica que la tarjeta no está disponible por ahora. */
-  private openWithoutCard(e: unknown): void {
-    this.cardDown.set(`${apiErrorMessage(e)} Mientras tanto, puedes pagar con Yape.`);
+  private openWithoutCard(_e: unknown): void {
+    this.cardDown.set('El pago con tarjeta (Izipay) no está disponible en este momento. Paga con Yape o inténtalo con tarjeta más tarde.');
     this.order.set('Se asigna al pagar');
     this.payWith.set('yape');
     this.krypton.set(true);
