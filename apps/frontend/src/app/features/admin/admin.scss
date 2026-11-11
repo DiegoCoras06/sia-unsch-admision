@@ -11,6 +11,8 @@
 .adm-group { margin: 1rem 0.75rem 0.35rem; font-size: 0.8125rem; font-weight: 600; color: var(--gold); letter-spacing: 0.01em; }
 .adm-side nav a { display: block; color: inherit; text-decoration: none; padding: 0.5rem 0.75rem; border-radius: var(--radius); font-weight: 600; font-size: 0.9375rem; transition: background-color var(--fast) var(--ease); }
 .adm-side nav a:hover { background: var(--accent-press); }
+.adm-side nav a[data-icon] { display: flex; align-items: center; gap: 0.65rem; }
+.adm-side nav a[data-icon]::before { width: 1.1rem; height: 1.1rem; opacity: 0.9; }
 .adm-side nav a.is-active { background: var(--ground); color: var(--accent); }
 .adm-side nav a:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .adm-user { padding: 1rem; background: var(--accent-press); font-size: 0.875rem; display: grid; gap: 0.35rem; }
@@ -73,8 +75,11 @@
 .adm-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; padding: 0.75rem 0.9rem; background: var(--ground); border-radius: var(--radius-lg); }
 .adm-filters .field { min-width: 9rem; }
 .adm-filters .field label { font-size: 0.8125rem; }
-.adm .input, .adm .select { padding: 0.5rem 0.65rem; font-size: 0.9375rem; }
-.adm .btn { padding: 0.55rem 1rem; font-size: 0.9375rem; }
+.adm .input, .adm .select { min-height: 2.75rem; padding: 0.5rem 0.65rem; font-size: 0.9375rem; }
+.adm .btn { min-height: 2.75rem; padding: 0.55rem 1rem; font-size: 0.9375rem; }
+/* Secundarios: fondo blanco sobre los paneles, así se leen como botón y no como texto con borde. */
+.adm .btn--quiet { background: var(--ground); }
+.adm .btn--quiet:hover { background: var(--stone); }
 .adm-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .adm-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
@@ -92,8 +97,9 @@
 .adm-table .nowrap { white-space: nowrap; }
 
 /* Estados de las tablas (una sola regla para las 20 pantallas). Sin filas y sin mensaje propio: mensaje común. */
-.adm-table tr.adm-none td { padding: 1.25rem 0.65rem; color: var(--ink-soft); font-size: 0.9375rem; background: none; }
-.adm-table-wrap:has(> .adm-table > tbody:empty)::after { content: 'Sin registros por ahora.'; display: block; padding: 1.25rem 0.65rem; color: var(--ink-soft); font-size: 0.9375rem; }
+.adm-table tr.adm-none td { padding: 2rem 1rem; color: var(--ink-soft); font-size: 0.9375rem; background: none; text-align: center; }
+.adm-table tr.adm-none td::before { content: ''; display: block; width: 2rem; height: 2rem; margin: 0 auto 0.6rem; background: var(--field-line); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 13h5l2 3h4l2-3h5'/%3E%3Cpath d='M5.5 6h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.adm-table-wrap:has(> .adm-table > tbody:empty)::after { content: 'Sin registros por ahora.'; display: block; text-align: center; padding: 2rem 1rem; color: var(--ink-soft); font-size: 0.9375rem; }
 /* Cargando: filas de relleno en lugar del mensaje de vacío, que sería falso mientras llegan los datos. */
 .adm-main.is-loading tr.adm-none { display: none; }
 .adm-main.is-loading .adm-table-wrap:has(> .adm-table > tbody:empty)::after,
@@ -151,4 +157,32 @@ details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: va
   .adm-form .two { grid-template-columns: 1fr; }
   .adm-bars li { grid-template-columns: 1fr 3rem; }
   .adm-bars .bar { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* Subir archivos: recuadro punteado con el botón de elegir integrado; también acepta soltar el archivo encima. */
+.adm input[type='file'].input { min-height: auto; padding: 0.85rem; border: 1.5px dashed var(--field-line); background: #fcfbf9; color: var(--ink-soft); cursor: pointer; }
+.adm input[type='file'].input:hover { border-color: var(--accent); background: var(--ground); }
+.adm input[type='file'].input::file-selector-button { margin-right: 0.85rem; padding: 0.5rem 0.95rem; border: 1px solid var(--field-line); border-radius: var(--radius); background: var(--ground); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.adm input[type='file'].input:hover::file-selector-button { border-color: var(--accent); color: var(--accent); }
+
+/* Mientras llega la primera respuesta, las páginas sin contenido muestran un panel de carga en lugar de quedar en blanco. */
+.adm-main.is-loading > router-outlet + *:not(:has(.adm-panel, .adm-table))::after {
+  content: ''; display: block; height: 15rem; margin-top: 1.25rem; padding: 1.25rem; border-radius: var(--radius-lg);
+  background: var(--ground) repeating-linear-gradient(180deg, var(--stone) 0 1.1rem, transparent 1.1rem 2.2rem) content-box;
+  animation: skel-pulse 1.2s ease-in-out infinite alternate;
+}
+
+/* 5. Avisos flotantes: confirmaciones que se van solas y errores que esperan a que se cierren. */
+.adm-toast { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 60; width: min(26rem, calc(100vw - 2.5rem)); display: flex; gap: 0.75rem; align-items: start;
+  padding: 0.85rem 0.6rem 0.85rem 3rem; border-radius: var(--radius-lg); background: #e3f1e8; color: #164d2a; font-size: 0.9375rem; font-weight: 500;
+  box-shadow: 0 14px 30px -14px rgb(29 20 21 / 0.45); animation: toast-in 220ms var(--ease); }
+.adm-toast.err { background: #f7e3e3; color: #6d1212; }
+.adm-toast p { margin: 0; flex: 1; padding-top: 0.1rem; }
+.adm-toast__x { flex: none; width: 2rem; height: 2rem; margin: -0.25rem 0; border: 0; border-radius: var(--radius); background: none; color: inherit; font: inherit; font-size: 1.35rem; line-height: 1; cursor: pointer; }
+.adm-toast__x:hover { background: rgb(0 0 0 / 0.06); }
+.adm-toast__x:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(0.75rem); } }
+@media (prefers-reduced-motion: reduce) {
+  .adm-toast { animation: none; }
+  .adm-main.is-loading > router-outlet + *::after { animation: none; }
 }

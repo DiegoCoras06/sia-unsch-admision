@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminSession } from '../../../core/admin-session';
@@ -10,13 +11,13 @@ interface Venue { id: string; code: string; name: string; address: string; activ
 /** Spec 006, Historia 2: sedes, pabellones, pisos y aulas con capacidad, puerta y accesibilidad (RF-08.01, RF-08.02). */
 @Component({
   selector: 'app-admin-venues',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AdmToast],
   template: `
     <header class="adm-head">
       <div><h1>Sedes y aulas</h1><p>Capacidad máxima, puerta de ingreso y accesibilidad de cada aula. Las aulas accesibles reciben primero a quienes pidieron adecuación.</p></div>
       <a class="btn btn--quiet" routerLink="/admin/examenes">Exámenes y distribución</a>
     </header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @for (v of venues(); track v.id) {
       <section class="adm-panel">

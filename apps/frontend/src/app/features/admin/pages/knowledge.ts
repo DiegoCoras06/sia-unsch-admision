@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -9,10 +10,10 @@ interface Usage { day: string; requests: number; aiReplies: number; tokensIn: nu
 /** Asistente virtual: base de conocimientos editable (RF-10.12) e indicadores de uso (RF-10.15, RF-12.10). */
 @Component({
   selector: 'app-admin-knowledge',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Asistente virtual</h1><p>Las respuestas que cargues aquí las usa el asistente desde el siguiente mensaje. Cita siempre la fuente oficial.</p></div></header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     <section class="adm-kpis">
       <div class="adm-kpi"><strong>{{ total('requests') }}</strong><span>Consultas (30 días)</span></div>
       <div class="adm-kpi"><strong>{{ total('aiReplies') }}</strong><span>Respondidas con IA</span></div>

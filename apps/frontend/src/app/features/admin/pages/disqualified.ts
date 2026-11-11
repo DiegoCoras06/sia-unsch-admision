@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -8,10 +9,10 @@ interface Person { id: string; documentType: string; documentNumber: string; rea
 /** Spec 008, Historia 5: registro de inhabilitados (RN-09); inhabilitar anula las inscripciones vigentes. */
 @Component({
   selector: 'app-admin-disqualified',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Inhabilitados</h1><p>Una persona inhabilitada no puede inscribirse; si ya tenía inscripción, se anula con la resolución.</p></div></header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     <div class="adm-grid">
       <form class="adm-panel adm-form" (ngSubmit)="add()">
         <h2>Registrar inhabilitación</h2>

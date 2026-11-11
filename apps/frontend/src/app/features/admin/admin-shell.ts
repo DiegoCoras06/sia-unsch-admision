@@ -2,38 +2,38 @@ import { Component, ViewEncapsulation, computed, inject, signal } from '@angular
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AdminSession } from '../../core/admin-session';
 
-type NavItem = { path: string; label: string; permission: string; exact?: boolean };
+type NavItem = { path: string; label: string; permission: string; icon: string; exact?: boolean };
 
 /** Menú agrupado por tarea: el personal busca «qué tengo que hacer», no una lista de 19 pantallas. */
 const NAV: { group: string | null; items: NavItem[] }[] = [
-  { group: null, items: [{ path: '/admin', label: 'Inicio', permission: 'panel.ver', exact: true }] },
+  { group: null, items: [{ path: '/admin', label: 'Inicio', permission: 'panel.ver', icon: 'inicio', exact: true }] },
   { group: 'Postulantes y pagos', items: [
-    { path: '/admin/inscripciones', label: 'Inscripciones', permission: 'inscripciones.ver' },
-    { path: '/admin/expedientes', label: 'Expedientes', permission: 'expedientes.evaluar' },
-    { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver' },
-    { path: '/admin/tesoreria', label: 'Tesorería', permission: 'pagos.conciliar' },
-    { path: '/admin/inhabilitados', label: 'Inhabilitados', permission: 'inhabilitados.gestionar' },
+    { path: '/admin/inscripciones', label: 'Inscripciones', permission: 'inscripciones.ver', icon: 'inscripcion' },
+    { path: '/admin/expedientes', label: 'Expedientes', permission: 'expedientes.evaluar', icon: 'expedientes' },
+    { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver', icon: 'pagar' },
+    { path: '/admin/tesoreria', label: 'Tesorería', permission: 'pagos.conciliar', icon: 'tasas' },
+    { path: '/admin/inhabilitados', label: 'Inhabilitados', permission: 'inhabilitados.gestionar', icon: 'inhabilitados' },
   ] },
   { group: 'Examen y resultados', items: [
-    { path: '/admin/examenes', label: 'Exámenes y aulas', permission: 'examenes.gestionar' },
-    { path: '/admin/asistencia', label: 'Asistencia', permission: 'asistencia.registrar' },
-    { path: '/admin/resultados', label: 'Resultados', permission: 'resultados.gestionar' },
-    { path: '/admin/ingresantes', label: 'Ingresantes', permission: 'ingreso.registrar' },
+    { path: '/admin/examenes', label: 'Exámenes y aulas', permission: 'examenes.gestionar', icon: 'examenes' },
+    { path: '/admin/asistencia', label: 'Asistencia', permission: 'asistencia.registrar', icon: 'asistencia' },
+    { path: '/admin/resultados', label: 'Resultados', permission: 'resultados.gestionar', icon: 'puntaje' },
+    { path: '/admin/ingresantes', label: 'Ingresantes', permission: 'ingreso.registrar', icon: 'programas' },
   ] },
   { group: 'Atención', items: [
-    { path: '/admin/casos', label: 'Casos de atención', permission: 'casos.gestionar' },
-    { path: '/admin/notificaciones', label: 'Notificaciones', permission: 'notificaciones.gestionar' },
-    { path: '/admin/asistente', label: 'Asistente virtual', permission: 'asistente.gestionar' },
+    { path: '/admin/casos', label: 'Casos de atención', permission: 'casos.gestionar', icon: 'casos' },
+    { path: '/admin/notificaciones', label: 'Notificaciones', permission: 'notificaciones.gestionar', icon: 'notificaciones' },
+    { path: '/admin/asistente', label: 'Asistente virtual', permission: 'asistente.gestionar', icon: 'asistente' },
   ] },
   { group: 'Concurso y portal', items: [
-    { path: '/admin/convocatoria', label: 'Convocatoria', permission: 'convocatoria.gestionar' },
-    { path: '/admin/catalogo', label: 'Catálogo del concurso', permission: 'convocatoria.gestionar' },
-    { path: '/admin/contenido', label: 'Contenido del portal', permission: 'contenido.gestionar' },
+    { path: '/admin/convocatoria', label: 'Convocatoria', permission: 'convocatoria.gestionar', icon: 'cronograma' },
+    { path: '/admin/catalogo', label: 'Catálogo del concurso', permission: 'convocatoria.gestionar', icon: 'reglamento' },
+    { path: '/admin/contenido', label: 'Contenido del portal', permission: 'contenido.gestionar', icon: 'contenido' },
   ] },
   { group: 'Sistema', items: [
-    { path: '/admin/usuarios', label: 'Usuarios y roles', permission: 'usuarios.gestionar' },
-    { path: '/admin/auditoria', label: 'Auditoría', permission: 'auditoria.ver' },
-    { path: '/admin/configuracion', label: 'Configuración', permission: 'configuracion.gestionar' },
+    { path: '/admin/usuarios', label: 'Usuarios y roles', permission: 'usuarios.gestionar', icon: 'vacantes' },
+    { path: '/admin/auditoria', label: 'Auditoría', permission: 'auditoria.ver', icon: 'auditoria' },
+    { path: '/admin/configuracion', label: 'Configuración', permission: 'configuracion.gestionar', icon: 'configuracion' },
   ] },
 ];
 
@@ -60,7 +60,7 @@ const ROLE_NAMES: Record<string, string> = {
             @if (g.group) { <p class="adm-group" [id]="'adm-g' + $index">{{ g.group }}</p> }
             <ul [attr.aria-labelledby]="g.group ? 'adm-g' + $index : null">
               @for (n of g.items; track n.path) {
-                <li><a [routerLink]="n.path" routerLinkActive="is-active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!n.exact }" (click)="menu.set(false)">{{ n.label }}</a></li>
+                <li><a [routerLink]="n.path" [attr.data-icon]="n.icon" routerLinkActive="is-active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!n.exact }" (click)="menu.set(false)">{{ n.label }}</a></li>
               }
             </ul>
           }

@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -19,7 +20,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
 /** Spec 008: catálogo del concurso (RF-01.02, RF-01.04, RF-04.11, RF-06.01, RF-14.03). */
 @Component({
   selector: 'app-admin-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head">
       <div><h1>Catálogo del concurso</h1><p>Modalidades, requisitos y programas que ve el postulante. Cada cambio queda en la auditoría.</p></div>
@@ -29,7 +30,7 @@ const blankProgram = (): Program => ({ id: '', name: '', scheduleNumber: 1, facu
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="tab.set(t.id)">{{ t.label }}</button> }
     </div>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @if (data(); as d) {
       @switch (tab()) {

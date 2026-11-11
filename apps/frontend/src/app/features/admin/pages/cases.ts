@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -11,7 +12,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
 /** Spec 008, Historia 7: consultas, denuncias y derivaciones del asistente con número de caso. */
 @Component({
   selector: 'app-admin-cases',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Casos de atención</h1><p>El ciudadano ve el avance con su número de caso en el portal.</p></div></header>
     <form class="adm-panel adm-filters" (ngSubmit)="go(1)">
@@ -19,7 +20,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
       <div class="field"><label for="cs-ty">Tipo</label><select id="cs-ty" class="select" name="ty" [(ngModel)]="type"><option value="">Todos</option><option value="CONTACT">Consulta</option><option value="COMPLAINT">Denuncia</option><option value="CHATBOT_ESCALATION">Derivado del asistente</option><option value="RESULT_REVIEW">Revisión de resultados</option></select></div>
       <button class="btn" type="submit">Filtrar</button>
     </form>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     <section class="adm-panel">
       <div class="adm-table-wrap"><table class="adm-table">
         <thead><tr><th>Caso</th><th>Tipo</th><th>De</th><th>Mensaje</th><th>Estado</th></tr></thead>

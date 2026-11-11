@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -13,10 +14,10 @@ interface SystemInfo {
 /** Spec 008, Historia 8: integraciones (sin secretos), fallas con reintento, respaldos y retención (RF-13.10, RF-14.04 a RF-14.10). */
 @Component({
   selector: 'app-admin-system',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Configuración</h1><p>Las credenciales viven solo en el servidor (variables de entorno o AWS Systems Manager Parameter Store) y aquí se muestran enmascaradas.</p></div></header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     @if (info(); as s) {
       <section class="adm-panel"><h2>Integraciones</h2>
         <div class="adm-table-wrap"><table class="adm-table"><tbody>

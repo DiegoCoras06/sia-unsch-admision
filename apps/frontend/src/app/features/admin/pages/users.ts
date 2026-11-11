@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -10,10 +11,10 @@ interface Staff { id: string; email: string; fullName: string; status: 'ACTIVE' 
 /** Spec 008, Historia 3: usuarios internos, roles, estado y segundo factor (RF-13.01 a RF-13.03, RF-13.06, RF-13.08). */
 @Component({
   selector: 'app-admin-users',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Usuarios y roles</h1><p>Cada persona entra con su contraseña y un código de su teléfono. Suspender cierra sus sesiones al instante.</p></div></header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     @if (secret()) {
       <section class="adm-panel" role="alert">
         <h2>Contraseña temporal</h2>

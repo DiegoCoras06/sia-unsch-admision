@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -14,7 +15,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
 /** Inscripciones con búsqueda, filtros y anulación con motivo (spec 008). */
 @Component({
   selector: 'app-admin-inscriptions',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Inscripciones</h1><p>Busca por código, DNI, apellido o nombre.</p></div></header>
     <form class="adm-panel adm-filters" (ngSubmit)="go(1)">
@@ -25,7 +26,7 @@ interface Page<T> { total: number; page: number; pageSize: number; items: T[] }
         <select id="i-mod" class="select" name="mod" [(ngModel)]="modality"><option value="">Todas</option><option value="ORD">Ordinario</option><option value="EXO">Exonerados</option><option value="CEPRE">CEPRE</option></select></div>
       <button class="btn" type="submit">Buscar</button>
     </form>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     <section class="adm-panel">
       <div class="adm-table-wrap">
         <table class="adm-table">

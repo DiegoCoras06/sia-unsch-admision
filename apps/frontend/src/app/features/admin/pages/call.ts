@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -27,7 +28,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
 /** Spec 008, Historia 1: etapas, tasas, vacantes (con resolución si está publicada) y copia de convocatoria. */
 @Component({
   selector: 'app-admin-call',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head">
       <div><h1>Convocatoria</h1><p>Los cambios se aplican al portal al instante y quedan en la auditoría con el valor anterior y el nuevo.</p></div>
@@ -37,7 +38,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="tab.set(t.id)">{{ t.label }}</button> }
     </div>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @if (detail(); as d) {
       @switch (tab()) {

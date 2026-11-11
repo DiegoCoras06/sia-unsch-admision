@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -26,10 +27,10 @@ const TAG: Record<string, string> = { ADMITIDO: 'ok', NO_ADMITIDO: '', AUSENTE: 
 /** Spec 007, Historias 1, 2, 3 y 6: importar, procesar, aprobar, publicar y reportar resultados. */
 @Component({
   selector: 'app-admin-results',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Resultados</h1><p>Importa el archivo de la lectora óptica, revisa el orden de mérito, envíalo a la Comisión y publica a la hora autorizada. Cada rectificación es una versión nueva.</p></div></header>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @if (!sel()) {
       @for (e of exams(); track e.id) {

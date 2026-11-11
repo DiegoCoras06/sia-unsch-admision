@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -22,13 +23,13 @@ const RESULTS = [
 /** Spec 005, Historias 4 y 5: conciliación con el proveedor o Tesorería y anulaciones por error de cobro (RN-08). */
 @Component({
   selector: 'app-admin-treasury',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Tesorería</h1><p>Concilia los pagos con el reporte de Izipay, del banco o de Tesorería, y registra anulaciones solo por error de cobro: el pago válido de la inscripción no se devuelve (Art. 18).</p></div></header>
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { @if (session.can(t.perm)) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="go(t.id)">{{ t.label }}</button> } }
     </div>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @if (tab() === 'rec') {
       @if (!run()) {

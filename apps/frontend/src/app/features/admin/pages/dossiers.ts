@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import type { DossierDto } from '@sia/contracts';
 import { AdminSession } from '../../../core/admin-session';
@@ -17,7 +18,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
 /** Spec 004, Historia 3: bandeja del evaluador, revisión por documento y dictamen del expediente. */
 @Component({
   selector: 'app-admin-dossiers',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     @if (!sel()) {
       <header class="adm-head"><div><h1>Expedientes de exonerados</h1><p>Revisa cada documento, márcalo conforme u obsérvalo, y emite el dictamen. Se asignan por turno entre los evaluadores activos.</p></div></header>
@@ -31,7 +32,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
         @if (seesAll()) { <label class="adm-row"><input type="checkbox" name="mine" [(ngModel)]="mine"> Solo los míos</label> }
         <button class="btn" type="submit">Filtrar</button>
       </form>
-      @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+      <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
       <section class="adm-panel">
         <div class="adm-table-wrap"><table class="adm-table">
           <thead><tr><th>Código</th><th>Postulante</th><th>Submodalidad</th><th>Programa</th><th>Enviado</th><th>Evaluador</th><th>Estado</th><th></th></tr></thead>
@@ -51,7 +52,7 @@ const TAG: Record<string, string> = { AUTORIZADO: 'ok', EN_REVISION: 'warn', OBS
           <h1>{{ d.fullName }}</h1><p>Código {{ d.applicantCode }}, {{ d.document }}, {{ d.category }}, {{ d.program }}</p></div>
         <span class="adm-tag" [class]="'adm-tag ' + tag(d.status)">{{ d.statusLabel }}</span>
       </header>
-      @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+      <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
       @if (d.decisionNote) { <p class="adm-panel"><strong>Último dictamen:</strong> {{ d.decisionNote }}@if (d.verifiedInPerson) { (verificado presencialmente) }</p> }
 
       <div class="adm-grid">

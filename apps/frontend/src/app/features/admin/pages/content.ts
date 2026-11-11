@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -16,7 +17,7 @@ const BLOCK_NAMES: Record<string, string> = {
 interface Asset { key: string; label: string; fallback: string; custom: { url: string; alt: string; updatedAt: string } | null }
 @Component({
   selector: 'app-admin-content',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Contenido del portal</h1><p>Lo que publiques aquí aparece en el portal sin intervención técnica.</p></div></header>
     <div class="adm-tabs" role="tablist">
@@ -25,7 +26,7 @@ interface Asset { key: string; label: string; fallback: string; custom: { url: s
       <button type="button" role="tab" [class.is-on]="tab() === 'img'" (click)="tab.set('img')">Imágenes</button>
       <button type="button" role="tab" [class.is-on]="tab() === 'fun'" (click)="tab.set('fun')">Funciones por etapa</button>
     </div>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @switch (tab()) {
       @case ('com') {

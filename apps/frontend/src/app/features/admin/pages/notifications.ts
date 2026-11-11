@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -24,13 +25,13 @@ const INS_STATUS = [
 /** Spec 010: registro de envíos (RF-11.09), comunicados segmentados (RF-11.08) y plantillas editables (FR-006). */
 @Component({
   selector: 'app-admin-notifications',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Notificaciones</h1><p>Todo correo del sistema queda registrado con su estado. Los recordatorios, aulas publicadas y resultados disponibles salen solos, sin duplicarse.</p></div></header>
     <div class="adm-tabs" role="tablist">
       @for (t of tabs; track t.id) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="go(t.id)">{{ t.label }}</button> }
     </div>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     @if (tab() === 'log' && log(); as l) {
       <div class="adm-kpis">@for (s of l.byStatus; track s.key) { <div class="adm-kpi"><strong>{{ s.count }}</strong><span>{{ st(s.key) }}</span></div> }</div>

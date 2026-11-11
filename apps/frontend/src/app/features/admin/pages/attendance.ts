@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { AdmToast } from '../toast';
 import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -37,7 +38,7 @@ const INCIDENTS = [
 /** Spec 006, Historia 5: control de ingreso por QR con la foto, lista por aula e incidencias (RF-08.07, RF-08.08). */
 @Component({
   selector: 'app-admin-attendance',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Asistencia del examen</h1><p>Escanea el QR de la ficha de examen (cámara o lector) o escribe el código. Compara la foto con la persona y su DNI antes de dejarla pasar.</p></div></header>
     <form class="adm-panel adm-filters" (ngSubmit)="loadRoom()">
@@ -49,7 +50,7 @@ const INCIDENTS = [
           @for (r of exam()?.rooms ?? []; track r.id) { <option [value]="r.id">{{ r.building }}, {{ r.code }} ({{ r.present }}/{{ r.assigned }})</option> }</select></div>
       @if (roomId) { <button type="button" class="btn btn--quiet" (click)="pdf()">Lista de asistencia (PDF)</button> }
     </form>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
     <div class="adm-grid">
       <section class="adm-panel adm-form">

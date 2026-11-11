@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminSession } from '../../../core/admin-session';
@@ -32,14 +33,14 @@ const SCORING = [
 /** Spec 006, Historias 1, 3 y 6: programación del examen, aulas habilitadas, distribución y cambios de aula. */
 @Component({
   selector: 'app-admin-exams',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AdmToast],
   template: `
     @if (!sel()) {
       <header class="adm-head">
         <div><h1>Exámenes y distribución</h1><p>Programa cada examen, habilita sus aulas, distribuye a los aptos y confirma la publicación (24 horas antes, Art. 24).</p></div>
         <a class="btn btn--quiet" routerLink="/admin/sedes">Sedes y aulas</a>
       </header>
-      @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+      <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
       <section class="adm-panel">
         <div class="adm-table-wrap"><table class="adm-table">
           <thead><tr><th>Examen</th><th>Fecha e ingreso</th><th class="num">Aptos</th><th class="num">Asignados</th><th class="num">Aulas (capacidad)</th><th>Estado</th><th></th></tr></thead>
@@ -67,7 +68,7 @@ const SCORING = [
           @for (t of tabs; track t.id) { <button type="button" role="tab" [class.is-on]="tab() === t.id" [attr.aria-selected]="tab() === t.id" (click)="tab.set(t.id)">{{ t.label }}</button> }
         </div>
       }
-      @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+      <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
 
       @if (tab() === 'prog' || !d.id) {
         <form class="adm-grid" (ngSubmit)="save()">

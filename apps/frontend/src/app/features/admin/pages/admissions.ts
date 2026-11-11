@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
 import { apiErrorMessage } from '../../../core/api.service';
@@ -12,7 +13,7 @@ const LABEL = { PENDIENTE: 'Admitido: por entregar', INGRESANTE: 'Ingresante', P
 /** Spec 007, Historia 5: entrega de documentos, pago de la constancia (S/ 15.00, recargo S/ 65.00) e ingresantes. */
 @Component({
   selector: 'app-admin-admissions',
-  imports: [FormsModule],
+  imports: [FormsModule, AdmToast],
   template: `
     <header class="adm-head"><div><h1>Ingreso</h1>
       <p>Registra la entrega de documentos originales y el recibo de la constancia de ingreso. Vencido el plazo, el admitido sin entrega pierde la vacante automáticamente (Art. 34) y no se cubre (Disp. Final 4.ª).</p></div></header>
@@ -25,7 +26,7 @@ const LABEL = { PENDIENTE: 'Admitido: por entregar', INGRESANTE: 'Ingresante', P
       <div class="field"><label for="ad-q">Buscar</label><input id="ad-q" class="input" name="q" [(ngModel)]="q" placeholder="Código, DNI o nombre"></div>
       <button class="btn" type="submit">Filtrar</button>
     </form>
-    @if (msg()) { <p class="adm-msg" [class.err]="msgErr()" role="status">{{ msg() }}</p> }
+    <app-adm-toast [text]="msg()" [error]="msgErr()" (closed)="msg.set(null)" />
     <section class="adm-panel">
       <div class="adm-table-wrap"><table class="adm-table">
         <thead><tr><th>Código</th><th>Admitido</th><th>Programa</th><th>Estado</th><th>Entrega</th><th></th></tr></thead>
