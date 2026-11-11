@@ -9,11 +9,20 @@
 .head h1 { font-size: clamp(2.5rem, 5.5vw, 5rem); }
 .head__links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 
-.card { background: var(--accent); color: var(--accent-ink); padding: clamp(1.25rem, 3.5vw, 3rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+/* Tarjeta guinda con profundidad, como el ingreso del panel y las consultas: luces difusas, borde de luz arriba y sombra amplia. */
+.card { color: var(--accent-ink); padding: clamp(1.25rem, 3.5vw, 3rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem;
+  border-radius: 22px; border: 1px solid rgb(94 20 25 / 0.5);
+  background:
+    radial-gradient(44rem 30rem at 0% 100%, rgb(217 180 74 / 0.16), transparent 70%),
+    radial-gradient(40rem 26rem at 100% 0%, rgb(255 255 255 / 0.1), transparent 70%),
+    linear-gradient(165deg, #8a2229 0%, var(--accent) 45%, #5e1419 100%);
+  box-shadow: 0 40px 80px -40px rgb(20 6 8 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.18); }
 .block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+/* Banda de cada paso en vidrio sobre el guinda, con el filete dorado del formulario oficial. */
 .block__title {
-  font-size: 1.125rem; letter-spacing: 0; line-height: 1.3; background: var(--accent-press);
-  padding: 0.9rem 1.25rem; border-left: 6px solid var(--gold); margin-bottom: 0.5rem;
+  font-size: 1.125rem; letter-spacing: 0; line-height: 1.3; background: rgb(255 255 255 / 0.08);
+  padding: 0.9rem 1.25rem; border-left: 6px solid var(--gold); border-radius: 4px 12px 12px 4px; margin-bottom: 0.5rem;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
 }
 
 .row { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 0.5rem 1.5rem; align-items: start; }
@@ -29,10 +38,13 @@
 .card .prog-search .prog-search__input { padding-left: 2.75rem; background-color: #fff; background-repeat: no-repeat; background-position: 0.9rem center; background-size: 1.1rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b4f50' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E"); }
 
-.card :is(.input, .select) { background: #fff; border-color: #fff; }
-.card :is(.input, .select):focus { border-color: var(--gold); }
-.card :is(.input, .select)[readonly] { background: #f1ebe6; border-color: #f1ebe6; }
-.card .input[aria-invalid='true'], .card .select[aria-invalid='true'] { border-color: #ffb4b4; }
+/* Campos en relieve suave (neumorfismo ligero) y anillo dorado al enfocar. */
+.card :is(.input, .select) { background-color: #fbf7f3; border-color: rgb(255 255 255 / 0.6); border-radius: 12px;
+  box-shadow: inset 2px 2px 6px rgb(29 20 21 / 0.14), inset -2px -2px 5px rgb(255 255 255 / 0.9); }
+.card :is(.input, .select):hover { border-color: #fff; }
+.card :is(.input, .select):focus { background-color: #fff; border-color: var(--gold); box-shadow: 0 0 0 4px rgb(217 180 74 / 0.35); }
+.card :is(.input, .select)[readonly] { background-color: #efe7e0; border-color: #efe7e0; box-shadow: none; }
+.card .input[aria-invalid='true'], .card .select[aria-invalid='true'] { border-color: #ffb4b4; box-shadow: inset 0 0 0 1px #ffb4b4; }
 .card .hint { color: var(--accent-ink); opacity: 0.85; font-size: var(--size-note); }
 .card .field-error { color: #ffd2d2; }
 .card a { color: var(--gold); font-weight: 700; }
@@ -86,12 +98,17 @@
 .step__error:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .step__nav { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: center; }
 .step__nav .btn--gold { margin-left: auto; }
-.btn--back { background: transparent; color: var(--accent-ink); box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.7); }
-.btn--back:hover { background: var(--accent-press); }
+.btn--back { background: transparent; color: var(--accent-ink); box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.7); border-radius: 12px; }
+.btn--back:hover { background: rgb(255 255 255 / 0.1); }
+/* Botón dorado con volumen: degradado, brillo arriba y sombra; se eleva un poco al pasar el mouse. */
+.step__nav .btn--gold { border-radius: 12px; }
+.step__nav .btn--gold:not([disabled]) { background: linear-gradient(180deg, #e8c86c, #c9a23a); border-color: #b38f2c;
+  box-shadow: 0 14px 26px -14px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.45); }
+.step__nav .btn--gold:not([disabled]):hover { filter: brightness(1.05); transform: translateY(-1px); }
 
 /* Revisión antes de guardar */
 .review { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
-.review__group { background: var(--accent-press); padding: 1.1rem 1.25rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+.review__group { background: rgb(0 0 0 / 0.16); border: 1px solid rgb(255 255 255 / 0.12); border-radius: 14px; padding: 1.1rem 1.25rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
 .review__group--key, .review__fee { grid-column: 1 / -1; }
 .review__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .review h3 { font-size: 1rem; color: var(--gold); }
