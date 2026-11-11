@@ -27,7 +27,7 @@ const kb = (n: number) => (n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(
               <div class="docs__what">
                 <strong>{{ r.name }}@if (r.required) { <span class="req">obligatorio</span> }</strong>
                 <span class="note">{{ r.hint }}</span>
-                @if (r.uploaded; as u) { <span class="docs__ok">Recibido: {{ u.fileName }} · {{ size(u.sizeBytes) }} · {{ when(u.uploadedAt) }}</span> }
+                @if (r.uploaded; as u) { <span class="docs__ok">Recibido: {{ u.fileName }}, {{ size(u.sizeBytes) }}, {{ when(u.uploadedAt) }}</span> }
               </div>
               <label class="btn btn--quiet docs__file" [class.is-busy]="busy() === r.kind">
                 {{ busy() === r.kind ? 'Subiendo…' : r.uploaded ? 'Reemplazar' : 'Subir archivo' }}

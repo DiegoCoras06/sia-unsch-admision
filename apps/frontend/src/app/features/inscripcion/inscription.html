@@ -33,7 +33,7 @@
           </div>
         } @else if (draftSavedAt(); as at) {
           <div class="draft-note">
-            <p aria-live="polite">Borrador guardado en este dispositivo · {{ when(at) }} · se borra solo a los 7 días</p>
+            <p aria-live="polite">Borrador guardado en este dispositivo el {{ when(at) }}. Se borra solo a los 7 días.</p>
             <button type="button" class="draft-note__x" (click)="forgetDevice()">¿Equipo compartido o cabina? Borrar mis datos de este equipo</button>
           </div>
         } @else if (draftOff()) {

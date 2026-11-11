@@ -3,7 +3,7 @@ import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db, Tx } from '../../../shared/db/prisma.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
-import { AppError, businessRule, conflict, notFound } from '../../../shared/http/errors.js';
+import { AppError, businessRule, conflict, gatewayUnavailable, notFound } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { PaymentContext } from '../../inscripciones/index.js';
 import {
@@ -99,7 +99,10 @@ export class PaymentService {
       });
     } catch (error) {
       await this.d.db.paymentAttempt.update({ where: { id: attempt.id }, data: { status: 'VENCIDO', providerMessage: 'No se generó el token de sesión' } });
-      throw error;
+      if (error instanceof AppError) throw error;
+      // La causa técnica queda en el registro; al postulante se le ofrece una salida (ADR-007).
+      this.d.logger.error({ err: error, transactionId: attempt.transactionId }, 'la pasarela no creó la sesión de pago');
+      throw gatewayUnavailable('El pago en línea no está disponible en este momento. Inténtalo más tarde o descarga tu orden de pago y paga en ventanilla.');
     }
     await this.d.audit.record({
       actorUserId: null, action: 'payment.started', resourceType: 'payment_attempt', resourceId: attempt.transactionId,

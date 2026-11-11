@@ -69,7 +69,7 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
             <div><dt>Fecha</dt><dd>{{ when(st!.order.paidAt!) }}</dd></div>
             <div><dt>N.° de operación</dt><dd>{{ rc.operationNumber ?? '-' }}</dd></div>
             <div><dt>Autorización</dt><dd>{{ rc.authorizationCode ?? '-' }}</dd></div>
-            <div><dt>Medio</dt><dd>{{ method(rc.payMethod) }}@if (rc.cardMasked) { · {{ rc.cardMasked }}}</dd></div>
+            <div><dt>Medio</dt><dd>{{ method(rc.payMethod) }}@if (rc.cardMasked) {, {{ rc.cardMasked }}}</dd></div>
             <div><dt>Pedido</dt><dd>{{ st!.order.orderNumber }}</dd></div>
           </dl>
           <p class="note">Constancia de pago del proceso de admisión. No es un comprobante electrónico SUNAT.</p>
@@ -126,7 +126,7 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
 
             <dl class="ck__who">
               <div><dt>Comercio</dt><dd>Universidad Nacional de San Cristóbal de Huamanga</dd></div>
-              <div><dt>Concepto</dt><dd>Derecho de inscripción · código {{ applicantCode() }}</dd></div>
+              <div><dt>Concepto</dt><dd>Derecho de inscripción, código {{ applicantCode() }}</dd></div>
             </dl>
 
             @if (payWith() === 'yape') {
@@ -167,7 +167,7 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
 
         @if (mock(); as m) {
           <div class="pay__mock no-print" role="dialog" aria-label="Pasarela simulada">
-            <p><strong>Pasarela simulada</strong> · Pedido {{ m.orderNumber }} · {{ money(m.amount) }}</p>
+            <p><strong>Pasarela simulada:</strong> pedido {{ m.orderNumber }}, {{ money(m.amount) }}</p>
             <p class="note">Simula la respuesta firmada del formulario de pago. El servidor la verifica igual que la de Izipay.</p>
             <div class="row">
               <button type="button" class="btn" (click)="finishMock(true)" [disabled]="busy()">Aprobar pago</button>
@@ -177,14 +177,14 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
         }
       }
 
-      @if (message(); as msg) { <p class="alert" [class.alert--error]="msgKind() === 'error'" [class.alert--info]="msgKind() === 'info'" role="alert">{{ msg }}</p> }
+      @if (message(); as msg) { <p class="alert" [class.alert--error]="msgKind() === 'error'" [class.alert--info]="msgKind() === 'info'" [class.alert--ok]="msgKind() === 'ok'" role="alert">{{ msg }}</p> }
 
       @if (st?.attempts?.length) {
         <details class="pay__history">
           <summary>Historial de pagos en línea ({{ st!.attempts.length }})</summary>
           <ul>
             @for (a of st!.attempts; track a.transactionId) {
-              <li><span>{{ when(a.createdAt) }} · pedido {{ a.orderNumber }}</span><strong>{{ a.label }}</strong>@if (a.message) {<small>{{ a.message }}</small>}</li>
+              <li><span>{{ when(a.createdAt) }}, pedido {{ a.orderNumber }}</span><strong>{{ a.label }}</strong>@if (a.message) {<small>{{ a.message }}</small>}</li>
             }
           </ul>
         </details>
@@ -298,7 +298,7 @@ export class OnlinePayment implements OnInit {
   private readonly checkout = viewChild<ElementRef<HTMLDialogElement>>('checkout');
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
-  protected readonly msgKind = signal<'error' | 'info'>('info');
+  protected readonly msgKind = signal<'error' | 'info' | 'ok'>('info');
   protected readonly money = soles;
   protected readonly when = dateTime;
 
@@ -388,7 +388,7 @@ export class OnlinePayment implements OnInit {
     this.show('Confirmando tu pago con Yape…', 'info');
     try {
       const res = await firstValueFrom(this.api.yapeCharge(this.documentNumber(), this.applicantCode(), transactionId, token));
-      if (res.status === 'AUTORIZADO') this.show('¡Pago con Yape confirmado! Tu inscripción quedó Apta.', 'info');
+      if (res.status === 'AUTORIZADO') this.show('¡Pago con Yape confirmado! Tu inscripción quedó Apta.', 'ok');
       else this.show(`${res.label}. ${res.message ?? ''} Puedes intentarlo de nuevo.`.trim(), 'error');
       await this.refresh();
       if (res.orderStatus === 'PAGADA') this.paid.emit();
@@ -463,7 +463,7 @@ export class OnlinePayment implements OnInit {
   private async confirm(message: SignedPaymentMessageDto): Promise<void> {
     try {
       const res = await firstValueFrom(this.api.paymentConfirm(message));
-      if (res.status === 'AUTORIZADO') this.show('¡Pago confirmado! Tu inscripción quedó Apta.', 'info');
+      if (res.status === 'AUTORIZADO') this.show('¡Pago confirmado! Tu inscripción quedó Apta.', 'ok');
       else if (res.status === 'RECHAZADO') this.show(`${res.label}. ${res.message ?? ''} Puedes intentarlo de nuevo.`.trim(), 'error');
       else this.show(`${res.label}. ${res.message ?? ''}`.trim(), 'info');
       await this.refresh();
@@ -483,7 +483,7 @@ export class OnlinePayment implements OnInit {
     }
   }
 
-  private show(text: string, kind: 'error' | 'info'): void {
+  private show(text: string, kind: 'error' | 'info' | 'ok'): void {
     this.message.set(text);
     this.msgKind.set(kind);
   }
