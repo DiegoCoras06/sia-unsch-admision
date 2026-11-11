@@ -1,6 +1,7 @@
 import { Component, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AdminSession } from '../../core/admin-session';
+import { AdmConfirmHost } from './confirm-dialog';
 
 type NavItem = { path: string; label: string; permission: string; icon: string; exact?: boolean };
 
@@ -45,7 +46,7 @@ const ROLE_NAMES: Record<string, string> = {
 /** Marco del panel: barra lateral según permisos y la sección elegida. Sus estilos alcanzan a todas las páginas del panel. */
 @Component({
   selector: 'app-admin-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AdmConfirmHost],
   encapsulation: ViewEncapsulation.None,
   styleUrl: './admin.scss',
   template: `
@@ -87,6 +88,7 @@ const ROLE_NAMES: Record<string, string> = {
         <router-outlet />
       </div>
     </div>
+    <app-adm-confirm />
   `,
 })
 export class AdminShell {

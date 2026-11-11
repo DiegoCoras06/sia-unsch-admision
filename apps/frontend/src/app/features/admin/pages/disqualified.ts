@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmConfirm } from '../confirm-dialog';
 import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
@@ -40,6 +41,7 @@ interface Person { id: string; documentType: string; documentNumber: string; rea
 })
 export class DisqualifiedAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
+  private readonly ask = inject(AdmConfirm);
   protected readonly list = signal<Person[]>([]);
   protected readonly msg = signal<string | null>(null);
   protected readonly msgErr = signal(false);
@@ -51,7 +53,7 @@ export class DisqualifiedAdminPage implements OnInit {
   private async reload() { this.list.set(await this.session.get<Person[]>('/admin/disqualified')); }
 
   protected async add() {
-    if (!confirm(`¿Inhabilitar el documento ${this.f.documentNumber}? Sus inscripciones vigentes se anularán.`)) return;
+    if (!(await this.ask.confirm(`Las inscripciones vigentes del documento ${this.f.documentNumber} se anularán.`, { title: '¿Inhabilitar este documento?', action: 'Inhabilitar', danger: true }))) return;
     try {
       const r = await this.session.postAuth<{ annulled: string[] }>('/admin/disqualified', { ...this.f, validUntil: this.f.validUntil || undefined });
       this.msg.set(`Registrado.${r.annulled.length ? ` Inscripciones anuladas: ${r.annulled.join(', ')}.` : ''}`);
@@ -65,7 +67,7 @@ export class DisqualifiedAdminPage implements OnInit {
   }
 
   protected async lift(p: Person) {
-    if (!confirm(`¿Dejar sin efecto la inhabilitación de ${p.documentNumber}?`)) return;
+    if (!(await this.ask.confirm(`El documento ${p.documentNumber} podrá volver a inscribirse. La inhabilitación queda en el historial.`, { title: '¿Dejar sin efecto la inhabilitación?', action: 'Dejar sin efecto' }))) return;
     await this.session.postAuth(`/admin/disqualified/${p.id}/lift`);
     this.msg.set('Inhabilitación dejada sin efecto (queda en el historial).');
     this.msgErr.set(false);

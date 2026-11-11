@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmConfirm } from '../confirm-dialog';
 import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
@@ -64,6 +65,7 @@ interface Staff { id: string; email: string; fullName: string; status: 'ACTIVE' 
 })
 export class UsersAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
+  private readonly ask = inject(AdmConfirm);
   protected readonly staff = signal<Staff[]>([]);
   protected readonly roles = signal<Role[]>([]);
   protected readonly editing = signal<Staff | null>(null);
@@ -99,16 +101,17 @@ export class UsersAdminPage implements OnInit {
   protected saveRoles(u: Staff) {
     return this.act(async () => { await this.session.put(`/admin/users/${u.id}/roles`, { roles: this.editRolesSel }); this.editing.set(null); return `Roles de ${u.fullName} actualizados; sus sesiones se cerraron.`; });
   }
-  protected setStatus(u: Staff, status: 'ACTIVE' | 'SUSPENDED' | 'DISABLED') {
-    if (status !== 'ACTIVE' && !confirm(`¿${status === 'SUSPENDED' ? 'Suspender' : 'Desactivar'} a ${u.fullName}? Sus sesiones se cerrarán.`)) return;
+  protected async setStatus(u: Staff, status: 'ACTIVE' | 'SUSPENDED' | 'DISABLED') {
+    const verb = status === 'SUSPENDED' ? 'Suspender' : 'Desactivar';
+    if (status !== 'ACTIVE' && !(await this.ask.confirm(`Las sesiones abiertas de ${u.fullName} se cerrarán.`, { title: `¿${verb} a este usuario?`, action: verb, danger: true }))) return;
     return this.act(async () => { await this.session.postAuth(`/admin/users/${u.id}/status`, { status }); return `${u.fullName}: ${this.statusLabel(status).toLowerCase()}.`; });
   }
-  protected resetMfa(u: Staff) {
-    if (!confirm(`¿Restablecer el segundo factor de ${u.fullName}? En su próximo ingreso deberá configurarlo de nuevo.`)) return;
+  protected async resetMfa(u: Staff) {
+    if (!(await this.ask.confirm(`En su próximo ingreso, ${u.fullName} deberá configurar de nuevo su aplicación de autenticación.`, { title: '¿Restablecer el segundo factor?', action: 'Restablecer', danger: true }))) return;
     return this.act(async () => { await this.session.postAuth(`/admin/users/${u.id}/reset-mfa`); return 'Segundo factor restablecido.'; });
   }
-  protected resetPassword(u: Staff) {
-    if (!confirm(`¿Generar una nueva contraseña temporal para ${u.fullName}?`)) return;
+  protected async resetPassword(u: Staff) {
+    if (!(await this.ask.confirm(`Se generará una contraseña temporal para ${u.fullName}; la actual dejará de funcionar.`, { title: '¿Generar una contraseña temporal?', action: 'Generar' }))) return;
     return this.act(async () => {
       const r = await this.session.postAuth<{ temporaryPassword: string }>(`/admin/users/${u.id}/reset-password`);
       this.secret.set({ email: u.email, password: r.temporaryPassword });

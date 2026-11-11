@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmConfirm } from '../confirm-dialog';
 import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
@@ -159,6 +160,7 @@ const fromLima = (local: string) => `${local}:00-05:00`;
 })
 export class CallAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
+  private readonly ask = inject(AdmConfirm);
   protected readonly calls = signal<{ code: string; status: string }[]>([]);
   protected readonly detail = signal<CallDetail | null>(null);
   protected readonly tab = signal<'etapas' | 'tasas' | 'vacantes' | 'cepre' | 'copiar'>('etapas');
@@ -248,7 +250,7 @@ export class CallAdminPage implements OnInit {
 
   protected async saveFee(f: Fee) {
     const amount = Number(f._amount);
-    const confirmZero = amount === 0 ? confirm(`¿Seguro que «${f.concept}» debe costar S/ 0.00?`) : false;
+    const confirmZero = amount === 0 ? await this.ask.confirm(`«${f.concept}» quedará gratuita para los postulantes.`, { title: '¿Tasa de S/ 0.00?', action: 'Sí, dejarla en S/ 0.00' }) : false;
     if (amount === 0 && !confirmZero) return;
     await this.act(async () => {
       await this.session.put(`/admin/calls/${this.code}/fees/${f.code}`, { amount, confirmZero });

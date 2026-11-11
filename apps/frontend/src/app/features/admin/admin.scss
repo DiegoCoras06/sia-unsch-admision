@@ -186,3 +186,30 @@ details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: va
   .adm-toast { animation: none; }
   .adm-main.is-loading > router-outlet + *::after { animation: none; }
 }
+
+/* Ventana de confirmación: fondo del panel desenfocado y tarjeta de vidrio, como el ingreso. */
+.adm-confirm { padding: 0; border: 0; background: transparent; max-width: calc(100vw - 2rem); width: 28rem; overflow: visible; }
+.adm-confirm::backdrop { background: rgb(29 12 14 / 0.42); backdrop-filter: blur(6px) saturate(1.1); -webkit-backdrop-filter: blur(6px) saturate(1.1); }
+.adm-confirm[open] { animation: confirm-in 200ms var(--ease); }
+@keyframes confirm-in { from { opacity: 0; transform: translateY(0.75rem) scale(0.97); } }
+.adm-confirm__card { position: relative; display: grid; gap: 0.75rem; padding: 2rem 1.75rem 1.5rem; border-radius: 22px; color: var(--ink);
+  background: rgb(255 255 255 / 0.9); border: 1px solid rgb(255 255 255 / 0.7); backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 40px 80px -30px rgb(20 6 8 / 0.7), inset 0 2px 0 rgb(255 255 255 / 0.9); }
+.adm-confirm__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; font-size: 1.5rem; font-weight: 800;
+  background: linear-gradient(180deg, #f8edcc, #ecd9a0); color: #6b5212; box-shadow: inset 0 1px 0 #fff, 0 8px 16px -10px rgb(0 0 0 / 0.5); }
+.adm-confirm__card.is-danger .adm-confirm__icon { background: linear-gradient(180deg, #f6dede, #ebc2c2); color: #8a1116; }
+.adm-confirm h2 { margin: 0.25rem 0 0; font-size: 1.375rem; letter-spacing: -0.02em; }
+.adm-confirm p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
+.adm-confirm__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; margin-top: 0.75rem; }
+.adm-confirm__actions button { min-height: 2.875rem; padding: 0.6rem 1.25rem; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer;
+  transition: filter var(--fast) var(--ease), transform var(--fast) var(--ease), background-color var(--fast) var(--ease); }
+.adm-confirm__no { background: #f6f1ec; color: var(--ink); border: 1px solid #e4d9cf; box-shadow: inset 2px 2px 5px rgb(29 20 21 / 0.05), inset -2px -2px 5px rgb(255 255 255 / 0.9); }
+.adm-confirm__no:hover { background: #efe7e0; }
+.adm-confirm__yes { color: #fff; border: 1px solid #5e1419; background: linear-gradient(180deg, #8a2229, #6a171d);
+  box-shadow: 0 12px 24px -12px rgb(122 28 34 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.18); }
+.adm-confirm__card.is-danger .adm-confirm__yes { border-color: #6d0d11; background: linear-gradient(180deg, #b3242b, #8a1116); }
+.adm-confirm__yes:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.adm-confirm__actions button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+@media (max-width: 480px) { .adm-confirm__actions button { flex: 1 1 100%; } .adm-confirm__yes { order: -1; } }
+@media (prefers-reduced-motion: reduce) { .adm-confirm[open] { animation: none; } .adm-confirm__yes:hover { transform: none; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .adm-confirm__card { background: #fff; } }

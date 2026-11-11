@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AdmConfirm } from '../confirm-dialog';
 import { AdmToast } from '../toast';
 import { FormsModule } from '@angular/forms';
 import { AdminSession } from '../../../core/admin-session';
@@ -115,6 +116,7 @@ interface Asset { key: string; label: string; fallback: string; custom: { url: s
 })
 export class ContentAdminPage implements OnInit {
   private readonly session = inject(AdminSession);
+  private readonly ask = inject(AdmConfirm);
   protected readonly tab = signal<'com' | 'txt' | 'img' | 'fun'>('com');
   protected readonly assets = signal<Asset[]>([]);
   protected altDraft: Record<string, string> = {};
@@ -152,8 +154,8 @@ export class ContentAdminPage implements OnInit {
     });
   }
 
-  protected remove(a: Ann) {
-    if (!confirm(`¿Retirar «${a.title}» del portal?`)) return;
+  protected async remove(a: Ann) {
+    if (!(await this.ask.confirm(`El comunicado «${a.title}» dejará de verse en el portal.`, { title: '¿Retirar el comunicado?', action: 'Retirar', danger: true }))) return;
     return this.act(async () => { await this.session.delete(`/admin/announcements/${a.id}`); return 'Comunicado retirado.'; });
   }
 
@@ -174,8 +176,8 @@ export class ContentAdminPage implements OnInit {
     });
   }
 
-  protected resetAsset(key: string) {
-    if (!confirm('¿Volver a la imagen original?')) return;
+  protected async resetAsset(key: string) {
+    if (!(await this.ask.confirm('Se quitará la imagen que subiste y el portal volverá a mostrar la original.', { title: '¿Volver a la imagen original?', action: 'Restaurar' }))) return;
     return this.act(async () => { await this.session.delete(`/admin/site-assets/${key}`); return 'Se restauró la imagen original.'; });
   }
 
