@@ -3,6 +3,7 @@ import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Respon
 import type { Logger } from 'pino';
 import type { ApiErrorBody } from '@sia/contracts';
 import { AppError } from './errors.js';
+import { DB_RETRY_AFTER_SECONDS, isDatabaseUnreachable } from '../db/unreachable.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -67,6 +68,13 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
   if (err instanceof SyntaxError && 'body' in err) {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'El cuerpo no es JSON válido.', requestId: req.requestId } } satisfies ApiErrorBody);
+    return;
+  }
+  if (isDatabaseUnreachable(err)) {
+    // La base de datos no responde: no es un error del programa. Aviso breve en el registro, sin la traza completa.
+    req.log?.warn({ path: req.path }, 'base de datos no disponible');
+    res.setHeader('Retry-After', String(DB_RETRY_AFTER_SECONDS));
+    res.status(503).json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'El servicio no está disponible por un momento. Inténtalo de nuevo en unos segundos.', requestId: req.requestId } } satisfies ApiErrorBody);
     return;
   }
   req.log?.error({ err }, 'error no controlado');
