@@ -65,6 +65,32 @@ export class HomePage {
   protected readonly newsState = signal<'loading' | 'ok' | 'error'>('loading');
 
   protected readonly milestone = computed(() => this.store.call()?.nextMilestone ?? null);
+  /** Píldora de la portada: dice en qué etapa está el proceso, según el cronograma real. */
+  protected readonly status = computed(() => {
+    const now = this.store.current();
+    if (now.some((s) => s.kind === 'REGULAR')) return { open: true, label: 'Inscripciones abiertas' };
+    if (now.some((s) => s.kind === 'EXTEMPORANEOUS')) return { open: true, label: 'Inscripción extemporánea abierta' };
+    if (now.some((s) => s.kind === 'EXAM')) return { open: false, label: 'Examen en curso' };
+    if (now.some((s) => s.kind === 'PUBLICATION' || s.kind === 'DELIVERY')) return { open: false, label: 'Resultados publicados' };
+    return { open: false, label: `Proceso de admisión ${this.store.code()}` };
+  });
+  /** Fechas de examen como mini calendario (hora de Lima). */
+  protected readonly exams = computed(() =>
+    (this.store.call()?.stages ?? [])
+      .filter((s) => s.kind === 'EXAM')
+      .map((s) => {
+        const d = new Date(s.startsAt);
+        const opt = { timeZone: 'America/Lima' } as const;
+        const label = this.examLabel(s.name);
+        return {
+          code: s.code,
+          day: d.toLocaleDateString('es-PE', { ...opt, day: 'numeric' }),
+          month: d.toLocaleDateString('es-PE', { ...opt, month: 'short' }).replace('.', '').toUpperCase(),
+          title: /ordinario$/i.test(s.name) ? 'Examen ordinario' : label.charAt(0).toUpperCase() + label.slice(1),
+          when: d.toLocaleDateString('es-PE', { ...opt, weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (c) => c.toUpperCase()),
+        };
+      }),
+  );
   protected readonly nowStages = computed(() => this.store.current().filter((s) => s.kind !== 'OTHER'));
   protected readonly byArea = computed(() =>
     (['I', 'II', 'III'] as const).map((code) => ({ code, name: AREA_NAMES[code], options: this.options().filter((o) => o.area === code) })),
