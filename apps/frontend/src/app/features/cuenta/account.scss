@@ -1,5 +1,6 @@
 /* Pantallas de la cuenta opcional del postulante: tarjeta centrada sobre piedra, identidad UNSCH. */
-.acc { padding-block: clamp(2.5rem, 6vw, 5rem); background: var(--stone); min-height: 70vh; }
+.acc { padding-block: clamp(2.5rem, 6vw, 5rem); min-height: 70vh; }
+.acc:not(.field-glow) { background: var(--stone); }
 .acc__wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 28rem); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
 .acc__intro h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); letter-spacing: -0.035em; line-height: 1; }
 .acc__intro p { margin-top: 1rem; max-width: 46ch; font-size: 1.125rem; }
@@ -19,3 +20,37 @@
 details.acc__demo { font-size: var(--size-note); }
 details.acc__demo summary { cursor: pointer; font-weight: 700; color: var(--accent); }
 @media (max-width: 860px) { .acc__wrap { grid-template-columns: 1fr; } }
+
+
+/* Ingresar, recuperar y crear cuenta: mismo lenguaje que Mi inscripción y el acceso del personal.
+   Fondo guinda con luces, tarjeta blanca con profundidad, campos en relieve y botón guinda con volumen. */
+.acc--glow .acc__intro { color: var(--accent-ink); }
+.acc--glow .acc__intro h1 { color: #fff; }
+.acc--glow .acc__intro ul { list-style: none; padding: 0; margin-top: 1.5rem; gap: 0; border-top: 1px solid rgb(255 255 255 / 0.22); }
+.acc--glow .acc__intro li { display: grid; grid-template-columns: 1rem 1fr; gap: 0.6rem; padding: 0.75rem 0; border-bottom: 1px solid rgb(255 255 255 / 0.22); }
+.acc--glow .acc__intro li::before { content: ''; width: 0.45rem; height: 0.45rem; margin-top: 0.55em; border-radius: 50%; background: var(--gold); }
+.acc--glow .acc__panel { border-radius: 22px; background: linear-gradient(180deg, #fff 0%, #fbf7f3 100%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.5), 0 30px 60px -28px rgb(20 6 8 / 0.85), inset 0 1px 0 #fff; }
+.acc--glow .acc__panel form.acc__card { background: transparent; }
+
+.acc__steps { display: flex; gap: 0.4rem; margin: 0 0 0.5rem; padding: 0; list-style: none; font-size: 0.875rem; font-weight: 600; color: var(--ink-soft); }
+.acc__steps li { flex: 1; display: flex; align-items: center; gap: 0.45rem; padding-bottom: 0.6rem; border-bottom: 3px solid var(--stone-deep); }
+.acc__steps span { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; flex: none; border-radius: 50%; background: var(--stone-deep); color: var(--ink); font-size: 0.8125rem; }
+.acc__steps .is-on { color: var(--accent); border-color: var(--accent); }
+.acc__steps .is-on span { background: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgb(217 180 74 / 0.45); }
+.acc__steps .is-done { color: var(--ink); border-color: var(--gold); }
+.acc__steps .is-done span { background: var(--gold); }
+
+.acc--glow .input { background: #fbf7f3; border-color: var(--stone-deep); border-radius: 12px;
+  box-shadow: inset 2px 2px 6px rgb(29 20 21 / 0.12), inset -2px -2px 5px rgb(255 255 255 / 0.9); }
+.acc--glow .input:hover { border-color: var(--ink-soft); }
+.acc--glow .input:focus { background: #fff; border-color: var(--gold); box-shadow: 0 0 0 4px rgb(217 180 74 / 0.35); }
+.acc--glow .input[aria-invalid='true'] { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.acc--glow .btn { border-radius: 12px; }
+.acc--glow .btn:not(.btn--quiet):not([disabled]) { background: linear-gradient(180deg, #932830 0%, var(--accent) 55%, #62161b 100%);
+  box-shadow: 0 14px 24px -14px rgb(122 28 34 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.2); }
+.acc--glow .btn:not(.btn--quiet):not([disabled]):hover { filter: brightness(1.08); }
+.acc--glow .acc__ok, .acc--glow .acc__names { border-radius: 12px; }
+.acc--glow .acc__consent { border-radius: 12px; box-shadow: inset 2px 2px 6px rgb(29 20 21 / 0.1); }
+.acc--glow .alert { border-radius: 12px; }
+@media (max-width: 520px) { .acc__steps { font-size: 0.8125rem; } }

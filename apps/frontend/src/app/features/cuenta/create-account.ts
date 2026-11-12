@@ -18,7 +18,7 @@ function demoCheckDigit(dni: string): string {
   imports: [FormsModule, RouterLink],
   styleUrl: './account.scss',
   template: `
-    <section class="acc">
+    <section class="acc acc--glow field-glow">
       <div class="frame acc__wrap">
         <div class="acc__intro">
           <h1>Crea tu cuenta</h1>
@@ -30,7 +30,15 @@ function demoCheckDigit(dni: string): string {
           </ul>
         </div>
 
-        <div class="acc__card">
+        <div class="acc__card acc__panel">
+          @if (step() < 4) {
+            <ol class="acc__steps" aria-label="Avance">
+              @for (s of steps; track s.n) {
+                <li [class.is-done]="step() > s.n" [class.is-on]="step() === s.n" [attr.aria-current]="step() === s.n ? 'step' : null">
+                  <span aria-hidden="true">{{ s.n }}</span>{{ s.label }}</li>
+              }
+            </ol>
+          }
           @switch (step()) {
             @case (1) {
               <form (ngSubmit)="lookup()" class="acc__card" style="padding:0">
@@ -91,6 +99,7 @@ export class CreateAccountPage implements OnInit {
   protected readonly identity = signal<IdentityLookupDto | null>(null);
   protected readonly consent = signal<ConsentDto | null>(null);
   protected readonly maskedEmail = signal('');
+  protected readonly steps = [{ n: 1, label: 'DNI' }, { n: 2, label: 'Contacto' }, { n: 3, label: 'Correo' }] as const;
   protected readonly demo = ['99900026', '99900027', '99900028', '99900029'];
   protected readonly check = demoCheckDigit;
   protected dni = '';

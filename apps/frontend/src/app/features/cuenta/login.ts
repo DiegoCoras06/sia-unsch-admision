@@ -20,7 +20,7 @@ const LEAD = {
   imports: [FormsModule, RouterLink],
   styleUrl: './account.scss',
   template: `
-    <section class="acc">
+    <section class="acc acc--glow field-glow">
       <div class="frame">
         <div class="lg">
           <aside class="lg__side" aria-label="Tu cuenta de postulante">
@@ -96,11 +96,14 @@ const LEAD = {
     </section>
   `,
   styles: `
-    /* Una sola tarjeta: el guinda explica, el blanco pide los datos. Esquinas concéntricas con el radio del sitio. */
-    .lg { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); max-width: 60rem; margin-inline: auto;
-      background: var(--ground); border-radius: var(--radius-lg); overflow: hidden;
-      box-shadow: 0 0 0 1px rgb(29 20 21 / 0.06), 0 1px 2px -1px rgb(29 20 21 / 0.08), 0 12px 32px -12px rgb(29 20 21 / 0.18); }
-    .lg__side { display: grid; align-content: start; gap: 0.9rem; padding: clamp(1.75rem, 4vw, 2.75rem); background: var(--accent); color: var(--accent-ink); }
+    /* Marco de vidrio sobre el fondo guinda con luces: a la izquierda explica, a la derecha la tarjeta blanca pide los datos. */
+    .lg { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); max-width: 60rem; margin-inline: auto; padding: 0.5rem;
+      background: rgb(255 255 255 / 0.08); border: 1px solid rgb(255 255 255 / 0.22); border-radius: 26px;
+      backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+      box-shadow: 0 30px 60px -30px rgb(20 6 8 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.2); }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .lg { background: rgb(0 0 0 / 0.18); } }
+    .lg__side { display: grid; align-content: start; gap: 0.9rem; padding: clamp(1.25rem, 3.5vw, 2.25rem); color: var(--accent-ink); }
+    .lg__crest { justify-self: start; padding: 0.5rem 1rem; box-sizing: content-box; background: #fff; border-radius: 50%; box-shadow: 0 0 0 3px var(--gold), 0 10px 20px -10px rgb(0 0 0 / 0.6); }
     .lg__crest { width: 47px; height: auto; }
     .lg__kicker { margin: 0.5rem 0 0; font-size: var(--size-note); font-weight: 600; color: var(--gold); }
     .lg__title { margin: 0; font-size: clamp(1.625rem, 2.6vw, 2.125rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
@@ -110,7 +113,8 @@ const LEAD = {
     .lg__note { margin: 0.5rem 0 0; font-size: var(--size-note); opacity: 0.9; }
     .lg__note a { color: var(--accent-ink); font-weight: 700; }
 
-    .lg__main { display: grid; align-content: center; gap: 1.5rem; padding: clamp(1.75rem, 5vw, 3.25rem); }
+    .lg__main { display: grid; align-content: center; gap: 1.5rem; padding: clamp(1.5rem, 5vw, 3rem); border-radius: 20px;
+      background: linear-gradient(180deg, #fff 0%, #fbf7f3 100%); box-shadow: 0 22px 44px -26px rgb(20 6 8 / 0.75), inset 0 1px 0 #fff; }
     .lg__head { display: grid; gap: 0.4rem; }
     .lg__head h1 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.03em; line-height: 1.1; }
     .lg__head p { margin: 0; color: var(--ink-soft); }
@@ -126,7 +130,7 @@ const LEAD = {
     .lg__links { margin: -0.25rem 0 0; font-size: 0.9375rem; }
     .lg__alt { margin: 0; padding-top: 1.25rem; border-top: 1px solid var(--stone-deep); font-size: 0.9375rem; }
     .lg__alt a, .lg__links a { color: var(--accent); font-weight: 600; }
-    .lg__ok { border-radius: var(--radius); }
+    .lg__ok { border-radius: 12px; }
 
     @media (max-width: 860px) {
       .lg { grid-template-columns: minmax(0, 1fr); }
