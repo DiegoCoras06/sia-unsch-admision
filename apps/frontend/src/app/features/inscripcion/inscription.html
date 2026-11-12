@@ -425,7 +425,7 @@
                   <section class="review__group review__fee" aria-live="polite">
                     <h3>Pagarás</h3>
                     <p class="review__total">{{ quote() ? money(quote()!.total) : 'S/ -' }}</p>
-                    @if (quote(); as q) { @for (l of q.lines; track l.code) { <p class="summary__line">{{ l.concept }}: {{ money(l.amount) }}</p> } }
+                    @if (quote(); as q) { @for (l of q.lines; track l.code) { <p class="summary__line"><span>{{ l.concept }}</span><span>{{ money(l.amount) }}</span></p> } }
                   </section>
                 </div>
                 <div class="declaration">
@@ -487,7 +487,7 @@
           <p>Pagarás</p>
           @if (quote(); as q) { <p class="summary__total">{{ money(q.total) }}</p> } @else { <p class="summary__empty">Elige tu modalidad y la gestión de tu colegio para ver el monto.</p> }
           @if (quote(); as q) {
-            @for (l of q.lines; track l.code) { <p class="summary__line">{{ l.concept }}: {{ money(l.amount) }}</p> }
+            @for (l of q.lines; track l.code) { <p class="summary__line"><span>{{ l.concept }}</span><span>{{ money(l.amount) }}</span></p> }
           }
         </div>
         @if (options()?.identitySimulated) {

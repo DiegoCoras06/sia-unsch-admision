@@ -117,7 +117,8 @@
 .review dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 .review__program { font-size: 1.25rem; }
 .review__group--photo img { width: 120px; height: 160px; object-fit: cover; background: #f1ebe6; }
-.review__fee { background: var(--ground); color: var(--ink); }
+.review__fee { background: linear-gradient(180deg, #fff 0%, #fbf7f3 100%); color: var(--ink); border: 0; border-left: 5px solid var(--gold); border-radius: 16px;
+  box-shadow: 0 18px 34px -22px rgb(20 6 8 / 0.8), inset 0 1px 0 #fff; gap: 0.35rem; }
 .review__fee h3 { color: var(--ink-soft); }
 .review__total { font-size: clamp(2.25rem, 4vw, 3rem); font-weight: 800; color: var(--accent); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 
@@ -126,16 +127,24 @@
 .btn--gold { min-width: 16rem; font-size: 1.125rem; }
 
 /* Resumen en vivo */
-.summary { position: sticky; top: 6rem; background: var(--stone); padding: 1.75rem; display: grid; gap: 1.25rem; }
+.summary { position: sticky; top: 6rem; padding: 1.75rem; display: grid; gap: 1.25rem; border-radius: 22px;
+  background: linear-gradient(180deg, #fff 0%, var(--stone) 100%); box-shadow: 0 0 0 1px var(--stone-deep), 0 24px 48px -30px rgb(29 20 21 / 0.45), inset 0 1px 0 #fff; }
 .summary__title { font-size: 1.5rem; }
 .summary dl { margin: 0; display: grid; gap: 0.85rem; }
 .summary dt { font-size: var(--size-note); color: var(--ink-soft); font-weight: 600; }
 .summary dd { margin: 0; font-weight: 700; }
-.summary__fee { background: var(--accent); color: var(--accent-ink); padding: 1.25rem; display: grid; gap: 0.25rem; }
+/* «Pagarás»: tarjeta guinda con luz dorada; el monto domina y cada concepto se lee como una línea de recibo. */
+.summary__fee { position: relative; overflow: hidden; display: grid; gap: 0.35rem; padding: 1.35rem 1.4rem; border-radius: 18px; color: var(--accent-ink);
+  background: radial-gradient(16rem 10rem at 100% 0%, rgb(217 180 74 / 0.32), transparent 70%), linear-gradient(160deg, #8f262e 0%, var(--accent) 55%, #5e1419 100%);
+  box-shadow: 0 18px 34px -20px rgb(94 20 25 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.18); }
+.summary__fee > p:first-child { margin: 0; font-size: var(--size-note); font-weight: 700; color: var(--gold); }
 .summary__total { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 800; color: var(--gold); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .summary__empty { margin: 0.25rem 0 0; font-size: var(--size-note); line-height: 1.45; opacity: 0.9; }
 .summary dd.is-empty { color: var(--ink-soft); font-weight: 500; font-style: italic; }
-.summary__line { font-size: var(--size-note); opacity: 0.9; }
+.summary__line { display: flex; justify-content: space-between; gap: 1rem; margin: 0; padding-top: 0.45rem; font-size: var(--size-note); font-variant-numeric: tabular-nums; opacity: 0.92; }
+.summary__fee .summary__total + .summary__line { margin-top: 0.4rem; border-top: 1px dashed rgb(255 255 255 / 0.3); padding-top: 0.6rem; }
+.review__fee .summary__line { opacity: 1; color: var(--ink-soft); }
+.review__fee .review__total + .summary__line { margin-top: 0.25rem; border-top: 1px dashed var(--stone-deep); padding-top: 0.6rem; }
 .demo { font-size: var(--size-note); }
 .demo summary { font-weight: 700; cursor: pointer; }
 .demo p { margin: 0.5rem 0; }

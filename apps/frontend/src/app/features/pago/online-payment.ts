@@ -46,7 +46,7 @@ function loadCulqi(): Promise<void> {
       @let st = status();
       @if (st?.order?.status === 'PAGADA' && st?.order?.receipt; as rc) {
         <div class="pay__ok" role="status">
-          <h3 id="pay-title">Pago confirmado</h3>
+          <h3 id="pay-title"><span class="pay__badge"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Pago confirmado</h3>
           <dl>
             <div><dt>Monto</dt><dd>{{ money(st!.order.amount) }}</dd></div>
             <div><dt>Fecha</dt><dd>{{ when(st!.order.paidAt!) }}</dd></div>
@@ -60,6 +60,7 @@ function loadCulqi(): Promise<void> {
       } @else {
         <div class="pay__cta">
           <div>
+            <p class="pay__secure"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Pago seguro con Culqi</p>
             <h3 id="pay-title">Paga en línea</h3>
             <p>Con tarjeta de débito o crédito o con <strong>Yape</strong>, en el formulario seguro de Culqi. Tu inscripción queda <strong>Apta</strong> en cuanto se confirma el pago.</p>
             <ul class="pay__methods" aria-label="Medios de pago">
@@ -68,9 +69,12 @@ function loadCulqi(): Promise<void> {
             @if (env() === 'sandbox') { <p class="tag">Ambiente de pruebas de Culqi: no se realizan cobros reales</p> }
             @if (env() === 'simulated') { <p class="tag">Pasarela simulada: no se realizan cobros</p> }
           </div>
-          <button type="button" class="btn btn--gold no-print" (click)="start()" [disabled]="busy()" [attr.aria-busy]="busy()">
-            {{ busy() ? 'Abriendo…' : 'Pagar ' + money(amount()) }}
-          </button>
+          <div class="pay__act">
+            <p class="pay__amount"><span>Total a pagar</span><strong>{{ money(amount()) }}</strong></p>
+            <button type="button" class="btn btn--gold no-print" (click)="start()" [disabled]="busy()" [attr.aria-busy]="busy()">
+              {{ busy() ? 'Abriendo…' : 'Pagar ahora' }}
+            </button>
+          </div>
         </div>
 
         @if (env() === 'sandbox') {
@@ -108,18 +112,42 @@ function loadCulqi(): Promise<void> {
     </section>
   `,
   styles: `
-    .pay { display: grid; gap: 1rem; }
-    .pay__cta { display: flex; gap: 1.5rem; align-items: center; justify-content: space-between; background: var(--accent); color: var(--accent-ink); padding: 1.5rem; }
-    .pay__cta h3 { font-size: 1.5rem; color: var(--gold); }
+    .pay { display: grid; gap: 1rem; container-type: inline-size; }
+    /* Tarjeta guinda con luz dorada: a la izquierda qué se paga y con qué; a la derecha, el monto y el botón. */
+    .pay__cta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem 2rem; align-items: center; padding: clamp(1.25rem, 3vw, 1.75rem);
+      border-radius: 22px; color: var(--accent-ink);
+      background: radial-gradient(28rem 16rem at 100% 0%, rgb(217 180 74 / 0.28), transparent 70%), radial-gradient(20rem 14rem at 0% 100%, rgb(255 255 255 / 0.1), transparent 70%),
+        linear-gradient(160deg, #8f262e 0%, var(--accent) 55%, #5e1419 100%);
+      box-shadow: 0 26px 50px -28px rgb(94 20 25 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.18); }
+    .pay__cta h3 { font-size: 1.5rem; color: #fff; margin-top: 0.4rem; }
     .pay__cta p { max-width: 46ch; }
-    .tag { display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.6rem; background: rgba(255, 255, 255, 0.14); font-size: var(--size-note); font-weight: 700; }
-    .btn--gold { white-space: nowrap; }
-    .pay__mock { border: 2px dashed var(--accent); padding: 1.25rem; display: grid; gap: 0.5rem; background: #fff; }
-    .pay__methods { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; padding: 0; list-style: none; }
-    .pay__methods li { padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: var(--size-note); font-weight: 700; }
+    .pay__secure { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: var(--size-note); font-weight: 700;
+      color: var(--gold); background: rgb(0 0 0 / 0.18); border: 1px solid rgb(217 180 74 / 0.45); }
+    .pay__act { display: grid; gap: 0.75rem; justify-items: stretch; min-width: 15rem; padding: 1.1rem 1.25rem; border-radius: 16px;
+      background: rgb(255 255 255 / 0.08); border: 1px solid rgb(255 255 255 / 0.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18); }
+    .pay__amount { display: grid; gap: 0.15rem; margin: 0; }
+    .pay__amount span { font-size: var(--size-note); font-weight: 600; opacity: 0.9; }
+    .pay__amount strong { font-size: clamp(2.25rem, 4vw, 2.75rem); font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--gold); font-variant-numeric: tabular-nums; }
+    .tag { display: inline-block; margin-top: 0.75rem; padding: 0.3rem 0.75rem; border-radius: 10px; background: rgb(255 255 255 / 0.14); font-size: var(--size-note); font-weight: 700; }
+    .btn--gold { white-space: nowrap; min-height: 3.25rem; border-radius: 12px; font-size: 1.0625rem; }
+    .btn--gold:not([disabled]) { background: linear-gradient(180deg, #e8c86c, #c9a23a); border-color: #b38f2c;
+      box-shadow: 0 14px 26px -14px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.45); }
+    .btn--gold:not([disabled]):hover { filter: brightness(1.05); }
+    .pay__mock { border: 2px dashed var(--accent); border-radius: 16px; padding: 1.25rem; display: grid; gap: 0.5rem; background: #fff; }
+    .pay__mock .btn { border-radius: 12px; }
+    .pay__methods { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; padding: 0; list-style: none; }
+    .pay__methods li { padding: 0.3rem 0.75rem; border-radius: 999px; background: rgb(255 255 255 / 0.95); color: var(--ink); font-size: var(--size-note); font-weight: 700;
+      box-shadow: 0 6px 12px -8px rgb(0 0 0 / 0.6); }
+    .pay__methods li:last-child { background: #742284; color: #fff; }
     .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .pay__ok { background: #e3f1e8; color: #164d2a; padding: 1.5rem; display: grid; gap: 1rem; }
-    .pay__ok h3 { font-size: 1.5rem; }
+    .pay__ok { padding: clamp(1.25rem, 3vw, 1.75rem); display: grid; gap: 1rem; border-radius: 22px; color: #164d2a;
+      background: linear-gradient(180deg, #effaf2 0%, #e1f1e6 100%); box-shadow: 0 0 0 1px #c5e3cf, 0 22px 44px -30px rgb(22 77 42 / 0.6), inset 0 1px 0 #fff; }
+    .pay__ok h3 { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; }
+    .pay__badge { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; flex: none; border-radius: 50%; background: #1f7a3f; color: #fff;
+      box-shadow: 0 0 0 4px rgb(31 122 63 / 0.18), 0 8px 16px -8px rgb(22 77 42 / 0.7); }
+    .pay__ok dl > div { padding: 0.65rem 0.8rem; border-radius: 12px; background: rgb(255 255 255 / 0.7); }
+    .pay__history { padding: 0.9rem 1.1rem; border-radius: 16px; background: var(--ground); box-shadow: 0 0 0 1px var(--stone-deep); }
     .pay__ok dl { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem 1.5rem; }
     .pay__ok dt { font-size: var(--size-note); font-weight: 600; opacity: 0.8; }
     .pay__ok dd { margin: 0; font-weight: 700; }
@@ -129,12 +157,15 @@ function loadCulqi(): Promise<void> {
     .pay__history small { grid-column: 1 / -1; color: var(--ink-soft); }
     .note { font-size: var(--size-note); }
     @media (max-width: 640px) {
-      .pay__cta { flex-direction: column; align-items: stretch; }
+      .pay__cta { grid-template-columns: minmax(0, 1fr); }
+      .pay__act { min-width: 0; }
       .pay__ok dl { grid-template-columns: 1fr 1fr; }
     }
-    .pay__test { font-size: var(--size-note); }
+    .pay__test { font-size: var(--size-note); padding: 0.75rem 1rem; border-radius: 12px; background: var(--stone); }
     .pay__test summary { cursor: pointer; font-weight: 700; }
     .pay__test p { margin: 0.5rem 0 0; }
+    /* Según el ancho de la propia tarjeta: en una columna angosta, el monto y el botón pasan debajo. */
+    @container (max-width: 40rem) { .pay__cta { grid-template-columns: minmax(0, 1fr); } .pay__act { min-width: 0; } }
   `,
 })
 export class OnlinePayment implements OnInit {
