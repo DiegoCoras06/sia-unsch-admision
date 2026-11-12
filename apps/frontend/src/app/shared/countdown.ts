@@ -21,9 +21,9 @@ import { Component, DestroyRef, computed, inject, input, signal } from '@angular
     .cd__num { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 800; line-height: 1; letter-spacing: -0.04em; color: var(--gold); font-variant-numeric: tabular-nums; }
     /* Variante en casillas de vidrio (portada). */
     .cd--tiles { gap: 0.6rem; }
-    .cd--tiles .cd__unit { justify-items: center; min-width: 4.6rem; padding: 0.65rem 0.6rem 0.55rem; border-radius: 14px; font-weight: 500;
+    .cd--tiles .cd__unit { justify-items: center; min-width: 4.2rem; padding: clamp(0.4rem, 1.2vh, 0.65rem) 0.6rem clamp(0.35rem, 1vh, 0.55rem); border-radius: 14px; font-weight: 500;
       background: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.05)); border: 1px solid rgb(255 255 255 / 0.2); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2); }
-    .cd--tiles .cd__num { font-size: clamp(1.9rem, 3.4vw, 2.5rem); color: #f0d27c; letter-spacing: -0.03em; }
+    .cd--tiles .cd__num { font-size: clamp(1.6rem, min(3.4vw, 4.4vh), 2.4rem); color: #f0d27c; letter-spacing: -0.03em; }
   `,
 })
 export class Countdown {

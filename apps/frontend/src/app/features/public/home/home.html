@@ -3,7 +3,7 @@
   <div class="hero__text">
     <div class="hero__inner">
       <p class="hero__pill" [class.is-open]="status().open"><i aria-hidden="true"></i>{{ status().label }}</p>
-      <h1 id="hero-title">Admisión UNSCH <span>2027-I</span></h1>
+      <h1 id="hero-title"><span class="hero__name">Admisión UNSCH</span> <span class="hero__year">2027-I</span></h1>
       <p class="hero__lead">Postula a la Universidad Nacional de San Cristóbal de Huamanga. Los exámenes se rinden en la Ciudad Universitaria de Ayacucho.</p>
       @if (exams().length) {
         <ul class="hero__dates" aria-label="Fechas de examen">
@@ -20,16 +20,18 @@
         <li><b>34</b><span>programas</span></li>
         <li><b>{{ options().length || 40 }}</b><span>opciones con especialidades</span></li>
       </ul>
-      <div class="hero__actions">
-        <a [routerLink]="quick[primary()].route" class="hero__go">{{ quick[primary()].cta }} <span aria-hidden="true">→</span></a>
-        <a routerLink="/cronograma" class="hero__ghost">Ver el cronograma</a>
-      </div>
-      @if (milestone(); as m) {
-        <div class="hero__count">
-          <p class="hero__count-label">Faltan para el {{ examLabel(m.name) }}</p>
-          <app-countdown [target]="m.startsAt" [serverNow]="store.call()!.now" [label]="m.name" [tiles]="true" />
+      <div class="hero__row">
+        <div class="hero__actions">
+          <a [routerLink]="quick[primary()].route" class="hero__go">{{ quick[primary()].cta }} <span aria-hidden="true">→</span></a>
+          <a routerLink="/cronograma" class="hero__ghost">Ver el cronograma</a>
         </div>
-      }
+        @if (milestone(); as m) {
+          <div class="hero__count">
+            <p class="hero__count-label">Faltan para el {{ examLabel(m.name) }}</p>
+            <app-countdown [target]="m.startsAt" [serverNow]="store.call()!.now" [label]="m.name" [tiles]="true" />
+          </div>
+        }
+      </div>
     </div>
   </div>
   <figure class="hero__media">
