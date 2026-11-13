@@ -67,8 +67,13 @@ const ROLE_NAMES: Record<string, string> = {
           }
         </nav>
         <div class="adm-user">
-          <p><strong>{{ session.me()?.fullName }}</strong></p>
-          <p class="adm-muted">{{ roles() }}</p>
+          <div class="adm-user__who">
+            <span class="adm-avatar" aria-hidden="true">{{ initials() }}</span>
+            <div>
+              <p><strong>{{ session.me()?.fullName }}</strong></p>
+              <p class="adm-muted">{{ roles() }}</p>
+            </div>
+          </div>
           <div class="adm-row">
             <a routerLink="/" class="adm-link">Ver portal</a>
             <a routerLink="/admin/seguridad" class="adm-link" (click)="menu.set(false)">Mi seguridad</a>
@@ -99,6 +104,9 @@ export class AdminShell {
     NAV.map((g) => ({ ...g, items: g.items.filter((n) => this.session.can(n.permission)) })).filter((g) => g.items.length),
   );
   protected readonly roles = computed(() => (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(', '));
+  /** Iniciales del nombre para el círculo del usuario. */
+  protected readonly initials = computed(() =>
+    (this.session.me()?.fullName ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join(''));
 
   /** La sesión se restaura con la cookie, así que recargar vuelve a pedir todo lo de la pantalla. */
   protected retry() {

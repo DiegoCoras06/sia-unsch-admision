@@ -259,3 +259,66 @@ details.adm-json pre { font-size: 0.75rem; white-space: pre-wrap; background: va
 .sus-panel__statements li.is-weak b { color: var(--danger); }
 .sus-panel__comments { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; font-size: 0.9375rem; }
 .sus-panel__comments li { padding: 0.6rem 0.8rem; border-radius: 10px; background: var(--stone); }
+
+/* ── Diseño actual del panel ───────────────────────────────────────────
+   El mismo lenguaje que el portal (guinda con luces, vidrio, dorado), sobrio porque es una pantalla de trabajo. */
+.adm { background: linear-gradient(180deg, #f6f2ee 0%, var(--stone) 100%); }
+.adm-side { background:
+    radial-gradient(18rem 14rem at 0% 0%, rgb(217 180 74 / 0.22), transparent 70%),
+    radial-gradient(16rem 18rem at 100% 100%, rgb(255 255 255 / 0.08), transparent 70%),
+    linear-gradient(170deg, #8d242b 0%, var(--accent) 45%, #5a1419 100%);
+  box-shadow: 8px 0 30px -18px rgb(29 20 21 / 0.6); }
+.adm-brand { margin: 0.6rem; padding: 0.8rem 0.85rem; border-radius: 16px; background: rgb(255 255 255 / 0.08); border: 1px solid rgb(255 255 255 / 0.16); }
+.adm-brand img { padding: 3px 6px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 2px var(--gold), 0 8px 16px -10px rgb(0 0 0 / 0.7); }
+.adm-brand strong { font-size: 1rem; letter-spacing: -0.01em; }
+.adm-brand small { color: var(--gold); opacity: 1; font-weight: 600; }
+.adm-group { margin: 1.1rem 0.85rem 0.4rem; font-size: 0.75rem; letter-spacing: 0.02em; }
+.adm-side nav a { padding: 0.55rem 0.8rem; border-radius: 12px; color: rgb(255 255 255 / 0.9); }
+.adm-side nav a:hover { background: rgb(255 255 255 / 0.1); color: #fff; }
+.adm-side nav a.is-active { background: #fff; color: var(--accent); box-shadow: inset 4px 0 0 var(--gold), 0 10px 20px -12px rgb(0 0 0 / 0.6); }
+.adm-side nav a.is-active[data-icon]::before { background: var(--accent); }
+.adm-user { margin: 0.6rem; padding: 0.9rem; border-radius: 16px; background: rgb(0 0 0 / 0.2); border: 1px solid rgb(255 255 255 / 0.12); gap: 0.6rem; }
+.adm-user p { margin: 0; }
+.adm-user__who { display: flex; align-items: center; gap: 0.7rem; }
+.adm-avatar { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; flex: none; border-radius: 50%; font-weight: 800; font-size: 0.875rem; color: var(--ink);
+  background: linear-gradient(180deg, #edd07a, #c9a23a); box-shadow: 0 0 0 2px rgb(255 255 255 / 0.25); }
+.adm-user .adm-row { gap: 0.4rem 0.85rem; }
+
+/* Encabezado de cada página: banda guinda con luces, como el encabezado de las páginas del portal. */
+.adm-head { position: relative; overflow: hidden; padding: clamp(1.1rem, 2.4vw, 1.6rem) clamp(1.2rem, 2.6vw, 1.75rem); border-radius: 22px; color: #fff;
+  background: radial-gradient(26rem 14rem at 100% 0%, rgb(217 180 74 / 0.26), transparent 70%), radial-gradient(18rem 12rem at 0% 100%, rgb(255 255 255 / 0.08), transparent 70%),
+    linear-gradient(155deg, #8d242b 0%, var(--accent) 52%, #5a1419 100%);
+  box-shadow: 0 24px 46px -30px rgb(87 18 23 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.14); align-items: center; }
+.adm-head h1 { color: #fff; font-size: clamp(1.6rem, 2.4vw, 2.1rem); }
+.adm-head > div:first-child p { color: rgb(255 255 255 / 0.88); margin-top: 0.35rem; }
+.adm-head > .field label { color: #fff; }
+.adm-head > .field .select, .adm-head > .field .input { background-color: #fff; border-color: transparent; }
+.adm-head .btn--quiet { background: #fff; border-color: #fff; color: var(--accent); }
+
+/* Indicadores, paneles y pendientes */
+.adm-kpi strong { font-size: clamp(1.75rem, 2.4vw, 2.25rem); }
+.adm-kpi span { font-size: 0.8125rem; }
+.adm-panel h2, .adm-todo h2 { display: flex; align-items: center; gap: 0.55rem; }
+.adm-panel > h2::before, .adm-todo > h2::before { content: ''; width: 0.5rem; height: 0.5rem; flex: none; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px rgb(217 180 74 / 0.25); }
+.adm-todo a { background: #fff; }
+@media (hover: hover) { .adm-todo a:hover { background: #fbf7f3; } }
+
+/* Campos en relieve con foco dorado y botón principal con volumen. */
+.adm .input, .adm .select { background-color: #fbf7f3; border-color: var(--stone-deep); box-shadow: inset 2px 2px 5px rgb(29 20 21 / 0.08), inset -2px -2px 4px rgb(255 255 255 / 0.9); }
+.adm .input:focus, .adm .select:focus { background-color: #fff; border-color: var(--gold); box-shadow: 0 0 0 4px rgb(217 180 74 / 0.3); }
+.adm .btn:not(.btn--quiet):not(.btn--gold):not([disabled]) { background: linear-gradient(180deg, #932830 0%, var(--accent) 55%, #62161b 100%);
+  box-shadow: 0 10px 18px -12px rgb(122 28 34 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.18); }
+.adm-filters { background: #fff; }
+
+/* Pestañas como píldoras */
+.adm-tabs { gap: 0.3rem; padding: 0.3rem; border-radius: 14px; background: #ebe4dd; box-shadow: inset 2px 2px 6px rgb(29 20 21 / 0.08); align-self: start; justify-self: start; }
+.adm-tabs button { border-radius: 10px; background: transparent; color: var(--ink-soft); min-height: 2.6rem; }
+.adm-tabs button:hover { background: rgb(255 255 255 / 0.6); color: var(--accent); }
+.adm-tabs button.is-on { background: #fff; color: var(--accent); box-shadow: 0 6px 14px -8px rgb(29 20 21 / 0.45); }
+
+/* Tablas: tarjeta con esquinas suaves */
+.adm-panel:has(> .adm-table-wrap) { padding-inline: 0.9rem; }
+.adm-table-wrap { border-radius: 14px; }
+
+/* Botón del menú en celular */
+.adm-burger { border-radius: 12px; }
