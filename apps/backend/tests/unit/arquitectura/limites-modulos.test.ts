@@ -58,6 +58,13 @@ describe('límites entre los 12 módulos', () => {
     expect(violations).toEqual([]);
   });
 
+  // Servicios que ya guardan por un repositorio: no pueden volver a usar el cliente de base de datos (Db).
+  it.each(['inscripciones/application/inscription-service.ts', 'pagos/application/payment-service.ts'])('%s usa su repositorio, no Prisma', (file) => {
+    const source = readFileSync(join(MODULES, file), 'utf-8');
+    expect(source).not.toMatch(/import type \{[^}]*Db[^}]*\} from/);
+    expect(source).not.toMatch(/this\.d\.db/);
+  });
+
   it('la capa de aplicación no conoce HTTP (Express)', () => {
     const violations = files
       .filter((f) => f.layer === 'application')

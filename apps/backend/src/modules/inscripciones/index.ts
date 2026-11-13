@@ -10,6 +10,7 @@ import type { ConvocatoriasQueries } from '../convocatorias/index.js';
 import type { AccessService } from '../seguridad/index.js';
 import type { IdentityProvider } from '../usuarios/index.js';
 import { InscriptionService } from './application/inscription-service.js';
+import { PrismaInscriptionRepository } from './infrastructure/prisma-inscription-repository.js';
 import { FichaService } from './application/ficha-service.js';
 import { OrdenPagoService } from './application/orden-pago-pdf.js';
 import { CepreAwardees } from './application/cepre-awardees.js';
@@ -32,7 +33,7 @@ export function createInscripcionesModule(deps: {
   fichaSecret: string;
   currentConsent?: () => Promise<{ version: string; textMarkdown: string }>;
 }) {
-  const service = new InscriptionService(deps);
+  const service = new InscriptionService({ ...deps, repo: new PrismaInscriptionRepository(deps.db) });
   const ficha = new FichaService({ ...deps, secret: deps.fichaSecret });
   const orden = new OrdenPagoService({ inscriptions: service, clock: deps.clock, frontendOrigin: deps.frontendOrigin });
   const cepre = new CepreAwardees(deps);

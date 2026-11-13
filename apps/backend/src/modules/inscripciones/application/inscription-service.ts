@@ -3,14 +3,13 @@ import type { RequestMeta } from '../../../shared/audit/audit.js';
 import type { AuditLog } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import { districtLabel, isValidDistrict } from '../../../shared/data/ubigeo.js';
-import { nextCounterValue } from '../../../shared/db/counters.js';
-import type { Db } from '../../../shared/db/prisma.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { businessRule, conflict, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import { jpegSize, type FileStorage } from '../../../shared/storage/file-storage.js';
 import { maskEmail } from '../../../shared/telemetry/logger.js';
 import type { ConvocatoriasQueries } from '../../convocatorias/index.js';
+import { DuplicateApplicationError, type InscriptionRepository } from './inscription-repository.js';
 import type { AccessService } from '../../seguridad/index.js';
 import { applicantCodeFromSequence, type IdentityProvider } from '../../usuarios/index.js';
 import {
@@ -104,7 +103,7 @@ const shortDate = (d: Date) => d.toLocaleDateString('es-PE', { timeZone: 'Americ
 export class InscriptionService {
   constructor(
     private readonly d: {
-      db: Db;
+      repo: InscriptionRepository;
       clock: Clock;
       outbox: Outbox;
       audit: AuditLog;
@@ -126,12 +125,7 @@ export class InscriptionService {
   async lookupIdentity(documentType: 'DNI' | 'CE', documentNumber: string, meta: RequestMeta) {
     await this.d.limiter.consume(`inscription-lookup:${meta.ipHash}`, 20, 3600);
     const callCode = await this.callCode();
-    const alreadyRegistered = Boolean(
-      await this.d.db.application.findFirst({
-        where: { callCode, documentType, documentNumber },
-        select: { id: true },
-      }),
-    );
+    const alreadyRegistered = await this.d.repo.existsForDocument(callCode, documentType, documentNumber);
     const empty = { found: false, paternalSurname: null, maternalSurname: null, firstNames: null, birthDate: null, simulated: this.d.identity.simulated, alreadyRegistered };
     if (documentType !== 'DNI') return empty;
     if (!/^\d{8}$/.test(documentNumber)) throw validationError('El DNI debe tener 8 dígitos.', [{ field: 'documentNumber', issue: '8 dígitos' }]);
@@ -198,14 +192,14 @@ export class InscriptionService {
     }
 
     // 1.1 Una inscripción por documento en la convocatoria (la reinscripción al Ordinario tiene su propio caso de uso).
-    if (await this.d.db.application.findFirst({ where: { callCode: call.code, documentType: input.documentType, documentNumber: input.documentNumber }, select: { id: true } })) {
+    if (await this.d.repo.existsForDocument(call.code, input.documentType, input.documentNumber)) {
       throw conflict('ALREADY_REGISTERED', 'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.');
     }
 
     // 1.2 Adjudicados CEPRE (spec 004, Historia 6): solo quien figura en la lista, con el programa y el ciclo adjudicados.
     if (input.modality === 'CEPRE') {
       const awardee = input.documentType === 'DNI'
-        ? await this.d.db.cepreAwardee.findUnique({ where: { callCode_documentNumber: { callCode: call.code, documentNumber: input.documentNumber } } })
+        ? await this.d.repo.findCepreAwardee(call.code, input.documentNumber)
         : null;
       if (!awardee) throw businessRule('NOT_CEPRE_AWARDEE', 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.');
       input = { ...input, optionCode: awardee.optionCode, quotaCategory: awardee.cycle };
@@ -265,11 +259,11 @@ export class InscriptionService {
     const examDate = examStage ? longDate(new Date(examStage.startsAt)) : 'Adjudicado por el CEPRE-UNSCH: no rinde examen';
 
     try {
-      const created = await this.d.db.$transaction(async (tx) => {
-        const applicantCode = applicantCodeFromSequence(await nextCounterValue(tx, 'applicant_code', 2_700_001));
+      const created = await this.d.repo.transaction(async (uow) => {
+        const { tx } = uow;
+        const applicantCode = applicantCodeFromSequence(await uow.nextApplicantCodeValue());
         const photoKey = `inscripciones/${call.code}/${applicantCode}.jpg`;
-        const row = await tx.application.create({
-          data: {
+        const row = await uow.create({
             callCode: call.code,
             applicantCode,
             documentType: input.documentType,
@@ -308,7 +302,6 @@ export class InscriptionService {
             declarationAcceptedAt: now,
             consentVersion: consent?.version ?? input.consentVersion,
             consentTextHash: consent ? createHash('sha256').update(consent.textMarkdown).digest('hex') : null,
-          },
         });
         await this.d.audit.record({ actorUserId: null, action: 'inscription.created', resourceType: 'application', resourceId: row.id, after: { modality: row.modality, optionCode: row.optionCode, status }, ...meta }, tx);
         await this.d.outbox.publish(tx, 'InscripcionRegistrada', {
@@ -321,7 +314,7 @@ export class InscriptionService {
       this.d.outbox.kick();
       return this.summary(created, option.displayName, category.name, examDate);
     } catch (error) {
-      if ((error as { code?: string })?.code === 'P2002') {
+      if (error instanceof DuplicateApplicationError) {
         throw conflict('ALREADY_REGISTERED', 'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.');
       }
       throw error;
@@ -333,7 +326,7 @@ export class InscriptionService {
    * La cuenta ya comprobó la identidad (DNI con dígito verificador y correo), así que no pide el código.
    */
   async byDocument(documentType: string, documentNumber: string): Promise<InscriptionSummary[]> {
-    const rows = await this.d.db.application.findMany({ where: { documentType, documentNumber: documentNumber.toUpperCase() }, orderBy: { createdAt: 'desc' } });
+    const rows = await this.d.repo.listByDocument(documentType, documentNumber);
     if (!rows.length) return [];
     const call = await this.d.convocatorias.getCurrentCall();
     return Promise.all(rows.map(async (row) => {
@@ -386,11 +379,11 @@ export class InscriptionService {
     const photo = await this.d.storage.get(row.photoKey);
 
     try {
-      const created = await this.d.db.$transaction(async (tx) => {
-        const code = applicantCodeFromSequence(await nextCounterValue(tx, 'applicant_code', 2_700_001));
+      const created = await this.d.repo.transaction(async (uow) => {
+        const { tx } = uow;
+        const code = applicantCodeFromSequence(await uow.nextApplicantCodeValue());
         const { id: _id, applicantCode: _code, createdAt: _c, updatedAt: _u, anonymizedAt: _a, feeLines: _f, ...personal } = row;
-        const app = await tx.application.create({
-          data: {
+        const app = await uow.create({
             ...personal,
             applicantCode: code,
             photoKey: `inscripciones/${call.code}/${code}.jpg`,
@@ -405,7 +398,6 @@ export class InscriptionService {
             status: 'PENDIENTE_PAGO',
             declarationAcceptedAt: this.d.clock.now(),
             reinscriptionOf: row.applicantCode,
-          },
         });
         await this.d.audit.record({ actorUserId: null, action: 'inscription.reinscribed', resourceType: 'application', resourceId: app.id, after: { from: row.applicantCode, optionCode: app.optionCode }, ...meta }, tx);
         await this.d.outbox.publish(tx, 'InscripcionRegistrada', {
@@ -418,13 +410,13 @@ export class InscriptionService {
       this.d.outbox.kick();
       return this.summary(created, option.displayName, 'Ordinario (reinscripción)', examDate);
     } catch (error) {
-      if ((error as { code?: string })?.code === 'P2002') throw conflict('ALREADY_REGISTERED', 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».');
+      if (error instanceof DuplicateApplicationError) throw conflict('ALREADY_REGISTERED', 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».');
       throw error;
     }
   }
 
   private async reinscriptionSource(documentNumber: string, applicantCode: string) {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row || row.documentNumber !== documentNumber.trim().toUpperCase()) {
       throw notFound('No encontramos una inscripción con ese documento y código. Revisa los datos.');
     }
@@ -440,17 +432,13 @@ export class InscriptionService {
     if (row.modality !== 'EXO') return 'La reinscripción es solo para postulantes de Exonerados que no alcanzaron vacante (Art. 21).';
     if (NO_REINSCRIPTION.has(row.quotaCategory)) return 'Los postulantes por traslado o graduados/titulados no pueden reinscribirse al Ordinario (Art. 21).';
     if (row.status !== 'APTA') return 'Tu inscripción de Exonerados no llegó a estar apta para el examen.';
-    if (await this.d.db.application.findFirst({ where: { callCode: row.callCode, documentType: row.documentType, documentNumber: row.documentNumber, modality: 'ORD' }, select: { id: true } })) {
+    if (await this.d.repo.existsForDocument(row.callCode, row.documentType, row.documentNumber, 'ORD')) {
       return 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».';
     }
     // Resultado publicado del examen de Exonerados: solo los no admitidos o ausentes.
-    const result = await this.d.db.examResult.findFirst({
-      where: { applicantCode: row.applicantCode, version: { status: 'PUBLICADA' } },
-      orderBy: { version: { version: 'desc' } },
-      select: { condition: true },
-    });
-    if (!result) return 'Todavía no hay resultados publicados del examen de Exonerados.';
-    if (result.condition === 'ADMITIDO') return 'Alcanzaste una vacante en Exonerados: no corresponde reinscribirte.';
+    const condition = await this.d.repo.latestPublishedCondition(row.applicantCode);
+    if (!condition) return 'Todavía no hay resultados publicados del examen de Exonerados.';
+    if (condition === 'ADMITIDO') return 'Alcanzaste una vacante en Exonerados: no corresponde reinscribirte.';
     const stage = call.stages.find((st) => st.scope === 'REINS');
     if (!stage || stage.status !== 'IN_PROGRESS') {
       return stage && stage.status === 'UPCOMING'
@@ -463,7 +451,7 @@ export class InscriptionService {
   /** H4: consulta con documento + código de postulante. */
   async status(documentNumber: string, applicantCode: string, meta: RequestMeta): Promise<InscriptionSummary> {
     await this.d.limiter.consume(`inscription-status:${meta.ipHash}`, 20, 3600);
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row || row.documentNumber !== documentNumber.trim().toUpperCase()) {
       throw notFound('No encontramos una inscripción con ese documento y código. Revisa los datos.');
     }
@@ -491,9 +479,9 @@ export class InscriptionService {
     await this.d.limiter.consume(`inscription-remind:${meta.ipHash}`, 5, 3600);
     if ((await this.d.limiter.hit(`inscription-remind-doc:${doc}`, 86_400)) > 3) return;
     const call = await this.d.convocatorias.getCurrentCall();
-    const row = await this.d.db.application.findFirst({ where: { callCode: call.code, documentNumber: doc, anonymizedAt: null } });
+    const row = await this.d.repo.findInCallByDocument(call.code, doc);
     if (!row) return;
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.repo.transaction(async ({ tx }) => {
       await this.d.audit.record({ actorUserId: null, action: 'inscription.code_reminded', resourceType: 'application', resourceId: row.id, ...meta }, tx);
       await this.d.outbox.publish(tx, 'CodigoPostulanteRecordado', { applicantCode: row.applicantCode, email: row.email, firstNames: row.firstNames }, meta.requestId);
     });
@@ -505,7 +493,7 @@ export class InscriptionService {
    * No aplica límite de uso: lo aplica el caso de uso de pagos que la llama.
    */
   async paymentContext(documentNumber: string, applicantCode: string): Promise<PaymentContext> {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row || row.documentNumber !== documentNumber.trim().toUpperCase()) {
       throw notFound('No encontramos una inscripción con ese documento y código. Revisa los datos.');
     }
@@ -532,7 +520,7 @@ export class InscriptionService {
    * para un código ya verificado con DNI por el pase del asistente (ADR-017).
    */
   async processSnapshot(applicantCode: string) {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row) return null;
     const call = await this.d.convocatorias.getCurrentCall();
     const [option, categories] = await Promise.all([
@@ -562,12 +550,12 @@ export class InscriptionService {
     const where = {
       ...(filter.status ? { status: filter.status as InscriptionStatus } : {}),
       ...(filter.modality ? { modality: filter.modality } : {}),
-      ...(q ? { OR: [{ applicantCode: { contains: q } }, { documentNumber: { contains: q } }, { paternalSurname: { contains: q } }, { firstNames: { contains: q } }] } : {}),
+      ...(q ? { text: q } : {}),
     };
     const pageSize = 25;
     const [total, rows] = await Promise.all([
-      this.d.db.application.count({ where }),
-      this.d.db.application.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (filter.page - 1) * pageSize, take: pageSize }),
+      this.d.repo.count(where),
+      this.d.repo.list(where, { skip: (filter.page - 1) * pageSize, take: pageSize }),
     ]);
     return {
       total, page: filter.page, pageSize,
@@ -583,19 +571,18 @@ export class InscriptionService {
   /** Relación pública de observados: solo código y modalidad, sin nombres ni documento (Art. 17). */
   async observedList() {
     const callCode = await this.callCode();
-    const rows = await this.d.db.application.findMany({
-      where: { callCode, status: 'OBSERVADA' }, orderBy: { applicantCode: 'asc' }, select: { applicantCode: true, modality: true, updatedAt: true },
-    });
+    const rows = await this.d.repo.list({ callCode, status: 'OBSERVADA' }, { orderBy: 'applicantCode' });
     return { callCode, rows: rows.map((r) => ({ applicantCode: r.applicantCode, modality: r.modality, since: r.updatedAt.toISOString() })) };
   }
 
   /** Panel: anular con motivo (y resolución si la hay), auditado. */
   async annul(applicantCode: string, reason: string, actor: string, meta: RequestMeta) {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row) throw notFound('Inscripción no encontrada.');
     if (row.status === 'ANULADA') throw conflict('ALREADY_ANNULLED', 'La inscripción ya está anulada.');
-    await this.d.db.$transaction(async (tx) => {
-      await tx.application.update({ where: { applicantCode }, data: { status: 'ANULADA' } });
+    await this.d.repo.transaction(async (uow) => {
+      const { tx } = uow;
+      await uow.setStatus(applicantCode, 'ANULADA');
       await this.d.audit.record({ actorUserId: actor, action: 'inscription.annulled', resourceType: 'application', resourceId: applicantCode, before: { status: row.status }, after: { status: 'ANULADA', reason }, ...meta }, tx);
       await this.d.outbox.publish(tx, 'InscripcionAnulada', { applicantCode, email: row.email, firstNames: row.firstNames, reason }, meta.requestId);
     });
@@ -603,7 +590,7 @@ export class InscriptionService {
 
   /** Spec 008, Historia 5: al inhabilitar a una persona se anulan sus inscripciones con la resolución. */
   async annulByDocument(documentType: string, documentNumber: string, resolution: string, actor: string, meta: RequestMeta): Promise<string[]> {
-    const rows = await this.d.db.application.findMany({ where: { documentType, documentNumber: documentNumber.toUpperCase(), status: { not: 'ANULADA' } } });
+    const rows = await this.d.repo.listByDocument(documentType, documentNumber, { excludeAnnulled: true });
     for (const r of rows) await this.annul(r.applicantCode, `Inhabilitación: ${resolution}`, actor, meta);
     return rows.map((r) => r.applicantCode);
   }
@@ -613,7 +600,7 @@ export class InscriptionService {
    * cuando quien consulta es personal autorizado), con la submodalidad de su categoría.
    */
   async dossierContext(applicantCode: string, documentNumber?: string) {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row || (documentNumber !== undefined && row.documentNumber !== documentNumber.trim().toUpperCase())) {
       throw notFound('No encontramos una inscripción con ese documento y código.');
     }
@@ -636,7 +623,7 @@ export class InscriptionService {
    */
   async eligibleFor(callCode: string, modalities: string[]) {
     const [rows, options] = await Promise.all([
-      this.d.db.application.findMany({ where: { callCode, status: 'APTA', modality: { in: modalities } }, orderBy: { applicantCode: 'asc' } }),
+      this.d.repo.list({ callCode, status: 'APTA', modalities }, { orderBy: 'applicantCode' }),
       this.d.convocatorias.searchOptions(callCode, {}),
     ]);
     const option = new Map(options.data.map((o) => [o.internalCode, o]));
@@ -645,7 +632,7 @@ export class InscriptionService {
 
   /** Datos de examen de una inscripción; con `documentNumber` exige que coincida (consulta pública con DNI + código). */
   async examContext(applicantCode: string, documentNumber?: string) {
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.repo.findByCode(applicantCode);
     if (!row || (documentNumber !== undefined && row.documentNumber !== documentNumber.trim().toUpperCase())) return null;
     const options = await this.d.convocatorias.searchOptions(row.callCode, {});
     return { ...this.examPerson(row, options.data.find((o) => o.internalCode === row.optionCode)), callCode: row.callCode, status: row.status, statusLabel: STATUS_LABEL[row.status] };
@@ -654,14 +641,13 @@ export class InscriptionService {
   /** M11: destinatarios de un comunicado segmentado por modalidad, programa y estado (RF-11.08). */
   async segment(filter: { modality?: string | undefined; optionCode?: string | undefined; status?: string | undefined }) {
     const call = await this.d.convocatorias.getCurrentCall();
-    const rows = await this.d.db.application.findMany({
-      where: {
-        callCode: call.code, ...(filter.modality ? { modality: filter.modality } : {}), ...(filter.optionCode ? { optionCode: filter.optionCode } : {}),
-        ...(filter.status ? { status: filter.status as InscriptionStatus } : { status: { not: 'ANULADA' } }),
-      },
-      select: { applicantCode: true, email: true, firstNames: true },
+    const rows = await this.d.repo.list({
+      callCode: call.code,
+      ...(filter.modality ? { modality: filter.modality } : {}),
+      ...(filter.optionCode ? { optionCode: filter.optionCode } : {}),
+      ...(filter.status ? { status: filter.status as InscriptionStatus } : { excludeAnnulled: true }),
     });
-    return rows;
+    return rows.map((r) => ({ applicantCode: r.applicantCode, email: r.email, firstNames: r.firstNames }));
   }
 
   /** M11, recordatorio de pago: pendientes cuya inscripción regular cierra dentro de `withinHours`. */
@@ -671,7 +657,7 @@ export class InscriptionService {
     const closing = call.stages.filter((s) => s.kind === 'REGULAR' && new Date(s.endsAt).getTime() > now && new Date(s.endsAt).getTime() - now <= withinHours * 3600_000);
     const out = [];
     for (const st of closing) {
-      const rows = await this.d.db.application.findMany({ where: { callCode: call.code, status: 'PENDIENTE_PAGO', modality: st.scope }, select: { applicantCode: true, email: true, firstNames: true, feeTotal: true } });
+      const rows = await this.d.repo.list({ callCode: call.code, status: 'PENDIENTE_PAGO', modality: st.scope });
       out.push(...rows.map((r) => ({ applicantCode: r.applicantCode, email: r.email, firstNames: r.firstNames, amount: Number(r.feeTotal).toFixed(2), closesAt: new Date(st.endsAt), stage: st.code })));
     }
     return out;
@@ -694,21 +680,14 @@ export class InscriptionService {
   async anonymizeExpired(years: number, actor: string | null, meta?: RequestMeta) {
     const current = await this.callCode();
     const limit = new Date(this.d.clock.now().getTime() - years * 365.25 * 86_400_000);
-    const rows = await this.d.db.application.findMany({ where: { callCode: { not: current }, createdAt: { lt: limit }, anonymizedAt: null }, take: 500 });
+    const rows = await this.d.repo.listExpired(current, limit, 500);
     for (const r of rows) {
-      const docs = await this.d.db.applicationDocument.findMany({ where: { applicantCode: r.applicantCode } });
+      const keys = await this.d.repo.documentKeys(r.applicantCode);
       await this.d.storage.delete(r.photoKey).catch(() => undefined);
-      for (const d of docs) await this.d.storage.delete(d.fileKey).catch(() => undefined);
-      await this.d.db.$transaction(async (tx) => {
-        await tx.applicationDocument.deleteMany({ where: { applicantCode: r.applicantCode } });
-        await tx.application.update({
-          where: { id: r.id },
-          data: {
-            documentNumber: `X${r.applicantCode}`, paternalSurname: 'ANONIMIZADO', maternalSurname: '', firstNames: 'ANONIMIZADO',
-            address: '', phone: null, mobile: '000000000', email: `${r.applicantCode}@anonimizado.invalid`, photoKey: '',
-            birthDate: new Date('1900-01-01'), schoolName: '', anonymizedAt: this.d.clock.now(),
-          },
-        });
+      for (const key of keys) await this.d.storage.delete(key).catch(() => undefined);
+      await this.d.repo.transaction(async (uow) => {
+      const { tx } = uow;
+        await uow.anonymize(r, this.d.clock.now());
         await this.d.audit.record({ actorUserId: actor, action: 'inscription.anonymized', resourceType: 'application', resourceId: r.applicantCode, after: { years, callCode: r.callCode }, ...(meta ?? {}) }, tx);
       });
     }
@@ -718,10 +697,11 @@ export class InscriptionService {
   /** Reacción al dictamen del expediente (M06): el estado de la inscripción sigue al expediente (RN-24). */
   async applyDossierDecision(applicantCode: string, decision: 'AUTORIZADO' | 'OBSERVADO' | 'EN_REVISION' | 'RECHAZADO' | 'NO_SUBSANADO') {
     const target = { AUTORIZADO: 'PENDIENTE_PAGO', OBSERVADO: 'OBSERVADA', EN_REVISION: 'PENDIENTE_VALIDACION', RECHAZADO: 'ANULADA', NO_SUBSANADO: 'ANULADA' }[decision] as InscriptionStatus;
-    return this.d.db.$transaction(async (tx) => {
-      const row = await tx.application.findUnique({ where: { applicantCode } });
+    return this.d.repo.transaction(async (uow) => {
+      const { tx } = uow;
+      const row = await uow.findByCode(applicantCode);
       if (!row || row.status === target || row.status === 'APTA') return row ? { email: row.email, firstNames: row.firstNames, changed: false } : null;
-      await tx.application.update({ where: { applicantCode }, data: { status: target } });
+      await uow.setStatus(applicantCode, target);
       await this.d.audit.record({
         actorUserId: null, action: 'inscription.dossier_decision', resourceType: 'application', resourceId: applicantCode,
         before: { status: row.status }, after: { status: target, decision },
@@ -732,16 +712,17 @@ export class InscriptionService {
 
   /** Reacción al evento PagoConfirmado: la inscripción pendiente de pago queda Apta (spec 005 SC-001). */
   async markPaid(applicantCode: string, operationNumber: string): Promise<{ changed: boolean; email: string; firstNames: string } | null> {
-    return this.d.db.$transaction(async (tx) => {
-      const updated = await tx.application.updateMany({ where: { applicantCode, status: 'PENDIENTE_PAGO' }, data: { status: 'APTA' } });
-      if (updated.count === 1) {
+    return this.d.repo.transaction(async (uow) => {
+      const { tx } = uow;
+      const changed = await uow.markPaidIfPending(applicantCode);
+      if (changed) {
         await this.d.audit.record({
           actorUserId: null, action: 'inscription.paid', resourceType: 'application', resourceId: applicantCode,
           before: { status: 'PENDIENTE_PAGO' }, after: { status: 'APTA', operationNumber },
         }, tx);
       }
-      const row = await tx.application.findUnique({ where: { applicantCode }, select: { email: true, firstNames: true } });
-      return row ? { changed: updated.count === 1, ...row } : null;
+      const row = await uow.findByCode(applicantCode);
+      return row ? { changed, email: row.email, firstNames: row.firstNames } : null;
     });
   }
 

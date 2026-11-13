@@ -7,6 +7,7 @@ import type { Outbox } from '../../shared/events/outbox.js';
 import type { RateLimiter } from '../../shared/rate-limit/rate-limiter.js';
 import type { PaymentContext } from '../inscripciones/index.js';
 import { PaymentService } from './application/payment-service.js';
+import { PrismaPaymentRepository } from './infrastructure/prisma-payment-repository.js';
 import type { PaymentGateway } from './domain/ports.js';
 import { CulqiGateway, type CulqiConfig } from './infrastructure/culqi-gateway.js';
 import { MockPaymentGateway } from './infrastructure/mock-gateway.js';
@@ -33,7 +34,7 @@ export function createPagosModule(deps: {
   gateway: PaymentGateway;
   inscriptions: { paymentContext(documentNumber: string, applicantCode: string): Promise<PaymentContext> };
 }) {
-  const service = new PaymentService(deps);
+  const service = new PaymentService({ ...deps, repo: new PrismaPaymentRepository(deps.db) });
 
   // Pago duplicado: queda registrado; Tesorería lo trata como anulación por cobro duplicado (RF-05.12).
   deps.outbox.subscribe('PagoDuplicado', async (e) => {

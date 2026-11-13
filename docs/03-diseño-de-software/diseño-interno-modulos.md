@@ -221,7 +221,7 @@ Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sist
 | 2. Lógica de negocio separada de la infraestructura | 🟡 Las reglas están en `domain/` y los proveedores externos detrás de puertos; pero los servicios de aplicación consultan la base de datos con Prisma directamente |
 | 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos |
 | 4. Los casos de uso coordinan los procesos | ✅ Servicios de aplicación por módulo |
-| 5. Repositorios que implementan interfaces internas | 🟡 Solo en Convocatorias (`ConvocatoriasRepository` → `PrismaConvocatoriasRepository`); pendiente en los demás módulos |
+| 5. Repositorios que implementan interfaces internas | 🟡 En Convocatorias (`ConvocatoriasRepository` → `PrismaConvocatoriasRepository`), Inscripciones (`InscriptionRepository` → `PrismaInscriptionRepository`, con unidad de trabajo para las transacciones) y Pagos (`PaymentRepository` → `PrismaPaymentRepository`); pendiente en los demás módulos |
 | 6. Sin dependencias circulares | ✅ Los módulos se comunican por su `index.ts` o por eventos |
 | 7. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API y tareas programadas |
 
