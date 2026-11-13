@@ -54,7 +54,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | El sistema rechaza las solicitudes no autorizadas, protege la información sensible y entrega al modelo de IA únicamente los datos necesarios para responder. |
 | **Medida** | Rechazar el 100 % de los intentos no autorizados incluidos en las pruebas de seguridad, sin exposición de información sensible, y el 100 % de los casos de acceso indebido mediante el chatbot debe impedir la exposición de datos de otros postulantes y credenciales. |
 | **Verificación** | Ejecutar pruebas de autenticación, autorización y acceso a funcionalidades protegidas; revisar las solicitudes enviadas a OpenRouter. |
-| **Estado** | ✅ Cumplido. 8 roles con permisos en `seguridad/domain/permissions.ts`; cada ruta del panel declara su permiso, el servidor responde 403 y lo registra en auditoría. Personal con contraseña + TOTP y bloqueo temporal (ADR-018). El asistente solo consulta datos del postulante con un pase firmado (DNI + código) y recibe datos mínimos; DNI enmascarado en pantallas; consentimiento en la inscripción y anonimización por retención (ADR-017). Pruebas: `tests/integration/admin.test.ts`, `assistant.test.ts`. |
+| **Estado** | ✅ Cumplido. 9 roles con permisos en `seguridad/domain/permissions.ts`; cada ruta del panel declara su permiso, el servidor responde 403 y lo registra en auditoría. Personal con contraseña + TOTP y bloqueo temporal (ADR-018). El asistente solo consulta datos del postulante con un pase firmado (DNI + código) y recibe datos mínimos; DNI enmascarado en pantallas; consentimiento en la inscripción y anonimización por retención (ADR-017). Pruebas: `tests/integration/admin.test.ts`, `assistant.test.ts`. Dependencias: `npm audit` sin vulnerabilidades (12/11/2026; antes 2 altas, 2 moderadas y 1 baja, corregidas al actualizar `@angular/build`, `sharp` y `uuid`). |
 
 ## EQ-05. Mantenibilidad: modificación de funcionalidades
 
@@ -67,7 +67,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | Los cambios se realizan en el módulo correspondiente, respetando las responsabilidades y contratos internos de los 12 módulos, sin afectar innecesariamente otras funcionalidades. |
 | **Medida** | Las pruebas del módulo modificado y las pruebas de regresión relacionadas deben aprobarse, y el 100 % de las dependencias verificadas debe respetar las reglas arquitectónicas establecidas. |
 | **Verificación** | Revisar el código, ejecutar pruebas automatizadas y analizar las dependencias entre módulos. |
-| **Estado** | 🟡 Parcial. Más de 250 casos de prueba (Vitest) aprobados; los módulos se comunican por su `index.ts` y por eventos; ningún controlador accede a la base de datos y ningún módulo importa capas internas de otro. Desviación: 29 de 30 servicios de aplicación usan Prisma sin un repositorio intermedio (ver 03, patrones). Falta una herramienta que verifique las reglas de dependencia de forma automática. |
+| **Estado** | 🟡 Parcial. Más de 250 casos de prueba (Vitest) aprobados; los módulos se comunican por su `index.ts` y por eventos; ningún controlador accede a la base de datos y ningún módulo importa capas internas de otro. Las reglas de dependencia se comprueban de forma automática en `tests/unit/arquitectura/limites-modulos.test.ts` (12/11/2026): 12 módulos, uso entre módulos solo por `index.ts` (26 importaciones, 0 infracciones tras corregir la de Soporte), dominio sin Prisma, Express ni infraestructura, y aplicación sin Express. Pendiente: 29 de 30 servicios de aplicación usan Prisma sin un repositorio intermedio (ver 03, patrones). |
 
 ## EQ-06. Integridad: consistencia de inscripciones y pagos
 
@@ -93,7 +93,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | La interfaz permite completar los datos, adjuntar documentos y realizar pagos de manera comprensible y accesible. |
 | **Medida** | **Propuesta para validar:** al menos el 90 % de los participantes completa las tareas principales sin asistencia, y las páginas cumplen los criterios aplicables de WCAG 2.2 nivel AA (sin fallas graves ni críticas en la revisión automática). |
 | **Verificación** | Realizar pruebas de usabilidad con usuarios representativos y registrar los resultados; ejecutar pruebas de accesibilidad automáticas (axe) y manuales con lector de pantalla. |
-| **Estado** | 🟡 Parcial. Interfaz revisada con las skills de diseño (impeccable, interface-design): pasos de inscripción, resumen de errores, vista de celular, foco visible de dos tonos, bordes de campo con contraste 3:1, etiquetas visibles, errores con `aria-describedby` y objetivos táctiles de 44 px. Falta la prueba con participantes reales para medir el 90 %, la verificación automática (axe) y la prueba con lector de pantalla. |
+| **Estado** | 🟡 Parcial. Interfaz revisada con las skills de diseño (impeccable, interface-design): pasos de inscripción, resumen de errores, vista de celular, foco visible de dos tonos, bordes de campo con contraste 3:1, etiquetas visibles, errores con `aria-describedby` y objetivos táctiles de 44 px. Verificación automática con axe-core 4.10 (reglas WCAG 2.0, 2.1 y 2.2, niveles A y AA) en 22 páginas del portal y el ingreso del personal (12/11/2026): 0 fallas, tras corregir el acceso con teclado a las tablas con desplazamiento (4 tablas) y el contraste de 5 etiquetas doradas (de 4.46:1 a 5.53:1). Falta la prueba con participantes reales (cuestionario SUS) para medir el 90 % y la prueba con lector de pantalla. |
 
 ## EQ-08. Interoperabilidad: integración con servicios externos
 
@@ -119,7 +119,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | El sistema conserva el estado de la operación, informa el problema y ejecuta reintentos controlados cuando corresponda; ante una pérdida de datos, el equipo técnico restaura la información con los procedimientos establecidos. |
 | **Medida** | No deben perderse operaciones confirmadas ni generarse transacciones duplicadas en los escenarios de falla probados. **Propuesta para validar:** recuperación del servicio en un máximo de 4 horas (RTO) y pérdida de datos no superior a 15 minutos (RPO). |
 | **Verificación** | Simular interrupciones, respuestas tardías y errores de servicios externos; ejecutar un simulacro de restauración y medir los tiempos y puntos de recuperación. |
-| **Estado** | 🟡 Parcial. Fallas externas cumplidas: bandeja de eventos (outbox) en PostgreSQL con reintentos, correos con hasta 3 intentos sin duplicar y consulta del estado del pago a la pasarela si no llega respuesta. La restauración depende del despliegue: la política de respaldo y el procedimiento están en «Configuración» del panel y las copias automáticas de RDS se activan en el Paso 11. |
+| **Estado** | 🟡 Parcial. Fallas externas cumplidas: bandeja de eventos (outbox) en PostgreSQL con reintentos, correos con hasta 3 intentos sin duplicar y consulta del estado del pago a la pasarela si no llega respuesta. Si la base de datos no responde, la API contesta 503 con un mensaje claro y `Retry-After`, y las tareas en segundo plano esperan sin llenar el registro (prueba `tests/unit/shared/db-unreachable.test.ts`). La política de respaldo y el procedimiento están en «Configuración» del panel. Pendiente: confirmar en la consola de AWS la retención de copias automáticas de RDS y medir una restauración en una instancia temporal. |
 
 ## EQ-10. Auditabilidad: seguimiento de operaciones
 
@@ -149,7 +149,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | EQ-09 | Confiabilidad | Que las fallas no generen pérdidas o duplicaciones y que la información pueda restaurarse. |
 | EQ-10 | Auditabilidad | Que las operaciones críticas puedan rastrearse. |
 
-## Estado de verificación (11/11/2026)
+## Estado de verificación (12/11/2026)
 
 | Estado | Escenarios |
 |---|---|

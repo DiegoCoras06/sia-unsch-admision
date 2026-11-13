@@ -159,6 +159,6 @@ flowchart TB
 | **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. | No se implementa por ahora (opcional, RC16) |
 | **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. | ✅ Modelo configurable (`OPENROUTER_MODEL`), presupuesto diario y modo básico sin clave (ADR-017) |
 | **Política de privacidad** | Definir qué información puede enviarse al chatbot y a los servicios externos. | ✅ Datos mínimos con pase firmado; consentimiento en la inscripción y anonimización por retención |
-| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. | ✅ 8 roles definidos en el panel (ADR-018); pendiente la validación formal con la Dirección de Admisión |
+| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. | ✅ 9 roles definidos en el panel (ADR-018); pendiente la validación formal con la Dirección de Admisión |
 | **Reglas de admisión** | Confirmar los requisitos, modalidades, vacantes y procedimientos oficiales de cada convocatoria. | ✅ Configurables como datos en el panel (catálogo del concurso) |
 | **Publicación de resultados** | Definir los responsables y procedimientos de aprobación de resultados oficiales. | ✅ Aprobación de otra persona y publicación a la hora autorizada |

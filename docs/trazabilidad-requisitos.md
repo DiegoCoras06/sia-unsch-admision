@@ -241,7 +241,7 @@ Generado con `node scripts/trazabilidad.mjs`; el estado se actualiza al cerrar c
 | Código | Requerimiento funcional | Spec · FR | Estado |
 |---|---|---|---|
 | RF-13.01 | El sistema debe permitir crear y administrar usuarios internos. | [008](../specs/008-panel-administrativo/requirements.md) FR-005 | ✅ Crear y administrar usuarios internos |
-| RF-13.02 | El sistema debe implementar permisos diferenciados mediante roles. | [008](../specs/008-panel-administrativo/requirements.md) FR-005 | ✅ 8 roles con permisos verificados en el servidor |
+| RF-13.02 | El sistema debe implementar permisos diferenciados mediante roles. | [008](../specs/008-panel-administrativo/requirements.md) FR-005 | ✅ 9 roles con permisos verificados en el servidor |
 | RF-13.03 | El sistema debe permitir activar, suspender y desactivar cuentas administrativas. | [008](../specs/008-panel-administrativo/requirements.md) FR-005 | ✅ Activar, suspender y desactivar con cierre de sesiones |
 | RF-13.04 | El sistema debe registrar las operaciones críticas realizadas por los usuarios. | [008](../specs/008-panel-administrativo/requirements.md) FR-008 | ✅ Auditoría solo-inserción protegida con trigger |
 | RF-13.05 | El sistema debe permitir consultar auditorías de cambios en pagos, expedientes y resultados. | [008](../specs/008-panel-administrativo/requirements.md) FR-008 | ✅ Consulta de auditoría por usuario, acción, recurso y fechas |
