@@ -121,9 +121,11 @@
 <section class="section" aria-labelledby="areas-title">
   <div class="frame stack-lg">
     <div class="areas-head">
-      <h2 id="areas-title" appReveal>34 programas en tres áreas</h2>
-      <p class="areas-note">Algunos programas se eligen por especialidad (por ejemplo, Biología o Educación Secundaria), por eso la lista tiene 40 opciones.</p>
-      <a routerLink="/programas" class="link-arrow" appReveal="60">Buscar programa y vacantes</a>
+      <div class="areas-intro">
+        <h2 id="areas-title" appReveal>34 programas en tres áreas</h2>
+        <p class="areas-note">Algunos programas se eligen por especialidad (por ejemplo, Biología o Educación Secundaria), por eso la lista tiene 40 opciones.</p>
+      </div>
+      <a routerLink="/programas" class="areas-search" appReveal="60" data-icon="buscar">Buscar programa y vacantes</a>
     </div>
     @switch (optionsState()) {
       @case ('loading') { <div class="skel skel--cards" role="status" aria-label="Cargando los programas de estudio"><span></span><span></span><span></span></div> }
@@ -133,10 +135,13 @@
     <div class="areas">
       @for (a of byArea(); track a.code; let i = $index) {
         <div class="area" [appReveal]="i * 80">
-          <p class="area__count"><span>{{ a.options.length }}</span> {{ a.name }} <small>opciones</small></p>
+          <header class="area__head">
+            <span class="area__num">{{ a.options.length }}</span>
+            <span class="area__title"><strong>{{ a.name }}</strong><small>Área {{ a.code }} · {{ a.options.length === 1 ? 'opción' : 'opciones' }}</small></span>
+          </header>
           <ul>
             @for (o of a.options; track o.internalCode) {
-              <li><a [routerLink]="['/programas', o.internalCode]">{{ o.displayName }}</a></li>
+              <li><a [routerLink]="['/programas', o.internalCode]"><span>{{ o.displayName }}</span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
             }
           </ul>
         </div>
