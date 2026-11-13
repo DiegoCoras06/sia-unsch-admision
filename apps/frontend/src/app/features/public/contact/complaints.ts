@@ -7,27 +7,37 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
   selector: 'app-complaints',
   imports: [ReactiveFormsModule],
   template: `
-    <div class="page">
-      @if (notice()) {
-        <div class="notice" role="note">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3Zm0 2.2 6 2.2V11c0 3.9-2.5 7.5-6 8.9V4.2Z"/></svg>
-          <p>Ante cualquier denuncia o irregularidad, comunícate con nosotros. Atenderemos tu caso con absoluta reserva.</p>
-          <button type="button" class="notice__x" (click)="notice.set(false)" aria-label="Cerrar aviso">×</button>
+    <section class="p-hero field-accent field-glow" aria-labelledby="dn-title">
+      <div class="frame p-hero__grid">
+        <div class="p-hero__text">
+          <p class="p-kicker"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.5 8 11 4.6-1.5 8-6 8-11V5l-8-3Zm0 2.2 6 2.2V11c0 3.9-2.5 7.5-6 8.9V4.2Z"/></svg>Canal de denuncias</p>
+          <h1 id="dn-title">Denuncia una <span>irregularidad</span></h1>
+          <p class="p-lead">Ante cualquier denuncia o irregularidad del proceso de admisión, escríbenos. Atendemos cada caso con absoluta reserva y te damos un número para hacerle seguimiento.</p>
         </div>
-      }
+        <ul class="dn-promises" aria-label="Qué garantizamos">
+          <li><span class="dn-promises__icon"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H5v14h14V9h-2V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg></span><span><strong>Reserva absoluta</strong>Tu denuncia solo la ve la Comisión de Admisión.</span></li>
+          <li><span class="dn-promises__icon"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5Z"/></svg></span><span><strong>Nombre opcional</strong>Solo pedimos un correo para responderte.</span></li>
+          <li><span class="dn-promises__icon"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 4h16v4H4V4Zm0 6h16v10H4V10Zm3 3v2h6v-2H7Z"/></svg></span><span><strong>Número de caso</strong>Para hacer seguimiento de tu denuncia.</span></li>
+        </ul>
+      </div>
+    </section>
 
+    <div class="page">
       <div class="frame grid">
         <section class="card form-card" aria-labelledby="d-title">
-          <h1 id="d-title">Ingresa tu denuncia</h1>
+          <h2 id="d-title" class="form-title">Ingresa tu denuncia</h2>
           <p class="secret" id="d-reserva">
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H5v14h14V9h-2V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H5v14h14V9h-2V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
             <span>Tu nombre es opcional y tu denuncia se atiende con reserva. El correo solo se usa para responderte; no se publica ni se comparte. Los campos con <span class="req" aria-hidden="true">*</span> son obligatorios.</span>
           </p>
 
           @if (caseNumber(); as n) {
             <div class="done" role="status">
-              <h2>Recibimos tu denuncia</h2>
-              <p>Tu número de caso es <strong>{{ n }}</strong>. Guárdalo para hacer seguimiento; te escribiremos al correo que indicaste.</p>
+              <span class="done__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <h3>Recibimos tu denuncia</h3>
+              <p class="done__label">Tu número de caso</p>
+              <p class="done__num">{{ n }}</p>
+              <p>Guárdalo para hacer seguimiento; te escribiremos al correo que indicaste.</p>
               <button type="button" class="send send--quiet" (click)="caseNumber.set(null)">Registrar otra denuncia</button>
             </div>
           } @else {
@@ -43,14 +53,15 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
                 </div>
                 <div class="col">
                   <div class="f f--grow"><label class="lb" for="d-msg">Hechos de tu denuncia <span class="req" aria-hidden="true">*</span></label>
-                    <textarea id="d-msg" class="in in--area" formControlName="message" placeholder="Qué pasó, cuándo y dónde, y quiénes participaron." aria-required="true" [attr.aria-invalid]="bad('message')"></textarea></div>
+                    <textarea id="d-msg" class="in in--area" formControlName="message" placeholder="Qué pasó, cuándo y dónde, y quiénes participaron." aria-required="true" [attr.aria-invalid]="bad('message')"></textarea>
+                    <span class="count" aria-live="polite">{{ form.controls.message.value.length }} / 2000</span></div>
                 </div>
               </div>
               <div class="f f--files">
-                <span class="lb" id="d-files-lb">Evidencia <span class="opt">(opcional · hasta 3 archivos PDF, JPG o PNG, 5 MB en total)</span></span>
-                <label class="outline outline--file" for="d-files">
-                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10h-1.5Z"/></svg>
-                  Adjuntar archivos</label>
+                <span class="lb" id="d-files-lb">Evidencia <span class="opt">(opcional: hasta 3 archivos PDF, JPG o PNG, 5 MB en total)</span></span>
+                <label class="drop" for="d-files">
+                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M16.5 6.5v10a4.5 4.5 0 0 1-9 0V5a3 3 0 0 1 6 0v10.5a1.5 1.5 0 0 1-3 0V6.5H9v9a3 3 0 0 0 6 0V5a4.5 4.5 0 0 0-9 0v11.5a6 6 0 0 0 12 0v-10h-1.5Z"/></svg>
+                  <span><strong>Adjuntar archivos</strong><small>Fotos o documentos que respalden tu denuncia</small></span></label>
                 <input id="d-files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" hidden aria-labelledby="d-files-lb" (change)="pick($any($event.target))">
                 @if (files().length) {
                   <ul class="files">@for (f of files(); track f.name) {
@@ -60,7 +71,7 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
               </div>
               <div class="hp" aria-hidden="true"><label for="d-web">Sitio web</label><input id="d-web" tabindex="-1" autocomplete="off" formControlName="website"></div>
               @if (error()) { <p class="err" role="alert">{{ error() }}</p> }
-              <button class="send" type="submit" [disabled]="sending()">
+              <button class="send" type="submit" [disabled]="sending()" [attr.aria-busy]="sending()">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M2 21 23 12 2 3v7l15 2-15 2v7Z"/></svg>
                 {{ sending() ? 'Enviando…' : 'Enviar denuncia de forma segura' }}
               </button>
@@ -69,80 +80,107 @@ import { ApiService, apiErrorMessage } from '../../../core/api.service';
         </section>
 
         <aside class="side">
-          <section class="card card--top">
-            <h2><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2 2 7v2h20V7L12 2ZM4 11v7h2v-7H4Zm4 0v7h2v-7H8Zm6 0v7h2v-7h-2Zm4 0v7h2v-7h-2ZM2 20v2h20v-2H2Z"/></svg> Contraloría General de la República</h2>
+          <section class="card side-card">
+            <span class="side-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 2 2 7v2h20V7L12 2ZM4 11v7h2v-7H4Zm4 0v7h2v-7H8Zm6 0v7h2v-7h-2Zm4 0v7h2v-7h-2ZM2 20v2h20v-2H2Z"/></svg></span>
+            <h2>Contraloría General de la República</h2>
             <p class="muted">También puedes presentar tu denuncia directamente ante la Plataforma Nacional Digital de Denuncias Ciudadanas del Estado.</p>
             <a class="outline" href="https://www.contraloria.gob.pe/" target="_blank" rel="noopener">Ir a Contraloría
-              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v8H3V5h2Z"/></svg></a>
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v8H3V5h2Z"/></svg><span class="sr-only">(se abre en otra pestaña)</span></a>
           </section>
 
-          <section class="card card--top">
-            <h2><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M2 5h20v14H2V5Zm2 2v.5l8 5 8-5V7H4Zm16 2.8-8 5-8-5V17h16V9.8Z"/></svg> Denuncia por Correo Directo</h2>
+          <section class="card side-card">
+            <span class="side-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M2 5h20v14H2V5Zm2 2v.5l8 5 8-5V7H4Zm16 2.8-8 5-8-5V17h16V9.8Z"/></svg></span>
+            <h2>Denuncia por correo directo</h2>
             <p class="row"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M2 5h20v14H2V5Zm2 2v.5l8 5 8-5V7H4Z"/></svg>
               <span><strong>Correo:</strong> <a href="mailto:admision@unsch.edu.pe">admision&#64;unsch.edu.pe</a></span></p>
-            <h2 class="h2--sp"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm-1 3v6l5 3 1-1.7-4-2.3V7h-2Z"/></svg> Horario de Atención</h2>
+            <h2 class="h2--sp">Horario de atención</h2>
             <p class="row"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 2v2H4v18h16V4h-3V2h-2v2H9V2H7Zm-1 8h12v10H6V10Zm4.6 7.6-2.8-2.8 1.4-1.4 1.4 1.4 4.2-4.2 1.4 1.4-5.6 5.6Z"/></svg>
               <span><strong>Comisión de Admisión (denuncias):</strong> lunes a viernes, 10:00 h - 13:00 h</span></p>
             <p class="row row--closed"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 2v2H4v18h16V4h-3V2h-2v2H9V2H7Zm-1 8h12v10H6V10Zm3.4 2.6L12 15.2l2.6-2.6 1.4 1.4-2.6 2.6 2.6 2.6-1.4 1.4-2.6-2.6-2.6 2.6L8 18.6l2.6-2.6L8 13.4l1.4-1.4Z"/></svg>
-              <span><strong>Sábado y Domingo:</strong> Cerrado</span></p>
+              <span><strong>Sábado y domingo:</strong> cerrado</span></p>
           </section>
         </aside>
       </div>
     </div>
   `,
   styles: `
-    :host { --g: #800020; --g-dark: #66001a; --navy: #0f1b33; display: block; background: #f0f0f0; }
+    :host { display: block; background: var(--stone); }
     .page { padding-bottom: clamp(3rem, 6vw, 5rem); }
-    .notice { display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0; padding: 1.1rem 1.5rem; background: #fdf1f3; border-left: 5px solid var(--g); color: var(--g); }
-    .notice p { margin: 0; font-weight: 600; flex: 1; max-width: none; }
-    .notice__x { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; background: none; border: 0; color: var(--g); font-size: 1.5rem; line-height: 1; cursor: pointer; }
-    .grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 2.5rem; align-items: start; padding-top: clamp(2.5rem, 6vw, 5.5rem); }
-    .card { background: #fff; border-radius: 12px; padding: clamp(1.5rem, 3vw, 2.25rem); box-shadow: 0 1px 3px rgb(0 0 0 / 0.06); }
-    .form-card { padding: clamp(1.75rem, 4vw, 3.5rem) clamp(1.5rem, 3vw, 2.25rem); }
-    h1 { margin: 0 0 1.25rem; font-size: clamp(2rem, 3.6vw, 3rem); font-weight: 800; text-transform: uppercase; color: var(--navy); letter-spacing: 0.01em; }
-    .secret { display: flex; align-items: flex-start; gap: 0.5rem; color: var(--g); font-weight: 600; margin: 0 0 1.75rem; }
-    .secret svg { flex: none; margin-top: 0.25em; }
-    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.25rem; }
-    .col { display: grid; gap: 1.4rem; align-content: start; }
-    .in { width: 100%; font: inherit; padding: 0.9rem 1.1rem; border: 1px solid #858585; border-radius: 8px; background: #fafafa; color: #222; }
-    .in::placeholder { color: #6b6b6b; }
+    .p-kicker svg { flex: none; }
+    /* Garantías en una tarjeta de vidrio, con ícono dorado. */
+    .dn-promises { margin: 0; padding: clamp(1rem, 2.4vw, 1.4rem); list-style: none; display: grid; gap: 0.6rem; border-radius: 22px; background: rgb(255 255 255 / 0.08);
+      border: 1px solid rgb(255 255 255 / 0.22); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 30px 60px -32px rgb(20 6 8 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.18); }
+    .dn-promises li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.85rem; align-items: center; padding: 0.7rem 0.85rem; border-radius: 14px; background: rgb(255 255 255 / 0.07); }
+    .dn-promises__icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 12px; color: var(--ink); background: linear-gradient(180deg, #edd07a, #c9a23a); }
+    .dn-promises li > span:last-child { display: grid; gap: 0.1rem; font-size: 0.9375rem; color: rgb(255 255 255 / 0.88); }
+    .dn-promises strong { color: #fff; }
+
+    .grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(1.25rem, 3vw, 2rem); align-items: start; margin-top: clamp(-2.5rem, -4vh, -1.5rem); position: relative; z-index: 1; }
+    .card { background: #fff; border-radius: 22px; padding: clamp(1.4rem, 3vw, 2rem); box-shadow: 0 0 0 1px rgb(29 20 21 / 0.06), 0 20px 40px -30px rgb(29 20 21 / 0.55); }
+    .form-card { padding: clamp(1.5rem, 3.5vw, 2.5rem); border-top: 4px solid var(--gold); }
+    .form-title { margin: 0 0 0.85rem; font-size: clamp(1.6rem, 2.8vw, 2.25rem); letter-spacing: -0.03em; }
+    .secret { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0 0 1.6rem; padding: 0.85rem 1rem; border-radius: 14px; background: #f7ece9; color: var(--accent);
+      font-weight: 600; font-size: 0.9375rem; max-width: none; }
+    .secret svg { flex: none; margin-top: 0.15em; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem 1.75rem; }
+    .col { display: grid; gap: 1.2rem; align-content: start; }
     .f { display: grid; gap: 0.4rem; }
-    .f--grow { grid-template-rows: auto 1fr; height: 100%; }
-    .lb { font-weight: 600; color: var(--navy); }
-    .opt { font-weight: 400; color: #5a6b80; }
-    .req { color: var(--g); }
-    .in:focus { border-color: var(--g); background: #fff; }
-    .in[aria-invalid='true'] { border-color: #b00020; }
-    .in--area { min-height: 11rem; height: 100%; resize: vertical; }
-    .send { margin-top: 1.75rem; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 3.5rem; border: 0; border-radius: 8px;
-      background: var(--g); color: #fff; font: inherit; font-size: 1.125rem; font-weight: 700; cursor: pointer; }
-    .send:hover { background: var(--g-dark); }
-    .send[disabled] { opacity: 0.7; cursor: progress; }
-    .send--quiet { width: auto; padding: 0 1.5rem; }
-    .err { color: #b00020; font-weight: 600; margin: 1rem 0 0; }
-    .done h2 { color: var(--navy); }
-    .hp { position: absolute; left: -9999px; }
+    .f--grow { grid-template-rows: auto 1fr auto; height: 100%; }
+    .lb { font-weight: 600; color: var(--ink); }
+    .opt { font-weight: 400; color: var(--ink-soft); }
+    .req { color: var(--accent); }
+    /* Campos en relieve con foco dorado, como en el resto del portal. */
+    .in { width: 100%; min-height: 3.1rem; font: inherit; padding: 0.8rem 1rem; border: 1px solid var(--stone-deep); border-radius: 12px; background: #fbf7f3; color: var(--ink);
+      box-shadow: inset 2px 2px 6px rgb(29 20 21 / 0.1), inset -2px -2px 5px rgb(255 255 255 / 0.9); transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+    .in::placeholder { color: #6b6060; }
+    .in:hover { border-color: var(--ink-soft); }
+    .in:focus { outline: none; border-color: var(--gold); background: #fff; box-shadow: 0 0 0 4px rgb(217 180 74 / 0.35); }
+    .in[aria-invalid='true'] { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+    .in--area { min-height: 12rem; height: 100%; resize: vertical; line-height: 1.5; }
+    .count { justify-self: end; font-size: 0.8125rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
     .f--files { margin-top: 1.4rem; }
-    .outline--file { cursor: pointer; width: fit-content; }
-    .files { list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
-    .files li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.75rem; background: #f7f7f7; border-radius: 6px; overflow-wrap: anywhere; }
-    .files__x { flex: none; width: 2.25rem; height: 2.25rem; border: 0; background: none; color: var(--g); font-size: 1.35rem; cursor: pointer; }
-    .side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
-    .card--top { border-top: 5px solid var(--g); }
-    .card h2 { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.85rem; font-size: 1.375rem; color: var(--navy); }
-    .card h2 svg { color: var(--g); flex: none; }
-    .h2--sp { margin-top: 1.5rem !important; }
-    .muted { color: #5a6b80; margin: 0 0 1rem; }
-    .outline { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border: 1px solid #e3c4cb; border-radius: 6px; color: var(--g); font-weight: 700; text-decoration: none; }
-    .outline:hover { background: #fdf1f3; }
-    .row { display: flex; align-items: center; gap: 0.75rem; margin: 0 0 0.6rem; padding: 0.75rem 1rem; background: #f7f7f7; border-radius: 6px; }
-    .row svg { color: var(--g); flex: none; }
+    .drop { display: flex; align-items: center; gap: 0.85rem; padding: 1rem 1.1rem; border: 2px dashed #d9c9bf; border-radius: 16px; background: #fbf7f3; color: var(--accent); cursor: pointer;
+      transition: border-color var(--fast) var(--ease), background-color var(--fast) var(--ease); }
+    .drop span { display: grid; gap: 0.1rem; }
+    .drop small { color: var(--ink-soft); font-size: var(--size-note); }
+    @media (hover: hover) { .drop:hover { border-color: var(--gold); background: #fffaf0; } }
+    .files { list-style: none; margin: 0.35rem 0 0; padding: 0; display: grid; gap: 0.35rem; }
+    .files li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.85rem; background: #fbf7f3; border-radius: 12px; overflow-wrap: anywhere; }
+    .files__x { flex: none; width: 2.5rem; height: 2.5rem; border: 0; border-radius: 10px; background: none; color: var(--accent); font-size: 1.35rem; cursor: pointer; }
+    .files__x:hover { background: #f7ece9; }
+    .hp { position: absolute; left: -9999px; }
+    .send { margin-top: 1.6rem; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 3.4rem; border: 1px solid var(--accent-press);
+      border-radius: 14px; color: #fff; font: inherit; font-size: 1.0625rem; font-weight: 700; cursor: pointer;
+      background: linear-gradient(180deg, #932830 0%, var(--accent) 55%, #62161b 100%); box-shadow: 0 16px 28px -16px rgb(122 28 34 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.2); }
+    @media (hover: hover) { .send:not([disabled]):hover { filter: brightness(1.08); } }
+    .send[disabled] { opacity: 0.7; cursor: progress; }
+    .send--quiet { width: auto; padding: 0 1.5rem; margin-top: 0.5rem; }
+    .err { display: flex; gap: 0.5rem; margin: 1rem 0 0; padding: 0.75rem 1rem; border-radius: 12px; background: #fbe9ea; color: var(--danger); font-weight: 600; }
+    .done { display: grid; justify-items: center; gap: 0.5rem; padding: 1.5rem 1rem; text-align: center; border-radius: 18px; background: #f1f9f3; }
+    .done__icon { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: #1f7a3f; color: #fff; box-shadow: 0 0 0 6px rgb(31 122 63 / 0.15); }
+    .done h3 { font-size: 1.375rem; margin-top: 0.4rem; }
+    .done p { margin: 0; max-width: 44ch; }
+    .done__label { font-size: var(--size-note); font-weight: 700; color: var(--ink-soft); }
+    .done__num { font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 800; letter-spacing: 0.04em; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .side { display: grid; gap: 1rem; }
+    .side-card { position: relative; display: grid; gap: 0.75rem; }
+    .side-card__icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 14px; color: #fff;
+      background: linear-gradient(160deg, #8d242b, var(--accent) 55%, #5e1419); box-shadow: 0 10px 18px -12px rgb(94 20 25 / 0.9); }
+    .side-card h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.015em; }
+    .h2--sp { margin-top: 0.75rem !important; }
+    .muted { color: var(--ink-soft); margin: 0; }
+    .outline { justify-self: start; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.75rem; padding: 0 1.1rem; border-radius: 12px; color: var(--accent); font-weight: 700;
+      text-decoration: none; background: #fff; box-shadow: 0 0 0 1px var(--stone-deep), 0 8px 16px -12px rgb(29 20 21 / 0.4); }
+    @media (hover: hover) { .outline:hover { box-shadow: 0 0 0 1px var(--accent), 0 10px 18px -12px rgb(122 28 34 / 0.5); } }
+    .row { display: flex; align-items: center; gap: 0.75rem; margin: 0; padding: 0.75rem 0.9rem; border-radius: 12px; background: #fbf7f3; max-width: none; }
+    .row svg { color: var(--accent); flex: none; }
     .row strong { margin-right: 0.3em; }
     .row > span { min-width: 0; overflow-wrap: anywhere; }
-    .row a { color: inherit; }
-    .row--closed { background: #fdf1f3; color: var(--g); }
-    @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-    @media (max-width: 640px) { .cols { grid-template-columns: minmax(0, 1fr); } .notice { padding: 0.9rem 1rem; } }
+    .row a { color: var(--accent); font-weight: 600; }
+    .row--closed { background: #f7ece9; color: var(--accent); }
+    @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); margin-top: 1.25rem; } }
+    @media (max-width: 640px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+    @media (prefers-reduced-motion: reduce) { .in, .drop { transition: none; } }
   `,
 })
 export class ComplaintsPage {
@@ -154,7 +192,6 @@ export class ComplaintsPage {
     message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(2000)]],
     website: [''],
   });
-  protected readonly notice = signal(true);
   protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly caseNumber = signal<string | null>(null);
