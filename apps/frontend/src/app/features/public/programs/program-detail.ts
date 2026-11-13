@@ -37,7 +37,7 @@ import { AREA_NAMES } from '../../../core/format';
           </div>
           <div class="stack">
             <h2 class="vac-title">Vacantes por modalidad</h2>
-            <div class="table-wrap">
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Vacantes por modalidad">
               <table class="data">
                 <caption class="sr-only">Vacantes de {{ o.displayName }} por modalidad</caption>
                 <thead><tr><th scope="col">Modalidad</th><th scope="col" class="num">Vacantes</th></tr></thead>

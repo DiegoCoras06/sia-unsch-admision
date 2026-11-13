@@ -163,10 +163,10 @@ span.quick__item { color: var(--ink-soft); }
 /* Indicaciones (contenido editable del panel): cada párrafo es una tarjeta con su título en dorado. */
 .exam .md { display: grid; gap: 0.85rem; }
 .exam .md ::ng-deep p { margin: 0; padding: 1.1rem 1.25rem; border-radius: var(--radius-lg); background: rgb(255 255 255 / 0.07); border-left: 3px solid var(--gold); line-height: 1.55; max-width: none; }
-.exam .md ::ng-deep p strong { display: block; margin-bottom: 0.25rem; color: var(--gold); font-size: 1.0625rem; }
+.exam .md ::ng-deep p strong { display: block; margin-bottom: 0.25rem; color: #ecc965; font-size: 1.0625rem; }
 /* Puntaje mínimo y estructura del examen. */
 .exam__score { display: grid; gap: 0.75rem; padding: clamp(1.5rem, 3vw, 2.25rem); border-radius: var(--radius-lg); background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.16); }
-.exam__label { margin: 0; font-size: var(--size-note); font-weight: 700; color: var(--gold); }
+.exam__label { margin: 0; font-size: var(--size-note); font-weight: 700; color: #ecc965; }
 .exam__label--gap { margin-top: 1rem; }
 .exam__value { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin: 0; }
 .exam__num { font-size: clamp(4rem, 8vw, 6.5rem); font-weight: 800; letter-spacing: -0.05em; line-height: 0.9; color: var(--gold); }

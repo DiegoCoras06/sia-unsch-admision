@@ -20,7 +20,7 @@ const MODALITY: Record<string, string> = { ORD: 'Ordinario', EXO: 'Exonerados', 
         @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
         @if (data(); as d) {
           @if (d.rows.length) {
-            <div class="table-wrap">
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Relación de inscripciones observadas">
               <table class="obs">
                 <caption>Concurso {{ d.callCode }} · {{ d.rows.length }} {{ d.rows.length === 1 ? 'inscripción observada' : 'inscripciones observadas' }}</caption>
                 <thead><tr><th>N.°</th><th>Código de postulante</th><th>Modalidad</th><th>Observada desde</th></tr></thead>

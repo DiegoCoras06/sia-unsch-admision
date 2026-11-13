@@ -43,7 +43,7 @@ import { AREA_NAMES } from '../../../core/format';
     <section class="frame section--tight" aria-labelledby="results-title">
       <h2 id="results-title" class="results-title" aria-live="polite">{{ results().length }} {{ results().length === 1 ? 'opción' : 'opciones' }}</h2>
       @if (results().length) {
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="results-title">
           <table class="data list">
             <thead>
               <tr>

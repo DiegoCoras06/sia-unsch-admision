@@ -70,7 +70,7 @@ const NEEDS_SCHOOL = new Set(['ORD', 'EXO-PSP', 'EXO-COAR']);
     <section class="section" aria-labelledby="table-title">
       <div class="frame stack-lg">
         <h2 id="table-title">Todas las tasas 2027-I</h2>
-        <div class="table-wrap">
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="table-title">
           <table class="data">
             <thead><tr><th scope="col">Concepto</th><th scope="col">Base</th><th scope="col" class="num">Monto</th></tr></thead>
             <tbody>
