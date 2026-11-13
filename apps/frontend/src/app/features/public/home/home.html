@@ -50,16 +50,22 @@
 <section class="now field-stone" aria-labelledby="now-title">
   <div class="frame now__grid">
     <div>
-      <h2 id="now-title" class="now__title">Ahora en curso</h2>
+      <div class="now__head">
+        <h2 id="now-title" class="now__title">Ahora en curso</h2>
+        @if (nowStages().length) { <span class="now__live"><i aria-hidden="true"></i>{{ nowStages().length }} {{ nowStages().length === 1 ? 'etapa abierta' : 'etapas abiertas' }}</span> }
+      </div>
       @if (store.unavailable()) {
         <p>Próximamente se publicará la nueva convocatoria.</p>
       }
       <ul class="now__stages">
         @for (s of nowStages(); track s.code) {
-          <li>
-            <strong>{{ s.name }}</strong>
-            <span>hasta el {{ longDate(s.endsAt) }}</span>
-            <span class="now__left" [class.is-soon]="soon(s.endsAt)">{{ left(s.endsAt) }}</span>
+          <li class="now__stage" [class.is-soon]="soon(s.endsAt)">
+            <div class="now__stage-top">
+              <strong>{{ s.name }}</strong>
+              <span class="now__left" [class.is-soon]="soon(s.endsAt)">{{ left(s.endsAt) }}</span>
+            </div>
+            <span class="now__until"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hasta el {{ longDate(s.endsAt) }}</span>
+            <span class="now__track" role="img" [attr.aria-label]="'Avance de la etapa: ' + stageProgress(s) + ' %'"><i [style.width.%]="stageProgress(s)"></i></span>
           </li>
         }
       </ul>
@@ -69,9 +75,13 @@
         @for (q of otherQuick(); track q.key) {
           <li>
             @if (q.enabled) {
-              <a class="quick__item is-on" [routerLink]="quick[q.key].route" [attr.data-icon]="quick[q.key].icon">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></a>
+              <a class="quick__item is-on" [routerLink]="quick[q.key].route" [attr.data-icon]="quick[q.key].icon">
+                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state"><i aria-hidden="true"></i>{{ q.reason }}</span><svg class="quick__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
             } @else {
-              <span class="quick__item" aria-disabled="true" [attr.data-icon]="quick[q.key].icon">{{ quick[q.key].label ?? q.label }}<span>{{ q.reason }}</span></span>
+              <span class="quick__item" aria-disabled="true" [attr.data-icon]="quick[q.key].icon">
+                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state">{{ q.reason }}</span>
+              </span>
             }
           </li>
         }

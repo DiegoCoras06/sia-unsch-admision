@@ -117,6 +117,12 @@ export class HomePage {
   protected day = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', timeZone: 'America/Lima' });
   protected month = (iso: string) => new Date(iso).toLocaleDateString('es-PE', { month: 'short', timeZone: 'America/Lima' }).replace('.', '');
   protected readonly newsType: Record<string, string> = { COMUNICADO: 'Comunicado', FE_ERRATAS: 'Fe de erratas', RESULTADO: 'Resultados' };
+  /** Porcentaje transcurrido de una etapa (hora del servidor), para la barra de avance. */
+  protected stageProgress(s: { startsAt: string; endsAt: string }): number {
+    const now = new Date(this.store.call()?.now ?? Date.now()).getTime();
+    const start = new Date(s.startsAt).getTime(), end = new Date(s.endsAt).getTime();
+    return end > start ? Math.round(Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100))) : 100;
+  }
   protected left = (endsAt: string) => closesIn(endsAt, this.store.call()!.now);
   /** Tres días o menos: se resalta para que nadie se quede fuera. */
   protected soon = (endsAt: string) => daysUntil(endsAt, this.store.call()!.now) <= 3;
