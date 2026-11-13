@@ -1,12 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "frontend-design": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
-    },
     "graphify": {
       "source": "graphify-labs/graphify",
       "sourceType": "github",
@@ -18,12 +12,6 @@
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
       "computedHash": "08c1403e2daff28509af4ca7fc5915cb748b1a6b72181b6142ba35fb2c258d89"
-    },
-    "interface-design": {
-      "source": "Dammyjay93/interface-design",
-      "sourceType": "github",
-      "skillPath": ".claude/skills/interface-design/SKILL.md",
-      "computedHash": "720b31a31276e899fbe3006a33cbfeaceb77a73ba4c27b80d29afd38c8b7b208"
     },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
