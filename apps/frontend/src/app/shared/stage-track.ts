@@ -56,6 +56,10 @@ import { STAGE_STATUS_LABEL, dateRange } from '../core/format';
     .is-now .st__name { font-weight: 800; }
     .is-now .st__chip:not(.st__chip--exam) { background: var(--accent); color: var(--accent-ink); }
 
+    @media (min-width: 961px) {
+      .st__text { padding: clamp(0.55rem, 1.6vh, 0.85rem) 0.75rem; gap: 0.2rem; }
+      .st__name { font-size: clamp(0.8125rem, 2.1vh, 0.9375rem); }
+    }
     /* Celular y tabletas: la misma línea en vertical. */
     @media (max-width: 900px) {
       .st { grid-template-columns: minmax(0, 1fr); padding-top: 0; }

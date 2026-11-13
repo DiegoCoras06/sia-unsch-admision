@@ -138,6 +138,21 @@ const NEEDS_SCHOOL = new Set(['ORD', 'EXO-PSP', 'EXO-COAR']);
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .res__stat { background: rgb(0 0 0 / 0.16); } }
     @media (prefers-reduced-motion: reduce) { .seg__opt span, .res__go, .res__ghost { transition: none; } }
     @media (max-width: 860px) { .finder { grid-template-columns: 1fr; } }
+    /* Escritorio: cabe en una pantalla junto con el título de la sección. */
+    @media (min-width: 961px) {
+      .finder__form { gap: clamp(0.7rem, 2.2vh, 1.5rem); padding: clamp(1rem, 2.6vh, 2rem); }
+      .q .select { min-height: clamp(2.5rem, 6.5vh, 3.25rem); }
+      .seg__opt span { min-height: clamp(2.4rem, 6vh, 2.9rem); }
+      .finder__note { padding-top: 0.6rem; }
+      .finder__result { padding: clamp(1.1rem, 3vh, 2.5rem); gap: 0.35rem; }
+      .res__program { font-size: clamp(1.25rem, 4vh, 2.1rem); }
+      .res__stats { margin-top: clamp(0.4rem, 1.4vh, 1rem); }
+      .res__stat { padding: clamp(0.7rem, 2vh, 1rem) 1rem; }
+      .res__num { font-size: clamp(2rem, 7.5vh, 3.75rem); }
+      .res__exam { margin-top: clamp(0.4rem, 1.2vh, 0.75rem); padding: 0.5rem 0.85rem; }
+      .res__actions { margin-top: clamp(0.5rem, 1.6vh, 1rem); }
+      .res__go, .res__ghost { min-height: clamp(2.6rem, 6.5vh, 3.1rem); }
+    }
     @media (max-width: 520px) {
       .res__stats { grid-template-columns: 1fr; }
       .res__actions > a { flex: 1 1 100%; }
