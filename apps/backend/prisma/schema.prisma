@@ -768,6 +768,26 @@ model CepreAwardee {
   @@schema("inscripciones")
 }
 
+/// Encuesta SUS (System Usability Scale) que responde el postulante al terminar su inscripción (AC07, EQ-07).
+/// Sin datos personales: solo el código de postulante (para no contar dos veces a la misma persona) y las respuestas.
+model UsabilitySurvey {
+  id              String   @id @default(uuid()) @db.Uuid
+  callCode        String   @map("call_code") @db.VarChar(10)
+  applicantCode   String   @unique @map("applicant_code") @db.Char(8)
+  /// 10 respuestas de 1 (totalmente en desacuerdo) a 5 (totalmente de acuerdo), en el orden del cuestionario.
+  answers         Int[]
+  score           Decimal  @db.Decimal(5, 2)
+  comment         String?  @db.VarChar(500)
+  /// Segundos que tomó la inscripción, si el navegador los midió.
+  durationSeconds Int?     @map("duration_seconds")
+  device          String?  @db.VarChar(12)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([callCode])
+  @@map("usability_surveys")
+  @@schema("inscripciones")
+}
+
 enum ApplicationStatus {
   PENDIENTE_PAGO
   PENDIENTE_VALIDACION

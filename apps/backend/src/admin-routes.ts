@@ -15,7 +15,7 @@ import type { AssistantService, KnowledgeAdmin } from './modules/asistente/index
 import type { ContentAdmin, SiteAssets } from './modules/configuracion/index.js';
 import type { CallAdmin, CatalogAdmin } from './modules/convocatorias/index.js';
 import type { InscriptionService } from './modules/inscripciones/application/inscription-service.js';
-import type { ApplicationDocuments } from './modules/inscripciones/index.js';
+import type { ApplicationDocuments, UsabilitySurveyService } from './modules/inscripciones/index.js';
 import { ATTENDANCE_COLUMNS, DOSSIER_COLUMNS, INSCRIPTION_COLUMNS, PAYMENT_COLUMNS, type Column, type ReportFilter, type ReportQueries } from './modules/reportes/index.js';
 import { hasPermission, type Permission, type SecurityAdmin } from './modules/seguridad/index.js';
 
@@ -29,6 +29,8 @@ export interface AdminDeps {
   security: SecurityAdmin;
   inscriptions: InscriptionService;
   inscriptionDocuments: ApplicationDocuments;
+  /** AC07: resultados de la encuesta SUS. */
+  usability: UsabilitySurveyService;
   cepre: CepreAwardees;
   vacancyImport: VacancyImport;
   reports: ReportQueries;
@@ -74,6 +76,11 @@ export function adminRoutes(d: AdminDeps): Router {
         asistente: hasPermission(roles, 'asistente.gestionar') || hasPermission(roles, 'auditoria.ver'), casos: hasPermission(roles, 'casos.gestionar'),
       }),
     });
+  }));
+  // AC07 (EQ-07): resultados de la encuesta SUS de la convocatoria vigente, sin datos personales.
+  r.get('/admin/usability', g('reportes.inscripciones'), handle(async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: await d.usability.summary() });
   }));
   r.get('/admin/reports/inscripciones.:type', g('reportes.inscripciones'), handle(async (req, res) => {
     const { type } = parse(z.object({ type: z.enum(['xlsx', 'pdf']) }), req.params);

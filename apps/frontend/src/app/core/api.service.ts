@@ -163,6 +163,10 @@ export class ApiService {
   inboxReminders = (documentNumber: string, applicantCode: string, reminders: boolean) =>
     this.http.put<ApiResponse<InboxDto>>(`${API}/notifications/preferences`, { documentNumber, applicantCode, reminders }).pipe(map((r) => r.data));
 
+  /** AC07 (EQ-07): encuesta SUS al terminar la inscripción. */
+  usabilitySurvey = (body: { documentNumber: string; applicantCode: string; answers: number[]; comment?: string; durationSeconds?: number; device?: 'celular' | 'tableta' | 'computadora' }) =>
+    this.http.post<ApiResponse<{ score: number }>>(`${API}/inscriptions/survey`, body).pipe(map((r) => r.data));
+
   // ── 005 Pagos en línea con Culqi: tarjeta y Yape (ADR-024) ─────────
   paymentSession = (documentNumber: string, applicantCode: string) =>
     this.http.post<ApiResponse<PaymentSessionDto>>(`${API}/payments/session`, { documentNumber, applicantCode }).pipe(map((r) => r.data));

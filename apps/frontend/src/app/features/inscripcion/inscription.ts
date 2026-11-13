@@ -10,6 +10,7 @@ import { CallStore } from '../../core/call.store';
 import { AREA_NAMES, longDate, soles } from '../../core/format';
 import { UbigeoSelect } from '../../shared/ubigeo-select';
 import { InscriptionReceipt } from './inscription-receipt';
+import { UsabilitySurvey } from './usability-survey';
 import { PhotoCapture } from './photo-capture';
 
 /** Borrador local de la inscripción (RF-03.06): solo en este navegador, nunca en el servidor sin cuenta. */
@@ -111,7 +112,7 @@ const FIELD_TARGET: Record<string, string> = {
 /** Spec 003 (iteración 1, ADR-015): formulario público de inscripción, como el oficial, por pasos y con resumen en vivo. */
 @Component({
   selector: 'app-inscription',
-  imports: [ReactiveFormsModule, RouterLink, UbigeoSelect, PhotoCapture, InscriptionReceipt],
+  imports: [ReactiveFormsModule, RouterLink, UbigeoSelect, PhotoCapture, InscriptionReceipt, UsabilitySurvey],
   templateUrl: './inscription.html',
   styleUrl: './inscription.scss',
 })
@@ -131,6 +132,8 @@ export class InscriptionPage {
   protected readonly serverError = signal<string | null>(null);
   protected readonly serverFieldErrors = signal<Record<string, string>>({});
   protected readonly result = signal<InscriptionSummaryDto | null>(null);
+  /** Para la encuesta SUS: cuánto tomó inscribirse (desde que se abrió el formulario). */
+  protected readonly startedAt = Date.now();
   /** Spec 004, Historia 6: programa y ciclo adjudicados por el CEPRE (o por qué no puede elegir esa modalidad). */
   protected readonly cepreAward = signal<{ optionCode: string; program: string; cycle: string } | null>(null);
   protected readonly cepreError = signal<string | null>(null);

@@ -7,6 +7,7 @@
         <p class="lead">Guarda tu código de postulante: lo necesitas para pagar y para imprimir tu ficha.</p>
       </div>
       <app-inscription-receipt [summary]="r" [documentNumber]="form.controls.documentNumber.value.trim()" (updated)="result.set($event)" />
+      <app-usability-survey [documentNumber]="form.controls.documentNumber.value.trim()" [applicantCode]="r.applicantCode" [startedAt]="startedAt" />
     </div>
   </section>
 } @else {

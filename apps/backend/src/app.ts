@@ -23,6 +23,7 @@ import { createConfiguracionModule } from './modules/configuracion/index.js';
 import { createConvocatoriasModule } from './modules/convocatorias/index.js';
 import { createSeguridadModule } from './modules/seguridad/index.js';
 import { createIdentityProvider, createUsuariosModule } from './modules/usuarios/index.js';
+import type { UsabilitySurveyService } from './modules/inscripciones/index.js';
 import { createInscripcionesModule } from './modules/inscripciones/index.js';
 import { createPagosModule, createPaymentGateway, createTesoreria, type PaymentGateway } from './modules/pagos/index.js';
 import { createAsistenteModule, type LlmProvider } from './modules/asistente/index.js';
@@ -65,6 +66,8 @@ export interface Application {
   results: { tick(): Promise<{ queued: number; lost: number }> };
   /** RF-13.10: anonimiza las inscripciones que superan `retencion.inscripciones_anios`. */
   retention: { inscriptions(): Promise<number> };
+  /** AC07: encuesta SUS (resumen para el panel y pruebas). */
+  usability: UsabilitySurveyService;
 }
 
 export function createApplication(env: Env, overrides: AppOverrides = {}): Application {
@@ -274,6 +277,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     vacancyImport: convocatorias.vacancyImport,
     inscriptions: inscripciones.service,
     inscriptionDocuments: inscripciones.documents,
+    usability: inscripciones.survey,
     reports: reportes.queries,
     exporters: reportes,
     knowledge: asistente.knowledge,
@@ -291,7 +295,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       return (await inscripciones.service.anonymizeExpired(years, null)).anonymized;
     },
   };
-  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention };
+  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey };
 }
 
 /** Estado de las integraciones para el panel (RF-14.04 a RF-14.07): nunca muestra secretos completos. */

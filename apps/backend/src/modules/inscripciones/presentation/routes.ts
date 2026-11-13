@@ -9,6 +9,7 @@ import type { FichaService } from '../application/ficha-service.js';
 import type { OrdenPagoService } from '../application/orden-pago-pdf.js';
 import type { CepreAwardees } from '../application/cepre-awardees.js';
 import type { InscriptionService } from '../application/inscription-service.js';
+import type { UsabilitySurveyService } from '../application/usability-survey.js';
 
 const name = z.string().trim().min(1, 'Obligatorio').max(80);
 const ubigeo = z.string().regex(/^\d{6}$/, 'Elige departamento, provincia y distrito');
@@ -55,8 +56,21 @@ const inscriptionSchema = z
 const meta = (req: Request): RequestMeta => ({ requestId: req.requestId, ipHash: req.ipHash, userAgent: req.get('user-agent') ?? null });
 
 /** Rutas públicas de M03 (contrato: specs/003-inscripcion-ordinaria/contracts/openapi.yaml). */
-export function inscripcionesRoutes(service: InscriptionService, ficha: FichaService, documents: ApplicationDocuments, orden: OrdenPagoService, cepre: CepreAwardees): Router {
+export function inscripcionesRoutes(service: InscriptionService, ficha: FichaService, documents: ApplicationDocuments, orden: OrdenPagoService, cepre: CepreAwardees, survey: UsabilitySurveyService): Router {
   const router = Router();
+
+  // AC07 (EQ-07): encuesta SUS al terminar la inscripción, con DNI + código; una respuesta por inscripción.
+  router.post('/inscriptions/survey', handle(async (req, res) => {
+    const body = parse(z.object({
+      documentNumber: z.string().trim().min(6).max(12),
+      applicantCode: z.string().regex(/^\d{8}$/, 'El código tiene 8 dígitos'),
+      answers: z.array(z.number().int().min(1).max(5)).length(10, 'Responde las 10 afirmaciones'),
+      comment: z.string().trim().max(500).optional(),
+      durationSeconds: z.number().int().min(0).max(86_400).optional(),
+      device: z.enum(['celular', 'tableta', 'computadora']).optional(),
+    }), req.body);
+    res.status(201).json({ data: await survey.submit(body, meta(req)) });
+  }));
 
   router.post('/identity/lookup', handle(async (req, res) => {
     const body = parse(z.object({ documentType: z.enum(['DNI', 'CE']), documentNumber: z.string().trim().toUpperCase().min(6).max(12) }), req.body);

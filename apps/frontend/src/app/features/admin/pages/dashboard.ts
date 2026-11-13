@@ -27,6 +27,16 @@ interface Dashboard {
   proximamente: string[];
 }
 
+/** AC07 (EQ-07): resumen de la encuesta SUS (sin datos personales). */
+interface Usability {
+  responses: number; target: number; mean: number | null; median: number | null; meetsTarget: boolean;
+  grade: string | null; adjective: string | null; medianSeconds: number | null;
+  distribution: { label: string; count: number }[];
+  statements: { text: string; positive: boolean; average: number | null }[];
+  devices: { device: string; count: number }[];
+  comments: { text: string; score: number; at: string }[];
+}
+
 /** Spec 008, Historia 2: indicadores filtrables, por rol, exportables a Excel y PDF (RF-12.01 a RF-12.10). */
 @Component({
   selector: 'app-admin-dashboard',
@@ -134,6 +144,52 @@ interface Dashboard {
             <p class="adm-muted">Tokens: {{ a.tokens }}, costo estimado US$ {{ a.costoUsd }}, errores del proveedor: {{ a.errores }}</p>
           </section>
         }
+        @if (u(); as u) {
+          <section class="adm-panel adm-panel--wide sus-panel" aria-labelledby="sus-h">
+            <div class="sus-panel__head">
+              <h2 id="sus-h">Usabilidad: encuesta SUS</h2>
+              <p class="adm-muted">Al terminar la inscripción, el postulante responde 10 afirmaciones (System Usability Scale). Meta de EQ-07: promedio de {{ u.target }} o más.</p>
+            </div>
+            @if (u.responses) {
+              <div class="sus-panel__score">
+                <div class="sus-panel__big" [class.is-ok]="u.meetsTarget">
+                  <strong>{{ u.mean }}</strong><span>puntaje SUS promedio</span>
+                  <span class="adm-tag" [class.ok]="u.meetsTarget" [class.warn]="!u.meetsTarget">{{ u.grade }}, {{ u.adjective }}{{ u.meetsTarget ? ': cumple la meta' : ': bajo la meta' }}</span>
+                </div>
+                <ul class="sus-panel__facts">
+                  <li><b>{{ u.responses }}</b><span>respuestas</span></li>
+                  <li><b>{{ u.median }}</b><span>mediana</span></li>
+                  @if (u.medianSeconds !== null) { <li><b>{{ minutes(u.medianSeconds) }}</b><span>tiempo mediano de inscripción</span></li> }
+                  @for (dv of u.devices; track dv.device) { <li><b>{{ dv.count }}</b><span>desde {{ dv.device }}</span></li> }
+                </ul>
+              </div>
+              <div class="adm-grid">
+                <div>
+                  <h3 class="adm-sub">Distribución de puntajes</h3>
+                  <ul class="adm-bars">@for (b of u.distribution; track b.label) {<li><span>{{ b.label }}</span><span class="bar"><i [style.width.%]="pct(b.count, u.distribution)"></i></span><b>{{ b.count }}</b></li>}</ul>
+                </div>
+                <div>
+                  <h3 class="adm-sub">Promedio por afirmación (1 a 5)</h3>
+                  <ol class="sus-panel__statements">
+                    @for (st of u.statements; track $index) {
+                      <li [class.is-weak]="st.average !== null && (st.positive ? st.average < 3.5 : st.average > 2.5)">
+                        <span>{{ st.text }}</span>
+                        <b>{{ st.average }}</b>
+                        <small class="adm-muted">{{ st.positive ? 'mejor si es alto' : 'mejor si es bajo' }}</small>
+                      </li>
+                    }
+                  </ol>
+                </div>
+              </div>
+              @if (u.comments.length) {
+                <h3 class="adm-sub">Comentarios recientes</h3>
+                <ul class="sus-panel__comments">@for (c of u.comments; track c.at) {<li><q>{{ c.text }}</q> <span class="adm-muted">puntaje {{ c.score }}</span></li>}</ul>
+              }
+            } @else {
+              <p class="adm-muted">Aún no hay respuestas. La encuesta aparece al terminar cada inscripción.</p>
+            }
+          </section>
+        }
       </div>
       @if (d.proximamente.length) { <p class="adm-muted">Próximamente en este panel: {{ d.proximamente.join(', ') }}.</p> }
     }
@@ -143,6 +199,7 @@ export class DashboardPage implements OnInit {
   protected readonly session = inject(AdminSession);
   private readonly api = inject(ApiService);
   protected readonly d = signal<Dashboard | null>(null);
+  protected readonly u = signal<Usability | null>(null);
   protected readonly options = signal<{ code: string; name: string }[]>([]);
   protected readonly error = signal<string | null>(null);
   protected readonly loading = signal(false);
@@ -179,6 +236,7 @@ export class DashboardPage implements OnInit {
     this.loading.set(true);
     try {
       this.d.set(await this.session.get<Dashboard>('/admin/dashboard', this.f));
+      if (this.session.can('reportes.inscripciones')) this.u.set(await this.session.get<Usability>('/admin/usability', {}).catch(() => null));
     } catch (e) {
       this.error.set(apiErrorMessage(e));
     } finally {
@@ -200,6 +258,11 @@ export class DashboardPage implements OnInit {
   }
   protected payPct(n: number, p: NonNullable<Dashboard['pagos']>) {
     return (n / Math.max(p.ordenesPagadas, p.intentosVencidos, p.pagosDuplicados, 1)) * 100;
+  }
+
+  protected minutes(seconds: number) {
+    const m = Math.floor(seconds / 60);
+    return m ? `${m} min ${seconds % 60} s` : `${seconds} s`;
   }
 
   protected methods(list: Count[]) {

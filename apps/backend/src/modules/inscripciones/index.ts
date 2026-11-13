@@ -11,6 +11,8 @@ import type { AccessService } from '../seguridad/index.js';
 import type { IdentityProvider } from '../usuarios/index.js';
 import { InscriptionService } from './application/inscription-service.js';
 import { PrismaInscriptionRepository } from './infrastructure/prisma-inscription-repository.js';
+import { PrismaSurveyRepository } from './infrastructure/prisma-survey-repository.js';
+import { UsabilitySurveyService } from './application/usability-survey.js';
 import { FichaService } from './application/ficha-service.js';
 import { OrdenPagoService } from './application/orden-pago-pdf.js';
 import { CepreAwardees } from './application/cepre-awardees.js';
@@ -33,7 +35,12 @@ export function createInscripcionesModule(deps: {
   fichaSecret: string;
   currentConsent?: () => Promise<{ version: string; textMarkdown: string }>;
 }) {
-  const service = new InscriptionService({ ...deps, repo: new PrismaInscriptionRepository(deps.db) });
+  const repo = new PrismaInscriptionRepository(deps.db);
+  const service = new InscriptionService({ ...deps, repo });
+  const survey = new UsabilitySurveyService({
+    surveys: new PrismaSurveyRepository(deps.db), inscriptions: repo, limiter: deps.limiter,
+    currentCallCode: async () => (await deps.convocatorias.getCurrentCall()).code,
+  });
   const ficha = new FichaService({ ...deps, secret: deps.fichaSecret });
   const orden = new OrdenPagoService({ inscriptions: service, clock: deps.clock, frontendOrigin: deps.frontendOrigin });
   const cepre = new CepreAwardees(deps);
@@ -109,8 +116,9 @@ export function createInscripcionesModule(deps: {
   });
 
   const documents = new ApplicationDocuments(deps);
-  return { service, ficha, documents, cepre, router: inscripcionesRoutes(service, ficha, documents, orden, cepre) };
+  return { service, ficha, documents, cepre, survey, router: inscripcionesRoutes(service, ficha, documents, orden, cepre, survey) };
 }
 
 export type { PaymentContext } from './application/inscription-service.js';
+export type { UsabilitySurveyService } from './application/usability-survey.js';
 export type { ApplicationDocuments } from './application/application-documents.js';
