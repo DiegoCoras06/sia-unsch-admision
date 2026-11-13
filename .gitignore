@@ -26,3 +26,6 @@ apps/backend/.comision-local.txt
 # graphify: el grafo se regenera gratis con /graphify (solo código); se comparte solo el informe
 graphify-out/*
 !graphify-out/GRAPH_REPORT.md
+
+# Capturas de desarrollo (no van al repositorio)
+.screens/
