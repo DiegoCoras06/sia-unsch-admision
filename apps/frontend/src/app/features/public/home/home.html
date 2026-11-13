@@ -152,10 +152,11 @@
 </section>
 
 <!-- La universidad: misión y principios oficiales (PEI) con la Ciudad Universitaria en fotos -->
-<section class="section field-accent mision" aria-labelledby="mision-title">
+<section class="section field-accent field-glow mision" aria-labelledby="mision-title">
   <div class="frame stack-lg">
     <div class="mision__grid">
       <div class="mision__main" appReveal>
+        <p class="mision__kicker">Nuestra universidad</p>
         <h2 id="mision-title" class="mision__title">Misión</h2>
         <blockquote class="mision__quote">
           <p>Brindar formación universitaria a los estudiantes con énfasis en la investigación científica, tecnológica y humanística con principios éticos, responsabilidad social que contribuya al desarrollo sostenible de la región y el país.</p>
@@ -164,9 +165,9 @@
       </div>
       <div class="mision__principles" appReveal="80">
         <h3>Principios</h3>
-        <ul>
-          @for (p of principles; track p) { <li>{{ p }}</li> }
-        </ul>
+        <ol>
+          @for (p of principles; track p; let i = $index) { <li><span class="mision__n" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span><span>{{ p }}</span></li> }
+        </ol>
       </div>
     </div>
 
@@ -226,10 +227,12 @@
 <section class="section rector" aria-labelledby="rector-title">
   <div class="frame rector__grid">
     <figure class="rector__photo" appReveal>
+      <figcaption class="rector__badge"><img src="img/escudo-unsch-oficial-120.webp" alt="" width="26" height="35">Rector de la UNSCH</figcaption>
       <img appPhoto [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')" [attr.srcset]="img.srcset('portada.rector', 'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w')" sizes="(max-width: 760px) 100vw, 40vw" [alt]="img.alt('portada.rector', 'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad')"
         width="709" height="768" loading="lazy" decoding="async">
     </figure>
     <div class="rector__text">
+      <p class="rector__kicker" appReveal="30">Autoridad universitaria</p>
       <h2 id="rector-title" appReveal="60">Dr. Emilio Germán Ramírez Roca</h2>
       <p class="rector__role" appReveal="120">Rector de la Universidad Nacional de San Cristóbal de Huamanga</p>
       <p appReveal="180">Fundada en 1677 y reabierta en 1959, la UNSCH conduce el Concurso de Admisión 2027-I por medio de su Dirección de Admisión: 1803 vacantes en 34 programas de estudio para los jóvenes de Ayacucho y de todo el país.</p>
@@ -251,7 +254,7 @@
           <p class="news__kicker">Novedades del concurso</p>
           <h2 id="news-title" appReveal>Comunicados</h2>
         </div>
-        <a routerLink="/comunicados" class="news__all">Todos los comunicados</a>
+        <a routerLink="/comunicados" class="news__all">Todos los comunicados <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </header>
       <ul class="news__list">
         @for (n of news(); track n.id) {
@@ -265,7 +268,7 @@
                 <p class="news__meta"><span class="news__tag" [attr.data-type]="n.type">{{ newsType[n.type] }}</span>{{ longDate(n.publishedAt) }}</p>
                 <h3>{{ n.title }}</h3>
                 <p class="news__text">{{ n.bodyMarkdown }}</p>
-                <a routerLink="/comunicados" class="news__more">Leer el comunicado</a>
+                <a routerLink="/comunicados" class="news__more">Leer el comunicado <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
               </div>
             </article>
           </li>
