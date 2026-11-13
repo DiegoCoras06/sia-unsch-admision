@@ -210,10 +210,10 @@ span.quick__item b { color: var(--ink); }
 .rector__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; }
 .rector__photo { position: relative; margin: 0; padding: 0.6rem; border-radius: 28px; background: linear-gradient(160deg, #fff, #f1ebe5);
   box-shadow: 0 0 0 1px rgb(29 20 21 / 0.06), 0 34px 60px -36px rgb(29 20 21 / 0.6); }
-.rector__photo img { width: 100%; height: auto; display: block; border-radius: 22px; background: #f2f2f2; }
+.rector__photo > img { width: 100%; height: auto; display: block; border-radius: 22px; background: #f2f2f2; }
 .rector__badge { position: absolute; left: 1.4rem; bottom: 1.4rem; display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.9rem 0.5rem 0.55rem; border-radius: 14px;
   background: rgb(255 255 255 / 0.94); color: var(--ink); font-size: 0.9375rem; font-weight: 700; box-shadow: 0 18px 30px -18px rgb(0 0 0 / 0.7); }
-.rector__badge img { width: 26px; height: auto; border-radius: 0; background: none; }
+.rector__badge img { width: 26px; height: auto; flex: none; }
 .rector__text { display: grid; gap: 1.25rem; max-width: 40rem; }
 .rector__kicker { margin: 0; justify-self: start; padding: 0.3rem 0.8rem; border-radius: 999px; font-size: var(--size-note); font-weight: 700; color: var(--accent); background: var(--stone); }
 .rector__text h2 { font-size: clamp(2.25rem, 4.4vw, 4rem); line-height: 1; letter-spacing: -0.035em; max-width: 14ch; }
@@ -315,9 +315,9 @@ span.quick__item b { color: var(--ink); }
    Cada sección cabe en una pantalla, como la portada: los tamaños dependen también del alto de la ventana
    (1280 × 610 con escala de Windows al 150 %, 1920 × 940, etc.). En celular no cambia nada. */
 @media (min-width: 961px) {
-  .section, .now { padding-block: clamp(1.5rem, 6vh, 5rem); }
-  .section h2, .now h2 { font-size: clamp(1.6rem, min(3.6vw, 6.4vh), 3.25rem); }
-  .stack-lg > * + * { margin-top: clamp(0.9rem, 2.8vh, 2rem); }
+  .section:not(.areas-section), .now { padding-block: clamp(1.5rem, 6vh, 5rem); }
+  .section:not(.areas-section) h2, .now h2 { font-size: clamp(1.6rem, min(3.6vw, 6.4vh), 3.25rem); }
+  .section:not(.areas-section) .stack-lg > * + * { margin-top: clamp(0.9rem, 2.8vh, 2rem); }
   .lead { font-size: clamp(1rem, 2.6vh, 1.375rem); }
 
   /* Tu postulación: título y explicación en una fila. */
@@ -327,18 +327,6 @@ span.quick__item b { color: var(--ink); }
   /* Fechas */
   .dates { gap: clamp(1rem, 3vh, 2.5rem); }
   .dates__head p { font-size: clamp(0.9375rem, 2.3vh, 1.0625rem); }
-
-  /* Programas: Ciencias y Letras en dos columnas por tarjeta; filas más bajas. */
-  .areas { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.45fr) minmax(0, 1fr); }
-  .area__head { padding: clamp(0.7rem, 2vh, 1.25rem) 1.2rem; }
-  .area__num { font-size: clamp(2.2rem, 6vh, 4rem); }
-  .area__title strong { font-size: clamp(1.1rem, 2.6vh, 1.375rem); }
-  .area ul { padding: 0.35rem; column-gap: 0.35rem; display: block; }
-  .area:not(:last-child) ul { columns: 2; }
-  .area li { break-inside: avoid; }
-  .area li + li { border-top: 0; }
-  .area a { min-height: 0; padding: clamp(0.2rem, 0.55vh, 0.55rem) 0.6rem; font-size: clamp(0.8125rem, 1.95vh, 0.9375rem); line-height: 1.25; }
-  .areas-search { min-height: 2.6rem; }
 
   /* Misión: cita más compacta, principios en dos columnas y fotos más bajas. */
   .mision > .frame > * + * { margin-top: clamp(0.9rem, 2.6vh, 2rem); }
@@ -371,9 +359,9 @@ span.quick__item b { color: var(--ink); }
 
   /* Rector: el retrato se ajusta al alto de la ventana. */
   .rector__grid { grid-template-columns: auto minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); }
-  .rector__photo img { width: auto; height: calc(100svh - 12rem); max-height: 640px; aspect-ratio: 709 / 768; object-fit: cover; object-position: top; }
+  .rector__photo > img { width: auto; height: calc(100svh - 12rem); max-height: 640px; aspect-ratio: 709 / 768; object-fit: cover; object-position: top; }
   .rector__text { gap: clamp(0.6rem, 2vh, 1.25rem); }
-  .rector__text h2 { font-size: clamp(1.8rem, min(4.4vw, 7.5vh), 4rem); }
+  .rector .rector__text h2 { font-size: clamp(1.8rem, min(4.4vw, 7.5vh), 4rem); }
   .rector__role { font-size: clamp(1rem, 2.6vh, 1.4rem); }
   .rector__text > p:not(.rector__role):not(.rector__kicker) { font-size: clamp(0.9375rem, 2.4vh, 1.125rem); }
   .rector__facts div { padding: clamp(0.7rem, 2vh, 1.2rem) 1rem; }
