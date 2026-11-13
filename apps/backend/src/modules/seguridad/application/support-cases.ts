@@ -5,7 +5,7 @@ import type { Outbox } from '../../../shared/events/outbox.js';
 import { validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
-import { checkDocument, type CheckedFile } from '../../expedientes/domain/file-check.js';
+import { checkDocument, type CheckedFile } from '../../expedientes/index.js';
 
 /** Evidencia de una denuncia: hasta 3 archivos PDF, JPG o PNG que juntos no superen 5 MB (MEJ-14). */
 export const EVIDENCE = { maxFiles: 3, maxTotalBytes: 5 * 1024 * 1024 } as const;

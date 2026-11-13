@@ -11,6 +11,9 @@ import type { ConvocatoriasQueries } from '../convocatorias/index.js';
 import { DossierService, type DossierContext } from './application/dossier-service.js';
 import { expedientesRoutes } from './presentation/routes.js';
 
+/** Validación de archivos (tipo real y tamaño): la usa también Soporte para los adjuntos de sus casos. */
+export { checkDocument, MAX_DOCUMENT_BYTES, type CheckedFile } from './domain/file-check.js';
+
 export function createExpedientesModule(deps: {
   db: Db;
   clock: Clock;
