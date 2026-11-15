@@ -1,0 +1,2495 @@
+{
+  "info": {
+    "_postman_id": "b245e58d-d95e-51d7-a041-614753ea8a08",
+    "name": "SIA-UNSCH Admisión 2027-I",
+    "description": "Verificación funcional de los 12 módulos del Sistema Integral de Admisión. Cada petición comprueba el código de respuesta, que responda en 3 s o menos (EQ-01) y la forma de los datos. Las carpetas «Escribe en la base» crean registros: úsalas solo con datos de prueba. Guía: calidad/postman/README.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Salud de la API",
+      "description": "",
+      "item": [
+        {
+          "name": "Salud de la API y la base de datos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"La base de datos responde\", () => pm.expect(pm.response.json().data.database).to.eql(\"ok\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "01. Convocatorias (portal)",
+      "description": "",
+      "item": [
+        {
+          "name": "Convocatoria vigente y etapas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Trae etapas\", () => pm.expect(pm.response.json().data.stages).to.be.an(\"array\").that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "current"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Áreas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/areas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "areas"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Programas y vacantes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Trae los 40 programas\", () => pm.expect(pm.response.json().data.length).to.be.at.least(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "options"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Programas de Letras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/options?area=II",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "options"
+              ],
+              "query": [
+                {
+                  "key": "area",
+                  "value": "II"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Detalle de un programa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/options/{{programa}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "options",
+                "{{programa}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Modalidades (submodalidades)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/submodalities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "submodalities"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Categorías de cupo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/quota-categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "quota-categories"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Tasas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/fees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "fees"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Simulador de tasa (Ordinario, colegio estatal)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                  "pm.test(\"Calcula un total\", () => pm.expect(pm.response.json().data).to.have.property(\"total\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/fee-quote?modality=ORD&schoolType=ESTATAL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "fee-quote"
+              ],
+              "query": [
+                {
+                  "key": "modality",
+                  "value": "ORD"
+                },
+                {
+                  "key": "schoolType",
+                  "value": "ESTATAL"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Requisitos del Ordinario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/requirements?submodality=ORD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "requirements"
+              ],
+              "query": [
+                {
+                  "key": "submodality",
+                  "value": "ORD"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Temario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/syllabus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "syllabus"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Documentos oficiales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "documents"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Inscritos por modalidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "stats"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Configuración (contenidos)",
+      "description": "",
+      "item": [
+        {
+          "name": "Contenido de la portada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "home"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Comunicados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/announcements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "announcements"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Imágenes del sitio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/site-assets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "site-assets"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Inscripciones",
+      "description": "",
+      "item": [
+        {
+          "name": "Datos para el formulario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inscriptions/options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inscriptions",
+                "options"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Relación de observados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inscriptions/observed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inscriptions",
+                "observed"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Estado de una inscripción (DNI y código)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inscriptions/status?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inscriptions",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": "Usa las variables dni y codigo de una inscripción de prueba."
+          }
+        },
+        {
+          "name": "Escribe en la base",
+          "description": "Estas peticiones guardan datos en la base a la que apunta {{baseUrl}}. Úsalas con datos de prueba y no las incluyas en una corrida completa contra producción.",
+          "item": [
+            {
+              "name": "Inscribir a un postulante de prueba",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                      "if (pm.response.code === 201) { pm.environment.set(\"codigo\", pm.response.json().data.applicantCode); pm.environment.set(\"dni\", pm.environment.get(\"dniNuevo\")); }"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/inscriptions",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "inscriptions"
+                  ]
+                },
+                "description": "Crea una inscripción real en la base. Cambia dniNuevo por un DNI de prueba que no esté inscrito.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"{{dniNuevo}}\",\n  \"paternalSurname\": \"PRUEBA\",\n  \"maternalSurname\": \"POSTMAN\",\n  \"firstNames\": \"POSTULANTE\",\n  \"sex\": \"F\",\n  \"maritalStatus\": \"SOLTERO\",\n  \"birthUbigeo\": \"050101\",\n  \"birthDate\": \"2008-01-10\",\n  \"address\": \"Jr. Asamblea 100, Ayacucho\",\n  \"residenceUbigeo\": \"050101\",\n  \"economicDependency\": \"PADRES\",\n  \"mobile\": \"987654321\",\n  \"email\": \"prueba.postman@example.com\",\n  \"photo\": \"data:image/jpeg;base64,/9j/wAARCAFAAPADASIAAhEBAxEB/9k=\",\n  \"schoolUbigeo\": \"050101\",\n  \"schoolName\": \"IE DE PRUEBA\",\n  \"schoolType\": \"ESTATAL\",\n  \"graduationYear\": 2025,\n  \"inFourthOrBelow\": false,\n  \"preparation\": \"ACADEMIA\",\n  \"attempts\": 1,\n  \"modality\": \"ORD\",\n  \"quotaCategory\": \"ORD\",\n  \"campus\": \"HUAMANGA\",\n  \"optionCode\": \"{{programa}}\",\n  \"militaryCondition\": \"NONE\",\n  \"familyLink\": false,\n  \"declarationAccepted\": true,\n  \"consentVersion\": \"2026-10-v1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Encuesta SUS de la inscripción",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/inscriptions/survey",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "inscriptions",
+                    "survey"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentNumber\": \"{{dni}}\",\n  \"applicantCode\": \"{{codigo}}\",\n  \"answers\": [\n    4,\n    2,\n    4,\n    2,\n    4,\n    2,\n    4,\n    2,\n    4,\n    2\n  ],\n  \"device\": \"computadora\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04. Pagos",
+      "description": "",
+      "item": [
+        {
+          "name": "Estado del pago (DNI y código)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/status?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Escribe en la base",
+          "description": "Estas peticiones guardan datos en la base a la que apunta {{baseUrl}}. Úsalas con datos de prueba y no las incluyas en una corrida completa contra producción.",
+          "item": [
+            {
+              "name": "Abrir un intento de pago (Culqi en modo prueba)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/payments/session",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "payments",
+                    "session"
+                  ]
+                },
+                "description": "Crea un intento de pago. No cobra: el cobro necesita el token que entrega Culqi Checkout en el navegador.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentNumber\": \"{{dni}}\",\n  \"applicantCode\": \"{{codigo}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05. Usuarios (cuentas y personal)",
+      "description": "",
+      "item": [
+        {
+          "name": "Política de datos vigente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/legal/consent/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "legal",
+                "consent",
+                "current"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Ingreso del personal",
+          "description": "Guarda el token en adminToken para las demás carpetas del panel. Escribe adminEmail, adminPassword y mfaCode en el entorno; no se guardan en el proyecto.",
+          "item": [
+            {
+              "name": "1. Correo y contraseña",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                      "if (pm.response.code === 200) { const d = pm.response.json().data; pm.environment.set(\"challenge\", d.challenge); pm.test(\"Pide el doble factor\", () => pm.expect(d.step).to.be.oneOf([\"MFA\", \"SETUP_MFA\", \"CHANGE_PASSWORD\"])); }"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "2. Código del autenticador",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));",
+                      "if (pm.response.code === 200) { pm.environment.set(\"adminToken\", pm.response.json().data.accessToken); }"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/auth/mfa",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "auth",
+                    "mfa"
+                  ]
+                },
+                "description": "Escribe en mfaCode el código de 6 dígitos de tu aplicación de autenticación justo antes de enviar.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"challenge\": \"{{challenge}}\",\n  \"code\": \"{{mfaCode}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mi perfil de personal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Usuarios del panel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Roles y permisos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Seguridad y auditoría",
+      "description": "",
+      "item": [
+        {
+          "name": "Auditoría",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "audit"
+              ]
+            },
+            "description": "Necesitan {{adminToken}}: corre antes «Ingreso del personal».",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Casos de atención",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cases"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Estado del sistema e integraciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/system",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "system"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Escribe en la base",
+          "description": "Estas peticiones guardan datos en la base a la que apunta {{baseUrl}}. Úsalas con datos de prueba y no las incluyas en una corrida completa contra producción.",
+          "item": [
+            {
+              "name": "Consulta de contacto",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/support/contact",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "support",
+                    "contact"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Prueba Postman\",\n  \"email\": \"prueba.postman@example.com\",\n  \"message\": \"Mensaje de prueba enviado desde Postman.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07. Expedientes",
+      "description": "",
+      "item": [
+        {
+          "name": "Expediente del postulante (exonerados)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossier?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossier"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": "Solo responde 200 para inscripciones de Exonerados; para Ordinario responde un error de regla de negocio."
+          }
+        },
+        {
+          "name": "Expedientes (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dossiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dossiers"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Expedientes por estado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dossiers/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dossiers",
+                "stats"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. Exámenes",
+      "description": "",
+      "item": [
+        {
+          "name": "Mi aula (DNI y código)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exam/room?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exam",
+                "room"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": "Responde 200 cuando ya hay distribución de aulas publicada."
+          }
+        },
+        {
+          "name": "Exámenes (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/exams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "exams"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sedes y aulas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/venues",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "venues"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Asistencia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/attendance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "attendance"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Resultados",
+      "description": "",
+      "item": [
+        {
+          "name": "Ingresantes publicados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/results/admitted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "results",
+                "admitted"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Mi resultado (DNI y código)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/results/me?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "results",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": "Responde 200 cuando hay resultados publicados."
+          }
+        },
+        {
+          "name": "Resultados (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "results"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ingresantes y entrega de documentos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/admissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "admissions"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Notificaciones",
+      "description": "",
+      "item": [
+        {
+          "name": "Bandeja del postulante (DNI y código)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?documentNumber={{dni}}&applicantCode={{codigo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "documentNumber",
+                  "value": "{{dni}}"
+                },
+                {
+                  "key": "applicantCode",
+                  "value": "{{codigo}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Envíos (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "notifications"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Plantillas de correo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/notification-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "notification-templates"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Campañas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/campaigns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "campaigns"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Asistente virtual",
+      "description": "",
+      "item": [
+        {
+          "name": "Preguntas sugeridas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/suggestions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "suggestions"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Uso del asistente (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/assistant/usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "assistant",
+                "usage"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Escribe en la base",
+          "description": "Estas peticiones guardan datos en la base a la que apunta {{baseUrl}}. Úsalas con datos de prueba y no las incluyas en una corrida completa contra producción.",
+          "item": [
+            {
+              "name": "Hacer una pregunta",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                      "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                      "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/assistant/messages",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "assistant",
+                    "messages"
+                  ]
+                },
+                "description": "Guarda la conversación y, si hay clave de OpenRouter, consume crédito de la IA.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"¿Cuándo es el examen ordinario?\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12. Reportes",
+      "description": "",
+      "item": [
+        {
+          "name": "Indicadores del inicio del panel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inscripciones (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/inscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "inscriptions"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pagos (panel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "payments"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Encuesta SUS: resumen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae la propiedad data\", () => pm.expect(pm.response.json()).to.have.property(\"data\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/usability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "usability"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reporte de inscripciones en Excel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Es un archivo de Excel\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"spreadsheet\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/inscripciones.xlsx",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "inscripciones.xlsx"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Errores esperados",
+      "description": "",
+      "item": [
+        {
+          "name": "DNI con formato inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae un error con código y mensaje\", () => { const e = pm.response.json().error; pm.expect(e).to.have.property(\"code\"); pm.expect(e).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/identity/lookup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "identity",
+                "lookup"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"12\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Panel sin iniciar sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae un error con código y mensaje\", () => { const e = pm.response.json().error; pm.expect(e).to.have.property(\"code\"); pm.expect(e).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Programa que no existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae un error con código y mensaje\", () => { const e = pm.response.json().error; pm.expect(e).to.have.property(\"code\"); pm.expect(e).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calls/{{convocatoria}}/options/P99",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calls",
+                "{{convocatoria}}",
+                "options",
+                "P99"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Ruta que no existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae un error con código y mensaje\", () => { const e = pm.response.json().error; pm.expect(e).to.have.property(\"code\"); pm.expect(e).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "no-existe"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Encuesta incompleta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en 3 s o menos (EQ-01)\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test(\"Trae un error con código y mensaje\", () => { const e = pm.response.json().error; pm.expect(e).to.have.property(\"code\"); pm.expect(e).to.have.property(\"message\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inscriptions/survey",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inscriptions",
+                "survey"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentNumber\": \"00000000\",\n  \"applicantCode\": \"00000000\",\n  \"answers\": [\n    1,\n    2\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

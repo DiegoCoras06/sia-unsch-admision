@@ -13,8 +13,12 @@ calidad/
 │   └── escalabilidad.js    AC03: carga escalonada de 10 a 100 usuarios
 ├── usabilidad/
 │   └── axe-consola.js      AC07: revisión de accesibilidad para pegar en la consola del navegador
+├── postman/                Verificación funcional de los 12 módulos (colección, entorno y guía)
 └── resultados/             Reportes generados (uno por fecha)
 ```
+
+**Dos herramientas, dos preguntas:** Postman (`postman/`) responde «¿cada módulo funciona?», y k6 (`k6/`) responde
+«¿cuántos usuarios soporta y con qué tiempos?».
 
 ## 1. Verificación automática (un solo comando)
 
