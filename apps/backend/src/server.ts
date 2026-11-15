@@ -29,12 +29,20 @@ const background = (name: keyof typeof tasks, label: string) => () =>
 
 const timer = setInterval(background('outbox.dispatch', 'worker local'), 5_000);
 
+// AC01: catálogo en memoria desde el arranque y renovado antes de que venza (cada 4 minutos; vence a los 5).
+const warm = () => application.warmCatalog().catch((err: unknown) => {
+  if (!isDatabaseUnreachable(err)) application.logger.warn({ err }, 'no se pudo precargar el catálogo');
+});
+void warm();
+const warmer = setInterval(warm, 4 * 60_000);
+
 // Avisos automáticos, publicación de resultados y cola de correo (M09, M11) cada minuto.
 const ticker = setInterval(background('notifications.tick', 'ciclo de avisos'), 60_000);
 
 const shutdown = () => {
   clearInterval(timer);
   clearInterval(ticker);
+  clearInterval(warmer);
   server.close(() => void application.db.$disconnect().then(() => process.exit(0)));
 };
 process.on('SIGINT', shutdown);

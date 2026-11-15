@@ -66,6 +66,8 @@ export interface Application {
   results: { tick(): Promise<{ queued: number; lost: number }> };
   /** RF-13.10: anonimiza las inscripciones que superan `retencion.inscripciones_anios`. */
   retention: { inscriptions(): Promise<number> };
+  /** AC01: carga de antemano el catálogo en la caché (al arrancar y cada pocos minutos). */
+  warmCatalog(): Promise<void>;
   /** AC07: encuesta SUS (resumen para el panel y pruebas). */
   usability: UsabilitySurveyService;
 }
@@ -95,7 +97,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       ? new S3FileStorage({ bucket: env.S3_BUCKET, region: env.S3_REGION })
       : new LocalFileStorage(path.join(backendDir, '.dev-storage')));
   logger.info({ storage: env.FILE_STORAGE, bucket: env.FILE_STORAGE === 's3' ? env.S3_BUCKET : undefined }, 'Almacenamiento de archivos');
-  const convocatorias = createConvocatoriasModule(db, clock, audit);
+  const convocatorias = createConvocatoriasModule(db, clock, audit, undefined, env.APP_ENV === 'test' ? 0 : 5 * 60_000);
   const configuracion = createConfiguracionModule(db, convocatorias.queries, clock, audit, outbox, storage);
   const seguridad = createSeguridadModule({
     db, clock, outbox, limiter,
@@ -295,7 +297,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       return (await inscripciones.service.anonymizeExpired(years, null)).anonymized;
     },
   };
-  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey };
+  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: convocatorias.warmUp };
 }
 
 /** Estado de las integraciones para el panel (RF-14.04 a RF-14.07): nunca muestra secretos completos. */

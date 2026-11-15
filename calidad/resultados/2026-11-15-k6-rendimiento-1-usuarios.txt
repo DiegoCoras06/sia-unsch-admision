@@ -1,0 +1,6 @@
+AC01 Rendimiento: 2026-11-15T05:29:18.562Z
+Dirección: http://127.0.0.1:3000/api/v1, usuarios simultáneos: 1
+Peticiones: 150
+Tiempo promedio: 40 ms, p90: 134 ms, p95: 135 ms, máximo: 1172 ms
+Errores: 0.00 %
+Meta EQ-01 (p95 de 3000 ms o menos y menos de 1 % de errores): CUMPLE

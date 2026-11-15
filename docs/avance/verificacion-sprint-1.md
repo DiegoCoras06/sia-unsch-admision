@@ -16,7 +16,7 @@ Comparación entre lo comprometido en `docs/01` a `docs/04` y el código impleme
 
 | Tema | Antes | Ahora |
 |---|---|---|
-| Caché | Redis (ElastiCache) | No se usa; previsto solo si la prueba de carga lo exige |
+| Caché | Redis (ElastiCache) | Caché en memoria del catálogo (15/11/2026), aplicada porque la prueba de carga lo exigió; sin Redis |
 | Mensajería | Amazon SQS o EventBridge, sin definir | Bandeja de eventos (outbox) en PostgreSQL + Amazon SQS (código listo, ADR-021) |
 | Módulos | 14 | 12: Inscripciones une Ordinaria y Exonerados; Exámenes une Sedes y Aulas |
 | Monitoreo | Amazon CloudWatch | OpenTelemetry + Grafana Cloud |

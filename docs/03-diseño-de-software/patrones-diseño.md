@@ -14,7 +14,7 @@ Documentar los patrones de diseño aplicados en el backend del Sistema Integral 
 - **Despliegue:** AWS Lambda.
 - **Comunicación:** API REST mediante HTTPS.
 - **Base de datos:** Amazon RDS PostgreSQL.
-- **Caché:** no se usa por ahora; Redis queda previsto si la prueba de carga lo exige.
+- **Caché:** en memoria, para el catálogo de Convocatorias (`CachedConvocatoriasRepository`), aplicada el 15/11/2026 porque la prueba de carga de EQ-01 lo exigió. Redis no es necesario por ahora.
 - **Eventos:** bandeja de eventos (Transactional Outbox) en PostgreSQL y Amazon SQS.
 - **Almacenamiento:** Amazon S3.
 - **Inteligencia artificial:** OpenRouter API.
@@ -140,7 +140,7 @@ flowchart TB
 | Patrón | Diseño inicial | Estado al 02/11/2026 |
 |---|---|---|
 | Repositorio | En todos los módulos (`inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`) | 🟡 En Convocatorias, Inscripciones (`InscriptionService`) y Pagos (`PaymentService`), los tres módulos centrales del proceso. Los demás servicios usan Prisma directamente; una prueba de arquitectura impide que los servicios migrados vuelvan a hacerlo. |
-| Decorador | Caché con Redis (`cached-convocatoria.repository.ts`) | No implementado: no se usa Redis (ver 01, decisiones, ADR-005). |
+| Decorador | Caché del repositorio de Convocatorias | ✅ Implementado en memoria, sin Redis: `CachedConvocatoriasRepository` envuelve a `PrismaConvocatoriasRepository` con la misma interfaz, guarda lo leído 5 minutos, comparte consultas simultáneas y se borra con cada cambio desde el panel (`modules/convocatorias/infrastructure/cached-convocatorias-repository.ts`). |
 | Observador | Previsto para una iteración posterior | ✅ Implementado con la bandeja de eventos. |
 | Fábrica | Previsto para las modalidades de inscripción | ✅ Implementado para elegir adaptadores; para las modalidades se resolvió con reglas por modalidad (`initialStatus`). |
 | Estrategia | Evaluación de expedientes por modalidad | Pendiente: los criterios se configuran como datos por submodalidad (ADR-011 del repositorio). |
