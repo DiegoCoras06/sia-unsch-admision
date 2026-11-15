@@ -43,5 +43,5 @@ export function handleSummary(data) {
     `Meta (p95 de 3000 ms o menos con 100 usuarios y menos de 1 % de errores): ${d['p(95)'] < 3000 && fallas < 0.01 ? 'CUMPLE' : 'NO CUMPLE'}`,
     '',
   ].join('\n');
-  return { stdout: `\n${texto}`, 'calidad/resultados/k6-escalabilidad.txt': texto };
+  return { stdout: `\n${texto}`, [`calidad/resultados/${new Date().toISOString().slice(0, 10)}-k6-escalabilidad.txt`]: texto };
 }
