@@ -69,8 +69,15 @@ sus resultados antes y después.
 - **281 pruebas** del backend (unitarias y de integración) con **Vitest**, que usa la misma API de Jest (`describe`,
   `it`, `expect`, `vi.fn` en lugar de `jest.fn`). Se eligió porque funciona con TypeScript y módulos ES sin
   configuración adicional; las pruebas se leen igual que en Jest.
-- **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición:
-  88,2 % de líneas, 83,5 % de sentencias, 83,4 % de funciones y 67,9 % de ramas.
+- **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición
+  (20/11/2026, 281 pruebas en 35 archivos, todas aprobadas):
+
+  | Métrica | Cubierto | Porcentaje |
+  |---|---|---|
+  | Líneas | 4430 de 5018 | 88,28 % |
+  | Sentencias | 5085 de 6087 | 83,53 % |
+  | Funciones | 1437 de 1725 | 83,30 % |
+  | Ramas | 2422 de 3564 | 67,95 % |
 - **Integración continua:** `.github/workflows/ci.yml` corre en cada envío a GitHub la revisión de tipos, las pruebas
   con cobertura (resumen en la página de la ejecución y reporte descargable `cobertura-backend`) y la compilación del
   portal.
