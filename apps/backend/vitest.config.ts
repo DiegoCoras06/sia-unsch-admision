@@ -9,5 +9,13 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 120_000,
+    // Reporte de cobertura (Sprint 2): npm run test:coverage. Se mide el código propio, sin el cliente generado de Prisma.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/generated/**', 'src/**/*.d.ts'],
+      reporter: ['text-summary', 'text', 'html', 'json-summary', 'lcov'],
+      reportsDirectory: 'coverage',
+    },
   },
 });

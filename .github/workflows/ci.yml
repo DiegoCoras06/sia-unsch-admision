@@ -35,8 +35,24 @@ jobs:
         run: npm run build -w @sia/contracts
       - name: Revisar tipos del backend
         run: npm run typecheck -w @sia/backend
-      - name: Pruebas del backend
-        run: npm test -w @sia/backend
+      - name: Pruebas del backend con cobertura
+        run: npm run test:coverage -w @sia/backend
+      - name: Resumen de cobertura en la página del CI
+        if: always()
+        run: |
+          node -e "
+            const t = require('./apps/backend/coverage/coverage-summary.json').total;
+            const fila = (n, k) => '| ' + n + ' | ' + t[k].pct + ' % | ' + t[k].covered + ' de ' + t[k].total + ' |';
+            console.log(['## Cobertura de pruebas del backend', '', '| Medida | Cobertura | Cubierto |', '|---|---|---|',
+              fila('Líneas', 'lines'), fila('Sentencias', 'statements'), fila('Funciones', 'functions'), fila('Ramas', 'branches')].join(String.fromCharCode(10)));
+          " >> "$GITHUB_STEP_SUMMARY"
+      - name: Guardar el reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-backend
+          path: apps/backend/coverage/
+          retention-days: 30
 
   frontend:
     name: Frontend (compilación)
