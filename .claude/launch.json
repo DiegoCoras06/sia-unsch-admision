@@ -4,9 +4,26 @@
     {
       "name": "web",
       "runtimeExecutable": "npm.cmd",
-      "runtimeArgs": ["run", "start", "-w", "@sia/frontend"],
+      "runtimeArgs": [
+        "run",
+        "start",
+        "-w",
+        "@sia/frontend"
+      ],
       "port": 4200,
       "url": "http://127.0.0.1:4200"
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file=.env.rds",
+        "../../node_modules/tsx/dist/cli.mjs",
+        "src/server.ts"
+      ],
+      "cwd": "apps/backend",
+      "port": 3000,
+      "url": "http://127.0.0.1:3000"
     }
   ]
 }

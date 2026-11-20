@@ -61,6 +61,19 @@ npm run dev:rds
 
 > Verificado el 25/10/2026: PostgreSQL 18.3 en RDS, migraciones aplicadas, semilla 2027-I (40 opciones, 1803 vacantes) y E2E de inscripción OK. Cada consulta tarda ~0,7–2 s desde Perú hasta us-east-2; apaga la instancia cuando no la uses.
 
+### Documentación de la API (OpenAPI y Swagger)
+
+Con la API encendida, abre **http://127.0.0.1:3000/api/docs** (Swagger UI) o descarga el contrato en
+`http://127.0.0.1:3000/api/openapi.json`. Reúne las 205 operaciones de los 12 módulos, agrupadas por módulo: las de
+`specs/<nn>/contracts/openapi.yaml` con su contrato detallado y las demás generadas del código. Para las rutas del panel,
+ingresa con `/admin/auth/login` y `/admin/auth/mfa`, y pega el `accessToken` en **Authorize**.
+
+Si agregas o cambias rutas, regenera el archivo (`apps/backend/openapi/openapi.json`); una prueba falla si falta alguna:
+
+```bash
+npm run openapi -w @sia/backend
+```
+
 ### Panel administrativo (ADR-018)
 
 Entra en **http://127.0.0.1:4200/admin**. El primer administrador lo crea la semilla: su correo y su contraseña temporal están en `apps/backend/.admin-inicial.txt` (ignorado por git; bórralo después de entrar).
