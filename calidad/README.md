@@ -10,7 +10,8 @@ calidad/
 ├── verificar.mjs           Corre las pruebas automáticas y escribe el reporte del día
 ├── k6/
 │   ├── rendimiento.js      AC01: carga de solo lectura (tiempo de respuesta)
-│   └── escalabilidad.js    AC03: carga escalonada de 10 a 100 usuarios
+│   ├── escalabilidad.js    AC03: carga escalonada de 10 a 100 usuarios
+│   └── carga-2000.js       AC01 y AC03: carga progresiva de 50 a 2000 usuarios (Sprint 2)
 ├── usabilidad/
 │   └── axe-consola.js      AC07: revisión de accesibilidad para pegar en la consola del navegador
 ├── postman/                Verificación funcional de los 12 módulos (colección, entorno y guía)
@@ -72,6 +73,13 @@ Por defecto apuntan a la API local (`http://127.0.0.1:3000/api/v1`). Para otra d
 
 ```bash
 k6 run -e BASE=https://tu-dominio/api/v1 calidad/k6/rendimiento.js
+```
+
+Para el Sprint 2, la carga progresiva sube por etapas de 50, 100, 250, 500, 1000, 1500 y 2000 usuarios (30 s de subida y
+1 minuto en cada una, unos 11 minutos) y entrega una tabla con el tiempo y los errores de cada etapa:
+
+```bash
+k6 run calidad/k6/carga-2000.js
 ```
 
 **Importante:** con la API en tu computadora y la base en RDS (Ohio), cada consulta cruza el continente y los tiempos
