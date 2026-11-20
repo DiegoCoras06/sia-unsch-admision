@@ -2,6 +2,7 @@ import type { AnnouncementDto, HomeContentDto, PageMeta, QuickAccessKey } from '
 import type { Clock } from '../../../shared/clock/clock.js';
 import { toLimaIso } from '../../../shared/clock/clock.js';
 import type { Db } from '../../../shared/db/prisma.js';
+import { MemoryCache } from '../../../shared/cache/memory-cache.js';
 import { stageStatus, type ConvocatoriasQueries } from '../../convocatorias/index.js';
 
 const PAGE_SIZE = 10;
@@ -9,7 +10,13 @@ const shortDate = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 
 /** Casos de uso de lectura de M14 (spec 001, Historias 5 y 6; FR-008, FR-010, FR-013). */
 export class ConfiguracionQueries {
-  constructor(private readonly db: Db, private readonly convocatorias: ConvocatoriasQueries, private readonly clock: Clock) {}
+  /** `cache`: comunicados y contenidos de la portada en memoria (AC01); sin caché por defecto. */
+  constructor(
+    private readonly db: Db,
+    private readonly convocatorias: ConvocatoriasQueries,
+    private readonly clock: Clock,
+    private readonly cache = new MemoryCache(0),
+  ) {}
 
   async listAnnouncements(filter: { callCode?: string | undefined; type?: AnnouncementDto['type'] | undefined; section?: string | undefined; page: number }) {
     const where = {
@@ -18,10 +25,11 @@ export class ConfiguracionQueries {
       ...(filter.type ? { type: filter.type } : {}),
       ...(filter.section ? { affectsSection: filter.section } : {}),
     };
-    const [rows, total] = await Promise.all([
+    const key = `announcements:${filter.callCode ?? ''}:${filter.type ?? ''}:${filter.section ?? ''}:${filter.page}`;
+    const [rows, total] = await this.cache.get(key, () => Promise.all([
       this.db.announcement.findMany({ where, orderBy: { publishedAt: 'desc' }, skip: (filter.page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
       this.db.announcement.count({ where }),
-    ]);
+    ]));
     const data: AnnouncementDto[] = rows.map((a) => ({
       id: a.id, type: a.type, title: a.title, bodyMarkdown: a.bodyMd, affectsSection: a.affectsSection, publishedAt: toLimaIso(a.publishedAt),
     }));
@@ -31,11 +39,14 @@ export class ConfiguracionQueries {
 
   /** Inicio: carrusel, autoridades, bloques y accesos rápidos habilitados según la etapa en curso. */
   async home(): Promise<HomeContentDto> {
-    const [slides, authorities, blocks, flags, call] = await Promise.all([
-      this.db.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
-      this.db.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.db.contentBlock.findMany(),
-      this.db.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
+    // Solo se guardan los datos leídos; qué accesos están abiertos se calcula siempre con la hora actual.
+    const [[slides, authorities, blocks, flags], call] = await Promise.all([
+      this.cache.get('home', () => Promise.all([
+        this.db.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
+        this.db.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
+        this.db.contentBlock.findMany(),
+        this.db.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
+      ])),
       this.convocatorias.getCurrentCall().catch(() => null),
     ]);
     const now = this.clock.now();

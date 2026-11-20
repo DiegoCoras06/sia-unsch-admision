@@ -9,14 +9,27 @@ import { ContentAdmin } from './application/content-admin.js';
 import { SiteAssets } from './application/site-assets.js';
 import type { FileStorage } from '../../shared/storage/file-storage.js';
 import { configuracionRoutes } from './presentation/routes.js';
+import { MemoryCache, invalidatesOnUse } from '../../shared/cache/memory-cache.js';
 
-export function createConfiguracionModule(db: Db, convocatorias: ConvocatoriasQueries, clock: Clock, audit: AuditLog, outbox: Outbox, storage: FileStorage) {
-  const queries = new ConfiguracionQueries(db, convocatorias, clock);
-  /** Gestión desde el panel (spec 008, Historias 6 y 8). */
-  const admin = new ContentAdmin({ db, clock, audit, outbox });
-  /** RF-14.01: imágenes del portal reemplazables desde el panel. */
-  const assets = new SiteAssets({ db, clock, audit, storage });
-  return { queries, admin, assets, router: configuracionRoutes(queries, assets) };
+export function createConfiguracionModule(db: Db, convocatorias: ConvocatoriasQueries, clock: Clock, audit: AuditLog, outbox: Outbox, storage: FileStorage, cacheTtlMs = 60_000) {
+  // AC01: comunicados, portada e imágenes del portal en memoria; se renuevan cada minuto sin hacer esperar a nadie.
+  const cache = new MemoryCache(cacheTtlMs);
+  const queries = new ConfiguracionQueries(db, convocatorias, clock, cache);
+  const assets = new SiteAssets({ db, clock, audit, storage, cache });
+  /** Carga de antemano lo que pide la portada, para que ningún visitante espere la primera consulta. */
+  const warmUp = async () => {
+    if (cacheTtlMs <= 0) return;
+    await Promise.all([queries.home(), queries.listAnnouncements({ page: 1 }), assets.publicMap()]);
+  };
+  const invalidate = () => {
+    cache.invalidate();
+    void warmUp().catch(() => undefined);
+  };
+  /** Gestión desde el panel (spec 008, Historias 6 y 8); cada cambio borra la caché de contenidos. */
+  const admin = invalidatesOnUse(new ContentAdmin({ db, clock, audit, outbox }), invalidate);
+  /** RF-14.01: imágenes del portal reemplazables desde el panel (el portal usa `assets`, el panel la versión que invalida). */
+  const assetsAdmin = invalidatesOnUse(assets, invalidate);
+  return { queries, admin, assets: assetsAdmin, warmUp, router: configuracionRoutes(queries, assets) };
 }
 
 export type { ContentAdmin } from './application/content-admin.js';

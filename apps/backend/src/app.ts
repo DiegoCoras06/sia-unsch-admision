@@ -100,7 +100,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       : new LocalFileStorage(path.join(backendDir, '.dev-storage')));
   logger.info({ storage: env.FILE_STORAGE, bucket: env.FILE_STORAGE === 's3' ? env.S3_BUCKET : undefined }, 'Almacenamiento de archivos');
   const convocatorias = createConvocatoriasModule(db, clock, audit, undefined, env.APP_ENV === 'test' ? 0 : 5 * 60_000);
-  const configuracion = createConfiguracionModule(db, convocatorias.queries, clock, audit, outbox, storage);
+  const configuracion = createConfiguracionModule(db, convocatorias.queries, clock, audit, outbox, storage, env.APP_ENV === 'test' ? 0 : 60_000);
   const seguridad = createSeguridadModule({
     db, clock, outbox, limiter,
     jwtSecret: env.JWT_SECRET,
@@ -310,7 +310,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       return (await inscripciones.service.anonymizeExpired(years, null)).anonymized;
     },
   };
-  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: convocatorias.warmUp };
+  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: async () => { await convocatorias.warmUp(); await configuracion.warmUp(); } };
 }
 
 /** Estado de las integraciones para el panel (RF-14.04 a RF-14.07): nunca muestra secretos completos. */

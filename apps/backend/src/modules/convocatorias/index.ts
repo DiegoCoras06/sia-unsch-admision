@@ -1,5 +1,6 @@
 // API pública del módulo M01 Convocatorias. Otros módulos solo importan desde aquí (ADR-002).
 import { VacancyImport } from './application/vacancy-import.js';
+import { invalidatesOnUse } from '../../shared/cache/memory-cache.js';
 import type { Clock } from '../../shared/clock/clock.js';
 import type { Db } from '../../shared/db/prisma.js';
 import { ConvocatoriasQueries } from './application/convocatorias-queries.js';
@@ -14,25 +15,6 @@ import { convocatoriasRoutes } from './presentation/routes.js';
 export type { Stage, StageStatus } from './domain/stage.js';
 export { stageStatus } from './domain/stage.js';
 export type { ConvocatoriasQueries } from './application/convocatorias-queries.js';
-
-/**
- * Envuelve un servicio del panel para que, al terminar cualquiera de sus operaciones, borre la caché del catálogo:
- * así un cambio de etapas, tasas o vacantes se ve en el portal al instante.
- */
-function invalidatesOnUse<T extends object>(service: T, invalidate: () => void): T {
-  return new Proxy(service, {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
-      if (typeof value !== 'function') return value;
-      return (...args: unknown[]) => {
-        const result = value.apply(target, args);
-        if (result instanceof Promise) return result.finally(invalidate);
-        invalidate();
-        return result;
-      };
-    },
-  });
-}
 
 export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog, stats: EnrollmentStatsProvider = pendingEnrollmentStats, cacheTtlMs = 5 * 60_000) {
   // AC01: el catálogo se lee una vez y se guarda en memoria (ver CachedConvocatoriasRepository).

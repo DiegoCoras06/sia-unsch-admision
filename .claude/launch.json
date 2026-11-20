@@ -24,6 +24,21 @@
       "cwd": "apps/backend",
       "port": 3000,
       "url": "http://127.0.0.1:3000"
+    },
+    {
+      "name": "api-carga",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file=.env.rds",
+        "../../node_modules/tsx/dist/cli.mjs",
+        "src/server.ts"
+      ],
+      "cwd": "apps/backend",
+      "port": 3000,
+      "url": "http://127.0.0.1:3000",
+      "env": {
+        "LOG_LEVEL": "warn"
+      }
     }
   ]
 }

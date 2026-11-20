@@ -3,6 +3,7 @@ import type { Clock } from '../../../shared/clock/clock.js';
 import type { Db } from '../../../shared/db/prisma.js';
 import { notFound, validationError } from '../../../shared/http/errors.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
+import { MemoryCache } from '../../../shared/cache/memory-cache.js';
 
 /** Imágenes de la portada que el personal puede reemplazar (RF-14.01). La original queda como respaldo. */
 export const SITE_SLOTS = {
@@ -17,11 +18,11 @@ const TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png',
 const MAX_BYTES = 3 * 1024 * 1024;
 
 export class SiteAssets {
-  constructor(private readonly d: { db: Db; clock: Clock; audit: AuditLog; storage: FileStorage }) {}
+  constructor(private readonly d: { db: Db; clock: Clock; audit: AuditLog; storage: FileStorage; cache?: MemoryCache }) {}
 
-  /** Para el portal: solo las imágenes reemplazadas (el resto usa la original). */
+  /** Para el portal: solo las imágenes reemplazadas (el resto usa la original). En caché de memoria (AC01). */
   async publicMap() {
-    const rows = await this.d.db.siteAsset.findMany();
+    const rows = await (this.d.cache ?? new MemoryCache(0)).get('site-assets', () => this.d.db.siteAsset.findMany());
     return Object.fromEntries(rows.map((r) => [r.key, { url: `/api/v1/site-assets/${r.key}?v=${r.updatedAt.getTime()}`, alt: r.alt }]));
   }
 
