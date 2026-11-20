@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { nextMilestone, stageStatus, type Stage } from '../../../src/modules/convocatorias/domain/stage.js';
 import { stages as seedStages } from '../../../prisma/seed/call-2027-I.js';
 

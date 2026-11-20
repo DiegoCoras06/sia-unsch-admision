@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import type { LlmMessage, LlmProvider, LlmResponse } from '../../src/modules/asistente/index.js';
 import { testApp } from '../helpers.js';
 

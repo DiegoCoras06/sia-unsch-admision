@@ -13,7 +13,7 @@ Los planes iniciales usaban Docker Compose para PostgreSQL, almacenamiento compa
 | Necesidad | Solución local sin Docker | En AWS (`demo`) |
 |---|---|---|
 | PostgreSQL 16 | **`embedded-postgres`** (binarios oficiales de PostgreSQL 16.14 instalados por npm), datos en `apps/backend/.pgdata/`, puerto 5433. Scripts `npm run db:start` / `db:stop` | RDS PostgreSQL 16 |
-| Base de datos de pruebas | Otra instancia embebida efímera en el puerto 5434, creada y destruida por Vitest | — |
+| Base de datos de pruebas | Otra instancia embebida efímera en el puerto 5434, creada y destruida por Jest (`tests/global-setup.ts` y `global-teardown.ts`) | — |
 | Archivos (S3) | `LocalFileStorage` en `apps/backend/.dev-storage/` (mismo puerto `FileStorage`) | S3 |
 | Correo | `FileEmailSender`: cada correo se guarda como `.html` en `apps/backend/.dev-mail/` y se resume en la consola | SES |
 | Observabilidad | Consola con `pino-pretty`; OTLP opcional | Grafana Cloud (ADR-013) |

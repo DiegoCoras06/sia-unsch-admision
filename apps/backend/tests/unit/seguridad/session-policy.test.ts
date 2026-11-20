@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { evaluateRefresh } from '../../../src/modules/seguridad/domain/session-policy.js';
 
 const now = new Date('2026-10-25T10:00:00-05:00');

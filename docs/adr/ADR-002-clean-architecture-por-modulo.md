@@ -37,7 +37,7 @@ modules/<modulo>/
 ## Consecuencias
 
 **Positivas:**
-- Las reglas RN se prueban con pruebas unitarias rápidas (Vitest).
+- Las reglas RN se prueban con pruebas unitarias rápidas (Jest).
 - Cambiar una simulación por una integración real no toca el dominio.
 
 **Negativas / riesgos aceptados:**

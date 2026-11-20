@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { SecretBox, totpService } from '../../src/modules/seguridad/index.js';
 import { Argon2Hasher } from '../../src/modules/usuarios/infrastructure/argon2-hasher.js';
 import { movableClock, testApp } from '../helpers.js';

@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { testApp } from '../helpers.js';
 
 /** Pasarela simulada: cobra como Culqi, servidor a servidor, según el token elegido (ADR-024). */

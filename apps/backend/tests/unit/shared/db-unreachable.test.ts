@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { isDatabaseUnreachable } from '../../../src/shared/db/unreachable.js';
 import { errorHandler } from '../../../src/shared/http/middleware.js';
 

@@ -13,9 +13,9 @@
     "postinstall": "prisma generate",
     "build": "prisma generate && tsx scripts/build.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ../../node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ../../node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ../../node_modules/jest/bin/jest.js --coverage",
     "openapi": "tsx swagger/generar.ts",
     "rds:check": "tsx scripts/rds.ts check",
     "rds:setup": "tsx scripts/rds.ts setup",
@@ -51,6 +51,9 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@jest/globals": "30.5.2",
+    "@swc/core": "1.16.21",
+    "@swc/jest": "0.2.39",
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.6",
     "@types/node": "22.20.5",
@@ -58,17 +61,16 @@
     "@types/qrcode": "^1.5.6",
     "@types/supertest": "7.2.1",
     "@types/swagger-ui-express": "4.1.8",
-    "@vitest/coverage-v8": "5.0.5",
     "concurrently": "10.0.6",
     "effect": "3.22.5",
     "embedded-postgres": "16.14.0-beta.17",
     "esbuild": "0.28.2",
+    "jest": "30.5.2",
     "pino-pretty": "13.2.0",
     "prisma": "7.10.1",
     "supertest": "7.3.1",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vitest": "5.0.5",
     "yaml": "2.9.1"
   }
 }

@@ -1,11 +1,14 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { CulqiGateway, parseCulqiCharge } from '../../../src/modules/pagos/infrastructure/culqi-gateway.js';
 
 // Llaves inventadas solo para la prueba.
 const gw = new CulqiGateway({ publicKey: 'pk_test_prueba', secretKey: 'sk_test_prueba' });
 const req = { transactionId: 'T2026000001', orderNumber: '2700001701', applicantCode: '27000017', amountCents: 25000, email: 'p@example.com', token: 'ype_test_abc', description: 'Admisión' };
 
-afterEach(() => vi.unstubAllGlobals());
+const fetchOriginal = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = fetchOriginal;
+});
 
 describe('Culqi: cargo con token de tarjeta o de Yape (ADR-024)', () => {
   it('un cargo exitoso se normaliza como aprobado con medio YAPE y número de operación', () => {
@@ -26,8 +29,8 @@ describe('Culqi: cargo con token de tarjeta o de Yape (ADR-024)', () => {
   });
 
   it('envía el cargo con la llave secreta, en céntimos y con el token', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ object: 'charge', id: 'chr_test_2', amount: 25000, currency_code: 'PEN', outcome: { type: 'venta_exitosa' } }), { status: 201 }));
-    vi.stubGlobal('fetch', fetchMock);
+    const fetchMock = jest.fn<(url: string, init: { headers: Record<string, string>; body: string }) => Promise<Response>>().mockResolvedValue(new Response(JSON.stringify({ object: 'charge', id: 'chr_test_2', amount: 25000, currency_code: 'PEN', outcome: { type: 'venta_exitosa' } }), { status: 201 }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
     const r = await gw.charge(req);
     expect(r.approved).toBe(true);
     const [url, init] = fetchMock.mock.calls[0]!;
@@ -38,7 +41,7 @@ describe('Culqi: cargo con token de tarjeta o de Yape (ADR-024)', () => {
   });
 
   it('sin conexión con Culqi responde 502 con un mensaje claro', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
+    globalThis.fetch = jest.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed')) as unknown as typeof fetch;
     await expect(gw.charge(req)).rejects.toMatchObject({ status: 502 });
   });
 

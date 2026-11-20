@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 
 // La documentación OpenAPI (swagger/openapi.json) debe cubrir todas las rutas reales de la API.
 // Si falla, corre `npm run openapi -w @sia/backend` y vuelve a confirmar el archivo.

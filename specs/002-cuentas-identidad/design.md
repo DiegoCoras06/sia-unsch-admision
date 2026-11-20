@@ -22,7 +22,7 @@ Técnicamente: módulos **M02 Usuarios e identidad** y **M13 Seguridad** (sesion
 | Lenguaje / versión | TypeScript 5.x (`strict`), Node.js 22 LTS |
 | Dependencias nuevas | `argon2`, `jose` (JWT), `cookie-parser` |
 | Almacenamiento | PostgreSQL: esquemas `usuarios` y `seguridad` |
-| Pruebas | Vitest, PostgreSQL embebido, Supertest, Playwright |
+| Pruebas | Jest, PostgreSQL embebido, Supertest, Playwright |
 | Metas | Registro + verificación < 3 min (SC-001); login p95 < 500 ms incluido Argon2id |
 | Restricciones | Sin datos personales en telemetría; mensajes que no revelan si una cuenta existe |
 | Depende de | 001: `shared/*`, límites de uso, outbox, envío de correo por el worker |

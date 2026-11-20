@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { isValidSusAnswers, susGrade, susScore } from '../../../src/modules/inscripciones/domain/sus.js';
 
 describe('System Usability Scale (AC07, EQ-07)', () => {

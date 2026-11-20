@@ -1,6 +1,6 @@
 // ADR-021: la bandeja de eventos envía los ID a una cola (Amazon SQS en AWS) y el worker los procesa una sola vez.
 import { randomUUID } from 'node:crypto';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from '@jest/globals';
 import type { EventQueue } from '../../src/shared/events/event-queue.js';
 import { movableClock, testApp } from '../helpers.js';
 

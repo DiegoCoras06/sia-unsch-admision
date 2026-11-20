@@ -30,7 +30,7 @@ node calidad/verificar.mjs
 Hace tres cosas y deja el reporte en `calidad/resultados/AAAA-MM-DD.md`:
 
 1. `npm audit`: vulnerabilidades de las dependencias (AC04).
-2. Todas las pruebas del backend (Vitest), **agrupadas por atributo**. Usan una base PostgreSQL temporal que se
+2. Todas las pruebas del backend (Jest), **agrupadas por atributo**. Usan una base PostgreSQL temporal que se
    crea y se borra en cada ejecución: **nunca tocan RDS**.
 3. Revisión de tipos del backend y del portal (AC05).
 

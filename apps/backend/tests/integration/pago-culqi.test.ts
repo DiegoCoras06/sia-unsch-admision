@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import type { ChargeRequest, PaymentGateway } from '../../src/modules/pagos/domain/ports.js';
 import { testApp } from '../helpers.js';
 

@@ -40,9 +40,9 @@ const totalVuln = vulnerabilidades ? vulnerabilidades.total : null;
 console.log(vulnerabilidades ? `  ${totalVuln} vulnerabilidades (altas: ${vulnerabilidades.high}, críticas: ${vulnerabilidades.critical})` : '  No se pudo leer el resultado de npm audit.');
 
 // 2. Pruebas del backend (todas, agrupadas por atributo)
-paso('Pruebas del backend (Vitest, base temporal de pruebas)');
+paso('Pruebas del backend (Jest, base temporal de pruebas)');
 const salida = path.join(os.tmpdir(), `sia-calidad-${process.pid}.json`);
-const vitest = run(`npx vitest run --reporter=json --outputFile="${salida}"`, backend);
+const jest = run(`npm test -- --json --outputFile="${salida}"`, backend);
 let resultados = [];
 try {
   resultados = JSON.parse(readFileSync(salida, 'utf8')).testResults.map((r) => {
@@ -56,8 +56,8 @@ try {
   });
   rmSync(salida, { force: true });
 } catch {
-  console.log('  No se pudo leer el resultado de Vitest.');
-  console.log((vitest.stdout || '').slice(-2000), (vitest.stderr || '').slice(-2000));
+  console.log('  No se pudo leer el resultado de Jest.');
+  console.log((jest.stdout || '').slice(-2000), (jest.stderr || '').slice(-2000));
 }
 const totalAprobadas = resultados.reduce((n, r) => n + r.aprobadas, 0);
 const totalFallidas = resultados.reduce((n, r) => n + r.fallidas.length, 0);

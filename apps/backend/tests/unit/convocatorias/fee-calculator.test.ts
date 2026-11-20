@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { quoteFee, type FeeCriteria, type FeeInfo, type FeeRule, type SurchargeRule } from '../../../src/modules/convocatorias/domain/fee-calculator.js';
 import { Money } from '../../../src/modules/convocatorias/domain/money.js';
 import type { Stage } from '../../../src/modules/convocatorias/domain/stage.js';
@@ -49,7 +49,9 @@ describe('Simulador de tasas - Tabla N.° 3 completa (SC-002 de 001)', () => {
     ['6.3 Recargo CEPRE extemporáneo (S/ 50, aclaración 25/10/2026)', { modality: 'CEPRE' }, '385.00', CEPRE_EXTEMP],
   ];
 
-  it.each(cases)('%s → S/ %s', (_name, criteria, expected, at) => {
+  // Cada fila lleva su fecha (Jest toma un parámetro de más como `done`, por eso no puede quedar vacío).
+  const rows = cases.map(([name, criteria, expected, at]): [string, Partial<FeeCriteria>, string, Date] => [name, criteria, expected, at ?? REGULAR]);
+  it.each(rows)('%s → S/ %s', (_name, criteria, expected, at) => {
     expect(quote(criteria, at).total.toString()).toBe(expected);
   });
 
@@ -66,11 +68,11 @@ describe('Simulador de tasas - Tabla N.° 3 completa (SC-002 de 001)', () => {
   });
 
   it('exonerados sin submodalidad → 422 SUBMODALITY_REQUIRED', () => {
-    expect(() => quote({ modality: 'EXO' })).toThrowError(expect.objectContaining({ code: 'SUBMODALITY_REQUIRED', status: 422 }));
+    expect(() => quote({ modality: 'EXO' })).toThrow(expect.objectContaining({ code: 'SUBMODALITY_REQUIRED', status: 422 }));
   });
 
   it('ordinario sin tipo de colegio → 422 SCHOOL_TYPE_REQUIRED', () => {
-    expect(() => quote({})).toThrowError(expect.objectContaining({ code: 'SCHOOL_TYPE_REQUIRED' }));
+    expect(() => quote({})).toThrow(expect.objectContaining({ code: 'SCHOOL_TYPE_REQUIRED' }));
   });
 });
 

@@ -1,6 +1,6 @@
 import { Writable } from 'node:stream';
 import pino from 'pino';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { REDACTED_PATHS } from '../../src/shared/telemetry/logger.js';
 import { checkDigit, movableClock, testApp } from '../helpers.js';
 

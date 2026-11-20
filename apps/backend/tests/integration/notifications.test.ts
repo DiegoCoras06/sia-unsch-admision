@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { NotificationService } from '../../src/modules/notificaciones/application/notification-service.js';
 import { AuditLog } from '../../src/shared/audit/audit.js';
 import { RateLimiter } from '../../src/shared/rate-limit/rate-limiter.js';

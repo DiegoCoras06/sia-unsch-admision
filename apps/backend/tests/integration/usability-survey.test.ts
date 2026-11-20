@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { testApp } from '../helpers.js';
 
 /** AC07 (EQ-07): encuesta SUS al terminar la inscripción. */

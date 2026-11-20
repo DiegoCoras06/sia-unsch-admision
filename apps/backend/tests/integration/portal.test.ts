@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { testApp } from '../helpers.js';
 
 const t = testApp('2026-10-25T10:00:00-05:00');

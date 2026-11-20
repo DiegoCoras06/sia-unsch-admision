@@ -1,6 +1,6 @@
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import pino from 'pino';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, jest } from '@jest/globals';
 import { loadEnv } from '../../../src/shared/config/env.js';
 import { SesEmailSender } from '../../../src/shared/email/ses-email-sender.js';
 
@@ -15,7 +15,7 @@ const baseEnv = {
 
 describe('Correo con Amazon SES', () => {
   it('envía HTML y texto en UTF-8 desde el remitente verificado, con el conjunto de configuración y la etiqueta del aviso', async () => {
-    const send = vi.spyOn(client, 'send').mockImplementation(async () => ({ MessageId: 'msg-1' }));
+    const send = jest.spyOn(client, 'send').mockImplementation(async () => ({ MessageId: 'msg-1' }));
     await sender.send({ to: 'postulante@correo.pe', subject: 'Código de verificación', html: '<p>Hola</p>', text: 'Hola', event: 'CUENTA.CODIGO' });
     const cmd = send.mock.calls[0]![0] as SendEmailCommand;
     expect(cmd).toBeInstanceOf(SendEmailCommand);
@@ -30,7 +30,7 @@ describe('Correo con Amazon SES', () => {
   });
 
   it('propaga el rechazo de SES para que la notificación quede FALLIDA', async () => {
-    const send = vi.spyOn(client, 'send').mockRejectedValue(Object.assign(new Error('Email address is not verified'), { name: 'MessageRejected' }));
+    const send = jest.spyOn(client, 'send').mockRejectedValue(Object.assign(new Error('Email address is not verified'), { name: 'MessageRejected' }) as never);
     await expect(sender.send({ to: 'otro@correo.pe', subject: 'x', html: 'x', text: 'x' })).rejects.toThrow('not verified');
     send.mockRestore();
   });

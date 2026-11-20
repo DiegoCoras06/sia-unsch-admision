@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { computeScore, rank, uncovered, type Contender, type Scoring } from '../../../src/modules/resultados/domain/ranking.js';
 import { parseScoreFile } from '../../../src/modules/resultados/domain/score-file.js';
 

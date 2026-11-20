@@ -31,14 +31,7 @@ export default async function setup() {
   }
   process.env['TEST_DATABASE_URL'] = TEST_DATABASE_URL;
 
-  return async () => {
-    // Con persistent:false, stop() también borra la carpeta; OneDrive puede bloquearla un momento.
-    await pg.stop().catch(() => {});
-    try {
-      // OneDrive/antivirus pueden retener la carpeta unos segundos; si no se borra, se borra al iniciar la próxima corrida.
-      rmSync(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
-    } catch {
-      /* se limpia en el próximo setup */
-    }
-  };
+  // global-teardown.ts lo detiene al terminar.
+  (globalThis as { __siaTestPg?: EmbeddedPostgres }).__siaTestPg = pg;
+
 }

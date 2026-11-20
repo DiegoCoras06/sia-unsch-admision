@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { testApp } from '../helpers.js';
 
 const t = testApp('2026-10-25T10:00:00-05:00');

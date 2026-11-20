@@ -1,5 +1,5 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, jest } from '@jest/globals';
 import { S3FileStorage } from '../../../src/shared/storage/s3-file-storage.js';
 
 // Credenciales inventadas: las firmas se calculan localmente, sin conectarse a AWS.
@@ -8,7 +8,7 @@ const storage = new S3FileStorage({ bucket: 'sia-unsch-documentos', region: 'us-
 
 describe('Almacenamiento en S3 (ADR-010)', () => {
   it('guarda con cifrado del servidor y lee el contenido', async () => {
-    const send = vi.spyOn(client, 'send').mockImplementation(async (cmd: unknown) => {
+    const send = jest.spyOn(client, 'send').mockImplementation(async (cmd: unknown) => {
       if (cmd instanceof GetObjectCommand) return { Body: { transformToByteArray: async () => new Uint8Array([37, 80, 68, 70]) } };
       return {};
     });

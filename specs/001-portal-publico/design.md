@@ -22,7 +22,7 @@ Técnicamente: módulos **M01 Convocatorias** y **M14 Configuración** con endpo
 | Lenguaje / versión | TypeScript 5.x (`strict`), Node.js 22 LTS |
 | Dependencias principales | Angular (estable vigente), Express, Zod, Prisma, pino, OpenTelemetry SDK |
 | Almacenamiento | PostgreSQL 16 (esquemas `convocatorias`, `configuracion`, `seguridad`, `shared`) |
-| Pruebas | Vitest, PostgreSQL embebido, Supertest, Playwright, axe |
+| Pruebas | Jest, PostgreSQL embebido, Supertest, Playwright, axe |
 | Plataforma | Navegador (móvil primero) + API REST `/api/v1` |
 | Metas | Inicio < 2.5 s en 4G (SC-005); GET públicos p95 < 300 ms sin caché |
 | Restricciones | Montos exactos de la Tabla 3 (SC-002); hora de Lima; sin CloudWatch |
@@ -293,8 +293,8 @@ Finalizada  si ahora >  fin
 **Decisión:**
 | Nivel | Herramienta | Qué cubre en 001 |
 |---|---|---|
-| Unitarias | Vitest | Estado de etapas, siguiente hito, calculadora de tasas (tabla con todas las combinaciones de la Tabla 3), filtros de vacantes |
-| Integración | Vitest + PostgreSQL embebido efímero (ADR-014) | Semilla 2027-I: 40 opciones, 926 ORD, 1803 en total; consultas de búsqueda |
+| Unitarias | Jest | Estado de etapas, siguiente hito, calculadora de tasas (tabla con todas las combinaciones de la Tabla 3), filtros de vacantes |
+| Integración | Jest + PostgreSQL embebido efímero (ADR-014) | Semilla 2027-I: 40 opciones, 926 ORD, 1803 en total; consultas de búsqueda |
 | Contrato | Supertest + validación contra `contracts/openapi.yaml` | Cada endpoint responde según el contrato |
 | E2E | Playwright (viewport 360 × 800 y escritorio) | Escenarios de aceptación de las Historias 1–3 |
 | Accesibilidad | `@axe-core/playwright` | 0 violaciones graves en las páginas públicas |

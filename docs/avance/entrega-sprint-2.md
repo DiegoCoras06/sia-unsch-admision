@@ -68,18 +68,22 @@ sus resultados antes y después.
 
 ## 7. Pruebas automáticas, cobertura e integración continua
 
-- **281 pruebas** del backend (unitarias y de integración) con **Vitest**, que usa la misma API de Jest (`describe`,
-  `it`, `expect`, `vi.fn` en lugar de `jest.fn`). Se eligió porque funciona con TypeScript y módulos ES sin
-  configuración adicional; las pruebas se leen igual que en Jest.
+- **281 pruebas** del backend (unitarias y de integración) con **Jest 30**, como pide el enunciado. TypeScript se
+  traduce con SWC (`@swc/jest`) y Jest carga el código como módulos ES; la configuración está en
+  `apps/backend/jest.config.mjs`. Hasta el 20/11/2026 se usó Vitest; las 281 pruebas se migraron sin cambiar lo que
+  comprueban.
 - **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición
-  (20/11/2026, 281 pruebas en 35 archivos, todas aprobadas):
+  con Jest (20/11/2026, 281 pruebas en 35 archivos, todas aprobadas):
 
   | Métrica | Cubierto | Porcentaje |
   |---|---|---|
-  | Líneas | 4430 de 5018 | 88,28 % |
-  | Sentencias | 5085 de 6087 | 83,53 % |
-  | Funciones | 1437 de 1725 | 83,30 % |
-  | Ramas | 2422 de 3564 | 67,95 % |
+  | Líneas | 11 763 de 12 677 | 92,79 % |
+  | Sentencias | 11 763 de 12 677 | 92,79 % |
+  | Funciones | 722 de 806 | 89,57 % |
+  | Ramas | 2769 de 3583 | 77,28 % |
+
+  Jest cuenta las líneas de otra forma que Vitest (con Vitest la misma suite daba 88,28 % de líneas y 67,95 % de
+  ramas); el código cubierto es el mismo.
 - **Carpeta de pruebas:** `apps/backend/tests/`, separada en `unit/` e `integration/`, con su guía en
   `apps/backend/tests/README.md`.
 - **Integración continua:** `.github/workflows/ci.yml` corre en cada envío a GitHub la revisión de tipos, las pruebas

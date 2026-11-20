@@ -1,5 +1,5 @@
 // ADR-022: códigos de respaldo del segundo factor del personal.
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
 import { totpService } from '../../src/modules/seguridad/index.js';
 import { normalizeRecoveryCode, newRecoveryCodes } from '../../src/modules/usuarios/domain/recovery-codes.js';
 import { Argon2Hasher } from '../../src/modules/usuarios/infrastructure/argon2-hasher.js';

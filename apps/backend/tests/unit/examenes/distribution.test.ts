@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@jest/globals';
 import { distribute, type Candidate, type Seatable } from '../../../src/modules/examenes/domain/distribution.js';
 import { codeFromScan, occupiedWindow, overlaps } from '../../../src/modules/examenes/domain/exam-rules.js';
 
