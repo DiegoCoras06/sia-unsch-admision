@@ -24,7 +24,10 @@ export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog,
   const warmUp = async () => {
     if (cacheTtlMs <= 0) return;
     const { code } = await queries.getCurrentCall();
-    await Promise.all([queries.searchOptions(code, {}), queries.listSubmodalities(code), queries.listQuotaCategories(code), queries.listFees(code)]);
+    await Promise.all([
+      queries.searchOptions(code, {}), queries.listSubmodalities(code), queries.listQuotaCategories(code), queries.listFees(code),
+      queries.listAreas(code), queries.listRequirements(code), queries.getSyllabus(code), queries.listDocuments(code),
+    ]);
   };
   const invalidate = () => {
     repo.invalidate();

@@ -3,7 +3,7 @@
 // Corre npm audit, todas las pruebas del backend (base temporal de pruebas, nunca RDS) y la revisión de tipos,
 // agrupa los resultados por atributo y escribe el reporte en calidad/resultados/AAAA-MM-DD.md.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -82,6 +82,21 @@ const porAtributo = ATRIBUTOS.map((a) => {
   return { ...a, archivos, aprobadas, fallidas, extras, ok };
 });
 
+// AC01 y AC03: último resultado de la carga progresiva con k6 (calidad/k6/carga-2000.js), si existe.
+const dirResultados = path.join(path.dirname(fileURLToPath(import.meta.url)), 'resultados');
+const ultimoK6 = readdirSync(dirResultados).filter((f) => /^\d{4}-\d{2}-\d{2}-k6-carga-\d+\.txt$/.test(f)).sort().pop();
+const k6 = (() => {
+  if (!ultimoK6) return null;
+  const texto = readFileSync(path.join(dirResultados, ultimoK6), 'utf8');
+  const filas = [...texto.matchAll(/^\| (\d+) \| [\d.]+ \| [\d.]+ \| ([\d.]+) \| ([\d.]+) % \| (Cumple|No cumple) \|$/gm)];
+  const ultima = filas.at(-1);
+  if (!ultima) return null;
+  return { archivo: ultimoK6, usuarios: ultima[1], p95: ultima[2], errores: ultima[3], cumple: filas.every((f) => f[4] === 'Cumple') };
+})();
+const filaK6 = (id, nombre, escenario) => k6
+  ? `| ${id} ${nombre} | ${escenario} | ${k6.cumple ? '✅ Cumple en local' : '❌ No cumple en local'} | k6 hasta ${k6.usuarios} usuarios: p95 ${k6.p95} ms, ${k6.errores} % de errores (\`resultados/${k6.archivo}\`); falta repetirla desplegado |`
+  : null;
+
 const fila = (a) => `| ${a.id} ${a.nombre} | ${a.escenario} | ${a.ok ? '✅ Pruebas aprobadas' : '❌ Revisar'} | ${a.aprobadas} aprobadas${a.fallidas.length ? `, ${a.fallidas.length} fallidas` : ''} en ${a.archivos.length} ${a.archivos.length === 1 ? 'archivo' : 'archivos'}${a.extras.length ? `; ${a.extras.join('; ')}` : ''} |`;
 
 const reporte = `# Verificación de atributos de calidad: ${hoy}
@@ -94,9 +109,9 @@ Las pruebas usan una base PostgreSQL temporal que se crea y se borra en cada eje
 
 | Atributo | Escenario | Resultado | Detalle |
 |---|---|---|---|
-| AC01 Rendimiento | EQ-01 | ⏳ Manual | Prueba de carga con k6 (\`calidad/k6/rendimiento.js\`) |
+${filaK6('AC01', 'Rendimiento', 'EQ-01') ?? '| AC01 Rendimiento | EQ-01 | ⏳ Manual | Prueba de carga con k6 (`calidad/k6/rendimiento.js`) |'}
 | AC02 Disponibilidad | EQ-02 | ⏳ Después del despliegue | UptimeRobot sobre \`/api/v1/health\` |
-| AC03 Escalabilidad | EQ-03 | ⏳ Después del despliegue | k6 escalonado (\`calidad/k6/escalabilidad.js\`) |
+${filaK6('AC03', 'Escalabilidad', 'EQ-03') ?? '| AC03 Escalabilidad | EQ-03 | ⏳ Después del despliegue | k6 escalonado (`calidad/k6/escalabilidad.js`) |'}
 ${porAtributo.map(fila).join('\n')}
 
 **Totales:** ${resultados.length} archivos de prueba, ${totalAprobadas} pruebas aprobadas, ${totalFallidas} fallidas.

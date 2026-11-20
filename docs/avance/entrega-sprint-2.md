@@ -84,7 +84,9 @@ sus resultados antes y después.
   `apps/backend/tests/README.md`.
 - **Integración continua:** `.github/workflows/ci.yml` corre en cada envío a GitHub la revisión de tipos, las pruebas
   con cobertura (resumen en la página de la ejecución y reporte descargable `cobertura-backend`) y la compilación del
-  portal.
+  portal. Estado: aprobado desde el commit `0c307e2` (20/11/2026). La compilación del portal fallaba desde el
+  rediseño porque los estilos de la portada y del panel superaban el límite de 16 kB por componente; se subió a 32 kB.
+  Resultados en https://github.com/DiegoCoras06/sia-unsch-admision/actions
 
 ## 8. Pruebas de calidad
 
@@ -92,7 +94,8 @@ sus resultados antes y después.
 
 `calidad/postman/SIA-UNSCH.postman_collection.json`: 62 peticiones en 14 carpetas (una por módulo, salud y errores
 esperados). Cada petición comprueba el código de respuesta, que responda en 3 s o menos y la forma de los datos. Las
-carpetas de solo lectura pasaron completas con Newman (22 peticiones, 70 comprobaciones). Guía en
+carpetas de solo lectura pasaron completas con Newman el 20/11/2026: 22 peticiones, 70 de 70 comprobaciones, promedio de
+197 ms (`calidad/resultados/2026-11-20-postman-solo-lectura.txt`). Guía en
 `calidad/postman/README.md`.
 
 ### k6 (¿cuántos usuarios soporta?)
@@ -122,4 +125,6 @@ caché de contenidos solo cumplía hasta 50 usuarios; la comparación y su anál
 ### Verificación automática por atributo
 
 `node calidad/verificar.mjs` corre npm audit, todas las pruebas agrupadas por atributo de calidad (AC04 a AC10) y la
-revisión de tipos, y escribe el reporte del día en `calidad/resultados/`.
+revisión de tipos, y escribe el reporte del día en `calidad/resultados/`. Último reporte:
+`calidad/resultados/2026-11-20.md` (281 pruebas aprobadas, 0 vulnerabilidades, tipos sin errores; AC01 y AC03 con el
+resultado de k6).

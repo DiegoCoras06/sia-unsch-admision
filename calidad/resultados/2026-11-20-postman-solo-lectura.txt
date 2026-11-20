@@ -1,0 +1,169 @@
+Postman (Newman 6): carpetas de solo lectura, 2026-11-20
+Comando: npx newman run calidad/postman/SIA-UNSCH.postman_collection.json -e calidad/postman/local.postman_environment.json --folder "00. Salud de la API" --folder "01. Convocatorias (portal)" --folder "02. Configuración (contenidos)" --folder "13. Errores esperados"
+API en la computadora del equipo, base en RDS.
+
+(node:13160) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+SIA-UNSCH Admisión 2027-I
+
+Folder 00. Salud de la API
+Sub-folder Salud de la API y la base de datos
+  GET http://127.0.0.1:3000/api/v1/health [200 OK, 981B, 222ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+  Pass  La base de datos responde
+
+Folder 01. Convocatorias (portal)
+Sub-folder Convocatoria vigente y etapas
+  GET http://127.0.0.1:3000/api/v1/calls/current [200 OK, 4.23kB, 6ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+  Pass  Trae etapas
+
+Sub-folder Áreas
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/areas [200 OK, 1.14kB, 11ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Programas y vacantes
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/options [200 OK, 8.86kB, 11ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+  Pass  Trae los 40 programas
+
+Sub-folder Programas de Letras
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/options?area=II [200 OK, 3.78kB, 9ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Detalle de un programa
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/options/P34 [200 OK, 2.6kB, 12ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Modalidades (submodalidades)
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/submodalities [200 OK, 2.61kB, 7ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Categorías de cupo
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/quota-categories [200 OK, 2.75kB, 7ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Tasas
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/fees [200 OK, 4.78kB, 8ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Simulador de tasa (Ordinario, colegio estatal)
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/fee-quote?modality=ORD&schoolType=ESTATAL [200 OK, 1.17kB, 2.8s]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+  Pass  Calcula un total
+
+Sub-folder Requisitos del Ordinario
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/requirements?submodality=ORD [200 OK, 2.38kB, 1013ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Temario
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/syllabus [200 OK, 4.56kB, 7ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Documentos oficiales
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/documents [200 OK, 2.19kB, 7ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Inscritos por modalidad
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/stats [200 OK, 1.09kB, 6ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Folder 02. Configuración (contenidos)
+Sub-folder Contenido de la portada
+  GET http://127.0.0.1:3000/api/v1/content/home [200 OK, 4.19kB, 7ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Comunicados
+  GET http://127.0.0.1:3000/api/v1/announcements [200 OK, 1.6kB, 3ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Sub-folder Imágenes del sitio
+  GET http://127.0.0.1:3000/api/v1/site-assets [200 OK, 992B, 6ms]
+  Pass  Responde 200
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae la propiedad data
+
+Folder 13. Errores esperados
+Sub-folder DNI con formato inválido
+  POST http://127.0.0.1:3000/api/v1/identity/lookup [400 Bad Request, 1.19kB, 70ms]
+  Pass  Responde 400
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae un error con código y mensaje
+
+Sub-folder Panel sin iniciar sesión
+  GET http://127.0.0.1:3000/api/v1/admin/dashboard [401 Unauthorized, 1.02kB, 14ms]
+  Pass  Responde 401
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae un error con código y mensaje
+
+Sub-folder Programa que no existe
+  GET http://127.0.0.1:3000/api/v1/calls/2027-I/options/P99 [404 Not Found, 1.09kB, 8ms]
+  Pass  Responde 404
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae un error con código y mensaje
+
+Sub-folder Ruta que no existe
+  GET http://127.0.0.1:3000/api/v1/no-existe [404 Not Found, 1.03kB, 11ms]
+  Pass  Responde 404
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae un error con código y mensaje
+
+Sub-folder Encuesta incompleta
+  POST http://127.0.0.1:3000/api/v1/inscriptions/survey [400 Bad Request, 1.11kB, 15ms]
+  Pass  Responde 400
+  Pass  Responde en 3 s o menos (EQ-01)
+  Pass  Trae un error con código y mensaje
+
+-------------------------------------------------------------------
+|                         |          executed |            failed |
+--------------------------+-------------------+--------------------
+|              iterations |                 1 |                 0 |
+--------------------------+-------------------+--------------------
+|                requests |                22 |                 0 |
+--------------------------+-------------------+--------------------
+|            test-scripts |                22 |                 0 |
+--------------------------+-------------------+--------------------
+|      prerequest-scripts |                 0 |                 0 |
+--------------------------+-------------------+--------------------
+|              assertions |                70 |                 0 |
+-------------------------------------------------------------------
+| total run duration: 6.5s                                        |
+-------------------------------------------------------------------
+| total data received: 33.99kB (approx)                           |
+-------------------------------------------------------------------
+| average response time: 197ms [min: 3ms, max: 2.8s, s.d.: 622ms] |
+-------------------------------------------------------------------
