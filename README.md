@@ -68,7 +68,7 @@ Con la API encendida, abre **http://127.0.0.1:3000/api/docs** (Swagger UI) o des
 `specs/<nn>/contracts/openapi.yaml` con su contrato detallado y las demás generadas del código. Para las rutas del panel,
 ingresa con `/admin/auth/login` y `/admin/auth/mfa`, y pega el `accessToken` en **Authorize**.
 
-Si agregas o cambias rutas, regenera el archivo (`apps/backend/openapi/openapi.json`); una prueba falla si falta alguna:
+Si agregas o cambias rutas, regenera el archivo (`apps/backend/swagger/openapi.json`); una prueba falla si falta alguna:
 
 ```bash
 npm run openapi -w @sia/backend

@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import express, { Router, type Express } from 'express';
 import helmet from 'helmet';
-import swaggerUi from 'swagger-ui-express';
 import type { Logger } from 'pino';
 import { AuditLog } from './shared/audit/audit.js';
 import { shiftedClock, systemClock, type Clock } from './shared/clock/clock.js';
@@ -37,7 +36,7 @@ import { createExpedientesModule } from './modules/expedientes/index.js';
 import { createExamenesModule } from './modules/examenes/index.js';
 import { createNotificacionesModule, RecordingEmailSender } from './modules/notificaciones/index.js';
 import { createResultadosModule } from './modules/resultados/index.js';
-import { readFileSync, existsSync } from 'node:fs';
+import { montarSwagger } from '../swagger/swagger.js';
 
 const backendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -289,16 +288,8 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     integrations: () => integrationStatus(env),
   }));
 
-  // Documentación OpenAPI (Sprint 2): se genera con `npm run openapi` y se ve en /api/docs.
-  const openapiFile = path.join(backendDir, 'openapi', 'openapi.json');
-  if (existsSync(openapiFile)) {
-    const openapi = JSON.parse(readFileSync(openapiFile, 'utf8')) as Record<string, unknown>;
-    app.get('/api/openapi.json', (_req, res) => { res.json(openapi); });
-    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapi, {
-      customSiteTitle: 'SIA-UNSCH: documentación de la API',
-      swaggerOptions: { docExpansion: 'none', filter: true, persistAuthorization: true, tagsSorter: 'alpha' },
-    }));
-  }
+  // Documentación OpenAPI con Swagger UI en /api/docs (carpeta swagger/).
+  montarSwagger(app);
 
   app.use('/api/v1', api);
   app.use(notFoundHandler);

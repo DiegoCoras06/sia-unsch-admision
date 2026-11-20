@@ -3,11 +3,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// La documentación OpenAPI (openapi/openapi.json) debe cubrir todas las rutas reales de la API.
+// La documentación OpenAPI (swagger/openapi.json) debe cubrir todas las rutas reales de la API.
 // Si falla, corre `npm run openapi -w @sia/backend` y vuelve a confirmar el archivo.
 const backend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const src = path.join(backend, 'src');
-const doc = JSON.parse(readFileSync(path.join(backend, 'openapi', 'openapi.json'), 'utf8')) as {
+const doc = JSON.parse(readFileSync(path.join(backend, 'swagger', 'openapi.json'), 'utf8')) as {
   openapi: string;
   tags: { name: string }[];
   paths: Record<string, Record<string, { tags?: string[]; responses?: object }>>;

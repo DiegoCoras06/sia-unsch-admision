@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "openapi": "tsx scripts/openapi.ts",
+    "openapi": "tsx swagger/generar.ts",
     "rds:check": "tsx scripts/rds.ts check",
     "rds:setup": "tsx scripts/rds.ts setup",
     "dev:rds": "tsx watch --env-file=.env.rds src/server.ts",

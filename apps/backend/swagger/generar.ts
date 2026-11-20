@@ -1,11 +1,12 @@
 /**
  * Genera la documentación OpenAPI 3.1 de toda la API (Sprint 2): `npm run openapi -w @sia/backend`.
+ * Vive en apps/backend/swagger/ junto con el contrato (openapi.json) y la configuración de Swagger UI (swagger.ts).
  *
  * 1. Toma tal cual los contratos detallados de specs/<nn>/contracts/openapi.yaml (fuente de verdad del SDD).
  * 2. Lee las rutas reales del código (presentation/*.ts de cada módulo y admin-routes.ts) y documenta las que
  *    no están en esos contratos: módulo, descripción (del comentario que acompaña a la ruta), parámetros,
  *    autenticación, permiso del panel y respuestas comunes.
- * 3. Escribe openapi/openapi.json, que la API sirve en /api/docs (Swagger UI) y /api/openapi.json.
+ * 3. Escribe swagger/openapi.json, que la API sirve en /api/docs (Swagger UI) y /api/openapi.json.
  */
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -178,7 +179,7 @@ const doc = {
   components,
 };
 
-const out = path.join(backend, 'openapi', 'openapi.json');
+const out = path.join(backend, 'swagger', 'openapi.json');
 mkdirSync(path.dirname(out), { recursive: true });
 writeFileSync(out, `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
 const ops = Object.values(ordenadas).reduce((n, o) => n + Object.keys(o).length, 0);
