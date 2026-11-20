@@ -141,6 +141,7 @@ flowchart TB
 |---|---|---|
 | Repositorio | En todos los módulos (`inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`) | 🟡 En Convocatorias, Inscripciones (`InscriptionService`) y Pagos (`PaymentService`), los tres módulos centrales del proceso. Los demás servicios usan Prisma directamente; una prueba de arquitectura impide que los servicios migrados vuelvan a hacerlo. |
 | Decorador | Caché del repositorio de Convocatorias | ✅ Implementado en memoria, sin Redis: `CachedConvocatoriasRepository` envuelve a `PrismaConvocatoriasRepository` con la misma interfaz, guarda lo leído 5 minutos, comparte consultas simultáneas y se borra con cada cambio desde el panel (`modules/convocatorias/infrastructure/cached-convocatorias-repository.ts`). |
+| Proxy | No previsto | ✅ Implementado (20/11/2026): `invalidatesOnUse` envuelve los servicios del panel de Convocatorias y Configuración; al terminar cada operación borra la caché correspondiente y la vuelve a cargar. La caché de comunicados, portada e imágenes (`shared/cache/memory-cache.ts`) entrega el valor anterior mientras lo renueva en segundo plano. |
 | Observador | Previsto para una iteración posterior | ✅ Implementado con la bandeja de eventos. |
 | Fábrica | Previsto para las modalidades de inscripción | ✅ Implementado para elegir adaptadores; para las modalidades se resolvió con reglas por modalidad (`initialStatus`). |
 | Estrategia | Evaluación de expedientes por modalidad | Pendiente: los criterios se configuran como datos por submodalidad (ADR-011 del repositorio). |

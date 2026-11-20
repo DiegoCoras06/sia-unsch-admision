@@ -1,15 +1,15 @@
-Carga progresiva hasta 2000 usuarios: 2026-11-20T05:13:01.430Z
+Carga progresiva hasta 2000 usuarios: 2026-11-20T05:35:24.930Z
 Dirección: http://127.0.0.1:3000/api/v1. Cada etapa: 30 s de subida y 60 s de meseta. Solo lectura.
-Peticiones: 255085, máximo de usuarios: 2000
+Peticiones: 1597216, máximo de usuarios: 2000
 
 | Usuarios | Promedio (ms) | Mediana (ms) | p95 (ms) | Errores | Meta: p95 3 s y menos de 1 % de errores |
 |---|---|---|---|---|---|
-| 50 | 878 | 3 | 2981 | 0.00 % | Cumple |
-| 100 | 1611 | 3 | 6497 | 0.00 % | No cumple |
-| 250 | 4478 | 3 | 18114 | 0.00 % | No cumple |
-| 500 | 7508 | 3 | 30000 | 25.00 % | No cumple |
-| 1000 | 30000 | 30000 | 30001 | 100.00 % | No cumple |
-| 1500 | 1139 | 0 | 0 | 99.61 % | No cumple |
-| 2000 | 6049 | 0 | 30023 | 91.22 % | No cumple |
+| 50 | 2 | 1 | 5 | 0.00 % | Cumple |
+| 100 | 3 | 2 | 8 | 0.00 % | Cumple |
+| 250 | 21 | 2 | 25 | 0.00 % | Cumple |
+| 500 | 7 | 1 | 32 | 0.00 % | Cumple |
+| 1000 | 16 | 4 | 70 | 0.00 % | Cumple |
+| 1500 | 241 | 196 | 482 | 0.00 % | Cumple |
+| 2000 | 503 | 494 | 589 | 0.00 % | Cumple |
 
-Toda la prueba: promedio 4219 ms, p95 30000 ms, máximo 31354 ms, errores 89.31 %
+Toda la prueba: promedio 201 ms, p95 572 ms, máximo 3882 ms, errores 0.00 %

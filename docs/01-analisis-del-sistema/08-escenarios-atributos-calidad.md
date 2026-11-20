@@ -15,7 +15,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | El sistema procesa las solicitudes correctamente, utilizando PostgreSQL con índices y consultas acotadas; en producción, AWS Lambda. Redis queda previsto solo si la prueba de carga lo exige (ver 07, ADR-005). |
 | **Medida** | **Propuesta para validar:** el 95 % de las solicitudes habituales responde en 3 segundos o menos, con menos del 1 % de errores técnicos durante una prueba con 200 usuarios simultáneos, excluyendo demoras externas. |
 | **Verificación** | Ejecutar pruebas de carga y registrar tiempos de respuesta, errores y usuarios concurrentes. |
-| **Estado** | 🟡 Primera medición (15/11/2026, `calidad/k6/rendimiento.js`, solo lectura, API en la computadora del equipo y base en RDS Ohio): con 1 usuario, promedio 3.5 s y p95 9.9 s; con 10 usuarios, promedio 8.3 s y p95 21.9 s, sin errores. **No cumple** la meta de 3 s en esta configuración: cada consulta viaja de Perú a Ohio (unos 150 ms) y varias pantallas hacen consultas seguidas con un grupo de 5 conexiones. La prueba válida con 200 usuarios se hará en el entorno desplegado (Paso 11), con la API en la misma región que RDS; si aún no cumple, se aplicará caché del catálogo y se juntarán consultas. Resultados en `calidad/resultados/`. **Con caché del catálogo (15/11/2026, misma prueba): con 1 usuario, promedio 40 ms y p95 135 ms; con 10 usuarios, 3144 peticiones en 1 minuto, promedio 26 ms y p95 135 ms, sin errores. Cumple la meta de 3 s.** Queda pendiente la prueba con 200 usuarios en el entorno desplegado. |
+| **Estado** | 🟡 Primera medición (15/11/2026, `calidad/k6/rendimiento.js`, solo lectura, API en la computadora del equipo y base en RDS Ohio): con 1 usuario, promedio 3.5 s y p95 9.9 s; con 10 usuarios, promedio 8.3 s y p95 21.9 s, sin errores. **No cumple** la meta de 3 s en esta configuración: cada consulta viaja de Perú a Ohio (unos 150 ms) y varias pantallas hacen consultas seguidas con un grupo de 5 conexiones. La prueba válida con 200 usuarios se hará en el entorno desplegado (Paso 11), con la API en la misma región que RDS; si aún no cumple, se aplicará caché del catálogo y se juntarán consultas. Resultados en `calidad/resultados/`. **Con caché del catálogo (15/11/2026, misma prueba): con 1 usuario, promedio 40 ms y p95 135 ms; con 10 usuarios, 3144 peticiones en 1 minuto, promedio 26 ms y p95 135 ms, sin errores. Cumple la meta de 3 s.** **Carga progresiva hasta 2000 usuarios (20/11/2026, `calidad/k6/carga-2000.js`, con caché de catálogo y de contenidos): p95 de 589 ms con 2000 usuarios y 0 % de errores en 1 597 216 peticiones; cumple en todas las etapas (`calidad/resultados/2026-11-20-k6-carga-2000.txt`).** Falta repetirla con la API desplegada en AWS. |
 
 ## EQ-02. Disponibilidad: continuidad del proceso de admisión
 
@@ -41,7 +41,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | AWS Lambda escala las ejecuciones del backend y el sistema controla las conexiones a la base de datos. |
 | **Medida** | **Propuesta para validar:** soportar 200 usuarios simultáneos, manteniendo el 95 % de las respuestas habituales en 3 segundos o menos y menos del 1 % de errores técnicos. |
 | **Verificación** | Incrementar progresivamente la carga y analizar tiempos de respuesta, errores y consumo de recursos. |
-| **Estado** | ⏳ Depende del despliegue en AWS (Paso 11) y de la prueba de carga de EQ-01. |
+| **Estado** | 🟡 Medido en local (20/11/2026): de 50 a 2000 usuarios, el p95 pasó de 5 ms a 589 ms sin errores, muy por encima de la meta de 200 usuarios (`calidad/k6/carga-2000.js`). Falta confirmarlo con AWS Lambda (Paso 11). |
 
 ## EQ-04. Seguridad: protección de información
 
@@ -156,6 +156,6 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | ✅ Cumplido con evidencia | EQ-04, EQ-06, EQ-08, EQ-10 |
 | 🟡 Parcial | EQ-05, EQ-07, EQ-09 |
 | ⏳ Depende del despliegue en AWS (Paso 11) | EQ-02, EQ-03 |
-| 🟡 Cumple con 10 usuarios (caché del catálogo); falta la prueba con 200 en el entorno desplegado | EQ-01 |
+| 🟡 Cumple con 2000 usuarios en local (cachés de catálogo y contenidos); falta repetirlo desplegado | EQ-01 |
 
 **Nota:** Las medidas propuestas deben aprobarse y validarse mediante pruebas. Los escenarios están alineados con los 10 atributos de calidad AC01–AC10 y las decisiones arquitectónicas del sistema. Privacidad, recuperabilidad, accesibilidad, observabilidad y modularidad se integraron en seguridad, confiabilidad, usabilidad, disponibilidad y mantenibilidad (ver 04).

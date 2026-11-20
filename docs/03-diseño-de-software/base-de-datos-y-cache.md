@@ -77,7 +77,8 @@ sin llegar a la API.
 
 ### 4.3 Qué no se guarda en caché
 
-Todo lo personal o que cambia con cada operación: inscripciones, pagos, sesiones, expedientes, resultados del
+Los contenidos públicos de Configuración (comunicados, portada e imágenes) también se guardan en memoria desde el
+20/11/2026 (sección 5.2). No se guarda todo lo personal o que cambia con cada operación: inscripciones, pagos, sesiones, expedientes, resultados del
 postulante, auditoría y el panel. Siempre se lee de la base, porque un dato viejo ahí sería un error.
 
 ### 4.4 Por qué no Redis (ADR-005)
@@ -125,9 +126,44 @@ RDS. Cada usuario pide 4 rutas por segundo: convocatoria, opciones y submodalida
    proceso; Windows se quedó sin puertos de red («Solo se permite un uso de cada dirección de socket») y la API quedó
    ocupada vaciando la cola hasta reiniciarla. Esto no mide a RDS ni al sistema desplegado.
 
-**Conclusión:** el sistema cumple la meta hasta 50 usuarios en esta configuración, y el primer límite está en las
-lecturas que todavía van a la base. La siguiente mejora es guardar en caché los contenidos públicos (comunicados,
-portada e imágenes) igual que el catálogo, y repetir la prueba desde una máquina distinta o con la API desplegada.
+**Conclusión de la primera corrida:** cumplía la meta solo hasta 50 usuarios, y el primer límite estaba en las lecturas
+que todavía iban a la base.
+
+### 5.2 Con la caché de comunicados, portada e imágenes (20/11/2026)
+
+Se aplicó la misma caché a los contenidos públicos de Configuración (`shared/cache/memory-cache.ts`): duran 1 minuto,
+al vencer se sigue entregando el valor anterior mientras **una sola** consulta lo renueva, y cada cambio del panel la
+borra y la recarga. Solo se guardan los datos leídos: qué accesos de la portada están abiertos se sigue calculando con la
+hora actual. Para la prueba, la API registró solo advertencias (`LOG_LEVEL=warn`), porque escribir una línea por
+petición también la frena con miles de peticiones por segundo.
+
+Misma prueba, mismas rutas, misma computadora y misma base. **1 597 216 peticiones** en 12 minutos (6 veces más que la
+primera corrida), sin un solo error. Resultado en `calidad/resultados/2026-11-20-k6-carga-2000.txt`.
+
+| Usuarios | Promedio | Mediana | p95 | Errores | Meta |
+|---|---|---|---|---|---|
+| 50 | 2 ms | 1 ms | 5 ms | 0 % | Cumple |
+| 100 | 3 ms | 2 ms | 8 ms | 0 % | Cumple |
+| 250 | 21 ms | 2 ms | 25 ms | 0 % | Cumple |
+| 500 | 7 ms | 1 ms | 32 ms | 0 % | Cumple |
+| 1000 | 16 ms | 4 ms | 70 ms | 0 % | Cumple |
+| 1500 | 241 ms | 196 ms | 482 ms | 0 % | Cumple |
+| 2000 | 503 ms | 494 ms | 589 ms | 0 % | Cumple |
+
+**Toda la prueba:** promedio 201 ms, p95 572 ms, máximo 3,9 s, 0 % de errores.
+
+| Usuarios | p95 sin caché de contenidos | p95 con caché de contenidos | Errores antes | Errores ahora |
+|---|---|---|---|---|
+| 100 | 6497 ms | 8 ms | 0 % | 0 % |
+| 500 | 30 000 ms | 32 ms | 25 % | 0 % |
+| 1000 | 30 001 ms | 70 ms | 100 % | 0 % |
+| 2000 | 30 023 ms | 589 ms | 91,2 % | 0 % |
+
+**Lectura:** con 2000 usuarios simultáneos el p95 es 0,59 s, cinco veces por debajo de la meta de 3 s de EQ-01. El
+tiempo empieza a subir desde 1500 usuarios porque la misma computadora genera la carga y atiende la API en un solo
+proceso; la base casi no participa, porque las lecturas públicas salen de la memoria. Esta prueba mide las **lecturas**
+del portal; las escrituras (inscripción y pago) siguen limitadas por la base y se miden aparte, sobre una copia
+restaurada de RDS, para no llenar la base real con datos de prueba.
 
 ## 6. Recomendaciones para el pico real de inscripción (10 000 a 15 000 personas)
 
