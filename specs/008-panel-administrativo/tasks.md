@@ -41,6 +41,11 @@
 - [x] T541 Denuncia reservada desde el portal y envío segmentado de comunicados (M11)
 - [x] T542 Evidencia en denuncias: hasta 3 archivos PDF/JPG/PNG (5 MB) verificados por contenido, almacenamiento privado y descarga auditada en «Casos» — `support-cases.ts`
 
+## Optimización del panel (24/11/2026)
+
+- [x] T555 [H2] Reducir la latencia repetida del inicio administrativo con deduplicación de GET en curso, caché breve por filtros/permisos, invalidación tras escrituras, agregaciones paralelas y carga diferida del estado de recuperación — `core/admin-session.ts`, `features/admin/pages/dashboard.ts`, `reportes/application/report-queries.ts`
+  - Evidencia: 3 pruebas frontend y 8 pruebas backend correctas; `typecheck` backend y build Angular correctos; medición de solo lectura contra RDS: primera agregación 1961 ms y repetición vigente 0 ms dentro del proceso. La primera consulta remota continúa condicionada por la distancia a RDS.
+
 ## Tareas agregadas (27 y 28/10/2026)
 
 - [x] T543 Catálogo del concurso editable

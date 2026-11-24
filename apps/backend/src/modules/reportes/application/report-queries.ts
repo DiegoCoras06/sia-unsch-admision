@@ -1,4 +1,5 @@
 import type { Db } from '../../../shared/db/prisma.js';
+import { MemoryCache } from '../../../shared/cache/memory-cache.js';
 
 export interface ReportFilter {
   modality?: string | undefined;
@@ -17,7 +18,12 @@ const MODALITY_LABEL: Record<string, string> = { ORD: 'Ordinario', EXO: 'Exonera
  * reportes nunca escribe). Cada bloque se entrega solo si el rol tiene el permiso (spec 008 H2-4).
  */
 export class ReportQueries {
-  constructor(private readonly db: Db) {}
+  private readonly dashboardCache: MemoryCache;
+
+  constructor(private readonly db: Db, dashboardTtlMs = 0) {
+    // En el panel se comparten lecturas vigentes, pero al vencer siempre se espera un resumen nuevo.
+    this.dashboardCache = new MemoryCache(dashboardTtlMs, Date.now, false);
+  }
 
   private applicationWhere(f: ReportFilter) {
     return {
@@ -28,19 +34,25 @@ export class ReportQueries {
   }
 
   async dashboard(f: ReportFilter, can: { inscripciones: boolean; pagos: boolean; asistente: boolean; casos: boolean }) {
-    const [inscripciones, pagos, asistente, casos, expedientes, examenes, resultados] = await Promise.all([
-      can.inscripciones ? this.inscriptionStats(f) : null,
-      can.pagos ? this.paymentStats(f) : null,
-      can.asistente ? this.assistantStats() : null,
-      can.casos ? this.db.supportCase.count({ where: { status: { not: 'CLOSED' } } }) : null,
-      can.inscripciones ? this.dossierStats() : null,
-      can.inscripciones ? this.examStats() : null,
-      can.inscripciones ? this.resultStats() : null,
-    ]);
-    return {
-      inscripciones, pagos, asistente, casosAbiertos: casos, expedientes, examenes, resultados,
-      proximamente: [],
-    };
+    const key = JSON.stringify({
+      f: { modality: f.modality ?? '', optionCode: f.optionCode ?? '', from: f.from ?? '', to: f.to ?? '' },
+      can,
+    });
+    return this.dashboardCache.get(key, async () => {
+      const [inscripciones, pagos, asistente, casos, expedientes, examenes, resultados] = await Promise.all([
+        can.inscripciones ? this.inscriptionStats(f) : null,
+        can.pagos ? this.paymentStats(f) : null,
+        can.asistente ? this.assistantStats() : null,
+        can.casos ? this.db.supportCase.count({ where: { status: { not: 'CLOSED' } } }) : null,
+        can.inscripciones ? this.dossierStats() : null,
+        can.inscripciones ? this.examStats() : null,
+        can.inscripciones ? this.resultStats() : null,
+      ]);
+      return {
+        inscripciones, pagos, asistente, casosAbiertos: casos, expedientes, examenes, resultados,
+        proximamente: [],
+      };
+    });
   }
 
   /** RF-12.04: expedientes de exonerados por estado. */
@@ -52,8 +64,10 @@ export class ReportQueries {
 
   /** Ocupación de aulas y asistencia por examen (M07/M08). */
   async examStats() {
-    const exams = await this.db.exam.findMany({ orderBy: { entryOpensAt: 'asc' }, include: { rooms: { include: { room: true } } } });
-    const att = await this.db.examAssignment.groupBy({ by: ['examId', 'attendance'], _count: { _all: true } });
+    const [exams, att] = await Promise.all([
+      this.db.exam.findMany({ orderBy: { entryOpensAt: 'asc' }, include: { rooms: { include: { room: true } } } }),
+      this.db.examAssignment.groupBy({ by: ['examId', 'attendance'], _count: { _all: true } }),
+    ]);
     const count = (examId: string, a?: string) => att.filter((x) => x.examId === examId && (!a || x.attendance === a)).reduce((s, x) => s + x._count._all, 0);
     return exams.map((e) => ({
       key: e.code, label: e.name, capacity: e.rooms.reduce((s, r) => s + r.room.capacity, 0),
@@ -78,14 +92,15 @@ export class ReportQueries {
 
   async inscriptionStats(f: ReportFilter) {
     const where = this.applicationWhere(f);
-    const [total, byStatus, byModality, byOption, rows] = await Promise.all([
+    const [total, byStatus, byModality, byOption, rows, optionRows] = await Promise.all([
       this.db.application.count({ where }),
       this.db.application.groupBy({ by: ['status'], where, _count: { _all: true } }),
       this.db.application.groupBy({ by: ['modality'], where, _count: { _all: true } }),
       this.db.application.groupBy({ by: ['optionCode'], where, _count: { _all: true }, orderBy: { _count: { optionCode: 'desc' } }, take: 10 }),
       this.db.application.findMany({ where, select: { createdAt: true } }),
+      this.db.applicationOption.findMany({ select: { internalCode: true, displayName: true } }),
     ]);
-    const names = new Map((await this.db.applicationOption.findMany({ select: { internalCode: true, displayName: true } })).map((o) => [o.internalCode, o.displayName]));
+    const names = new Map(optionRows.map((o) => [o.internalCode, o.displayName]));
     const byDay = new Map<string, number>();
     for (const r of rows) {
       const day = new Date(r.createdAt.getTime() - 5 * 3600_000).toISOString().slice(0, 10);
@@ -106,14 +121,14 @@ export class ReportQueries {
       ? (await this.db.application.findMany({ where: this.applicationWhere(f), select: { applicantCode: true } })).map((a) => a.applicantCode)
       : null;
     const orderWhere = codes ? { applicantCode: { in: codes } } : {};
-    const [paid, pending, attempts] = await Promise.all([
+    const [paid, pending, attempts, byMethod] = await Promise.all([
       this.db.paymentOrder.aggregate({ where: { ...orderWhere, status: 'PAGADA' }, _sum: { amount: true }, _count: { _all: true } }),
       this.db.paymentOrder.count({ where: { ...orderWhere, status: 'PENDIENTE' } }),
       this.db.paymentAttempt.groupBy({ by: ['status'], where: codes ? { order: orderWhere } : {}, _count: { _all: true } }),
+      this.db.paymentAttempt.groupBy({
+        by: ['payMethod'], where: { status: 'AUTORIZADO', ...(codes ? { order: orderWhere } : {}) }, _count: { _all: true }, _sum: { amount: true },
+      }),
     ]);
-    const byMethod = await this.db.paymentAttempt.groupBy({
-      by: ['payMethod'], where: { status: 'AUTORIZADO', ...(codes ? { order: orderWhere } : {}) }, _count: { _all: true }, _sum: { amount: true },
-    });
     const count = (s: string) => attempts.find((a) => a.status === s)?._count._all ?? 0;
     return {
       recaudado: Number(paid._sum.amount ?? 0).toFixed(2),

@@ -1,8 +1,9 @@
 /**
  * AC01 Rendimiento: caché en la memoria del proceso para lecturas públicas que cambian poco.
  *
- * - Cada dato vale `ttlMs` milisegundos. Al vencer, se sigue entregando el valor anterior mientras **una sola**
- *   consulta lo renueva en segundo plano (stale-while-revalidate): ningún visitante espera la renovación.
+ * - Cada dato vale `ttlMs` milisegundos. Por defecto, al vencer se entrega el valor anterior mientras **una sola**
+ *   consulta lo renueva en segundo plano. Las lecturas administrativas pueden desactivar ese comportamiento y
+ *   esperar un valor nuevo.
  * - Si varias peticiones piden lo mismo y aún no hay valor, comparten una sola consulta.
  * - Los errores no se guardan: la siguiente petición vuelve a consultar.
  * - `invalidate()` lo borra todo (se llama después de cada cambio desde el panel).
@@ -11,12 +12,20 @@
 export class MemoryCache {
   private readonly entries = new Map<string, { expires: number; value: Promise<unknown>; refreshing?: boolean }>();
 
-  constructor(private readonly ttlMs: number, private readonly now: () => number = Date.now) {}
+  constructor(
+    private readonly ttlMs: number,
+    private readonly now: () => number = Date.now,
+    private readonly staleWhileRevalidate = true,
+  ) {}
 
   get<T>(key: string, load: () => Promise<T>): Promise<T> {
     if (this.ttlMs <= 0) return load();
     const hit = this.entries.get(key);
     if (!hit) return this.store(key, load());
+    if (hit.expires <= this.now() && !this.staleWhileRevalidate) {
+      this.entries.delete(key);
+      return this.store(key, load());
+    }
     if (hit.expires <= this.now() && !hit.refreshing) {
       hit.refreshing = true;
       const fresh = load();

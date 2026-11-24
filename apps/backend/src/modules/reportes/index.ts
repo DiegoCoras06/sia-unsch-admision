@@ -29,8 +29,8 @@ export const ATTENDANCE_COLUMNS: Column[] = [
   { key: 'ingreso', header: 'Hora de ingreso', width: 14 },
 ];
 
-export function createReportesModule(db: Db) {
-  return { queries: new ReportQueries(db), toExcel, toPdf };
+export function createReportesModule(db: Db, dashboardTtlMs = 0) {
+  return { queries: new ReportQueries(db, dashboardTtlMs), toExcel, toPdf };
 }
 
 export type { ReportFilter, ReportQueries } from './application/report-queries.js';

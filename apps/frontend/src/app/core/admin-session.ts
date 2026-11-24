@@ -25,6 +25,10 @@ export class AdminSession {
   private readonly http = inject(HttpClient);
   private token: string | null = null;
   private restoring: Promise<boolean> | null = null;
+  /** Comparte GET idénticos en curso y conserva solo las lecturas que cada pantalla marca como cacheables. */
+  private readonly inFlightGets = new Map<string, Promise<unknown>>();
+  private readonly readCache = new Map<string, { expiresAt: number; value: unknown }>();
+  private readVersion = 0;
   readonly me = signal<StaffMe | null>(null);
   /** Consultas en curso: el marco del panel muestra la barra de progreso y las filas de carga. */
   private readonly pending = signal(0);
@@ -75,7 +79,34 @@ export class AdminSession {
   }
 
   // ── Llamadas autenticadas ──────────────────────────────────────────
-  async get<T>(path: string, query: Query = {}): Promise<T> {
+  get<T>(path: string, query: Query = {}): Promise<T> {
+    const key = this.readKey(path, query);
+    const current = this.inFlightGets.get(key);
+    if (current) return current as Promise<T>;
+
+    const pending = this.performGet<T>(path, query);
+    this.inFlightGets.set(key, pending);
+    void pending.then(
+      () => { if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key); },
+      () => { if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key); },
+    );
+    return pending;
+  }
+
+  /** Caché breve y explícita para resúmenes sin secretos; nunca se usa para sesiones ni recuperación. */
+  async getCached<T>(path: string, query: Query = {}, ttlMs = 15_000): Promise<T> {
+    const key = this.readKey(path, query);
+    const hit = this.readCache.get(key);
+    if (hit && hit.expiresAt > Date.now()) return hit.value as T;
+    if (hit) this.readCache.delete(key);
+
+    const version = this.readVersion;
+    const value = await this.get<T>(path, query);
+    if (version === this.readVersion) this.readCache.set(key, { expiresAt: Date.now() + ttlMs, value });
+    return value;
+  }
+
+  private async performGet<T>(path: string, query: Query): Promise<T> {
     if (this.pending() === 0) this.loadFailed.set(false);
     this.pending.update((n) => n + 1);
     try {
@@ -87,9 +118,9 @@ export class AdminSession {
       this.pending.update((n) => n - 1);
     }
   }
-  put<T>(path: string, body: unknown) { return this.request<T>('PUT', path, body); }
-  postAuth<T>(path: string, body: unknown = {}) { return this.request<T>('POST', path, body); }
-  delete<T>(path: string) { return this.request<T>('DELETE', path); }
+  put<T>(path: string, body: unknown) { return this.mutate(this.request<T>('PUT', path, body)); }
+  postAuth<T>(path: string, body: unknown = {}) { return this.mutate(this.request<T>('POST', path, body)); }
+  delete<T>(path: string) { return this.mutate(this.request<T>('DELETE', path)); }
 
   async request<T>(method: string, path: string, body?: unknown, query: Query = {}, retried = false): Promise<T> {
     try {
@@ -144,6 +175,7 @@ export class AdminSession {
   private clear() {
     this.token = null;
     this.me.set(null);
+    this.invalidateReads();
   }
 
   private auth() {
@@ -154,6 +186,25 @@ export class AdminSession {
     let p = new HttpParams();
     for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== null && v !== '') p = p.set(k, String(v));
     return p;
+  }
+
+  private readKey(path: string, query: Query): string {
+    const values = Object.entries(query)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .sort(([a], [b]) => a.localeCompare(b));
+    return `${path}?${JSON.stringify(values)}`;
+  }
+
+  private async mutate<T>(operation: Promise<T>): Promise<T> {
+    const value = await operation;
+    this.invalidateReads();
+    return value;
+  }
+
+  private invalidateReads() {
+    this.readVersion += 1;
+    this.readCache.clear();
+    this.inFlightGets.clear();
   }
 
   private async post<T>(path: string, body: unknown): Promise<T> {

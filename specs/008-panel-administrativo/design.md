@@ -30,6 +30,8 @@
 - **M14 configuracion:** `ContentAdmin` (comunicados, bloques, funciones), `SystemStatus` (integraciones, respaldos, retención).
 - **M10 asistente:** `KnowledgeAdmin` y uso.
 - **M12 reportes (nuevo):** `ReportQueries` (solo lectura) y exportadores Excel/PDF.
+- **Rendimiento del inicio (24/11/2026):** `ReportQueries` comparte durante 15 segundos las agregaciones usando una clave con filtros y permisos; al vencer espera un valor nuevo. Angular comparte GET idénticos en curso y conserva solo dashboard/usabilidad durante 15/30 segundos, con invalidación tras escrituras y cierre de sesión. Sesiones, credenciales y códigos de recuperación quedan fuera de la caché.
+- **Carga priorizada:** dashboard y usabilidad se consultan en paralelo; la verificación de recuperación se inicia tras mostrar los indicadores. Las consultas independientes de inscripciones, pagos y exámenes se inician en paralelo. Esto acelera la navegación repetida, sin ocultar la latencia de la primera conexión local hacia RDS.
 - **Presentación:** `/api/v1/admin/*` con un router por área; todos detrás de `authenticate` + `guard`.
 - **Frontend:** `/admin` (Angular, carga diferida): ingreso, inicio con indicadores, convocatoria, inscripciones, pagos, usuarios, auditoría, inhabilitados, contenido, casos, asistente y configuración. Estilo de pantalla de trabajo: tablas, filtros y formularios densos con la identidad UNSCH.
 

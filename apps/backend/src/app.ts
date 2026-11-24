@@ -190,7 +190,8 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     secret: `examen-qr:${env.HMAC_SECRET}`,
     frontendOrigin: env.FRONTEND_ORIGIN,
   });
-  const reportes = createReportesModule(db);
+  // El resumen administrativo tolera unos segundos de desfase y evita repetir sus agregaciones costosas.
+  const reportes = createReportesModule(db, env.APP_ENV === 'test' ? 0 : 15_000);
   const notificaciones = createNotificacionesModule({
     db, clock, audit, limiter, transport,
     sources: {

@@ -227,21 +227,32 @@ export class DashboardPage implements OnInit {
 
   ngOnInit() {
     this.api.options('2027-I').subscribe((r) => this.options.set(r.data.map((o) => ({ code: o.internalCode, name: o.displayName }))));
-    void this.load();
-    this.session.recoveryStatus().then((r) => this.noRecovery.set(r.remaining === 0)).catch(() => undefined);
+    // Los indicadores tienen prioridad. La comprobación de recuperación se difiere para no competir por RDS.
+    void this.load().then(() => this.loadRecoveryStatus());
   }
 
   protected async load() {
     this.error.set(null);
     this.loading.set(true);
     try {
-      this.d.set(await this.session.get<Dashboard>('/admin/dashboard', this.f));
-      if (this.session.can('reportes.inscripciones')) this.u.set(await this.session.get<Usability>('/admin/usability', {}).catch(() => null));
+      const [dashboard, usability] = await Promise.all([
+        this.session.getCached<Dashboard>('/admin/dashboard', this.f, 15_000),
+        this.session.can('reportes.inscripciones')
+          ? this.session.getCached<Usability>('/admin/usability', {}, 30_000).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      this.d.set(dashboard);
+      this.u.set(usability);
     } catch (e) {
       this.error.set(apiErrorMessage(e));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async loadRecoveryStatus() {
+    const r = await this.session.recoveryStatus().catch(() => null);
+    if (r) this.noRecovery.set(r.remaining === 0);
   }
 
   protected async export(kind: ReportKind, type: 'xlsx' | 'pdf') {

@@ -41,6 +41,18 @@ describe('MemoryCache (AC01, caché de contenidos públicos)', () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
+  it('puede exigir un valor nuevo al vencer para lecturas administrativas', async () => {
+    let t = 0;
+    const cache = new MemoryCache(1000, () => t, false);
+    let version = 1;
+    const load = jest.fn(async () => `v${version}`);
+    expect(await cache.get('k', load)).toBe('v1');
+    t = 2000;
+    version = 2;
+    expect(await cache.get('k', load)).toBe('v2');
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it('un cambio desde el panel borra la caché', async () => {
     const cache = new MemoryCache(60_000);
     const load = jest.fn(async () => 'x');
