@@ -5,7 +5,7 @@ import type { RequestMeta } from '../../../shared/audit/audit.js';
 import type { AuditLog } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
 import { nextCounterValue } from '../../../shared/db/counters.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { businessRule, conflict, forbidden, locked, tooManyRequests, unauthorized, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
@@ -33,7 +33,7 @@ const RESET_TTL_MS = 30 * 60_000;
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
 
 export interface AuthDeps {
-  db: Db;
+  persistence: PersistencePort;
   clock: Clock;
   outbox: Outbox;
   audit: AuditLog;
@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   async currentConsent(): Promise<ConsentDto> {
-    const doc = await this.d.db.consentDocument.findFirstOrThrow({ orderBy: { publishedAt: 'desc' } });
+    const doc = await this.d.persistence.consentDocument.findFirstOrThrow({ orderBy: { publishedAt: 'desc' } });
     return { version: doc.version, textMarkdown: doc.textMd };
   }
 
@@ -94,7 +94,7 @@ export class AuthService {
       throw businessRule('REGISTRATION_NOT_ALLOWED', 'No es posible continuar con el registro. Acércate a la Dirección de Admisión.');
     }
 
-    const existing = await this.d.db.applicant.findUnique({
+    const existing = await this.d.persistence.applicant.findUnique({
       where: { documentType_documentNumber: { documentType: payload.documentType, documentNumber: payload.documentNumber } },
       include: { user: true },
     });
@@ -121,7 +121,7 @@ export class AuthService {
     if (identity === 'expired') throw businessRule('IDENTITY_TOKEN_EXPIRED', 'Pasaron más de 10 minutos. Vuelve a verificar tu documento.');
     if (!identity) throw businessRule('IDENTITY_TOKEN_INVALID', 'La verificación de identidad no es válida. Vuelve a empezar.');
 
-    const consent = await this.d.db.consentDocument.findFirstOrThrow({ orderBy: { publishedAt: 'desc' } });
+    const consent = await this.d.persistence.consentDocument.findFirstOrThrow({ orderBy: { publishedAt: 'desc' } });
     if (input.consentVersion !== consent.version) {
       throw businessRule('CONSENT_OUTDATED', 'El texto de tratamiento de datos cambió. Léelo y acéptalo de nuevo.');
     }
@@ -143,7 +143,7 @@ export class AuthService {
     const now = this.d.clock.now();
 
     try {
-      const result = await this.d.db.$transaction(async (tx) => {
+      const result = await this.d.persistence.$transaction(async (tx) => {
         const user = await tx.user.create({ data: { email, passwordHash, type: 'APPLICANT', status: 'PENDING_EMAIL' } });
         const applicantCode = applicantCodeFromSequence(await nextCounterValue(tx, 'applicant_code', 2_700_001));
         const applicant = await tx.applicant.create({
@@ -180,7 +180,7 @@ export class AuthService {
   // ── H2: verificar correo ───────────────────────────────────────────────
   async verifyEmail(emailInput: string, code: string, meta: RequestMeta): Promise<void> {
     const email = normalizeEmail(emailInput);
-    const record = await this.d.db.emailVerificationCode.findFirst({
+    const record = await this.d.persistence.emailVerificationCode.findFirst({
       where: { email, consumedAt: null },
       orderBy: { sentAt: 'desc' },
       include: { user: true },
@@ -195,14 +195,14 @@ export class AuthService {
     const given = Buffer.from(this.hmac(`${record.userId}:${code}`), 'hex');
     if (!timingSafeEqual(expected, given)) {
       const attempts = record.attempts + 1;
-      await this.d.db.emailVerificationCode.update({ where: { id: record.id }, data: { attempts } });
+      await this.d.persistence.emailVerificationCode.update({ where: { id: record.id }, data: { attempts } });
       if (attempts >= 5) throw businessRule('CODE_LOCKED', 'Superaste los intentos. Pide un código nuevo.');
       throw businessRule('CODE_INVALID', `Código incorrecto. Te quedan ${5 - attempts} intentos.`, { attemptsLeft: 5 - attempts });
     }
 
     const isEmailChange = record.user.email !== email;
     try {
-      await this.d.db.$transaction(async (tx) => {
+      await this.d.persistence.$transaction(async (tx) => {
         await tx.emailVerificationCode.update({ where: { id: record.id }, data: { consumedAt: now } });
         await tx.user.update({
           where: { id: record.userId },
@@ -224,18 +224,18 @@ export class AuthService {
 
   async resendCode(emailInput: string): Promise<void> {
     const email = normalizeEmail(emailInput);
-    const user = await this.d.db.user.findUnique({ where: { email } });
+    const user = await this.d.persistence.user.findUnique({ where: { email } });
     if (!user || user.status !== 'PENDING_EMAIL') return; // misma respuesta exista o no (anti-enumeración)
     const now = this.d.clock.now();
-    const last = await this.d.db.emailVerificationCode.findFirst({ where: { userId: user.id }, orderBy: { sentAt: 'desc' } });
+    const last = await this.d.persistence.emailVerificationCode.findFirst({ where: { userId: user.id }, orderBy: { sentAt: 'desc' } });
     if (last && now.getTime() - last.sentAt.getTime() < 60_000) {
       const wait = Math.ceil((60_000 - (now.getTime() - last.sentAt.getTime())) / 1000);
       throw tooManyRequests(wait, `Espera ${wait} segundos para pedir otro código.`);
     }
     await this.d.limiter.consume(`resend:${user.id}`, 5, 3600);
-    const applicant = await this.d.db.applicant.findUnique({ where: { userId: user.id } });
+    const applicant = await this.d.persistence.applicant.findUnique({ where: { userId: user.id } });
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({ where: { userId: user.id, consumedAt: null }, data: { consumedAt: now } });
       await tx.emailVerificationCode.create({
         data: { userId: user.id, email, codeHmac: this.hmac(`${user.id}:${code}`), expiresAt: new Date(now.getTime() + CODE_TTL_MS), sentAt: now },
@@ -267,7 +267,7 @@ export class AuthService {
 
     if (!(await this.d.hasher.verify(user.passwordHash, password))) {
       const next = registerLoginFailure(user, now);
-      await this.d.db.$transaction(async (tx) => {
+      await this.d.persistence.$transaction(async (tx) => {
         await tx.user.update({
           where: { id: user.id },
           data: { failedLoginCount: next.failedLoginCount, failedLoginSince: next.failedLoginSince, ...(next.lockUntil ? { lockedUntil: next.lockUntil } : {}) },
@@ -282,12 +282,12 @@ export class AuthService {
       throw unauthorized('INVALID_CREDENTIALS', 'Documento, correo o contraseña incorrectos.');
     }
 
-    await this.d.db.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, failedLoginSince: null, lockedUntil: null, lastLoginAt: now } });
+    await this.d.persistence.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, failedLoginSince: null, lockedUntil: null, lastLoginAt: now } });
     await this.d.audit.record({ actorUserId: user.id, action: 'auth.login', resourceType: 'user', resourceId: user.id, ...meta });
     const session = await this.d.sessions.create(user.id, user.type, { userAgent: meta.userAgent, ipHash: meta.ipHash });
     if (session.newDevice) {
       const event = { email: user.email, device: session.newDevice, at: now.toISOString(), staff: false };
-      await this.d.db.$transaction((tx) => this.d.outbox.publish(tx, 'InicioSesionNuevo', event));
+      await this.d.persistence.$transaction((tx) => this.d.outbox.publish(tx, 'InicioSesionNuevo', event));
       this.d.outbox.kick();
     }
     return { token: await this.accessTokenFor(user.id, session.sessionId), refreshToken: session.refreshToken };
@@ -305,7 +305,7 @@ export class AuthService {
 
   async refresh(refreshToken: string, meta: RequestMeta): Promise<{ token: TokenDto; refreshToken: string }> {
     const rotated = await this.d.sessions.rotate(refreshToken, null, { userAgent: meta.userAgent, ipHash: meta.ipHash });
-    const user = await this.d.db.user.findUnique({ where: { id: rotated.userId } });
+    const user = await this.d.persistence.user.findUnique({ where: { id: rotated.userId } });
     if (!user || user.status === 'SUSPENDED' || user.status === 'DISABLED') {
       await this.d.sessions.revokeAll(rotated.userId, 'SUSPENDED');
       throw unauthorized('SESSION_REVOKED', 'Tu cuenta no está habilitada.');
@@ -331,7 +331,7 @@ export class AuthService {
     if (!user || user.status === 'DISABLED') return; // respuesta idéntica (escenario 4.1)
     const token = randomBytes(32).toString('base64url');
     const now = this.d.clock.now();
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.passwordResetToken.create({ data: { userId: user.id, tokenHash: sha256(token), expiresAt: new Date(now.getTime() + RESET_TTL_MS) } });
       await this.d.audit.record({ actorUserId: user.id, action: 'auth.password_reset_requested', resourceType: 'user', resourceId: user.id, ...meta }, tx);
       await this.d.outbox.publish(tx, 'RecuperacionSolicitada', {
@@ -343,7 +343,7 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string, meta: RequestMeta): Promise<void> {
     const now = this.d.clock.now();
-    const record = await this.d.db.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) }, include: { user: { include: { applicant: true } } } });
+    const record = await this.d.persistence.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) }, include: { user: { include: { applicant: true } } } });
     if (!record || record.usedAt || record.expiresAt.getTime() < now.getTime()) {
       throw businessRule('TOKEN_INVALID_OR_EXPIRED', 'El enlace no es válido o ya venció. Solicita uno nuevo.');
     }
@@ -351,7 +351,7 @@ export class AuthService {
     if (issues.length) throw businessRule('WEAK_PASSWORD', issues[0]!, { details: issues.map((issue) => ({ field: 'newPassword', issue })) });
 
     const passwordHash = await this.d.hasher.hash(newPassword);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       const claimed = await tx.passwordResetToken.updateMany({ where: { id: record.id, usedAt: null }, data: { usedAt: now } });
       if (claimed.count === 0) throw businessRule('TOKEN_INVALID_OR_EXPIRED', 'El enlace ya fue usado.');
       await tx.user.update({
@@ -367,7 +367,7 @@ export class AuthService {
 
   // ── auxiliares ────────────────────────────────────────────────────────
   private async accessTokenFor(userId: string, sessionId: string): Promise<TokenDto> {
-    const user = await this.d.db.user.findUniqueOrThrow({ where: { id: userId } });
+    const user = await this.d.persistence.user.findUniqueOrThrow({ where: { id: userId } });
     const roles = await this.d.access.rolesOf(userId);
     const accessToken = await this.d.tokens.signAccess({ sub: userId, sid: sessionId, typ: user.type, roles });
     return { accessToken, expiresIn: ACCESS_TOKEN_TTL_SECONDS, user: { id: userId, type: user.type, status: user.status, roles } };
@@ -375,8 +375,8 @@ export class AuthService {
 
   private async findUserByIdentifier(identifier: string) {
     const value = identifier.trim();
-    if (value.includes('@')) return this.d.db.user.findUnique({ where: { email: normalizeEmail(value) } });
-    const applicant = await this.d.db.applicant.findFirst({
+    if (value.includes('@')) return this.d.persistence.user.findUnique({ where: { email: normalizeEmail(value) } });
+    const applicant = await this.d.persistence.applicant.findFirst({
       where: { documentNumber: value.toUpperCase() },
       include: { user: true },
     });

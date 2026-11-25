@@ -32,7 +32,9 @@ class PrismaInscriptionUnitOfWork implements InscriptionUnitOfWork {
 
   async create(data: NewApplication) {
     try {
-      return await this.tx.application.create({ data });
+      return await this.tx.application.create({
+        data: { ...data, feeTotal: data.feeTotal.toString(), feeLines: data.feeLines as never },
+      });
     } catch (e) {
       if (isUniqueViolation(e)) throw new DuplicateApplicationError();
       throw e;

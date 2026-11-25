@@ -30,7 +30,7 @@ export function createExpedientesModule(deps: {
   seesAll: (roles: string[]) => boolean;
   frontendOrigin: string;
 }) {
-  const service = new DossierService(deps);
+  const service = new DossierService({ ...deps, persistence: deps.db });
   const link = `<a href="${deps.frontendOrigin}/mi-inscripcion">${deps.frontendOrigin}/mi-inscripcion</a>`;
 
   // RF-06.05: el postulante recibe un correo en cada cambio de su expediente.

@@ -29,7 +29,7 @@ export function createExamenesModule(deps: {
   secret: string;
   frontendOrigin: string;
 }) {
-  const exams = new ExamService(deps);
+  const exams = new ExamService({ ...deps, persistence: deps.db });
   const attendance = new AttendanceService(exams, deps.commission);
   const link = `<a href="${deps.frontendOrigin}/buscar-aula">${deps.frontendOrigin}/buscar-aula</a>`;
 

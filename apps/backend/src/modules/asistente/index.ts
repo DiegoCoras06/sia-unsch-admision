@@ -31,19 +31,19 @@ export function createAsistenteModule(deps: {
   dailyBudgetUsd: number;
   retentionDays: () => Promise<number>;
 }) {
-  const tools = new AssistantTools({ db: deps.db, convocatorias: deps.convocatorias, inscriptions: deps.inscriptions, payments: deps.payments, ...(deps.progress ? { progress: deps.progress } : {}) });
+  const tools = new AssistantTools({ persistence: deps.db, convocatorias: deps.convocatorias, inscriptions: deps.inscriptions, payments: deps.payments, ...(deps.progress ? { progress: deps.progress } : {}) });
   const ai = deps.aiOverride !== undefined
     ? deps.aiOverride
     : deps.openRouter.apiKey
       ? new OpenRouterProvider({ apiKey: deps.openRouter.apiKey, model: deps.openRouter.model, referer: deps.openRouter.referer })
       : null;
   const service = new AssistantService({
-    db: deps.db, clock: deps.clock, limiter: deps.limiter, audit: deps.audit, logger: deps.logger,
+    persistence: deps.db, clock: deps.clock, limiter: deps.limiter, audit: deps.audit, logger: deps.logger,
     tools, ai, basic: new RuleBasedProvider(),
     passSecret: deps.passSecret, dailyBudgetUsd: deps.dailyBudgetUsd, retentionDays: deps.retentionDays,
     inscriptions: deps.inscriptions, support: deps.support,
   });
-  const knowledge = new KnowledgeAdmin({ db: deps.db, audit: deps.audit });
+  const knowledge = new KnowledgeAdmin({ persistence: deps.db, audit: deps.audit });
   return { service, knowledge, router: asistenteRoutes(service) };
 }
 

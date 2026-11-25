@@ -1,6 +1,6 @@
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db, Tx } from '../../../shared/db/prisma.js';
+import type { PersistencePort, TransactionPort } from '../../../shared/application/persistence-port.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { AppError, businessRule, conflict, forbidden, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
@@ -15,8 +15,8 @@ export interface DossierContext {
   program: string; fullName: string; firstNames: string; email: string; documentType: string; documentNumber: string;
 }
 
-type Doc = Awaited<ReturnType<Db['dossierDocument']['findMany']>>[number];
-type Row = NonNullable<Awaited<ReturnType<Db['dossier']['findUnique']>>>;
+type Doc = Awaited<ReturnType<PersistencePort['dossierDocument']['findMany']>>[number];
+type Row = NonNullable<Awaited<ReturnType<PersistencePort['dossier']['findUnique']>>>;
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 /** Última versión de cada requisito. */
@@ -33,7 +33,7 @@ function latest(docs: Doc[]): Map<string, Doc> {
 export class DossierService {
   constructor(
     private readonly d: {
-      db: Db;
+      persistence: PersistencePort;
       clock: Clock;
       outbox: Outbox;
       audit: AuditLog;
@@ -84,7 +84,7 @@ export class DossierService {
     const fileKey = `expedientes/${ctx.callCode}/${applicantCode}/${req.code}-v${version}.${check.file.extension}`;
     await this.d.storage.put(fileKey, buf, check.file.mimeType);
     if (input.uploadKey) await this.d.storage.delete(input.uploadKey).catch(() => undefined);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       if (prev) await tx.dossierDocument.update({ where: { id: prev.id }, data: { status: prev.status === 'OBSERVADO' ? 'REEMPLAZADO' : 'REEMPLAZADO' } });
       await tx.dossierDocument.create({
         data: {
@@ -94,7 +94,7 @@ export class DossierService {
       });
       await this.event(tx, row.id, null, prev ? 'documento.reemplazado' : 'documento.cargado', `${req.name} (versión ${version})`);
     });
-    return this.present(ctx, await this.d.db.dossier.findUniqueOrThrow({ where: { id: row.id } }), false);
+    return this.present(ctx, await this.d.persistence.dossier.findUniqueOrThrow({ where: { id: row.id } }), false);
   }
 
   /** Expediente, requisito y versión anterior de un documento que el postulante puede cargar ahora. */
@@ -104,7 +104,7 @@ export class DossierService {
     const requirements = await this.requirements(ctx);
     const req = requirements.find((r) => r.code === requirementCode);
     if (!req) throw validationError('Ese documento no corresponde a tu submodalidad.', [{ field: 'requirementCode', issue: 'no aplica' }]);
-    const docs = await this.d.db.dossierDocument.findMany({ where: { dossierId: row.id } });
+    const docs = await this.d.persistence.dossierDocument.findMany({ where: { dossierId: row.id } });
     const prev = latest(docs).get(req.code);
     if (row.status === 'OBSERVADO') {
       if (prev?.status !== 'OBSERVADO') throw businessRule('NOT_OBSERVED', 'Solo puedes reemplazar los documentos observados.');
@@ -121,7 +121,7 @@ export class DossierService {
     if (row.status !== 'BORRADOR' && row.status !== 'OBSERVADO') throw businessRule('DOSSIER_LOCKED', 'Tu expediente ya fue enviado.');
     const fields = COMPLEMENTARY_FIELDS[row.submodality] ?? [];
     const clean = Object.fromEntries(fields.map((f) => [f.key, String(values[f.key] ?? '').trim().slice(0, 200)]));
-    const updated = await this.d.db.dossier.update({ where: { id: row.id }, data: { complementary: clean } });
+    const updated = await this.d.persistence.dossier.update({ where: { id: row.id }, data: { complementary: clean } });
     return this.present(ctx, updated, false);
   }
 
@@ -133,7 +133,7 @@ export class DossierService {
       throw businessRule('DOSSIER_LOCKED', `Tu expediente está «${DOSSIER_STATUS_LABEL[row.status as DossierStatus]}».`);
     }
     const requirements = await this.requirements(ctx);
-    const last = latest(await this.d.db.dossierDocument.findMany({ where: { dossierId: row.id } }));
+    const last = latest(await this.d.persistence.dossierDocument.findMany({ where: { dossierId: row.id } }));
     const missing = requirements.filter((r) => r.mandatory && !last.get(r.code));
     if (missing.length) {
       throw new AppError(422, 'DOSSIER_INCOMPLETE', `Falta cargar: ${missing.map((m) => m.name).join('; ')}.`, { missing: missing.map((m) => m.code) });
@@ -147,13 +147,13 @@ export class DossierService {
 
     const resubmitted = row.status === 'OBSERVADO';
     const evaluatorId = row.evaluatorId ?? (await this.pickEvaluator());
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossier.update({ where: { id: row.id }, data: { status: 'EN_REVISION', submittedAt: this.d.clock.now(), evaluatorId, observeDeadline: null } });
       await this.event(tx, row.id, null, resubmitted ? 'expediente.reenviado' : 'expediente.enviado', evaluatorId ? 'Asignado a un evaluador' : 'En espera de asignación');
       await this.d.outbox.publish(tx, 'ExpedienteEnviado', { applicantCode, email: ctx.email, firstNames: ctx.firstNames, resubmitted }, meta.requestId);
     });
     this.d.outbox.kick();
-    return this.present(ctx, await this.d.db.dossier.findUniqueOrThrow({ where: { id: row.id } }), false);
+    return this.present(ctx, await this.d.persistence.dossier.findUniqueOrThrow({ where: { id: row.id } }), false);
   }
 
   async ownFile(documentNumber: string, applicantCode: string, documentId: string) {
@@ -167,7 +167,7 @@ export class DossierService {
 
   /** Bandeja: el evaluador ve solo lo asignado a él; Admisión y el administrador ven todo (H3, escenario 1). */
   async queue(actor: { userId: string; seesAll: boolean }, f: { status?: string | undefined; submodality?: string | undefined; mine?: boolean | undefined }) {
-    const rows = await this.d.db.dossier.findMany({
+    const rows = await this.d.persistence.dossier.findMany({
       where: {
         ...(f.status ? { status: f.status as DossierStatus } : { status: { not: 'BORRADOR' } }),
         ...(f.submodality ? { submodality: f.submodality } : {}),
@@ -188,7 +188,7 @@ export class DossierService {
   }
 
   async detail(id: string, actor: { userId: string; seesAll: boolean }) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
     const ctx = await this.d.inscriptions.dossierContext(row.applicantCode);
@@ -197,7 +197,7 @@ export class DossierService {
 
   /** RF-06.02: descarga del personal, auditada. */
   async staffFile(id: string, documentId: string, actor: { userId: string; seesAll: boolean }, meta: RequestMeta) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
     const f = await this.file(row.id, documentId);
@@ -207,14 +207,14 @@ export class DossierService {
 
   /** H3, escenario 2: Conforme u Observado (con motivo obligatorio) por documento (RF-06.04). */
   async reviewDocument(id: string, documentId: string, verdict: 'CONFORME' | 'OBSERVADO', note: string | undefined, actor: { userId: string; seesAll: boolean }) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
     if (row.status !== 'EN_REVISION') throw businessRule('NOT_IN_REVIEW', 'Solo se revisan expedientes «En revisión».');
     if (verdict === 'OBSERVADO' && !note?.trim()) throw validationError('Escribe el motivo de la observación.', [{ field: 'note', issue: 'obligatorio' }]);
-    const doc = await this.d.db.dossierDocument.findFirst({ where: { id: documentId, dossierId: id } });
+    const doc = await this.d.persistence.dossierDocument.findFirst({ where: { id: documentId, dossierId: id } });
     if (!doc || doc.status === 'REEMPLAZADO') throw notFound('Documento no encontrado o reemplazado.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossierDocument.update({ where: { id: doc.id }, data: { status: verdict, note: verdict === 'OBSERVADO' ? note!.trim() : null, reviewedAt: this.d.clock.now(), reviewerId: actor.userId } });
       await this.event(tx, id, actor.userId, verdict === 'CONFORME' ? 'documento.conforme' : 'documento.observado', `${doc.requirementCode}${note ? `: ${note}` : ''}`);
     });
@@ -223,13 +223,13 @@ export class DossierService {
 
   /** H3, escenarios 3 a 5 (RF-04.07, RF-04.09, RF-06.07): Autorizar · Observar · Rechazar. */
   async decide(id: string, decision: 'AUTORIZAR' | 'OBSERVAR' | 'RECHAZAR', note: string | undefined, actor: { userId: string; seesAll: boolean }, meta: RequestMeta) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
     if (row.status !== 'EN_REVISION') throw businessRule('NOT_IN_REVIEW', 'Solo se dictaminan expedientes «En revisión».');
     const ctx = await this.d.inscriptions.dossierContext(row.applicantCode);
     const requirements = await this.requirements(ctx);
-    const last = latest(await this.d.db.dossierDocument.findMany({ where: { dossierId: id } }));
+    const last = latest(await this.d.persistence.dossierDocument.findMany({ where: { dossierId: id } }));
     const mandatory = requirements.filter((r) => r.mandatory);
     const observed = [...last.values()].filter((d) => d.status === 'OBSERVADO');
     const now = this.d.clock.now();
@@ -248,7 +248,7 @@ export class DossierService {
       status = 'RECHAZADO';
     }
     const reqName = new Map(requirements.map((r) => [r.code, r.name]));
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossier.update({ where: { id }, data: { status, decidedAt: now, decisionNote: note?.trim() || null, observeDeadline: deadline } });
       await this.event(tx, id, actor.userId, `expediente.${status.toLowerCase()}`, note?.trim() || null);
       await this.d.audit.record({ actorUserId: actor.userId, action: 'dossier.decided', resourceType: 'dossier', resourceId: row.applicantCode, before: { status: row.status }, after: { status, note: note ?? null }, ...meta }, tx);
@@ -264,13 +264,13 @@ export class DossierService {
 
   /** Historia 7: verificación presencial de los documentos físicos, con responsable (FR-012). */
   async verifyInPerson(id: string, note: string, actor: { userId: string; seesAll: boolean }, meta: RequestMeta) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
     if (row.status === 'AUTORIZADO' || row.status === 'RECHAZADO') throw businessRule('ALREADY_DECIDED', 'El expediente ya tiene dictamen.');
     const ctx = await this.d.inscriptions.dossierContext(row.applicantCode);
     const now = this.d.clock.now();
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossier.update({ where: { id }, data: { status: 'AUTORIZADO', verifiedInPerson: true, decidedAt: now, decisionNote: note, evaluatorId: row.evaluatorId ?? actor.userId } });
       await this.event(tx, id, actor.userId, 'expediente.verificado_presencialmente', note);
       await this.d.audit.record({ actorUserId: actor.userId, action: 'dossier.verified_in_person', resourceType: 'dossier', resourceId: row.applicantCode, after: { note }, ...meta }, tx);
@@ -284,11 +284,11 @@ export class DossierService {
 
   /** RF-06.03: asignación manual (Admisión). */
   async assign(id: string, evaluatorId: string, actor: { userId: string }, meta: RequestMeta) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     const evaluators = await this.d.evaluators();
     if (!evaluators.some((e) => e.id === evaluatorId)) throw validationError('Esa persona no es evaluadora activa.', [{ field: 'evaluatorId', issue: 'no evaluador' }]);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossier.update({ where: { id }, data: { evaluatorId } });
       await this.event(tx, id, actor.userId, 'expediente.asignado', evaluators.find((e) => e.id === evaluatorId)!.name);
       await this.d.audit.record({ actorUserId: actor.userId, action: 'dossier.assigned', resourceType: 'dossier', resourceId: row.applicantCode, before: { evaluatorId: row.evaluatorId }, after: { evaluatorId }, ...meta }, tx);
@@ -297,10 +297,10 @@ export class DossierService {
 
   /** RF-04.12, FR-015: evaluación o adecuación especial programada para el postulante. */
   async scheduleSpecial(id: string, input: { date: string; place: string; note: string }, actor: { userId: string; seesAll: boolean }) {
-    const row = await this.d.db.dossier.findUnique({ where: { id } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { id } });
     if (!row) throw notFound('Expediente no encontrado.');
     this.ensureAccess(row, actor);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.dossier.update({ where: { id }, data: { specialEvaluation: input } });
       await this.event(tx, id, actor.userId, 'expediente.evaluacion_especial', `${input.date} · ${input.place} · ${input.note}`);
     });
@@ -309,7 +309,7 @@ export class DossierService {
 
   /** M10 (RF-10.06): resumen del expediente para el asistente, del postulante ya identificado. */
   async summaryFor(applicantCode: string) {
-    const row = await this.d.db.dossier.findUnique({ where: { applicantCode }, include: { documents: true } });
+    const row = await this.d.persistence.dossier.findUnique({ where: { applicantCode }, include: { documents: true } });
     if (!row) return null;
     const fresh = await this.expire(row);
     const ctx = await this.d.inscriptions.dossierContext(applicantCode);
@@ -325,7 +325,7 @@ export class DossierService {
 
   /** RF-12.04: expedientes por estado. */
   async stats() {
-    const g = await this.d.db.dossier.groupBy({ by: ['status'], _count: { _all: true } });
+    const g = await this.d.persistence.dossier.groupBy({ by: ['status'], _count: { _all: true } });
     return g.map((x) => ({ key: x.status, label: DOSSIER_STATUS_LABEL[x.status as DossierStatus], count: x._count._all }));
   }
 
@@ -336,7 +336,7 @@ export class DossierService {
     const ctx = await this.d.inscriptions.dossierContext(applicantCode, documentNumber);
     if (ctx.modality !== 'EXO' || !ctx.submodality) throw businessRule('NOT_EXEMPT', 'El expediente es solo para la modalidad Exonerados.');
     if (ctx.status === 'ANULADA') throw businessRule('ANNULLED', 'La inscripción está anulada.');
-    const row = await this.d.db.dossier.upsert({
+    const row = await this.d.persistence.dossier.upsert({
       where: { applicantCode },
       create: { applicantCode, callCode: ctx.callCode, submodality: ctx.submodality },
       update: {},
@@ -348,7 +348,7 @@ export class DossierService {
   private async expire(row: Row): Promise<Row> {
     if (row.status !== 'OBSERVADO' || !row.observeDeadline || row.observeDeadline > this.d.clock.now()) return row;
     const ctx = await this.d.inscriptions.dossierContext(row.applicantCode);
-    const updated = await this.d.db.$transaction(async (tx) => {
+    const updated = await this.d.persistence.$transaction(async (tx) => {
       const u = await tx.dossier.update({ where: { id: row.id }, data: { status: 'NO_SUBSANADO' } });
       await this.event(tx, row.id, null, 'expediente.no_subsanado', 'Venció el plazo de subsanación');
       await this.d.outbox.publish(tx, 'ExpedienteDictaminado', {
@@ -368,7 +368,7 @@ export class DossierService {
   private async pickEvaluator(): Promise<string | null> {
     const evaluators = await this.d.evaluators();
     if (!evaluators.length) return null;
-    const load = await this.d.db.dossier.groupBy({ by: ['evaluatorId'], where: { status: 'EN_REVISION', evaluatorId: { in: evaluators.map((e) => e.id) } }, _count: { _all: true } });
+    const load = await this.d.persistence.dossier.groupBy({ by: ['evaluatorId'], where: { status: 'EN_REVISION', evaluatorId: { in: evaluators.map((e) => e.id) } }, _count: { _all: true } });
     const count = new Map(load.map((l) => [l.evaluatorId, l._count._all]));
     return [...evaluators].sort((a, b) => (count.get(a.id) ?? 0) - (count.get(b.id) ?? 0) || a.name.localeCompare(b.name))[0]!.id;
   }
@@ -386,7 +386,7 @@ export class DossierService {
   }
 
   private async file(dossierId: string, documentId: string) {
-    const doc = await this.d.db.dossierDocument.findFirst({ where: { id: documentId, dossierId } });
+    const doc = await this.d.persistence.dossierDocument.findFirst({ where: { id: documentId, dossierId } });
     if (!doc) throw notFound('Documento no encontrado.');
     // Con S3, un enlace temporal: el archivo no pasa por la Lambda (límite de 6 MB en la respuesta).
     if (this.d.storage.presignDownload) return { url: await this.d.storage.presignDownload(doc.fileKey, doc.fileName, doc.mimeType) };
@@ -395,7 +395,7 @@ export class DossierService {
     return { content, mimeType: doc.mimeType, fileName: doc.fileName };
   }
 
-  private event(tx: Tx, dossierId: string, actorUserId: string | null, action: string, note: string | null) {
+  private event(tx: TransactionPort, dossierId: string, actorUserId: string | null, action: string, note: string | null) {
     return tx.dossierEvent.create({ data: { dossierId, actorUserId, action, note: note?.slice(0, 600) ?? null } });
   }
 
@@ -403,8 +403,8 @@ export class DossierService {
   private async present(ctx: DossierContext, row: Row, staff: boolean) {
     const [requirements, docs, events, subs] = await Promise.all([
       this.requirements(ctx),
-      this.d.db.dossierDocument.findMany({ where: { dossierId: row.id }, orderBy: [{ requirementCode: 'asc' }, { version: 'desc' }] }),
-      this.d.db.dossierEvent.findMany({ where: { dossierId: row.id }, orderBy: { at: 'asc' } }),
+      this.d.persistence.dossierDocument.findMany({ where: { dossierId: row.id }, orderBy: [{ requirementCode: 'asc' }, { version: 'desc' }] }),
+      this.d.persistence.dossierEvent.findMany({ where: { dossierId: row.id }, orderBy: { at: 'asc' } }),
       this.d.convocatorias.listSubmodalities(ctx.callCode),
     ]);
     const last = latest(docs);

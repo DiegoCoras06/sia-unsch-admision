@@ -41,9 +41,9 @@ export function createInscripcionesModule(deps: {
     surveys: new PrismaSurveyRepository(deps.db), inscriptions: repo, limiter: deps.limiter,
     currentCallCode: async () => (await deps.convocatorias.getCurrentCall()).code,
   });
-  const ficha = new FichaService({ ...deps, secret: deps.fichaSecret });
+  const ficha = new FichaService({ ...deps, persistence: deps.db, secret: deps.fichaSecret });
   const orden = new OrdenPagoService({ inscriptions: service, clock: deps.clock, frontendOrigin: deps.frontendOrigin });
-  const cepre = new CepreAwardees(deps);
+  const cepre = new CepreAwardees({ ...deps, persistence: deps.db });
 
   // Correo de confirmación con el código de postulante y la orden de pago (sin datos sensibles en el asunto).
   deps.outbox.subscribe('InscripcionRegistrada', async (e) => {
@@ -115,7 +115,7 @@ export function createInscripcionesModule(deps: {
     await service.applyDossierDecision(e.applicantCode, e.decision);
   });
 
-  const documents = new ApplicationDocuments(deps);
+  const documents = new ApplicationDocuments({ ...deps, persistence: deps.db });
   return { service, ficha, documents, cepre, survey, router: inscripcionesRoutes(service, ficha, documents, orden, cepre, survey) };
 }
 

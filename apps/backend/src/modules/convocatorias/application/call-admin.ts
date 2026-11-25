@@ -1,6 +1,6 @@
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, conflict, notFound, validationError } from '../../../shared/http/errors.js';
 import { stageStatus } from '../domain/stage.js';
 
@@ -8,19 +8,19 @@ const iso = (d: Date) => d.toISOString();
 
 /** Gestión de la convocatoria desde el panel (spec 008, Historia 1; RF-01.01 a RF-01.05, RF-14.02). */
 export class CallAdmin {
-  constructor(private readonly d: { db: Db; clock: Clock; audit: AuditLog }) {}
+  constructor(private readonly d: { persistence: PersistencePort; clock: Clock; audit: AuditLog }) {}
 
   async list() {
-    const calls = await this.d.db.admissionCall.findMany({ orderBy: [{ year: 'desc' }, { period: 'desc' }] });
+    const calls = await this.d.persistence.admissionCall.findMany({ orderBy: [{ year: 'desc' }, { period: 'desc' }] });
     return calls.map((c) => ({ code: c.code, name: c.name, status: c.status, year: c.year, period: c.period, publishedAt: c.publishedAt?.toISOString() ?? null }));
   }
 
   async detail(code: string) {
     const call = await this.call(code);
     const [stages, fees, vacancies] = await Promise.all([
-      this.d.db.scheduleStage.findMany({ where: { callId: call.id }, orderBy: { sortOrder: 'asc' } }),
-      this.d.db.fee.findMany({ where: { callId: call.id }, orderBy: { sortOrder: 'asc' } }),
-      this.d.db.vacancy.findMany({ where: { callId: call.id }, include: { option: { include: { program: { include: { area: true } } } }, quotaCategory: true } }),
+      this.d.persistence.scheduleStage.findMany({ where: { callId: call.id }, orderBy: { sortOrder: 'asc' } }),
+      this.d.persistence.fee.findMany({ where: { callId: call.id }, orderBy: { sortOrder: 'asc' } }),
+      this.d.persistence.vacancy.findMany({ where: { callId: call.id }, include: { option: { include: { program: { include: { area: true } } } }, quotaCategory: true } }),
     ]);
     const now = this.d.clock.now();
     const options = new Map<string, { code: string; name: string; area: string; byCategory: Record<string, number>; total: number }>();
@@ -42,20 +42,20 @@ export class CallAdmin {
   /** RF-01.03: fechas válidas; las superposiciones dentro del mismo alcance se informan como advertencia. */
   async updateStage(code: string, stageCode: string, input: { startsAt: string; endsAt: string }, actor: string, meta: RequestMeta) {
     const call = await this.call(code);
-    const stage = await this.d.db.scheduleStage.findUnique({ where: { callId_code: { callId: call.id, code: stageCode } } });
+    const stage = await this.d.persistence.scheduleStage.findUnique({ where: { callId_code: { callId: call.id, code: stageCode } } });
     if (!stage) throw notFound('Etapa no encontrada.');
     const startsAt = new Date(input.startsAt);
     const endsAt = new Date(input.endsAt);
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) throw validationError('Fechas inválidas.', [{ field: 'startsAt', issue: 'fecha' }]);
     if (endsAt <= startsAt) throw validationError('La etapa debe terminar después de empezar.', [{ field: 'endsAt', issue: 'antes del inicio' }]);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.scheduleStage.update({ where: { id: stage.id }, data: { startsAt, endsAt } });
       await this.d.audit.record({
         actorUserId: actor, action: 'call.stage_updated', resourceType: 'schedule_stage', resourceId: `${code}/${stageCode}`,
         before: { startsAt: iso(stage.startsAt), endsAt: iso(stage.endsAt) }, after: { startsAt: iso(startsAt), endsAt: iso(endsAt) }, ...meta,
       }, tx);
     });
-    const overlaps = await this.d.db.scheduleStage.findMany({
+    const overlaps = await this.d.persistence.scheduleStage.findMany({
       where: { callId: call.id, scope: stage.scope, kind: stage.kind, id: { not: stage.id }, startsAt: { lt: endsAt }, endsAt: { gt: startsAt } },
     });
     return { warnings: overlaps.map((o) => `Se superpone con «${o.name}».`) };
@@ -64,11 +64,11 @@ export class CallAdmin {
   /** RF-14.02: una tasa en 0 exige confirmación explícita (spec 008, casos límite). */
   async updateFee(code: string, feeCode: string, amount: number, confirmZero: boolean, actor: string, meta: RequestMeta) {
     const call = await this.call(code);
-    const fee = await this.d.db.fee.findUnique({ where: { callId_code: { callId: call.id, code: feeCode } } });
+    const fee = await this.d.persistence.fee.findUnique({ where: { callId_code: { callId: call.id, code: feeCode } } });
     if (!fee) throw notFound('Tasa no encontrada.');
     if (amount < 0 || amount > 10_000) throw validationError('Monto fuera de rango.', [{ field: 'amount', issue: 'rango' }]);
     if (amount === 0 && !confirmZero) throw businessRule('ZERO_FEE_CONFIRM', 'Una tasa en S/ 0.00 exige confirmación explícita.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.fee.update({ where: { id: fee.id }, data: { amount } });
       await this.d.audit.record({
         actorUserId: actor, action: 'call.fee_updated', resourceType: 'fee', resourceId: `${code}/${feeCode}`,
@@ -88,12 +88,12 @@ export class CallAdmin {
     }
     if (!Number.isInteger(input.quantity) || input.quantity < 0 || input.quantity > 500) throw validationError('Cantidad inválida.', [{ field: 'quantity', issue: 'rango' }]);
     const [option, category] = await Promise.all([
-      this.d.db.applicationOption.findFirst({ where: { internalCode: input.optionCode } }),
-      this.d.db.quotaCategory.findUnique({ where: { code: input.category } }),
+      this.d.persistence.applicationOption.findFirst({ where: { internalCode: input.optionCode } }),
+      this.d.persistence.quotaCategory.findUnique({ where: { code: input.category } }),
     ]);
     if (!option || !category) throw notFound('Programa o categoría no encontrados.');
-    const current = await this.d.db.vacancy.findUnique({ where: { callId_optionId_quotaCategoryId: { callId: call.id, optionId: option.id, quotaCategoryId: category.id } } });
-    await this.d.db.$transaction(async (tx) => {
+    const current = await this.d.persistence.vacancy.findUnique({ where: { callId_optionId_quotaCategoryId: { callId: call.id, optionId: option.id, quotaCategoryId: category.id } } });
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.vacancy.upsert({
         where: { callId_optionId_quotaCategoryId: { callId: call.id, optionId: option.id, quotaCategoryId: category.id } },
         create: { callId: call.id, optionId: option.id, quotaCategoryId: category.id, quantity: input.quantity },
@@ -112,13 +112,13 @@ export class CallAdmin {
    */
   async copy(fromCode: string, input: { code: string; name: string; year: number; period: string; monthsOffset: number }, actor: string, meta: RequestMeta) {
     const from = await this.call(fromCode);
-    if (await this.d.db.admissionCall.findUnique({ where: { code: input.code } })) throw conflict('CALL_EXISTS', `Ya existe la convocatoria ${input.code}.`);
+    if (await this.d.persistence.admissionCall.findUnique({ where: { code: input.code } })) throw conflict('CALL_EXISTS', `Ya existe la convocatoria ${input.code}.`);
     const shift = (d: Date) => {
       const n = new Date(d);
       n.setUTCMonth(n.getUTCMonth() + input.monthsOffset);
       return n;
     };
-    const created = await this.d.db.$transaction(async (tx) => {
+    const created = await this.d.persistence.$transaction(async (tx) => {
       const call = await tx.admissionCall.create({ data: { code: input.code, name: input.name, year: input.year, period: input.period, status: 'DRAFT' } });
       const stages = await tx.scheduleStage.findMany({ where: { callId: from.id } });
       await tx.scheduleStage.createMany({
@@ -148,7 +148,7 @@ export class CallAdmin {
   }
 
   private async call(code: string) {
-    const call = await this.d.db.admissionCall.findUnique({ where: { code } });
+    const call = await this.d.persistence.admissionCall.findUnique({ where: { code } });
     if (!call) throw notFound(`No existe la convocatoria ${code}.`);
     return call;
   }

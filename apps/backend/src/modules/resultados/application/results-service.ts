@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, forbidden, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
@@ -47,7 +47,7 @@ const RECARGO = 65;
 export class ResultsService {
   constructor(
     private readonly d: {
-      db: Db;
+      persistence: PersistencePort;
       clock: Clock;
       audit: AuditLog;
       limiter: RateLimiter;
@@ -68,8 +68,8 @@ export class ResultsService {
     const exams = await this.p.exams.examList();
     return Promise.all(exams.map(async (e) => {
       const [batches, versions] = await Promise.all([
-        this.d.db.scoreBatch.findMany({ where: { examId: e.id }, orderBy: { createdAt: 'desc' }, take: 5 }),
-        this.d.db.resultVersion.findMany({ where: { examId: e.id }, orderBy: { version: 'desc' } }),
+        this.d.persistence.scoreBatch.findMany({ where: { examId: e.id }, orderBy: { createdAt: 'desc' }, take: 5 }),
+        this.d.persistence.resultVersion.findMany({ where: { examId: e.id }, orderBy: { version: 'desc' } }),
       ]);
       return {
         id: e.id, code: e.code, name: e.name, modalities: e.modalities, date: iso(e.date), examStatus: e.status,
@@ -79,7 +79,7 @@ export class ResultsService {
     }));
   }
 
-  private versionSummary(v: NonNullable<Awaited<ReturnType<Db['resultVersion']['findUnique']>>>) {
+  private versionSummary(v: NonNullable<Awaited<ReturnType<PersistencePort['resultVersion']['findUnique']>>>) {
     return {
       id: v.id, version: v.version, status: v.status, reason: v.reason, publishAt: iso(v.publishAt), visible: v.status === 'PUBLICADA' && !!v.publishAt && v.publishAt <= this.d.clock.now(),
       submittedAt: iso(v.submittedAt), approvedAt: iso(v.approvedAt), createdAt: iso(v.createdAt), notifiedAt: iso(v.notifiedAt),
@@ -91,7 +91,7 @@ export class ResultsService {
     const ctx = await this.p.exams.gradingContext(examId);
     if (!ctx.closedAt) throw businessRule('ATTENDANCE_OPEN', 'Primero cierra la asistencia del examen: los ausentes salen de ahí.');
     const { rows, issues } = parseScoreFile(content, ctx.attendance, ctx.structure);
-    const b = await this.d.db.$transaction(async (tx) => {
+    const b = await this.d.persistence.$transaction(async (tx) => {
       const batch = await tx.scoreBatch.create({
         data: { examId, fileName, status: issues.length ? 'CON_ERRORES' : 'VALIDO', rows: rows as object[], issues: issues as object[], validCount: rows.length, uploadedBy: actorId },
       });
@@ -103,11 +103,11 @@ export class ResultsService {
 
   // ── H2: procesar (RF-09.03 a RF-09.05) ─────────────────────────────
   async process(batchId: string, reason: string | undefined, actorId: string, meta: RequestMeta) {
-    const batch = await this.d.db.scoreBatch.findUnique({ where: { id: batchId } });
+    const batch = await this.d.persistence.scoreBatch.findUnique({ where: { id: batchId } });
     if (!batch) throw notFound('Lote no encontrado.');
     if (batch.status === 'CON_ERRORES') throw businessRule('BATCH_HAS_ERRORS', 'El lote tiene inconsistencias: corrígelas e impórtalo de nuevo.');
     const ctx = await this.p.exams.gradingContext(batch.examId);
-    const published = await this.d.db.resultVersion.findFirst({ where: { examId: ctx.id, status: 'PUBLICADA' } });
+    const published = await this.d.persistence.resultVersion.findFirst({ where: { examId: ctx.id, status: 'PUBLICADA' } });
     // H3-4: una rectificación de resultados publicados exige motivo y queda como nueva versión.
     if (published && (reason?.trim().length ?? 0) < 10) {
       throw validationError('Ya hay resultados publicados: indica el motivo de la rectificación (mínimo 10 caracteres).', [{ field: 'reason', issue: 'obligatorio' }]);
@@ -120,8 +120,8 @@ export class ResultsService {
       return { applicantCode: p.applicantCode, optionCode: p.optionCode, quotaCategory: p.quotaCategory, area: p.area, noVacancyRight: p.noVacancyRight, answers: a ?? null };
     });
     const ranked = rank(contenders, vacancies, ctx.scoring);
-    const last = await this.d.db.resultVersion.findFirst({ where: { examId: ctx.id }, orderBy: { version: 'desc' } });
-    const version = await this.d.db.$transaction(async (tx) => {
+    const last = await this.d.persistence.resultVersion.findFirst({ where: { examId: ctx.id }, orderBy: { version: 'desc' } });
+    const version = await this.d.persistence.$transaction(async (tx) => {
       await tx.resultVersion.updateMany({ where: { examId: ctx.id, status: { in: ['BORRADOR', 'EN_APROBACION'] } }, data: { status: 'DESCARTADA' } });
       const v = await tx.resultVersion.create({
         data: { examId: ctx.id, callCode: ctx.callCode, version: (last?.version ?? 0) + 1, batchId, reason: reason?.trim() || null, createdBy: actorId, vacancies: Object.fromEntries(vacancies) },
@@ -153,7 +153,7 @@ export class ResultsService {
     }
     if (modalities.includes('ORD')) {
       const exo = (await this.p.exams.examList()).find((e) => e.modalities.includes('EXO'));
-      const v = exo ? await this.d.db.resultVersion.findFirst({ where: { examId: exo.id, status: 'PUBLICADA' }, include: { results: true } }) : null;
+      const v = exo ? await this.d.persistence.resultVersion.findFirst({ where: { examId: exo.id, status: 'PUBLICADA' }, include: { results: true } }) : null;
       if (v) {
         const left = uncovered(v.results.map((r) => ({ optionCode: r.optionCode, quotaCategory: r.quotaCategory, condition: r.condition as Condition })), new Map(Object.entries(v.vacancies as Record<string, number>)));
         for (const [k, n] of left) {
@@ -167,9 +167,9 @@ export class ResultsService {
   }
 
   async version(id: string, f: { optionCode?: string | undefined; condition?: string | undefined; q?: string | undefined }) {
-    const v = await this.d.db.resultVersion.findUnique({ where: { id } });
+    const v = await this.d.persistence.resultVersion.findUnique({ where: { id } });
     if (!v) throw notFound('Versión no encontrada.');
-    const [rows, ctx] = await Promise.all([this.d.db.examResult.findMany({ where: { versionId: id } }), this.p.exams.gradingContext(v.examId)]);
+    const [rows, ctx] = await Promise.all([this.d.persistence.examResult.findMany({ where: { versionId: id } }), this.p.exams.gradingContext(v.examId)]);
     const people = new Map((await this.p.inscriptions.eligibleFor(v.callCode, ctx.modalities)).map((p) => [p.applicantCode, p]));
     const vac = v.vacancies as Record<string, number>;
     const byCondition = Object.keys(CONDITION_LABEL).map((k) => ({ key: k, label: CONDITION_LABEL[k as Condition], count: rows.filter((r) => r.condition === k).length }));
@@ -197,10 +197,10 @@ export class ResultsService {
 
   // ── H3: aprobación y publicación (RF-09.06, RF-09.07, RF-09.11) ────
   async submit(id: string, actorId: string, meta: RequestMeta) {
-    const v = await this.d.db.resultVersion.findUnique({ where: { id } });
+    const v = await this.d.persistence.resultVersion.findUnique({ where: { id } });
     if (!v) throw notFound('Versión no encontrada.');
     if (v.status !== 'BORRADOR') throw businessRule('NOT_DRAFT', 'Solo se envía a aprobación un borrador.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.resultVersion.update({ where: { id }, data: { status: 'EN_APROBACION', submittedBy: actorId, submittedAt: this.d.clock.now() } });
       await this.d.audit.record({ actorUserId: actorId, action: 'results.submitted', resourceType: 'result_version', resourceId: id, after: { version: v.version }, ...meta }, tx);
     });
@@ -208,13 +208,13 @@ export class ResultsService {
   }
 
   async approve(id: string, publishAt: Date, actorId: string, meta: RequestMeta) {
-    const v = await this.d.db.resultVersion.findUnique({ where: { id }, include: { results: { where: { condition: 'ADMITIDO' } } } });
+    const v = await this.d.persistence.resultVersion.findUnique({ where: { id }, include: { results: { where: { condition: 'ADMITIDO' } } } });
     if (!v) throw notFound('Versión no encontrada.');
     if (v.status !== 'EN_APROBACION') throw businessRule('NOT_SUBMITTED', 'Solo se aprueba una versión enviada a aprobación.');
     // Segregación de funciones: quien procesa o envía no aprueba (RNF-09).
     if (v.submittedBy === actorId || v.createdBy === actorId) throw forbidden('La aprobación la da otra persona de la Comisión, no quien procesó o envió los resultados.');
     const admitted = new Set(v.results.map((r) => r.applicantCode));
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       const prev = await tx.resultVersion.findMany({ where: { examId: v.examId, status: 'PUBLICADA' } });
       await tx.resultVersion.updateMany({ where: { examId: v.examId, status: 'PUBLICADA' }, data: { status: 'REEMPLAZADA' } });
       await tx.resultVersion.update({ where: { id }, data: { status: 'PUBLICADA', approvedBy: actorId, approvedAt: this.d.clock.now(), publishAt, notifiedAt: prev.length ? this.d.clock.now() : null } });
@@ -234,9 +234,9 @@ export class ResultsService {
   }
 
   async sendBack(id: string, note: string, actorId: string, meta: RequestMeta) {
-    const v = await this.d.db.resultVersion.findUnique({ where: { id } });
+    const v = await this.d.persistence.resultVersion.findUnique({ where: { id } });
     if (!v || v.status !== 'EN_APROBACION') throw businessRule('NOT_SUBMITTED', 'Solo se devuelve una versión enviada a aprobación.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.resultVersion.update({ where: { id }, data: { status: 'BORRADOR', submittedBy: null, submittedAt: null } });
       await this.d.audit.record({ actorUserId: actorId, action: 'results.sent_back', resourceType: 'result_version', resourceId: id, after: { note }, ...meta }, tx);
     });
@@ -247,9 +247,9 @@ export class ResultsService {
   async tick() {
     const now = this.d.clock.now();
     let queued = 0;
-    for (const v of await this.d.db.resultVersion.findMany({ where: { status: 'PUBLICADA', publishAt: { lte: now }, notifiedAt: null } })) {
+    for (const v of await this.d.persistence.resultVersion.findMany({ where: { status: 'PUBLICADA', publishAt: { lte: now }, notifiedAt: null } })) {
       const ctx = await this.p.exams.gradingContext(v.examId);
-      const codes = new Set((await this.d.db.examResult.findMany({ where: { versionId: v.id }, select: { applicantCode: true } })).map((r) => r.applicantCode));
+      const codes = new Set((await this.d.persistence.examResult.findMany({ where: { versionId: v.id }, select: { applicantCode: true } })).map((r) => r.applicantCode));
       const people = (await this.p.inscriptions.eligibleFor(v.callCode, ctx.modalities)).filter((p) => codes.has(p.applicantCode));
       const items = [];
       for (const p of people) {
@@ -257,12 +257,12 @@ export class ResultsService {
         items.push({ email: p.email, event: 'RESULTADOS_DISPONIBLES', ...m, dedupeKey: `resultados:${v.examId}:${p.applicantCode}` });
       }
       queued += await this.p.notify.enqueue(items);
-      await this.d.db.resultVersion.update({ where: { id: v.id }, data: { notifiedAt: now } });
+      await this.d.persistence.resultVersion.update({ where: { id: v.id }, data: { notifiedAt: now } });
     }
     const end = await this.deliveryWindow();
     let lost = 0;
     if (end && now > end.lateEnd) {
-      lost = (await this.d.db.admission.updateMany({ where: { status: 'PENDIENTE' }, data: { status: 'PERDIDA', note: 'No entregó documentos en el plazo (Art. 34).' } })).count;
+      lost = (await this.d.persistence.admission.updateMany({ where: { status: 'PENDIENTE' }, data: { status: 'PERDIDA', note: 'No entregó documentos en el plazo (Art. 34).' } })).count;
     }
     return { queued, lost };
   }
@@ -271,7 +271,7 @@ export class ResultsService {
   private async visibleFor(modality: string) {
     const exam = (await this.p.exams.examList()).find((e) => e.modalities.includes(modality));
     if (!exam) return { exam: null, version: null };
-    const version = await this.d.db.resultVersion.findFirst({ where: { examId: exam.id, status: 'PUBLICADA' } });
+    const version = await this.d.persistence.resultVersion.findFirst({ where: { examId: exam.id, status: 'PUBLICADA' } });
     return { exam, version };
   }
 
@@ -286,12 +286,12 @@ export class ResultsService {
     if (!version || !version.publishAt || version.publishAt > now) {
       return { ...base, state: 'NOT_PUBLISHED' as const, exam: exam.name, message: version?.publishAt ? `Los resultados se publican el ${version.publishAt.toLocaleString('es-PE', { timeZone: 'America/Lima' })}.` : 'Los resultados se publican el mismo día del examen (Art. 30).' };
     }
-    const r = await this.d.db.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } });
+    const r = await this.d.persistence.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } });
     if (!r) return { ...base, state: 'NOT_IN_RESULTS' as const, exam: exam.name, message: 'No figuras en los resultados de este examen. Comunícate con la Dirección de Admisión.' };
     const ctxExam = await this.p.exams.gradingContext(exam.id);
     const s = ctxExam.scoring;
-    const group = await this.d.db.examResult.count({ where: { versionId: version.id, optionCode: r.optionCode, quotaCategory: r.quotaCategory, rank: { not: null } } });
-    const admission = r.condition === 'ADMITIDO' ? await this.d.db.admission.findUnique({ where: { applicantCode } }) : null;
+    const group = await this.d.persistence.examResult.count({ where: { versionId: version.id, optionCode: r.optionCode, quotaCategory: r.quotaCategory, rank: { not: null } } });
+    const admission = r.condition === 'ADMITIDO' ? await this.d.persistence.admission.findUnique({ where: { applicantCode } }) : null;
     const window = await this.deliveryWindow();
     return {
       ...base, state: 'PUBLISHED' as const, exam: exam.name, version: version.version, message: null,
@@ -318,9 +318,9 @@ export class ResultsService {
     if (!version?.publishAt || version.publishAt > this.d.clock.now()) {
       return { publicado: false, detalle: version?.publishAt ? `Se publica el ${version.publishAt.toLocaleString('es-PE', { timeZone: 'America/Lima' })}.` : 'Se publica el mismo día del examen (Art. 30).' };
     }
-    const r = await this.d.db.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } });
+    const r = await this.d.persistence.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } });
     if (!r) return { publicado: true, detalle: 'No figuras en los resultados de este examen.' };
-    const admission = await this.d.db.admission.findUnique({ where: { applicantCode } });
+    const admission = await this.d.persistence.admission.findUnique({ where: { applicantCode } });
     return {
       publicado: true,
       puntaje: r.score ? Number(r.score).toFixed(2) : null, puesto: r.rank, condicion: CONDITION_LABEL[r.condition as Condition],
@@ -332,10 +332,10 @@ export class ResultsService {
   async admittedList(examCode: string, optionCode: string | undefined) {
     const exam = (await this.p.exams.examList()).find((e) => e.code === examCode);
     if (!exam) throw notFound('Examen no encontrado.');
-    const version = await this.d.db.resultVersion.findFirst({ where: { examId: exam.id, status: 'PUBLICADA', publishAt: { lte: this.d.clock.now() } } });
+    const version = await this.d.persistence.resultVersion.findFirst({ where: { examId: exam.id, status: 'PUBLICADA', publishAt: { lte: this.d.clock.now() } } });
     if (!version) return { exam: exam.name, published: false, rows: [] };
     const [rows, people] = await Promise.all([
-      this.d.db.examResult.findMany({ where: { versionId: version.id, condition: 'ADMITIDO', ...(optionCode ? { optionCode } : {}) }, orderBy: [{ optionCode: 'asc' }, { rank: 'asc' }] }),
+      this.d.persistence.examResult.findMany({ where: { versionId: version.id, condition: 'ADMITIDO', ...(optionCode ? { optionCode } : {}) }, orderBy: [{ optionCode: 'asc' }, { rank: 'asc' }] }),
       this.p.inscriptions.eligibleFor(version.callCode, exam.modalities),
     ]);
     const who = new Map(people.map((p) => [p.applicantCode, p]));
@@ -365,7 +365,7 @@ export class ResultsService {
   }
 
   async admissions(f: { status?: string | undefined; q?: string | undefined }) {
-    const rows = await this.d.db.admission.findMany({ where: f.status ? { status: f.status as 'PENDIENTE' } : {}, orderBy: { applicantCode: 'asc' } });
+    const rows = await this.d.persistence.admission.findMany({ where: f.status ? { status: f.status as 'PENDIENTE' } : {}, orderBy: { applicantCode: 'asc' } });
     const people = new Map<string, ResultPerson>();
     for (const code of rows.map((r) => r.applicantCode)) {
       const p = await this.p.inscriptions.examContext(code);
@@ -385,7 +385,7 @@ export class ResultsService {
 
   /** H5-1, H5-2: entrega de documentos y pago de la constancia (S/ 15.00; con recargo de S/ 65.00 si es extemporánea). */
   async deliver(applicantCode: string, receiptNumber: string, actorId: string, meta: RequestMeta) {
-    const a = await this.d.db.admission.findUnique({ where: { applicantCode } });
+    const a = await this.d.persistence.admission.findUnique({ where: { applicantCode } });
     if (!a) throw notFound('El postulante no tiene un trámite de ingreso (no es admitido).');
     if (a.status !== 'PENDIENTE') throw businessRule('ADMISSION_CLOSED', a.status === 'INGRESANTE' ? 'Ya es ingresante.' : 'Perdió la admisión: venció el plazo de entrega (Art. 34).');
     const w = await this.deliveryWindow();
@@ -393,7 +393,7 @@ export class ResultsService {
     if (w && now < w.start) throw businessRule('DELIVERY_NOT_OPEN', `La entrega de documentos empieza el ${w.start.toLocaleDateString('es-PE', { timeZone: 'America/Lima' })}.`);
     if (w && now > w.lateEnd) throw businessRule('DELIVERY_CLOSED', 'Venció el plazo de entrega: la admisión se pierde (Art. 34).');
     const late = Boolean(w && now > w.end);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.admission.update({
         where: { applicantCode },
         data: { status: 'INGRESANTE', documentsReceivedAt: now, receivedBy: actorId, receiptNumber: receiptNumber.trim(), late, amountPaid: (CONSTANCIA + (late ? RECARGO : 0)).toFixed(2) },
@@ -408,10 +408,10 @@ export class ResultsService {
     await this.d.limiter.consume(`constancia:${meta.ipHash}`, 30, 3600);
     const ctx = await this.p.inscriptions.examContext(applicantCode, documentNumber);
     if (!ctx) throw notFound('Datos no encontrados.');
-    const a = await this.d.db.admission.findUnique({ where: { applicantCode } });
+    const a = await this.d.persistence.admission.findUnique({ where: { applicantCode } });
     if (a?.status !== 'INGRESANTE') throw businessRule('NOT_INGRESANTE', 'La constancia se emite cuando Admisión registra la entrega de tus documentos y el pago.');
     const { version } = await this.visibleFor(ctx.modality);
-    const r = version ? await this.d.db.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } }) : null;
+    const r = version ? await this.d.persistence.examResult.findUnique({ where: { versionId_applicantCode: { versionId: version.id, applicantCode } } }) : null;
     const call = await this.d.convocatorias.getCurrentCall();
     return admissionCertificatePdf({
       applicantCode, fullName: ctx.fullName, document: ctx.document, program: ctx.program, modality: MODALITY_LABEL[ctx.modality] ?? ctx.modality,
@@ -424,7 +424,7 @@ export class ResultsService {
     const [code, sig] = token.split('.');
     const ok = Boolean(code && sig && /^\d{8}$/.test(code) && sig.length === 16 && timingSafeEqual(Buffer.from(sig), Buffer.from(this.sign(code))));
     if (!ok) return { valid: false as const, reason: 'El código QR no corresponde a una constancia emitida por la UNSCH.' };
-    const a = await this.d.db.admission.findUnique({ where: { applicantCode: code } });
+    const a = await this.d.persistence.admission.findUnique({ where: { applicantCode: code } });
     if (a?.status !== 'INGRESANTE') return { valid: false as const, reason: 'La constancia no está vigente.' };
     const ctx = await this.p.inscriptions.examContext(code!);
     return { valid: true as const, applicantCode: code!, name: ctx?.firstNames ?? '', program: ctx?.program ?? '', modality: MODALITY_LABEL[ctx?.modality ?? ''] ?? '' };
@@ -437,11 +437,11 @@ export class ResultsService {
   // ── H6: reportes (RF-09.09, RF-12.07) ──────────────────────────────
   async reportRows(versionId: string) {
     const v = await this.version(versionId, {});
-    const row = await this.d.db.resultVersion.findUniqueOrThrow({ where: { id: versionId } });
+    const row = await this.d.persistence.resultVersion.findUniqueOrThrow({ where: { id: versionId } });
     const ctx = await this.p.exams.gradingContext(row.examId);
-    const all = await this.d.db.examResult.findMany({ where: { versionId } });
+    const all = await this.d.persistence.examResult.findMany({ where: { versionId } });
     const people = new Map((await this.p.inscriptions.eligibleFor(row.callCode, ctx.modalities)).map((p) => [p.applicantCode, p]));
-    const admissions = new Map((await this.d.db.admission.findMany({ where: { applicantCode: { in: all.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a.status]));
+    const admissions = new Map((await this.d.persistence.admission.findMany({ where: { applicantCode: { in: all.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a.status]));
     return {
       v,
       results: all.map((r) => ({

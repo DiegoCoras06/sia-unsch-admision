@@ -1,4 +1,4 @@
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { MemoryCache } from '../../../shared/cache/memory-cache.js';
 
 export interface ReportFilter {
@@ -20,7 +20,7 @@ const MODALITY_LABEL: Record<string, string> = { ORD: 'Ordinario', EXO: 'Exonera
 export class ReportQueries {
   private readonly dashboardCache: MemoryCache;
 
-  constructor(private readonly db: Db, dashboardTtlMs = 0) {
+  constructor(private readonly persistence: PersistencePort, dashboardTtlMs = 0) {
     // En el panel se comparten lecturas vigentes, pero al vencer siempre se espera un resumen nuevo.
     this.dashboardCache = new MemoryCache(dashboardTtlMs, Date.now, false);
   }
@@ -43,7 +43,7 @@ export class ReportQueries {
         can.inscripciones ? this.inscriptionStats(f) : null,
         can.pagos ? this.paymentStats(f) : null,
         can.asistente ? this.assistantStats() : null,
-        can.casos ? this.db.supportCase.count({ where: { status: { not: 'CLOSED' } } }) : null,
+        can.casos ? this.persistence.supportCase.count({ where: { status: { not: 'CLOSED' } } }) : null,
         can.inscripciones ? this.dossierStats() : null,
         can.inscripciones ? this.examStats() : null,
         can.inscripciones ? this.resultStats() : null,
@@ -58,15 +58,15 @@ export class ReportQueries {
   /** RF-12.04: expedientes de exonerados por estado. */
   async dossierStats() {
     const label: Record<string, string> = { BORRADOR: 'Por enviar', EN_REVISION: 'En revisión', OBSERVADO: 'Observados', AUTORIZADO: 'Autorizados', RECHAZADO: 'Rechazados', NO_SUBSANADO: 'No subsanados' };
-    const g = await this.db.dossier.groupBy({ by: ['status'], _count: { _all: true } });
+    const g = await this.persistence.dossier.groupBy({ by: ['status'], _count: { _all: true } });
     return g.map((x) => ({ key: x.status, label: label[x.status] ?? x.status, count: x._count._all }));
   }
 
   /** Ocupación de aulas y asistencia por examen (M07/M08). */
   async examStats() {
     const [exams, att] = await Promise.all([
-      this.db.exam.findMany({ orderBy: { entryOpensAt: 'asc' }, include: { rooms: { include: { room: true } } } }),
-      this.db.examAssignment.groupBy({ by: ['examId', 'attendance'], _count: { _all: true } }),
+      this.persistence.exam.findMany({ orderBy: { entryOpensAt: 'asc' }, include: { rooms: { include: { room: true } } } }),
+      this.persistence.examAssignment.groupBy({ by: ['examId', 'attendance'], _count: { _all: true } }),
     ]);
     const count = (examId: string, a?: string) => att.filter((x) => x.examId === examId && (!a || x.attendance === a)).reduce((s, x) => s + x._count._all, 0);
     return exams.map((e) => ({
@@ -78,10 +78,10 @@ export class ReportQueries {
   /** RF-12.07: condición por examen (versión publicada) e ingresantes. */
   async resultStats() {
     const label: Record<string, string> = { ADMITIDO: 'Admitidos', NO_ADMITIDO: 'No admitidos', AUSENTE: 'Ausentes', NO_CALIFICABLE: 'No calificables', SIN_DERECHO_VACANTE: 'Sin derecho a vacante' };
-    const versions = await this.db.resultVersion.findMany({ where: { status: 'PUBLICADA' }, select: { id: true } });
+    const versions = await this.persistence.resultVersion.findMany({ where: { status: 'PUBLICADA' }, select: { id: true } });
     const [byCondition, admissions] = await Promise.all([
-      this.db.examResult.groupBy({ by: ['condition'], where: { versionId: { in: versions.map((v) => v.id) } }, _count: { _all: true } }),
-      this.db.admission.groupBy({ by: ['status'], _count: { _all: true } }),
+      this.persistence.examResult.groupBy({ by: ['condition'], where: { versionId: { in: versions.map((v) => v.id) } }, _count: { _all: true } }),
+      this.persistence.admission.groupBy({ by: ['status'], _count: { _all: true } }),
     ]);
     const adm = (s: string) => admissions.find((a) => a.status === s)?._count._all ?? 0;
     return {
@@ -93,12 +93,12 @@ export class ReportQueries {
   async inscriptionStats(f: ReportFilter) {
     const where = this.applicationWhere(f);
     const [total, byStatus, byModality, byOption, rows, optionRows] = await Promise.all([
-      this.db.application.count({ where }),
-      this.db.application.groupBy({ by: ['status'], where, _count: { _all: true } }),
-      this.db.application.groupBy({ by: ['modality'], where, _count: { _all: true } }),
-      this.db.application.groupBy({ by: ['optionCode'], where, _count: { _all: true }, orderBy: { _count: { optionCode: 'desc' } }, take: 10 }),
-      this.db.application.findMany({ where, select: { createdAt: true } }),
-      this.db.applicationOption.findMany({ select: { internalCode: true, displayName: true } }),
+      this.persistence.application.count({ where }),
+      this.persistence.application.groupBy({ by: ['status'], where, _count: { _all: true } }),
+      this.persistence.application.groupBy({ by: ['modality'], where, _count: { _all: true } }),
+      this.persistence.application.groupBy({ by: ['optionCode'], where, _count: { _all: true }, orderBy: { _count: { optionCode: 'desc' } }, take: 10 }),
+      this.persistence.application.findMany({ where, select: { createdAt: true } }),
+      this.persistence.applicationOption.findMany({ select: { internalCode: true, displayName: true } }),
     ]);
     const names = new Map(optionRows.map((o) => [o.internalCode, o.displayName]));
     const byDay = new Map<string, number>();
@@ -118,14 +118,14 @@ export class ReportQueries {
 
   async paymentStats(f: ReportFilter) {
     const codes = f.modality || f.optionCode || f.from || f.to
-      ? (await this.db.application.findMany({ where: this.applicationWhere(f), select: { applicantCode: true } })).map((a) => a.applicantCode)
+      ? (await this.persistence.application.findMany({ where: this.applicationWhere(f), select: { applicantCode: true } })).map((a) => a.applicantCode)
       : null;
     const orderWhere = codes ? { applicantCode: { in: codes } } : {};
     const [paid, pending, attempts, byMethod] = await Promise.all([
-      this.db.paymentOrder.aggregate({ where: { ...orderWhere, status: 'PAGADA' }, _sum: { amount: true }, _count: { _all: true } }),
-      this.db.paymentOrder.count({ where: { ...orderWhere, status: 'PENDIENTE' } }),
-      this.db.paymentAttempt.groupBy({ by: ['status'], where: codes ? { order: orderWhere } : {}, _count: { _all: true } }),
-      this.db.paymentAttempt.groupBy({
+      this.persistence.paymentOrder.aggregate({ where: { ...orderWhere, status: 'PAGADA' }, _sum: { amount: true }, _count: { _all: true } }),
+      this.persistence.paymentOrder.count({ where: { ...orderWhere, status: 'PENDIENTE' } }),
+      this.persistence.paymentAttempt.groupBy({ by: ['status'], where: codes ? { order: orderWhere } : {}, _count: { _all: true } }),
+      this.persistence.paymentAttempt.groupBy({
         by: ['payMethod'], where: { status: 'AUTORIZADO', ...(codes ? { order: orderWhere } : {}) }, _count: { _all: true }, _sum: { amount: true },
       }),
     ]);
@@ -143,7 +143,7 @@ export class ReportQueries {
 
   async assistantStats() {
     const since = new Date(Date.now() - 13 * 86_400_000);
-    const rows = await this.db.chatUsageDaily.findMany({ where: { day: { gte: new Date(since.toISOString().slice(0, 10)) } }, orderBy: { day: 'asc' } });
+    const rows = await this.persistence.chatUsageDaily.findMany({ where: { day: { gte: new Date(since.toISOString().slice(0, 10)) } }, orderBy: { day: 'asc' } });
     const sum = (k: 'requests' | 'aiReplies' | 'handoffs' | 'errors' | 'tokensIn' | 'tokensOut') => rows.reduce((s, r) => s + r[k], 0);
     return {
       consultas: sum('requests'), conIa: sum('aiReplies'), derivaciones: sum('handoffs'), errores: sum('errors'),
@@ -154,10 +154,10 @@ export class ReportQueries {
 
   /** Filas para exportar: inscripciones con el programa y el estado del pago. */
   async inscriptionRows(f: ReportFilter) {
-    const rows = await this.db.application.findMany({ where: this.applicationWhere(f), orderBy: { createdAt: 'asc' } });
+    const rows = await this.persistence.application.findMany({ where: this.applicationWhere(f), orderBy: { createdAt: 'asc' } });
     const [names, orders] = await Promise.all([
-      this.db.applicationOption.findMany({ select: { internalCode: true, displayName: true } }),
-      this.db.paymentOrder.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } }),
+      this.persistence.applicationOption.findMany({ select: { internalCode: true, displayName: true } }),
+      this.persistence.paymentOrder.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } }),
     ]);
     const name = new Map(names.map((o) => [o.internalCode, o.displayName]));
     const pay = new Map(orders.map((o) => [o.applicantCode, o.status]));
@@ -172,8 +172,8 @@ export class ReportQueries {
   /** RF-12.04: expedientes de exonerados para exportar, con su estado y fechas. */
   async dossierRows() {
     const label: Record<string, string> = { BORRADOR: 'Por enviar', EN_REVISION: 'En revisión', OBSERVADO: 'Observado', AUTORIZADO: 'Autorizado', RECHAZADO: 'Rechazado', NO_SUBSANADO: 'No subsanado' };
-    const rows = await this.db.dossier.findMany({ orderBy: [{ status: 'asc' }, { applicantCode: 'asc' }] });
-    const apps = new Map((await this.db.application.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a]));
+    const rows = await this.persistence.dossier.findMany({ orderBy: [{ status: 'asc' }, { applicantCode: 'asc' }] });
+    const apps = new Map((await this.persistence.application.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a]));
     const lima = (d: Date | null) => (d ? new Date(d.getTime() - 5 * 3600_000).toISOString().slice(0, 16).replace('T', ' ') : '');
     return rows.map((r) => {
       const a = apps.get(r.applicantCode);
@@ -188,8 +188,8 @@ export class ReportQueries {
   /** RF-12.06: asistencia por examen y aula para exportar. */
   async attendanceRows() {
     const label: Record<string, string> = { PENDIENTE: 'Por ingresar', PRESENTE: 'Presente', AUSENTE: 'Ausente' };
-    const rows = await this.db.examAssignment.findMany({ include: { exam: true, room: true }, orderBy: [{ examId: 'asc' }, { roomId: 'asc' }, { seat: 'asc' }] });
-    const apps = new Map((await this.db.application.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a]));
+    const rows = await this.persistence.examAssignment.findMany({ include: { exam: true, room: true }, orderBy: [{ examId: 'asc' }, { roomId: 'asc' }, { seat: 'asc' }] });
+    const apps = new Map((await this.persistence.application.findMany({ where: { applicantCode: { in: rows.map((r) => r.applicantCode) } } })).map((a) => [a.applicantCode, a]));
     return rows.map((r) => {
       const a = apps.get(r.applicantCode);
       return {
@@ -203,8 +203,8 @@ export class ReportQueries {
 
   /** Filas para exportar: intentos de pago (sin datos de tarjeta salvo la máscara). */
   async paymentRows(f: ReportFilter) {
-    const codes = (await this.db.application.findMany({ where: this.applicationWhere(f), select: { applicantCode: true } })).map((a) => a.applicantCode);
-    const rows = await this.db.paymentAttempt.findMany({ where: { order: { applicantCode: { in: codes } } }, include: { order: true }, orderBy: { createdAt: 'asc' } });
+    const codes = (await this.persistence.application.findMany({ where: this.applicationWhere(f), select: { applicantCode: true } })).map((a) => a.applicantCode);
+    const rows = await this.persistence.paymentAttempt.findMany({ where: { order: { applicantCode: { in: codes } } }, include: { order: true }, orderBy: { createdAt: 'asc' } });
     return rows.map((a) => ({
       codigo: a.order.applicantCode, pedido: a.orderNumber, transaccion: a.transactionId, proveedor: a.provider, estado: a.status,
       monto: Number(a.amount).toFixed(2), medio: a.payMethod ?? '', operacion: a.operationNumber ?? '', tarjeta: a.cardMasked ?? '',
@@ -217,8 +217,8 @@ export class ReportQueries {
     const where = f.status ? { status: f.status as 'INICIADO' } : {};
     const pageSize = 25;
     const [total, rows] = await Promise.all([
-      this.db.paymentAttempt.count({ where }),
-      this.db.paymentAttempt.findMany({ where, include: { order: true }, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize }),
+      this.persistence.paymentAttempt.count({ where }),
+      this.persistence.paymentAttempt.findMany({ where, include: { order: true }, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize }),
     ]);
     return {
       total, page: f.page, pageSize,

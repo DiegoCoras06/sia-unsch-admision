@@ -1,14 +1,65 @@
-import type { ApplicationModel, ApplicationUncheckedCreateInput } from '../../../generated/prisma/models.js';
-import type { Tx } from '../../../shared/db/prisma.js';
+import type { TransactionPort } from '../../../shared/application/persistence-port.js';
 import type { InscriptionStatus } from '../domain/inscription-rules.js';
 
 /**
  * Fila de inscripción tal como se guarda. Es el tipo que se genera del esquema (solo la forma de los datos):
  * el caso de uso no usa el cliente de base de datos, solo este repositorio.
  */
-export type ApplicationRecord = ApplicationModel;
+export interface ApplicationRecord {
+  id: string;
+  callCode: string;
+  applicantCode: string;
+  documentType: string;
+  documentNumber: string;
+  identityStatus: string;
+  paternalSurname: string;
+  maternalSurname: string;
+  firstNames: string;
+  sex: string;
+  maritalStatus: string;
+  birthUbigeo: string;
+  birthDate: Date;
+  address: string;
+  residenceUbigeo: string;
+  economicDependency: string;
+  phone: string | null;
+  mobile: string;
+  email: string;
+  photoKey: string;
+  schoolUbigeo: string;
+  schoolName: string;
+  schoolType: string;
+  graduationYear: number;
+  inFourthOrBelow: boolean;
+  preparation: string;
+  attempts: number;
+  modality: string;
+  quotaCategory: string;
+  campus: string;
+  area: string;
+  optionCode: string;
+  militaryCondition: string;
+  familyLink: boolean;
+  noVacancyRight: boolean;
+  feeTotal: { toString(): string };
+  feeLines: unknown;
+  status: InscriptionStatus;
+  declarationAcceptedAt: Date;
+  consentVersion: string | null;
+  consentTextHash: string | null;
+  anonymizedAt: Date | null;
+  reinscriptionOf: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 /** Datos para crear una inscripción (los que tienen valor por defecto son opcionales). */
-export type NewApplication = ApplicationUncheckedCreateInput;
+export type NewApplication = Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'anonymizedAt' | 'reinscriptionOf'> & {
+  id?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  anonymizedAt?: Date | null;
+  reinscriptionOf?: string | null;
+};
 
 /** La inscripción ya existe para ese documento y convocatoria (restricción única de la tabla). */
 export class DuplicateApplicationError extends Error {
@@ -33,7 +84,7 @@ export interface ApplicationFilter {
 /** Operaciones dentro de una transacción: lo que se guarde aquí se confirma o se deshace junto con la auditoría y los eventos. */
 export interface InscriptionUnitOfWork {
   /** Para la auditoría y la bandeja de eventos, que se guardan en la misma transacción. */
-  readonly tx: Tx;
+  readonly tx: TransactionPort;
   nextApplicantCodeValue(): Promise<number>;
   /** Lanza `DuplicateApplicationError` si el documento ya tiene inscripción en la convocatoria. */
   create(data: NewApplication): Promise<ApplicationRecord>;

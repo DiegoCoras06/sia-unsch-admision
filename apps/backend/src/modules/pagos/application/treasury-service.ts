@@ -1,5 +1,5 @@
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, conflict, forbidden, notFound, validationError } from '../../../shared/http/errors.js';
 
 export const RECONCILIATION_LABEL = {
@@ -26,7 +26,7 @@ const money = (n: number) => n.toFixed(2);
 
 /** Tesorería (spec 005, Historias 4 y 5): conciliación con el reporte externo y anulaciones por error de cobro. */
 export class TreasuryService {
-  constructor(private readonly d: { db: Db; audit: AuditLog }) {}
+  constructor(private readonly d: { persistence: PersistencePort; audit: AuditLog }) {}
 
   // ── H4: conciliación (RF-05.11) ────────────────────────────────────
   /**
@@ -49,7 +49,7 @@ export class TreasuryService {
 
     const rows = lines.slice(1).map((l) => l.split(sep).map((x) => x.trim()));
     const refs = rows.map((c) => c[ref] ?? '').filter(Boolean);
-    const attempts = await this.d.db.paymentAttempt.findMany({
+    const attempts = await this.d.persistence.paymentAttempt.findMany({
       where: { OR: [{ [byOrder ? 'orderNumber' : 'transactionId']: { in: refs } }, { status: { in: ['AUTORIZADO', 'DUPLICADO'] }, createdAt: { gte: from, lte: to } }] },
       include: { order: true },
     });
@@ -82,7 +82,7 @@ export class TreasuryService {
       providerTotal: money(items.filter((i) => i.providerStatus && providerPaid(i.providerStatus)).reduce((s, i) => s + Number(i.providerAmount ?? 0), 0)),
       systemTotal: money(items.filter((i) => i.systemStatus && PAID.has(i.systemStatus)).reduce((s, i) => s + Number(i.systemAmount ?? 0), 0)),
     };
-    const run = await this.d.db.$transaction(async (tx) => {
+    const run = await this.d.persistence.$transaction(async (tx) => {
       const r = await tx.reconciliationRun.create({ data: { source: input.source, fileName: input.fileName, periodFrom: from, periodTo: to, summary, createdBy: actorId } });
       await tx.reconciliationItem.createMany({ data: items.map((i) => ({ ...i, runId: r.id })) });
       await this.d.audit.record({ actorUserId: actorId, action: 'payments.reconciled', resourceType: 'reconciliation_run', resourceId: r.id, after: summary, ...meta }, tx);
@@ -92,14 +92,14 @@ export class TreasuryService {
   }
 
   async runs() {
-    const rows = await this.d.db.reconciliationRun.findMany({ orderBy: { createdAt: 'desc' }, take: 30 });
+    const rows = await this.d.persistence.reconciliationRun.findMany({ orderBy: { createdAt: 'desc' }, take: 30 });
     return rows.map((r) => ({ id: r.id, source: r.source, fileName: r.fileName, periodFrom: r.periodFrom.toISOString(), periodTo: r.periodTo.toISOString(), summary: r.summary, createdAt: r.createdAt.toISOString() }));
   }
 
   async run(id: string, f: { result?: string | undefined }) {
-    const r = await this.d.db.reconciliationRun.findUnique({ where: { id } });
+    const r = await this.d.persistence.reconciliationRun.findUnique({ where: { id } });
     if (!r) throw notFound('Conciliación no encontrada.');
-    const items = await this.d.db.reconciliationItem.findMany({ where: { runId: id, ...(f.result ? { result: f.result as Result } : {}) }, orderBy: [{ result: 'asc' }, { reference: 'asc' }] });
+    const items = await this.d.persistence.reconciliationItem.findMany({ where: { runId: id, ...(f.result ? { result: f.result as Result } : {}) }, orderBy: [{ result: 'asc' }, { reference: 'asc' }] });
     return {
       id: r.id, source: r.source, fileName: r.fileName, periodFrom: r.periodFrom.toISOString(), periodTo: r.periodTo.toISOString(), summary: r.summary, createdAt: r.createdAt.toISOString(),
       items: items.map((i) => ({
@@ -112,10 +112,10 @@ export class TreasuryService {
 
   /** H4-2: cada diferencia se resuelve con justificación, auditada. */
   async resolve(itemId: string, resolution: string, actorId: string, meta: RequestMeta) {
-    const i = await this.d.db.reconciliationItem.findUnique({ where: { id: itemId } });
+    const i = await this.d.persistence.reconciliationItem.findUnique({ where: { id: itemId } });
     if (!i) throw notFound('Partida no encontrada.');
     if (i.result === 'CONCILIADO') throw businessRule('NOTHING_TO_RESOLVE', 'La partida ya está conciliada.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.reconciliationItem.update({ where: { id: itemId }, data: { resolution, resolvedBy: actorId, resolvedAt: new Date() } });
       await this.d.audit.record({ actorUserId: actorId, action: 'payments.reconciliation_resolved', resourceType: 'reconciliation_item', resourceId: itemId, after: { reference: i.reference, result: i.result, resolution }, ...meta }, tx);
     });
@@ -124,8 +124,8 @@ export class TreasuryService {
 
   // ── H5: anulaciones y devoluciones por error (RF-05.12, RN-08) ─────
   async annulments() {
-    const rows = await this.d.db.paymentAnnulment.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
-    const attempts = new Map((await this.d.db.paymentAttempt.findMany({ where: { id: { in: rows.map((r) => r.attemptId) } }, include: { order: true } })).map((a) => [a.id, a]));
+    const rows = await this.d.persistence.paymentAnnulment.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+    const attempts = new Map((await this.d.persistence.paymentAttempt.findMany({ where: { id: { in: rows.map((r) => r.attemptId) } }, include: { order: true } })).map((a) => [a.id, a]));
     return rows.map((r) => ({
       id: r.id, kind: r.kind, reason: r.reason, reasonLabel: ANNULMENT_REASONS[r.reason as Reason] ?? r.reason, detail: r.detail, resolution: r.resolution,
       amount: Number(r.amount).toFixed(2), status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt.toISOString(), decidedAt: r.decidedAt?.toISOString() ?? null,
@@ -135,14 +135,14 @@ export class TreasuryService {
   }
 
   async requestAnnulment(input: { reference: string; kind: 'ANULACION' | 'DEVOLUCION'; reason: Reason; detail: string; resolution: string }, actorId: string, meta: RequestMeta) {
-    const a = await this.d.db.paymentAttempt.findFirst({ where: { OR: [{ transactionId: input.reference }, { orderNumber: input.reference }] } });
+    const a = await this.d.persistence.paymentAttempt.findFirst({ where: { OR: [{ transactionId: input.reference }, { orderNumber: input.reference }] } });
     if (!a) throw notFound('No encontramos ese pedido o transacción.');
     if (!PAID.has(a.status)) throw businessRule('NOT_CHARGED', 'Solo se anula o devuelve un cobro efectivo (autorizado o duplicado).');
     if (input.reason === 'COBRO_DUPLICADO' && a.status !== 'DUPLICADO') {
       throw businessRule('NOT_DUPLICATED', 'Ese intento no está marcado como pago duplicado. El pago válido de la inscripción no se devuelve (Art. 18).');
     }
-    if (await this.d.db.paymentAnnulment.findFirst({ where: { attemptId: a.id, status: { in: ['SOLICITADA', 'APROBADA'] } } })) throw conflict('ANNULMENT_EXISTS', 'Ese cobro ya tiene una solicitud en trámite o aprobada.');
-    await this.d.db.$transaction(async (tx) => {
+    if (await this.d.persistence.paymentAnnulment.findFirst({ where: { attemptId: a.id, status: { in: ['SOLICITADA', 'APROBADA'] } } })) throw conflict('ANNULMENT_EXISTS', 'Ese cobro ya tiene una solicitud en trámite o aprobada.');
+    await this.d.persistence.$transaction(async (tx) => {
       const r = await tx.paymentAnnulment.create({ data: { attemptId: a.id, kind: input.kind, reason: input.reason, detail: input.detail, resolution: input.resolution, amount: a.amount, requestedBy: actorId } });
       await this.d.audit.record({ actorUserId: actorId, action: 'payments.annulment_requested', resourceType: 'payment_annulment', resourceId: r.id, after: { transactionId: a.transactionId, reason: input.reason, resolution: input.resolution }, ...meta }, tx);
     });
@@ -151,11 +151,11 @@ export class TreasuryService {
 
   /** Lo aprueba o rechaza otra persona (segregación); el dinero lo devuelve Tesorería por su canal, no el sistema. */
   async decideAnnulment(id: string, approve: boolean, note: string, actorId: string, meta: RequestMeta) {
-    const r = await this.d.db.paymentAnnulment.findUnique({ where: { id } });
+    const r = await this.d.persistence.paymentAnnulment.findUnique({ where: { id } });
     if (!r) throw notFound('Solicitud no encontrada.');
     if (r.status !== 'SOLICITADA') throw businessRule('ALREADY_DECIDED', 'La solicitud ya fue resuelta.');
     if (r.requestedBy === actorId) throw forbidden('La aprueba o rechaza una persona distinta de quien la solicitó.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.paymentAnnulment.update({ where: { id }, data: { status: approve ? 'APROBADA' : 'RECHAZADA', decidedBy: actorId, decidedAt: new Date(), decisionNote: note } });
       await this.d.audit.record({ actorUserId: actorId, action: approve ? 'payments.annulment_approved' : 'payments.annulment_rejected', resourceType: 'payment_annulment', resourceId: id, after: { note }, ...meta }, tx);
     });

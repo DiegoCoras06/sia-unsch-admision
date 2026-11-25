@@ -24,7 +24,7 @@ export class AttendanceService {
   /** Exámenes y aulas para el responsable de aula. */
   async board() {
     const call = await this.d.convocatorias.getCurrentCall();
-    const exams = await this.d.db.exam.findMany({
+    const exams = await this.d.persistence.exam.findMany({
       where: { callCode: call.code, status: { in: ['CONFIRMADO', 'FINALIZADO', 'DISTRIBUIDO'] } }, orderBy: { entryOpensAt: 'asc' },
       include: { rooms: { include: { room: true } }, assignments: { select: { roomId: true, attendance: true } } },
     });
@@ -53,7 +53,7 @@ export class AttendanceService {
     // Un QR con firma debe ser auténtico; el código escrito a mano se acepta (el responsable compara la foto).
     const token = /(\d{8}\.[\w-]+)$/.exec(scan.trim())?.[1];
     if (token && !this.exams.checkToken(token)) throw businessRule('QR_INVALID', 'El QR no corresponde a una ficha de examen emitida por la UNSCH.');
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode: code } }, include: { room: { include: { venue: true } } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode: code } }, include: { room: { include: { venue: true } } } });
     if (!a) throw notFound(`El código ${code} no figura en la relación de este examen: no puede ingresar.`);
     const person = await this.d.inscriptions.examContext(code);
     if (!person || person.status !== 'APTA') throw businessRule('NOT_ELIGIBLE', `El postulante ${code} ya no está apto (${person?.statusLabel ?? 'sin inscripción'}): no puede ingresar.`);
@@ -71,7 +71,7 @@ export class AttendanceService {
     // H5, escenario 3: después del cierre del ingreso queda marcado fuera de hora (RN-36).
     const late = already ? a.late : now > e.entryClosesAt;
     if (!already) {
-      await this.d.db.$transaction(async (tx) => {
+      await this.d.persistence.$transaction(async (tx) => {
         await tx.examAssignment.update({ where: { id: a.id }, data: { attendance: 'PRESENTE', checkedInAt: now, late, checkedBy: actorId } });
         await this.d.audit.record({ actorUserId: actorId, action: 'exam.check_in', resourceType: 'exam_assignment', resourceId: code, after: { examId, roomId: a.roomId, late, ...(scannedAt ? { offline: true, syncedAt: serverNow.toISOString() } : {}) }, ...meta }, tx);
       });
@@ -87,10 +87,10 @@ export class AttendanceService {
   async setAttendance(examId: string, applicantCode: string, status: 'PRESENTE' | 'AUSENTE' | 'PENDIENTE', actorId: string, meta: RequestMeta) {
     const e = await this.exams.requireExam(examId);
     if (e.attendanceClosedAt) throw businessRule('ATTENDANCE_CLOSED', 'La asistencia de este examen ya se cerró.');
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode } } });
     if (!a) throw notFound('El postulante no figura en este examen.');
     const now = this.d.clock.now();
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.examAssignment.update({
         where: { id: a.id },
         data: { attendance: status, checkedInAt: status === 'PRESENTE' ? (a.checkedInAt ?? now) : null, late: status === 'PRESENTE' ? (a.checkedInAt ? a.late : now > e.entryClosesAt) : false, checkedBy: actorId },
@@ -105,7 +105,7 @@ export class AttendanceService {
     const e = await this.exams.requireExam(examId);
     if (e.attendanceClosedAt) throw businessRule('ATTENDANCE_CLOSED', 'La asistencia ya estaba cerrada.');
     if (this.d.clock.now() < e.entryClosesAt) throw businessRule('ENTRY_STILL_OPEN', 'Espera a que cierre el ingreso al local.');
-    const absent = await this.d.db.$transaction(async (tx) => {
+    const absent = await this.d.persistence.$transaction(async (tx) => {
       const r = await tx.examAssignment.updateMany({ where: { examId, attendance: 'PENDIENTE' }, data: { attendance: 'AUSENTE' } });
       await tx.exam.update({ where: { id: examId }, data: { attendanceClosedAt: this.d.clock.now(), status: 'FINALIZADO' } });
       await this.d.audit.record({ actorUserId: actorId, action: 'exam.attendance_closed', resourceType: 'exam', resourceId: examId, after: { absent: r.count }, ...meta }, tx);
@@ -123,11 +123,11 @@ export class AttendanceService {
   /** H5, escenario 1: lista PDF por aula con foto (RF-08.07). */
   async roomPdf(examId: string, roomId: string) {
     const e = await this.exams.requireExam(examId);
-    const room = await this.d.db.room.findUnique({ where: { id: roomId }, include: { venue: true } });
+    const room = await this.d.persistence.room.findUnique({ where: { id: roomId }, include: { venue: true } });
     if (!room) throw notFound('Aula no encontrada.');
     const [call, rows, people] = await Promise.all([
       this.d.convocatorias.getCurrentCall(),
-      this.d.db.examAssignment.findMany({ where: { examId, roomId }, orderBy: { seat: 'asc' } }),
+      this.d.persistence.examAssignment.findMany({ where: { examId, roomId }, orderBy: { seat: 'asc' } }),
       this.d.inscriptions.eligibleFor(e.callCode, e.modalities),
     ]);
     const who = new Map(people.map((p) => [p.applicantCode, p]));
@@ -144,14 +144,14 @@ export class AttendanceService {
   /** H5, escenario 4: incidencia con tipo, descripción, hora, aula y responsable; aviso a la Comisión (RN-60). */
   async incident(examId: string, input: { roomId?: string | undefined; applicantCode?: string | undefined; type: IncidentType; description: string }, actorId: string, meta: RequestMeta) {
     const e = await this.exams.requireExam(examId);
-    const room = input.roomId ? await this.d.db.room.findUnique({ where: { id: input.roomId } }) : null;
+    const room = input.roomId ? await this.d.persistence.room.findUnique({ where: { id: input.roomId } }) : null;
     if (input.roomId && !room) throw notFound('Aula no encontrada.');
-    if (input.applicantCode && !(await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode: input.applicantCode } } }))) {
+    if (input.applicantCode && !(await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId, applicantCode: input.applicantCode } } }))) {
       throw validationError('Ese código no figura en este examen.', [{ field: 'applicantCode', issue: 'no asignado' }]);
     }
     const to = await this.commission();
     const now = this.d.clock.now();
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       const i = await tx.examIncident.create({ data: { examId, roomId: input.roomId ?? null, applicantCode: input.applicantCode ?? null, type: input.type, description: input.description.trim(), reportedBy: actorId, at: now } });
       await this.d.audit.record({ actorUserId: actorId, action: 'exam.incident', resourceType: 'exam_incident', resourceId: i.id, after: { type: input.type, roomId: input.roomId ?? null, applicantCode: input.applicantCode ?? null }, ...meta }, tx);
       if (to.length) {
@@ -165,8 +165,8 @@ export class AttendanceService {
   }
 
   async incidents(examId: string) {
-    const rows = await this.d.db.examIncident.findMany({ where: { examId }, orderBy: { at: 'desc' } });
-    const rooms = new Map((await this.d.db.room.findMany({ where: { id: { in: rows.map((r) => r.roomId).filter((x): x is string => Boolean(x)) } } })).map((r) => [r.id, r.code]));
+    const rows = await this.d.persistence.examIncident.findMany({ where: { examId }, orderBy: { at: 'desc' } });
+    const rooms = new Map((await this.d.persistence.room.findMany({ where: { id: { in: rows.map((r) => r.roomId).filter((x): x is string => Boolean(x)) } } })).map((r) => [r.id, r.code]));
     return rows.map((r) => ({
       id: r.id, type: r.type, typeLabel: INCIDENT_TYPES[r.type as IncidentType] ?? r.type, description: r.description,
       room: r.roomId ? (rooms.get(r.roomId) ?? '-') : null, applicantCode: r.applicantCode, at: iso(r.at),

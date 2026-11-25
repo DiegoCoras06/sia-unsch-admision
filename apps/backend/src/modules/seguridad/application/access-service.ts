@@ -1,16 +1,16 @@
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db, Tx } from '../../../shared/db/prisma.js';
+import type { PersistencePort, TransactionPort } from '../../../shared/application/persistence-port.js';
 
 /** Roles y padrón de inhabilitados (M13). */
 export class AccessService {
-  constructor(private readonly db: Db, private readonly clock: Clock) {}
+  constructor(private readonly persistence: PersistencePort, private readonly clock: Clock) {}
 
   async rolesOf(userId: string): Promise<string[]> {
-    const rows = await this.db.userRole.findMany({ where: { userId }, include: { role: true } });
+    const rows = await this.persistence.userRole.findMany({ where: { userId }, include: { role: true } });
     return rows.map((r) => r.role.code);
   }
 
-  async assignRole(tx: Tx, userId: string, roleCode: string): Promise<void> {
+  async assignRole(tx: TransactionPort, userId: string, roleCode: string): Promise<void> {
     const role = await tx.role.findUniqueOrThrow({ where: { code: roleCode } });
     await tx.userRole.create({ data: { userId, roleId: role.id } });
   }
@@ -18,7 +18,7 @@ export class AccessService {
   /** RN-09: inhabilitación vigente a la fecha actual. */
   async isDisqualified(documentType: string, documentNumber: string): Promise<boolean> {
     const today = this.clock.now();
-    const found = await this.db.disqualifiedPerson.findFirst({
+    const found = await this.persistence.disqualifiedPerson.findFirst({
       where: {
         documentType,
         documentNumber,

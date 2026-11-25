@@ -276,7 +276,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     catalog: convocatorias.catalog,
     content: configuracion.admin,
     siteAssets: configuracion.assets,
-    security: new SecurityAdmin({ db, clock, audit, inscriptions: inscripciones.service, storage }),
+    security: new SecurityAdmin({ persistence: db, clock, audit, inscriptions: inscripciones.service, storage }),
     cepre: inscripciones.cepre,
     vacancyImport: convocatorias.vacancyImport,
     inscriptions: inscripciones.service,

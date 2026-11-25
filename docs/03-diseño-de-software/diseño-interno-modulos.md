@@ -213,15 +213,15 @@ La aplicación de Clean Architecture facilitará la separación entre las reglas
 
 Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sistema, además de facilitar futuras mejoras y ampliaciones.
 
-## 7.10. Estado de implementación (02/11/2026)
+## 7.10. Estado de implementación (25/11/2026)
 
 | Regla de diseño (7.8) | Estado |
 |---|---|
 | 1. Responsabilidades claras por módulo | ✅ 12 módulos, uno por carpeta |
-| 2. Lógica de negocio separada de la infraestructura | 🟡 Las reglas están en `domain/` y los proveedores externos detrás de puertos; pero los servicios de aplicación consultan la base de datos con Prisma directamente |
+| 2. Lógica de negocio separada de la infraestructura | ✅ `domain/` y `application/` no importan Prisma ni adaptadores; los casos de uso reciben `PersistencePort` y puertos específicos por inyección |
 | 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos |
 | 4. Los casos de uso coordinan los procesos | ✅ Servicios de aplicación por módulo |
-| 5. Repositorios que implementan interfaces internas | 🟡 En Convocatorias (`ConvocatoriasRepository` → `PrismaConvocatoriasRepository`), Inscripciones (`InscriptionRepository` → `PrismaInscriptionRepository`, con unidad de trabajo para las transacciones) y Pagos (`PaymentRepository` → `PrismaPaymentRepository`); pendiente en los demás módulos |
+| 5. Repositorios que implementan interfaces internas | ✅ Repositorios específicos en Convocatorias, Inscripciones y Pagos; los demás casos de uso acceden mediante el puerto común `PersistencePort`, cuya implementación concreta se inyecta en la raíz de composición |
 | 6. Sin dependencias circulares | ✅ Los módulos se comunican por su `index.ts` o por eventos |
 | 7. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API y tareas programadas |
 

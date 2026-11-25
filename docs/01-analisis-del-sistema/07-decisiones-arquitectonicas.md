@@ -36,7 +36,7 @@ Durante la implementación (Pasos 3 a 10.2) cada decisión se detalló en un ADR
 | Decisión de este documento | Qué se implementó | ADR vigente | Estado |
 |---|---|---|---|
 | ADR-001 Monolito Modular por Capas | Un backend Express con 12 módulos funcionales, uno por carpeta. Inscripción Ordinaria y Exonerados son un solo módulo (`inscripciones`), igual que Exámenes, Sedes y Aulas (`examenes`). | ADR-001 | ✅ |
-| ADR-002 Clean Architecture | Capas `presentation`, `application`, `domain` e `infrastructure` por módulo; los controladores no tocan la base de datos. **Desviación:** la mayoría de los servicios de aplicación usan Prisma sin repositorio intermedio (ver 03, patrones). | ADR-002 | 🟡 |
+| ADR-002 Clean Architecture | Capas `presentation`, `application`, `domain` e `infrastructure` por módulo. Dominio y aplicación no importan Prisma, Express ni implementaciones de infraestructura; los casos de uso reciben `PersistencePort` y los demás puertos por inyección. Una prueba de arquitectura verifica estas reglas para los 12 módulos. | ADR-002 | ✅ |
 | ADR-003 Despliegue con AWS Lambda | Diseñado (API Gateway HTTP API + Lambda ARM64); aún no desplegado. | ADR-009 | ⏳ Paso 11 |
 | ADR-004 PostgreSQL | Amazon RDS PostgreSQL con Prisma 7, un esquema por módulo y SSL verificado. | ADR-005 | ✅ |
 | ADR-005 Caché con Redis | **Aplicada en memoria, sin Redis (15/11/2026).** La prueba de carga de EQ-01 mostró que el catálogo (convocatoria, etapas, programas, tasas) se pedía en casi todas las pantallas; ahora se guarda en la memoria de la API 5 minutos, se precarga al arrancar y se borra con cada cambio del panel. Con 10 usuarios, el p95 bajó de 21.9 s a 0.135 s. Redis queda previsto solo si varias instancias necesitan compartir la caché. |

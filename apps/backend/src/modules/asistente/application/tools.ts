@@ -1,4 +1,4 @@
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { normalizeForSearch } from '../../../shared/text/normalize.js';
 import type { ConvocatoriasQueries } from '../../convocatorias/index.js';
 import type { ToolSpec } from '../domain/ports.js';
@@ -12,7 +12,7 @@ export interface ToolResult {
 }
 
 export interface ToolDeps {
-  db: Db;
+  persistence: PersistencePort;
   convocatorias: ConvocatoriasQueries;
   inscriptions: { processSnapshot(applicantCode: string): Promise<Record<string, unknown> | null> };
   payments: { orderSummary(applicantCode: string): Promise<Record<string, unknown>> };
@@ -69,7 +69,7 @@ export class AssistantTools {
 
   async knowledge(query: string): Promise<ToolResult> {
     const words = terms(query);
-    const entries = await this.d.db.knowledgeEntry.findMany({ where: { active: true } });
+    const entries = await this.d.persistence.knowledgeEntry.findMany({ where: { active: true } });
     const scored = entries
       .map((e) => {
         const hay = e.keywords;

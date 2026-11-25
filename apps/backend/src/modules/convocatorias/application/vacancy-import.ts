@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, notFound, validationError } from '../../../shared/http/errors.js';
 
 export interface VacancyImportRow {
@@ -28,7 +28,7 @@ export interface VacancyImportPreview {
  * (diferencias con lo vigente y errores) y solo un archivo sin errores se guarda, todo o nada.
  */
 export class VacancyImport {
-  constructor(private readonly d: { db: Db; audit: AuditLog }) {}
+  constructor(private readonly d: { persistence: PersistencePort; audit: AuditLog }) {}
 
   /** Plantilla con el cuadro vigente: se descarga, se corrige en Excel y se vuelve a subir. */
   async template(code: string): Promise<Buffer> {
@@ -122,7 +122,7 @@ export class VacancyImport {
     const catId = new Map(categories.map((c) => [c.code, c.id]));
     const optId = new Map(options.map((o) => [o.internalCode, o.id]));
     const changes = p.rows.flatMap((r) => r.changes.map((c) => ({ ...c, optionCode: r.optionCode })));
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       for (const c of changes) {
         const key = { callId: call.id, optionId: optId.get(c.optionCode)!, quotaCategoryId: catId.get(c.category)! };
         await tx.vacancy.upsert({ where: { callId_optionId_quotaCategoryId: key }, create: { ...key, quantity: c.to }, update: { quantity: c.to } });
@@ -136,12 +136,12 @@ export class VacancyImport {
   }
 
   private async context(code: string) {
-    const call = await this.d.db.admissionCall.findUnique({ where: { code } });
+    const call = await this.d.persistence.admissionCall.findUnique({ where: { code } });
     if (!call) throw notFound(`No existe la convocatoria ${code}.`);
     const [categories, options, vacancies] = await Promise.all([
-      this.d.db.quotaCategory.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.d.db.applicationOption.findMany({ orderBy: { internalCode: 'asc' } }),
-      this.d.db.vacancy.findMany({ where: { callId: call.id }, include: { option: true, quotaCategory: true } }),
+      this.d.persistence.quotaCategory.findMany({ orderBy: { sortOrder: 'asc' } }),
+      this.d.persistence.applicationOption.findMany({ orderBy: { internalCode: 'asc' } }),
+      this.d.persistence.vacancy.findMany({ where: { callId: call.id }, include: { option: true, quotaCategory: true } }),
     ]);
     const current = new Map(vacancies.map((v) => [`${v.option.internalCode}/${v.quotaCategory.code}`, v.quantity]));
     return { call, categories, options, current };

@@ -59,7 +59,7 @@ describe('Registro de envíos (RF-11.09)', () => {
     let calls = 0;
     // Solo falla para este destinatario: la cola es compartida con las demás pruebas en paralelo.
     const failing = { send: async (m: { to: string }) => { if (m.to !== 'reintento@example.com') return; calls++; throw new Error('SMTP caído'); } };
-    const svc = new NotificationService({ db: t.db, clock, audit: new AuditLog(t.db), limiter: new RateLimiter(t.db, clock), transport: failing, sources: null as never, frontendOrigin: 'http://x' });
+    const svc = new NotificationService({ persistence: t.db, clock, audit: new AuditLog(t.db), limiter: new RateLimiter(t.db, clock), transport: failing, sources: null as never, frontendOrigin: 'http://x' });
     const item = { email: 'reintento@example.com', event: 'PRUEBA', subject: 'Prueba', html: '<p>x</p>', text: 'x', dedupeKey: 'prueba:reintento' };
     expect(await svc.enqueue([item])).toBe(1);
     expect(await svc.enqueue([item])).toBe(0);

@@ -34,9 +34,9 @@ export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog,
     void warmUp().catch(() => undefined);
   };
   /** Gestión desde el panel (spec 008, Historia 1); cada cambio borra la caché del catálogo. */
-  const admin = invalidatesOnUse(new CallAdmin({ db, clock, audit }), invalidate);
-  const catalog = invalidatesOnUse(new CatalogAdmin({ db, audit }), invalidate);
-  const vacancyImport = invalidatesOnUse(new VacancyImport({ db, audit }), invalidate);
+  const admin = invalidatesOnUse(new CallAdmin({ persistence: db, clock, audit }), invalidate);
+  const catalog = invalidatesOnUse(new CatalogAdmin({ persistence: db, audit }), invalidate);
+  const vacancyImport = invalidatesOnUse(new VacancyImport({ persistence: db, audit }), invalidate);
   return { queries, admin, catalog, vacancyImport, warmUp, router: convocatoriasRoutes(queries) };
 }
 

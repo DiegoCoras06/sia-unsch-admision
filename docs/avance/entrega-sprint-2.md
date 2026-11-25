@@ -21,8 +21,8 @@ comprobarla**. Repositorio: https://github.com/DiegoCoras06/sia-unsch-admision
 - **Estilo:** monolito modular con 12 módulos (ADR-001), cada uno con su esquema propio en PostgreSQL.
 - **Patrón:** Clean Architecture dentro de cada módulo (ADR-002): `domain` (reglas y puertos), `application`
   (casos de uso), `infrastructure` (Prisma, Culqi, SES, S3) y `presentation` (rutas de Express).
-- **Cómo se comprueba:** `apps/backend/tests/unit/arquitectura/` falla si un módulo importa el interior de otro o si un
-  servicio de aplicación usa Prisma directamente.
+- **Cómo se comprueba:** `apps/backend/tests/unit/arquitectura/` falla si un módulo importa el interior de otro o si
+  cualquier archivo de aplicación importa Prisma, código generado, infraestructura o presentación.
 
 ## 3. Especificaciones SDD
 

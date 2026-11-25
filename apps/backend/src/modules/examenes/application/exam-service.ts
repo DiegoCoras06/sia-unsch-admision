@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import QRCode from 'qrcode';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { businessRule, conflict, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
@@ -35,8 +35,8 @@ export interface ExamInput {
   instructions?: { llevar: string[]; prohibido: string[]; notas: string } | undefined; reason?: string | undefined;
 }
 
-type ExamRow = NonNullable<Awaited<ReturnType<Db['exam']['findUnique']>>>;
-type RoomRow = NonNullable<Awaited<ReturnType<Db['room']['findUnique']>>> & { venue: { name: string; address: string } };
+type ExamRow = NonNullable<Awaited<ReturnType<PersistencePort['exam']['findUnique']>>>;
+type RoomRow = NonNullable<Awaited<ReturnType<PersistencePort['room']['findUnique']>>> & { venue: { name: string; address: string } };
 
 const MODALITY_LABEL: Record<string, string> = { ORD: 'Ordinario', EXO: 'Exonerados', CEPRE: 'CEPRE-UNSCH' };
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
@@ -52,7 +52,7 @@ export function roomInfo(r: RoomRow): RoomInfo {
 export class ExamService {
   constructor(
     readonly d: {
-      db: Db;
+      persistence: PersistencePort;
       clock: Clock;
       outbox: Outbox;
       audit: AuditLog;
@@ -67,7 +67,7 @@ export class ExamService {
 
   // ── Utilidades compartidas ─────────────────────────────────────────
   async requireExam(id: string): Promise<ExamRow> {
-    const e = await this.d.db.exam.findUnique({ where: { id } });
+    const e = await this.d.persistence.exam.findUnique({ where: { id } });
     if (!e) throw notFound('Examen no encontrado.');
     return e;
   }
@@ -104,7 +104,7 @@ export class ExamService {
   // ── H1: programar exámenes (RF-07.01 a RF-07.09) ───────────────────
   async list() {
     const call = await this.d.convocatorias.getCurrentCall();
-    const exams = await this.d.db.exam.findMany({
+    const exams = await this.d.persistence.exam.findMany({
       where: { callCode: call.code }, orderBy: { entryOpensAt: 'asc' },
       include: { rooms: { include: { room: true } }, _count: { select: { assignments: true } } },
     });
@@ -119,11 +119,11 @@ export class ExamService {
   async detail(id: string) {
     const e = await this.requireExam(id);
     const [rooms, assignments, eligible, requests, changes] = await Promise.all([
-      this.d.db.examRoom.findMany({ where: { examId: id }, include: { room: { include: { venue: true } } } }),
-      this.d.db.examAssignment.findMany({ where: { examId: id } }),
+      this.d.persistence.examRoom.findMany({ where: { examId: id }, include: { room: { include: { venue: true } } } }),
+      this.d.persistence.examAssignment.findMany({ where: { examId: id } }),
       this.d.inscriptions.eligibleFor(e.callCode, e.modalities),
-      this.d.db.accommodationRequest.findMany({ where: { examId: id }, orderBy: { createdAt: 'asc' } }),
-      this.d.db.assignmentChange.findMany({ where: { assignment: { examId: id }, fromRoomId: { not: null } }, include: { assignment: true }, orderBy: { at: 'desc' }, take: 30 }),
+      this.d.persistence.accommodationRequest.findMany({ where: { examId: id }, orderBy: { createdAt: 'asc' } }),
+      this.d.persistence.assignmentChange.findMany({ where: { assignment: { examId: id }, fromRoomId: { not: null } }, include: { assignment: true }, orderBy: { at: 'desc' }, take: 30 }),
     ]);
     const eligibleSet = new Set(eligible.map((p) => p.applicantCode));
     const assignedSet = new Set(assignments.map((a) => a.applicantCode));
@@ -182,12 +182,12 @@ export class ExamService {
     };
 
     // RF-07.06: una modalidad no puede estar en dos exámenes de la misma convocatoria.
-    const others = await this.d.db.exam.findMany({ where: { callCode: call.code, ...(id ? { id: { not: id } } : {}) }, include: { rooms: true } });
+    const others = await this.d.persistence.exam.findMany({ where: { callCode: call.code, ...(id ? { id: { not: id } } : {}) }, include: { rooms: true } });
     const dup = others.find((o) => o.modalities.some((m) => input.modalities.includes(m)));
     if (dup) throw conflict('MODALITY_TAKEN', `La modalidad ya tiene examen: ${dup.name}.`);
 
     if (!id) {
-      const created = await this.d.db.$transaction(async (tx) => {
+      const created = await this.d.persistence.$transaction(async (tx) => {
         const e = await tx.exam.create({
           data: { ...data, callCode: call.code, structure: input.structure ?? DEFAULT_STRUCTURE, scoring: input.scoring ?? DEFAULT_SCORING, instructions: input.instructions ?? DEFAULT_INSTRUCTIONS },
         });
@@ -204,9 +204,9 @@ export class ExamService {
     if (notify && (input.reason?.trim().length ?? 0) < 10) {
       throw validationError('Las aulas ya están publicadas: indica el motivo de la reprogramación (mínimo 10 caracteres).', [{ field: 'reason', issue: 'obligatorio' }]);
     }
-    if (rescheduled) await this.ensureNoClash(id, (await this.d.db.examRoom.findMany({ where: { examId: id } })).map((r) => r.roomId), { entryOpensAt: opens, entryClosesAt: closes, durationMinutes: input.durationMinutes });
+    if (rescheduled) await this.ensureNoClash(id, (await this.d.persistence.examRoom.findMany({ where: { examId: id } })).map((r) => r.roomId), { entryOpensAt: opens, entryClosesAt: closes, durationMinutes: input.durationMinutes });
     const people = notify ? await this.assignedPeople(before) : [];
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.exam.update({ where: { id }, data });
       await this.d.audit.record({
         actorUserId: actorId, action: rescheduled ? 'exam.rescheduled' : 'exam.updated', resourceType: 'exam', resourceId: id,
@@ -226,7 +226,7 @@ export class ExamService {
   private async ensureNoClash(examId: string, roomIds: string[], when: { entryOpensAt: Date; entryClosesAt: Date; durationMinutes: number }) {
     if (!roomIds.length) return;
     const mine = occupiedWindow(when);
-    const others = await this.d.db.exam.findMany({ where: { id: { not: examId }, rooms: { some: { roomId: { in: roomIds } } } }, include: { rooms: { include: { room: true } } } });
+    const others = await this.d.persistence.exam.findMany({ where: { id: { not: examId }, rooms: { some: { roomId: { in: roomIds } } } }, include: { rooms: { include: { room: true } } } });
     for (const o of others) {
       if (!overlaps(mine, occupiedWindow(o))) continue;
       const shared = o.rooms.filter((r) => roomIds.includes(r.roomId)).map((r) => r.room.code);
@@ -236,13 +236,13 @@ export class ExamService {
 
   async setRooms(id: string, roomIds: string[], actorId: string, meta: RequestMeta) {
     const e = await this.requireExam(id);
-    const rooms = await this.d.db.room.findMany({ where: { id: { in: roomIds }, active: true } });
+    const rooms = await this.d.persistence.room.findMany({ where: { id: { in: roomIds }, active: true } });
     if (rooms.length !== new Set(roomIds).size) throw validationError('Hay aulas inexistentes o inactivas.', [{ field: 'roomIds', issue: 'inválido' }]);
-    const used = await this.d.db.examAssignment.groupBy({ by: ['roomId'], where: { examId: id }, _count: { _all: true } });
+    const used = await this.d.persistence.examAssignment.groupBy({ by: ['roomId'], where: { examId: id }, _count: { _all: true } });
     const removedInUse = used.filter((u) => !roomIds.includes(u.roomId));
     if (removedInUse.length) throw businessRule('ROOM_IN_USE', 'No puedes quitar aulas con postulantes asignados: muévelos o vuelve a distribuir.');
     await this.ensureNoClash(id, roomIds, e);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.examRoom.deleteMany({ where: { examId: id } });
       await tx.examRoom.createMany({ data: roomIds.map((roomId) => ({ examId: id, roomId })) });
       await this.d.audit.record({ actorUserId: actorId, action: 'exam.rooms_set', resourceType: 'exam', resourceId: id, after: { rooms: roomIds.length }, ...meta }, tx);
@@ -252,7 +252,7 @@ export class ExamService {
 
   // ── H2: sedes, pabellones, pisos y aulas (RF-08.01, RF-08.02) ──────
   async venues() {
-    const venues = await this.d.db.venue.findMany({ orderBy: { name: 'asc' }, include: { rooms: true } });
+    const venues = await this.d.persistence.venue.findMany({ orderBy: { name: 'asc' }, include: { rooms: true } });
     return venues.map((v) => ({
       id: v.id, code: v.code, name: v.name, address: v.address, active: v.active,
       capacity: v.rooms.filter((r) => r.active).reduce((s, r) => s + r.capacity, 0),
@@ -264,24 +264,24 @@ export class ExamService {
 
   async saveVenue(id: string | null, input: { code: string; name: string; address: string; active: boolean }, actorId: string, meta: RequestMeta) {
     const data = { code: input.code.trim().toUpperCase(), name: input.name.trim(), address: input.address.trim(), active: input.active };
-    const dup = await this.d.db.venue.findUnique({ where: { code: data.code } });
+    const dup = await this.d.persistence.venue.findUnique({ where: { code: data.code } });
     if (dup && dup.id !== id) throw conflict('VENUE_CODE_TAKEN', 'Ya existe una sede con ese código.');
-    const v = id ? await this.d.db.venue.update({ where: { id }, data }) : await this.d.db.venue.create({ data });
+    const v = id ? await this.d.persistence.venue.update({ where: { id }, data }) : await this.d.persistence.venue.create({ data });
     await this.d.audit.record({ actorUserId: actorId, action: id ? 'venue.updated' : 'venue.created', resourceType: 'venue', resourceId: v.id, after: data, ...meta });
     return this.venues();
   }
 
   async saveRoom(id: string | null, input: { venueId: string; building: string; floor: number; code: string; capacity: number; gate: string; accessible: boolean; active: boolean }, actorId: string, meta: RequestMeta) {
     const data = { ...input, building: input.building.trim(), code: input.code.trim().toUpperCase(), gate: input.gate.trim() };
-    const dup = await this.d.db.room.findFirst({ where: { venueId: data.venueId, code: data.code } });
+    const dup = await this.d.persistence.room.findFirst({ where: { venueId: data.venueId, code: data.code } });
     if (dup && dup.id !== id) throw conflict('ROOM_CODE_TAKEN', 'Ya existe un aula con ese código en la sede.');
     if (id) {
       // No se puede bajar la capacidad por debajo de los asientos ya asignados en algún examen.
-      const max = await this.d.db.examAssignment.aggregate({ where: { roomId: id }, _max: { seat: true } });
+      const max = await this.d.persistence.examAssignment.aggregate({ where: { roomId: id }, _max: { seat: true } });
       if ((max._max.seat ?? 0) > data.capacity) throw businessRule('CAPACITY_BELOW_ASSIGNED', `El aula ya tiene ${max._max.seat} asientos asignados.`);
-      if (!data.active && (await this.d.db.examAssignment.count({ where: { roomId: id } }))) throw businessRule('ROOM_IN_USE', 'El aula tiene postulantes asignados: muévelos antes de desactivarla.');
+      if (!data.active && (await this.d.persistence.examAssignment.count({ where: { roomId: id } }))) throw businessRule('ROOM_IN_USE', 'El aula tiene postulantes asignados: muévelos antes de desactivarla.');
     }
-    const r = id ? await this.d.db.room.update({ where: { id }, data }) : await this.d.db.room.create({ data });
+    const r = id ? await this.d.persistence.room.update({ where: { id }, data }) : await this.d.persistence.room.create({ data });
     await this.d.audit.record({ actorUserId: actorId, action: id ? 'room.updated' : 'room.created', resourceType: 'room', resourceId: r.id, after: { code: r.code, capacity: r.capacity, accessible: r.accessible }, ...meta });
     return this.venues();
   }
@@ -290,7 +290,7 @@ export class ExamService {
   async distribute(id: string, reason: string | undefined, actorId: string, meta: RequestMeta) {
     const e = await this.requireExam(id);
     if (e.status === 'FINALIZADO') throw businessRule('EXAM_FINISHED', 'La asistencia del examen ya se cerró.');
-    if (await this.d.db.examAssignment.count({ where: { examId: id, attendance: { not: 'PENDIENTE' } } })) {
+    if (await this.d.persistence.examAssignment.count({ where: { examId: id, attendance: { not: 'PENDIENTE' } } })) {
       throw businessRule('ATTENDANCE_STARTED', 'Ya se registró asistencia: usa el cambio de aula individual.');
     }
     const visible = this.isVisible(e);
@@ -300,9 +300,9 @@ export class ExamService {
     const started = Date.now();
     const [people, links, requests, old] = await Promise.all([
       this.d.inscriptions.eligibleFor(e.callCode, e.modalities),
-      this.d.db.examRoom.findMany({ where: { examId: id }, include: { room: true } }),
-      this.d.db.accommodationRequest.findMany({ where: { examId: id } }),
-      this.d.db.examAssignment.findMany({ where: { examId: id } }),
+      this.d.persistence.examRoom.findMany({ where: { examId: id }, include: { room: true } }),
+      this.d.persistence.accommodationRequest.findMany({ where: { examId: id } }),
+      this.d.persistence.examAssignment.findMany({ where: { examId: id } }),
     ]);
     if (!people.length) throw businessRule('NO_ELIGIBLE', 'Aún no hay postulantes aptos para este examen.');
     const needs = new Set(requests.map((r) => r.applicantCode));
@@ -319,7 +319,7 @@ export class ExamService {
     const byPerson = new Map(people.map((p) => [p.applicantCode, p]));
     const roomLabel = new Map(links.map((l) => [l.roomId, `${l.room.building}, piso ${l.room.floor}, aula ${l.room.code} (${l.room.gate})`]));
     const why = reason?.trim() || `Distribución automática v${version}`;
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       // Asientos temporales negativos para reordenar sin chocar con la restricción única (aula, asiento).
       await tx.$executeRaw`UPDATE examenes.exam_assignments SET seat = -seat WHERE exam_id = ${id}::uuid`;
       const keep = new Set(result.seats.map((s) => s.applicantCode));
@@ -354,7 +354,7 @@ export class ExamService {
   async confirm(id: string, actorId: string, meta: RequestMeta) {
     const e = await this.requireExam(id);
     if (e.status !== 'DISTRIBUIDO') throw businessRule('NOT_DISTRIBUTED', e.status === 'PROGRAMADO' ? 'Primero genera la distribución.' : 'La distribución ya está confirmada.');
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.exam.update({ where: { id }, data: { status: 'CONFIRMADO', confirmedAt: this.d.clock.now() } });
       await this.d.audit.record({ actorUserId: actorId, action: 'exam.confirmed', resourceType: 'exam', resourceId: id, after: { version: e.distributionVersion, publishAt: iso(e.publishAt) }, ...meta }, tx);
     });
@@ -364,17 +364,17 @@ export class ExamService {
   /** Historia 6: cambio de aula autorizado de un postulante, con historial y aviso (RF-08.09). */
   async move(id: string, applicantCode: string, roomId: string, reason: string, actorId: string, meta: RequestMeta) {
     const e = await this.requireExam(id);
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId: id, applicantCode } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId: id, applicantCode } } });
     if (!a) throw notFound('El postulante no tiene aula en este examen.');
     if (a.roomId === roomId) throw businessRule('SAME_ROOM', 'El postulante ya está en esa aula.');
-    const link = await this.d.db.examRoom.findUnique({ where: { examId_roomId: { examId: id, roomId } }, include: { room: true } });
+    const link = await this.d.persistence.examRoom.findUnique({ where: { examId_roomId: { examId: id, roomId } }, include: { room: true } });
     if (!link) throw validationError('El aula no está habilitada para este examen.', [{ field: 'roomId', issue: 'no habilitada' }]);
-    const taken = new Set((await this.d.db.examAssignment.findMany({ where: { examId: id, roomId }, select: { seat: true } })).map((s) => s.seat));
+    const taken = new Set((await this.d.persistence.examAssignment.findMany({ where: { examId: id, roomId }, select: { seat: true } })).map((s) => s.seat));
     let seat = 1;
     while (taken.has(seat)) seat++;
     if (seat > link.room.capacity) throw businessRule('ROOM_FULL', `El aula ${link.room.code} está llena.`);
     const person = await this.d.inscriptions.examContext(applicantCode);
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.examAssignment.update({ where: { id: a.id }, data: { roomId, seat } });
       await tx.assignmentChange.create({ data: { assignmentId: a.id, fromRoomId: a.roomId, toRoomId: roomId, reason: reason.trim(), actorId } });
       await this.d.audit.record({ actorUserId: actorId, action: 'exam.assignment_moved', resourceType: 'exam_assignment', resourceId: applicantCode, before: { roomId: a.roomId, seat: a.seat }, after: { roomId, seat, reason }, ...meta }, tx);
@@ -392,7 +392,7 @@ export class ExamService {
   async assignments(id: string, filter: { roomId?: string | undefined; q?: string | undefined }) {
     const e = await this.requireExam(id);
     const [rows, people] = await Promise.all([
-      this.d.db.examAssignment.findMany({ where: { examId: id, ...(filter.roomId ? { roomId: filter.roomId } : {}) }, include: { room: true }, orderBy: [{ room: { code: 'asc' } }, { seat: 'asc' }] }),
+      this.d.persistence.examAssignment.findMany({ where: { examId: id, ...(filter.roomId ? { roomId: filter.roomId } : {}) }, include: { room: true }, orderBy: [{ room: { code: 'asc' } }, { seat: 'asc' }] }),
       this.d.inscriptions.eligibleFor(e.callCode, e.modalities),
     ]);
     const who = new Map(people.map((p) => [p.applicantCode, p]));
@@ -411,7 +411,7 @@ export class ExamService {
     const call = await this.d.convocatorias.getCurrentCall();
     const [people, rows] = await Promise.all([
       this.d.inscriptions.eligibleFor(e.callCode, e.modalities),
-      this.d.db.examAssignment.findMany({ where: { examId: id }, include: { room: true } }),
+      this.d.persistence.examAssignment.findMany({ where: { examId: id }, include: { room: true } }),
     ]);
     const seat = new Map(rows.map((a) => [a.applicantCode, `${a.room.building} · ${a.room.code}`]));
     const sorted = [...people].sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'));
@@ -427,7 +427,7 @@ export class ExamService {
     await this.d.limiter.consume(`aula:${meta.ipHash}`, 30, 3600);
     const ctx = await this.d.inscriptions.examContext(applicantCode, documentNumber);
     if (!ctx) throw notFound('Datos no encontrados. Revisa tu número de documento y tu código de postulante.');
-    const exam = (await this.d.db.exam.findMany({ where: { callCode: ctx.callCode } })).find((x) => x.modalities.includes(ctx.modality)) ?? null;
+    const exam = (await this.d.persistence.exam.findMany({ where: { callCode: ctx.callCode } })).find((x) => x.modalities.includes(ctx.modality)) ?? null;
     return { ctx, exam };
   }
 
@@ -435,7 +435,7 @@ export class ExamService {
     const { ctx, exam } = await this.applicant(documentNumber, applicantCode, meta);
     const base = { applicantCode: ctx.applicantCode, fullName: ctx.fullName, program: ctx.program, modality: MODALITY_LABEL[ctx.modality] ?? ctx.modality };
     if (!exam) return { ...base, state: 'NO_EXAM' as const, message: 'Tu modalidad no rinde examen en este proceso.' };
-    const request = await this.d.db.accommodationRequest.findUnique({ where: { applicantCode } });
+    const request = await this.d.persistence.accommodationRequest.findUnique({ where: { applicantCode } });
     const examPart = {
       exam: {
         name: exam.name, date: iso(exam.entryOpensAt), entryOpensAt: iso(exam.entryOpensAt), entryClosesAt: iso(exam.entryClosesAt),
@@ -451,7 +451,7 @@ export class ExamService {
     if (!this.isVisible(exam)) {
       return { ...base, ...examPart, state: 'NOT_PUBLISHED' as const, message: `Tu aula se publica el ${longDate(exam.publishAt)} a las ${hour(exam.publishAt)}.` };
     }
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
     if (!a) return { ...base, ...examPart, state: 'NOT_ASSIGNED' as const, message: 'No figuras en la relación de aptos de este examen. Comunícate de inmediato con la Dirección de Admisión.' };
     return { ...base, ...examPart, state: 'ASSIGNED' as const, message: null, room: { ...roomInfo(a.room), seat: a.seat } };
   }
@@ -460,7 +460,7 @@ export class ExamService {
   async slip(documentNumber: string, applicantCode: string, meta: RequestMeta) {
     const { ctx, exam } = await this.applicant(documentNumber, applicantCode, meta);
     if (!exam || ctx.status !== 'APTA' || !this.isVisible(exam)) throw businessRule('SLIP_NOT_AVAILABLE', 'Tu ficha de examen estará disponible cuando se publique tu aula.');
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
     if (!a) throw businessRule('SLIP_NOT_AVAILABLE', 'No figuras en la relación de aptos de este examen.');
     const [call, photo, qr] = await Promise.all([
       this.d.convocatorias.getCurrentCall(),
@@ -481,7 +481,7 @@ export class ExamService {
     const now = this.d.clock.now();
     if (now >= exam.entryOpensAt) throw businessRule('EXAM_STARTED', 'El examen ya empezó: acércate al personal de la puerta.');
     const late = now.getTime() > exam.entryOpensAt.getTime() - ACCOMMODATION_HOURS * 3600_000;
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.accommodationRequest.upsert({
         where: { applicantCode }, create: { applicantCode, examId: exam.id, needs: needs.trim(), late }, update: { needs: needs.trim(), late, examId: exam.id },
       });
@@ -494,10 +494,10 @@ export class ExamService {
   async roomFor(applicantCode: string) {
     const ctx = await this.d.inscriptions.examContext(applicantCode);
     if (!ctx) return null;
-    const exam = (await this.d.db.exam.findMany({ where: { callCode: ctx.callCode } })).find((x) => x.modalities.includes(ctx.modality));
+    const exam = (await this.d.persistence.exam.findMany({ where: { callCode: ctx.callCode } })).find((x) => x.modalities.includes(ctx.modality));
     if (!exam) return { publicada: false, detalle: 'Tu modalidad no rinde examen en este proceso.' };
     if (!this.isVisible(exam)) return { publicada: false, detalle: `Se publica el ${longDate(exam.publishAt)} a las ${hour(exam.publishAt)}.` };
-    const a = await this.d.db.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
+    const a = await this.d.persistence.examAssignment.findUnique({ where: { examId_applicantCode: { examId: exam.id, applicantCode } }, include: { room: { include: { venue: true } } } });
     if (!a) return { publicada: true, detalle: 'No figuras en la relación de aptos de este examen; comunícate con la Dirección de Admisión.' };
     return {
       publicada: true,
@@ -508,18 +508,18 @@ export class ExamService {
   // ── Fuentes para M11 y M09 ─────────────────────────────────────────
   /** RF-11.06: exámenes cuya distribución ya es visible y aún no se avisó. */
   async roomNotices() {
-    const exams = await this.d.db.exam.findMany({ where: { status: { in: ['CONFIRMADO', 'FINALIZADO'] }, publishAt: { lte: this.d.clock.now() }, roomsNotifiedAt: null } });
+    const exams = await this.d.persistence.exam.findMany({ where: { status: { in: ['CONFIRMADO', 'FINALIZADO'] }, publishAt: { lte: this.d.clock.now() }, roomsNotifiedAt: null } });
     return Promise.all(exams.map(async (e) => ({ examId: e.id, exam: e.name, people: await this.assignedPeople(e) })));
   }
 
   async markRoomsNotified(examId: string) {
-    await this.d.db.exam.update({ where: { id: examId }, data: { roomsNotifiedAt: this.d.clock.now() } });
+    await this.d.persistence.exam.update({ where: { id: examId }, data: { roomsNotifiedAt: this.d.clock.now() } });
   }
 
   /** H3-2 de la spec 010: exámenes que empiezan dentro de `withinHours`, con sus asignados. */
   async examsSoon(withinHours: number) {
     const now = this.d.clock.now();
-    const exams = await this.d.db.exam.findMany({ where: { status: { in: ['CONFIRMADO'] }, entryOpensAt: { gt: now, lte: new Date(now.getTime() + withinHours * 3600_000) } } });
+    const exams = await this.d.persistence.exam.findMany({ where: { status: { in: ['CONFIRMADO'] }, entryOpensAt: { gt: now, lte: new Date(now.getTime() + withinHours * 3600_000) } } });
     return Promise.all(exams.map(async (e) => ({
       examId: e.id, exam: e.name, opens: e.entryOpensAt, closes: e.entryClosesAt,
       bring: (e.instructions as ExamInfo['instructions']).llevar, people: await this.assignedPeople(e),
@@ -529,7 +529,7 @@ export class ExamService {
   /** M09: lo que necesita la calificación de un examen (estructura, puntajes y asistencia). */
   async gradingContext(id: string) {
     const e = await this.requireExam(id);
-    const rows = await this.d.db.examAssignment.findMany({ where: { examId: id }, select: { applicantCode: true, attendance: true } });
+    const rows = await this.d.persistence.examAssignment.findMany({ where: { examId: id }, select: { applicantCode: true, attendance: true } });
     return {
       id: e.id, code: e.code, name: e.name, callCode: e.callCode, modalities: e.modalities, closedAt: e.attendanceClosedAt,
       structure: e.structure as { conocimientos: number; aptitudVocacional: number; actitudPersonal: number },
@@ -549,11 +549,11 @@ export class ExamService {
 
   async examList() {
     const call = await this.d.convocatorias.getCurrentCall();
-    return (await this.d.db.exam.findMany({ where: { callCode: call.code }, orderBy: { entryOpensAt: 'asc' } })).map((e) => ({ id: e.id, code: e.code, name: e.name, modalities: e.modalities, status: e.status, date: e.entryOpensAt }));
+    return (await this.d.persistence.exam.findMany({ where: { callCode: call.code }, orderBy: { entryOpensAt: 'asc' } })).map((e) => ({ id: e.id, code: e.code, name: e.name, modalities: e.modalities, status: e.status, date: e.entryOpensAt }));
   }
 
   private async assignedPeople(e: ExamRow) {
-    const codes = new Set((await this.d.db.examAssignment.findMany({ where: { examId: e.id }, select: { applicantCode: true } })).map((a) => a.applicantCode));
+    const codes = new Set((await this.d.persistence.examAssignment.findMany({ where: { examId: e.id }, select: { applicantCode: true } })).map((a) => a.applicantCode));
     return (await this.d.inscriptions.eligibleFor(e.callCode, e.modalities)).filter((p) => codes.has(p.applicantCode));
   }
 }

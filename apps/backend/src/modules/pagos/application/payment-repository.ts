@@ -1,4 +1,4 @@
-import type { Tx } from '../../../shared/db/prisma.js';
+import type { TransactionPort } from '../../../shared/application/persistence-port.js';
 import type { AttemptStatus, OrderStatus } from '../domain/payment-rules.js';
 
 /** Orden de pago de una inscripción (una por código de postulante). */
@@ -80,6 +80,6 @@ export interface PaymentRepository {
   settle(
     attempt: AttemptRecord,
     data: SettleData,
-    then: (outcome: Exclude<SettleOutcome, 'IGNORADO'>, order: OrderRecord, tx: Tx) => Promise<void>,
+    then: (outcome: Exclude<SettleOutcome, 'IGNORADO'>, order: OrderRecord, tx: TransactionPort) => Promise<void>,
   ): Promise<SettleOutcome>;
 }

@@ -1,7 +1,7 @@
 import type { AnnouncementDto, HomeContentDto, PageMeta, QuickAccessKey } from '@sia/contracts';
 import type { Clock } from '../../../shared/clock/clock.js';
 import { toLimaIso } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { MemoryCache } from '../../../shared/cache/memory-cache.js';
 import { stageStatus, type ConvocatoriasQueries } from '../../convocatorias/index.js';
 
@@ -12,7 +12,7 @@ const shortDate = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 export class ConfiguracionQueries {
   /** `cache`: comunicados y contenidos de la portada en memoria (AC01); sin caché por defecto. */
   constructor(
-    private readonly db: Db,
+    private readonly persistence: PersistencePort,
     private readonly convocatorias: ConvocatoriasQueries,
     private readonly clock: Clock,
     private readonly cache = new MemoryCache(0),
@@ -27,8 +27,8 @@ export class ConfiguracionQueries {
     };
     const key = `announcements:${filter.callCode ?? ''}:${filter.type ?? ''}:${filter.section ?? ''}:${filter.page}`;
     const [rows, total] = await this.cache.get(key, () => Promise.all([
-      this.db.announcement.findMany({ where, orderBy: { publishedAt: 'desc' }, skip: (filter.page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-      this.db.announcement.count({ where }),
+      this.persistence.announcement.findMany({ where, orderBy: { publishedAt: 'desc' }, skip: (filter.page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+      this.persistence.announcement.count({ where }),
     ]));
     const data: AnnouncementDto[] = rows.map((a) => ({
       id: a.id, type: a.type, title: a.title, bodyMarkdown: a.bodyMd, affectsSection: a.affectsSection, publishedAt: toLimaIso(a.publishedAt),
@@ -42,10 +42,10 @@ export class ConfiguracionQueries {
     // Solo se guardan los datos leídos; qué accesos están abiertos se calcula siempre con la hora actual.
     const [[slides, authorities, blocks, flags], call] = await Promise.all([
       this.cache.get('home', () => Promise.all([
-        this.db.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
-        this.db.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
-        this.db.contentBlock.findMany(),
-        this.db.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
+        this.persistence.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
+        this.persistence.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
+        this.persistence.contentBlock.findMany(),
+        this.persistence.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
       ])),
       this.convocatorias.getCurrentCall().catch(() => null),
     ]);

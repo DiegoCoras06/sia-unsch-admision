@@ -1,7 +1,7 @@
 import type { Logger } from 'pino';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Tx } from '../../../shared/db/prisma.js';
+import type { TransactionPort } from '../../../shared/application/persistence-port.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { AppError, businessRule, conflict, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
@@ -248,7 +248,7 @@ export class PaymentService {
     };
   }
 
-  private audit(tx: Tx, action: string, attempt: Attempt, after: Record<string, unknown>, meta: RequestMeta | null) {
+  private audit(tx: TransactionPort, action: string, attempt: Attempt, after: Record<string, unknown>, meta: RequestMeta | null) {
     return this.d.audit.record({
       actorUserId: null, action, resourceType: 'payment_attempt', resourceId: attempt.transactionId,
       after: { orderNumber: attempt.orderNumber, ...after },

@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db, Tx } from '../../../shared/db/prisma.js';
+import type { PersistencePort, TransactionPort } from '../../../shared/application/persistence-port.js';
 import { unauthorized } from '../../../shared/http/errors.js';
 import { SESSION_TTL, deviceLabel, evaluateRefresh } from '../domain/session-policy.js';
 
@@ -13,36 +13,36 @@ export interface SessionMeta {
 
 /** Sesiones con refresh token opaco rotativo (ADR-006). */
 export class SessionService {
-  constructor(private readonly db: Db, private readonly clock: Clock) {}
+  constructor(private readonly persistence: PersistencePort, private readonly clock: Clock) {}
 
   /** `newDevice` trae la etiqueta si entra desde un navegador o sistema que esta cuenta nunca usó; en el primer ingreso no avisa. */
   async create(userId: string, type: 'APPLICANT' | 'STAFF', meta: SessionMeta): Promise<{ sessionId: string; refreshToken: string; expiresAt: Date; newDevice: string | null }> {
     const device = deviceLabel(meta.userAgent);
-    const known = await this.db.session.findMany({ where: { userId }, select: { userAgent: true }, distinct: ['userAgent'], take: 100 });
+    const known = await this.persistence.session.findMany({ where: { userId }, select: { userAgent: true }, distinct: ['userAgent'], take: 100 });
     const newDevice = device && known.length && !known.some((s) => deviceLabel(s.userAgent) === device) ? device : null;
-    return { ...(await this.issue(this.db, userId, type, randomUUID(), meta)), newDevice };
+    return { ...(await this.issue(this.persistence, userId, type, randomUUID(), meta)), newDevice };
   }
 
   /** Sesiones abiertas, una por dispositivo: cada rotación deja viva solo la última de su familia. */
   async list(userId: string, currentSessionId: string) {
     const now = this.clock.now();
     const [rows, current] = await Promise.all([
-      this.db.session.findMany({ where: { userId, revokedAt: null, expiresAt: { gt: now } }, orderBy: { lastRefreshedAt: 'desc' } }),
-      this.db.session.findUnique({ where: { id: currentSessionId }, select: { familyId: true } }),
+      this.persistence.session.findMany({ where: { userId, revokedAt: null, expiresAt: { gt: now } }, orderBy: { lastRefreshedAt: 'desc' } }),
+      this.persistence.session.findUnique({ where: { id: currentSessionId }, select: { familyId: true } }),
     ]);
     return rows.map((s) => ({ id: s.familyId, device: deviceLabel(s.userAgent) ?? 'Dispositivo desconocido', lastActiveAt: s.lastRefreshedAt.toISOString(), current: s.familyId === current?.familyId }));
   }
 
   /** Cierra un dispositivo de esta cuenta. Corta la renovación al instante; su token de acceso vence en 15 minutos o menos (ADR-006). */
   async revokeDevice(userId: string, familyId: string): Promise<boolean> {
-    const { count } = await this.db.session.updateMany({ where: { userId, familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: 'USER_REVOKED' } });
+    const { count } = await this.persistence.session.updateMany({ where: { userId, familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: 'USER_REVOKED' } });
     return count > 0;
   }
 
   /** Rota el refresh token. Lanza 401 con el motivo; si detecta reutilización, revoca la familia. */
   async rotate(refreshToken: string, type: 'APPLICANT' | 'STAFF' | null, meta: SessionMeta) {
     const now = this.clock.now();
-    const session = await this.db.session.findUnique({ where: { refreshTokenHash: sha256(refreshToken) } });
+    const session = await this.persistence.session.findUnique({ where: { refreshTokenHash: sha256(refreshToken) } });
     if (!session) throw unauthorized('SESSION_REVOKED', 'Tu sesión ya no es válida. Inicia sesión de nuevo.');
 
     const decision = evaluateRefresh(session, now);
@@ -57,7 +57,7 @@ export class SessionService {
       throw unauthorized(decision.code, message);
     }
 
-    return this.db.$transaction(async (tx) => {
+    return this.persistence.$transaction(async (tx) => {
       const next = await this.issue(tx, session.userId, type ?? 'APPLICANT', session.familyId, meta);
       await tx.session.update({
         where: { id: session.id },
@@ -68,14 +68,14 @@ export class SessionService {
   }
 
   async revoke(refreshToken: string, reason = 'LOGOUT'): Promise<string | null> {
-    const session = await this.db.session.findUnique({ where: { refreshTokenHash: sha256(refreshToken) } });
+    const session = await this.persistence.session.findUnique({ where: { refreshTokenHash: sha256(refreshToken) } });
     if (!session) return null;
-    await this.db.session.updateMany({ where: { id: session.id, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
+    await this.persistence.session.updateMany({ where: { id: session.id, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
     return session.userId;
   }
 
-  async revokeAll(userId: string, reason: string, tx?: Tx): Promise<number> {
-    const { count } = await (tx ?? this.db).session.updateMany({
+  async revokeAll(userId: string, reason: string, tx?: TransactionPort): Promise<number> {
+    const { count } = await (tx ?? this.persistence).session.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: this.clock.now(), revokeReason: reason },
     });
@@ -83,10 +83,10 @@ export class SessionService {
   }
 
   private async revokeFamily(familyId: string, reason: string): Promise<void> {
-    await this.db.session.updateMany({ where: { familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
+    await this.persistence.session.updateMany({ where: { familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
   }
 
-  private async issue(client: Db | Tx, userId: string, type: 'APPLICANT' | 'STAFF', familyId: string, meta: SessionMeta) {
+  private async issue(client: PersistencePort | TransactionPort, userId: string, type: 'APPLICANT' | 'STAFF', familyId: string, meta: SessionMeta) {
     const now = this.clock.now();
     const refreshToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(now.getTime() + SESSION_TTL[type] * 1000);

@@ -46,7 +46,7 @@ export function createPagosModule(deps: {
 
 /** Tesorería: conciliación y anulaciones (spec 005, Historias 4 y 5); app.ts lo monta con la seguridad ya creada. */
 export function createTesoreria(deps: { db: Db; audit: AuditLog; authenticate: RequestHandler; guard: (p: 'pagos.conciliar' | 'pagos.anular') => RequestHandler }) {
-  const service = new TreasuryService(deps);
+  const service = new TreasuryService({ ...deps, persistence: deps.db });
   return { service, router: treasuryRoutes(service, deps) };
 }
 

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import QRCode from 'qrcode';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, notFound } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { RequestMeta } from '../../../shared/audit/audit.js';
@@ -30,7 +30,7 @@ export function shortName(firstNames: string, paternal: string, maternal: string
 export class FichaService {
   constructor(
     private readonly d: {
-      db: Db;
+      persistence: PersistencePort;
       clock: Clock;
       limiter: RateLimiter;
       storage: FileStorage;
@@ -51,7 +51,7 @@ export class FichaService {
   /** Historia 5, escenario 4: descarga con DNI + código; solo con la inscripción Apta (pago confirmado). */
   async pdf(documentNumber: string, applicantCode: string, meta: RequestMeta): Promise<Buffer> {
     await this.d.limiter.consume(`ficha:${meta.ipHash}`, 30, 3600);
-    const row = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const row = await this.d.persistence.application.findUnique({ where: { applicantCode } });
     if (!row || row.documentNumber !== documentNumber.trim().toUpperCase()) throw notFound('No encontramos una inscripción con ese documento y código.');
     if (row.status !== 'APTA') {
       throw businessRule('FICHA_NOT_AVAILABLE', row.status === 'ANULADA'
@@ -146,7 +146,7 @@ export class FichaService {
     const [code, sig] = token.split('.');
     const valid = Boolean(code && sig && /^\d{8}$/.test(code) && this.safeEqual(sig, this.sign(code)));
     if (!valid) return { valid: false as const, reason: 'El código QR no corresponde a una ficha emitida por la UNSCH.' };
-    const row = await this.d.db.application.findUnique({ where: { applicantCode: code } });
+    const row = await this.d.persistence.application.findUnique({ where: { applicantCode: code } });
     if (!row) return { valid: false as const, reason: 'La ficha no existe.' };
     if (row.status !== 'APTA') {
       return { valid: false as const, reason: row.status === 'ANULADA' ? 'La inscripción fue anulada: la ficha no es válida.' : 'La inscripción aún no está habilitada.' };

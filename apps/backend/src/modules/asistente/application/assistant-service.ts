@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Logger } from 'pino';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import { LIMITS, NO_INFO_REPLY, SUGGESTIONS, SYSTEM_PROMPT, asksForHuman, maskPersonal } from '../domain/assistant-rules.js';
@@ -22,7 +22,7 @@ export interface AssistantReply {
 export class AssistantService {
   constructor(
     private readonly d: {
-      db: Db;
+      persistence: PersistencePort;
       clock: Clock;
       limiter: RateLimiter;
       audit: AuditLog;
@@ -75,13 +75,13 @@ export class AssistantService {
 
     const applicantCode = this.verifyPass(input.accessToken);
     const conversation = input.conversationId
-      ? await this.d.db.chatConversation.findUnique({ where: { id: input.conversationId } })
+      ? await this.d.persistence.chatConversation.findUnique({ where: { id: input.conversationId } })
       : null;
     if (input.conversationId && !conversation) throw notFound('La conversación ya no existe. Empieza una nueva.');
-    const conv = conversation ?? (await this.d.db.chatConversation.create({ data: {} }));
-    if (applicantCode && !conv.identified) await this.d.db.chatConversation.update({ where: { id: conv.id }, data: { identified: true } });
+    const conv = conversation ?? (await this.d.persistence.chatConversation.create({ data: {} }));
+    if (applicantCode && !conv.identified) await this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { identified: true } });
 
-    const history = await this.d.db.chatMessage.findMany({
+    const history = await this.d.persistence.chatMessage.findMany({
       where: { conversationId: conv.id },
       orderBy: { createdAt: 'desc' },
       take: LIMITS.historyMessages,
@@ -105,15 +105,15 @@ export class AssistantService {
 
     const noInfo = outcome.empty || outcome.reply === NO_INFO_REPLY;
     const failedTurns = noInfo ? conv.failedTurns + 1 : conv.failedTurns;
-    await this.d.db.$transaction([
-      this.d.db.chatMessage.create({ data: { conversationId: conv.id, role: 'user', content: masked, mode: outcome.mode } }),
-      this.d.db.chatMessage.create({
+    await this.d.persistence.$transaction([
+      this.d.persistence.chatMessage.create({ data: { conversationId: conv.id, role: 'user', content: masked, mode: outcome.mode } }),
+      this.d.persistence.chatMessage.create({
         data: {
           conversationId: conv.id, role: 'assistant', content: outcome.reply.slice(0, 4000), mode: outcome.mode,
           tools: outcome.tools, tokensIn: outcome.tokensIn, tokensOut: outcome.tokensOut,
         },
       }),
-      this.d.db.chatConversation.update({ where: { id: conv.id }, data: { failedTurns } }),
+      this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { failedTurns } }),
     ]);
     await this.bumpUsage({
       requests: 1, aiReplies: outcome.mode === 'ia' ? 1 : 0, tokensIn: outcome.tokensIn, tokensOut: outcome.tokensOut, costUsd: outcome.costUsd,
@@ -131,7 +131,7 @@ export class AssistantService {
 
   /** Historia 3: crea un caso de atención con la conversación enmascarada (RF-10.10). */
   async handoff(input: { conversationId: string; name: string; email: string; note?: string | undefined }, meta: RequestMeta) {
-    const conv = await this.d.db.chatConversation.findUnique({
+    const conv = await this.d.persistence.chatConversation.findUnique({
       where: { id: input.conversationId },
       include: { messages: { orderBy: { createdAt: 'asc' }, take: 40 } },
     });
@@ -140,7 +140,7 @@ export class AssistantService {
     const transcript = conv.messages.map((m) => `${m.role === 'user' ? 'Postulante' : 'Asistente'}: ${m.content}`).join('\n');
     const message = [`Derivado desde el asistente virtual.${input.note ? ` Nota: ${maskPersonal(input.note)}` : ''}`, '', transcript].join('\n').slice(0, 1900);
     const caseNumber = await this.d.support.createCase({ name: input.name, email: input.email, message }, meta.ipHash);
-    await this.d.db.chatConversation.update({ where: { id: conv.id }, data: { handedOff: true, caseNumber } });
+    await this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { handedOff: true, caseNumber } });
     await this.bumpUsage({ handoffs: 1 });
     return { caseNumber };
   }
@@ -148,14 +148,14 @@ export class AssistantService {
   /** RF-10.11: borra conversaciones más antiguas que la política de retención. */
   async purgeExpired(): Promise<number> {
     const limit = new Date(this.d.clock.now().getTime() - (await this.d.retentionDays()) * 86_400_000);
-    const r = await this.d.db.chatConversation.deleteMany({ where: { updatedAt: { lt: limit } } });
+    const r = await this.d.persistence.chatConversation.deleteMany({ where: { updatedAt: { lt: limit } } });
     return r.count;
   }
 
   /** RF-10.15 / RF-12.10: consumo de los últimos días. */
   async usage(days = 14) {
     const since = new Date(this.today().getTime() - (days - 1) * 86_400_000);
-    const rows = await this.d.db.chatUsageDaily.findMany({ where: { day: { gte: since } }, orderBy: { day: 'asc' } });
+    const rows = await this.d.persistence.chatUsageDaily.findMany({ where: { day: { gte: since } }, orderBy: { day: 'asc' } });
     return rows.map((r) => ({ ...r, day: r.day.toISOString().slice(0, 10), costUsd: Number(r.costUsd) }));
   }
 
@@ -195,13 +195,13 @@ export class AssistantService {
 
   private async withinBudget(): Promise<boolean> {
     if (this.d.dailyBudgetUsd <= 0) return false;
-    const row = await this.d.db.chatUsageDaily.findUnique({ where: { day: this.today() } });
+    const row = await this.d.persistence.chatUsageDaily.findUnique({ where: { day: this.today() } });
     return !row || Number(row.costUsd) < this.d.dailyBudgetUsd;
   }
 
   private async bumpUsage(delta: Partial<Record<'requests' | 'aiReplies' | 'tokensIn' | 'tokensOut' | 'errors' | 'handoffs' | 'costUsd', number>>) {
     const inc = Object.fromEntries(Object.entries(delta).filter(([, v]) => v).map(([k, v]) => [k, { increment: v }]));
-    await this.d.db.chatUsageDaily.upsert({
+    await this.d.persistence.chatUsageDaily.upsert({
       where: { day: this.today() },
       create: { day: this.today(), ...Object.fromEntries(Object.entries(delta).map(([k, v]) => [k, v ?? 0])) },
       update: inc,

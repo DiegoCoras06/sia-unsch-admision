@@ -26,7 +26,7 @@ export function createResultadosModule(deps: {
   secret: string;
   frontendOrigin: string;
 }) {
-  const service = new ResultsService(deps);
+  const service = new ResultsService({ ...deps, persistence: deps.db });
   return { service, router: resultadosRoutes(service, deps) };
 }
 

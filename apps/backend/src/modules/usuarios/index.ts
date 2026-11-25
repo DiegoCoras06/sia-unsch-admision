@@ -54,10 +54,10 @@ export function createUsuariosModule(deps: {
 }) {
   const identity = deps.identityProvider ?? new MockIdentityProvider(10_000, () => deps.clock.now());
   const hasher = new Argon2Hasher();
-  const auth = new AuthService({ ...deps, identity, hasher });
+  const auth = new AuthService({ ...deps, persistence: deps.db, identity, hasher });
   const profile = new ProfileService(deps.db, deps.clock, deps.audit, deps.outbox, deps.hmacSecret, identity.simulated);
-  const staffAuth = new StaffAuthService({ ...deps, hasher, secrets: new SecretBox(deps.staffSecretKey), totp: totpService });
-  const staffAdmin = new StaffAdmin({ db: deps.db, audit: deps.audit, hasher, sessions: deps.sessions });
+  const staffAuth = new StaffAuthService({ ...deps, persistence: deps.db, hasher, secrets: new SecretBox(deps.staffSecretKey), totp: totpService });
+  const staffAdmin = new StaffAdmin({ persistence: deps.db, audit: deps.audit, hasher, sessions: deps.sessions });
   subscribeAccountNotifications(deps.outbox, deps.email, deps.frontendOrigin);
   return {
     auth, profile, staffAuth, staffAdmin, hasher,

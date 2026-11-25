@@ -19,7 +19,7 @@ export function createNotificacionesModule(deps: {
   guard: (permission: 'notificaciones.gestionar') => RequestHandler;
   frontendOrigin: string;
 }) {
-  const service = new NotificationService(deps);
+  const service = new NotificationService({ ...deps, persistence: deps.db });
   return { service, router: notificacionesRoutes(service, deps) };
 }
 

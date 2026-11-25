@@ -2,7 +2,7 @@ import { createHmac, randomInt } from 'node:crypto';
 import type { ActivityDto, ProfileDto, UpdateProfileRequestDto } from '@sia/contracts';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
 import type { Clock } from '../../../shared/clock/clock.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import type { Outbox } from '../../../shared/events/outbox.js';
 import { businessRule, conflict, notFound } from '../../../shared/http/errors.js';
 import { EDITABLE_FIELDS, IDENTITY_FIELDS, normalizeEmail } from '../domain/account-rules.js';
@@ -29,7 +29,7 @@ const describeDevice = (ua: string | null) =>
 /** Spec 002, Historias 5 y 6. */
 export class ProfileService {
   constructor(
-    private readonly db: Db,
+    private readonly persistence: PersistencePort,
     private readonly clock: Clock,
     private readonly audit: AuditLog,
     private readonly outbox: Outbox,
@@ -38,7 +38,7 @@ export class ProfileService {
   ) {}
 
   async get(userId: string): Promise<ProfileDto> {
-    const user = await this.db.user.findUnique({ where: { id: userId }, include: { applicant: true } });
+    const user = await this.persistence.user.findUnique({ where: { id: userId }, include: { applicant: true } });
     if (!user?.applicant) throw notFound('Perfil no encontrado.');
     const a = user.applicant;
     return {
@@ -66,17 +66,17 @@ export class ProfileService {
     if (forbiddenFields.length) {
       throw businessRule('IDENTITY_FIELDS_NOT_EDITABLE', 'Tus nombres y documento provienen del registro de identidad. Para corregirlos, presenta una solicitud a la Dirección de Admisión.', { fields: forbiddenFields });
     }
-    const user = await this.db.user.findUnique({ where: { id: userId }, include: { applicant: true } });
+    const user = await this.persistence.user.findUnique({ where: { id: userId }, include: { applicant: true } });
     if (!user?.applicant) throw notFound('Perfil no encontrado.');
 
     const changed = Object.keys(input).filter((k) => k !== 'email');
     const newEmail = input.email ? normalizeEmail(input.email) : null;
     const emailChange = newEmail && newEmail !== user.email ? newEmail : null;
-    if (emailChange && (await this.db.user.findUnique({ where: { email: emailChange } }))) {
+    if (emailChange && (await this.persistence.user.findUnique({ where: { email: emailChange } }))) {
       throw conflict('EMAIL_ALREADY_USED', 'Ese correo ya está registrado en otra cuenta.');
     }
 
-    await this.db.$transaction(async (tx) => {
+    await this.persistence.$transaction(async (tx) => {
       if (changed.length) {
         await tx.applicant.update({
           where: { userId },
@@ -109,7 +109,7 @@ export class ProfileService {
   }
 
   async activity(userId: string, page: number): Promise<ActivityDto[]> {
-    const events = await this.db.auditEvent.findMany({
+    const events = await this.persistence.auditEvent.findMany({
       where: { actorUserId: userId },
       orderBy: { occurredAt: 'desc' },
       skip: (page - 1) * 20,

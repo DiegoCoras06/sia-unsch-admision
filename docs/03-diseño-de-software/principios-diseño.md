@@ -96,7 +96,7 @@ flowchart TB
 | **I - Segregación de Interfaces (ISP)** | Dominio | Cada interfaz contiene únicamente las operaciones necesarias: `InscripcionRepository` permite guardar y consultar inscripciones, mientras que `ElegibilidadPort` verifica las condiciones de inscripción. | `inscripcion-repository.ts`, `elegibilidad-port.ts` |
 | **D - Inversión de Dependencias (DIP)** | Aplicación e Infraestructura | El caso de uso depende de interfaces y no conoce directamente PostgreSQL ni los módulos externos. Las implementaciones concretas se conectan mediante inyección de dependencias. | `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts` |
 
-### 3.1. Estado en el código (02/11/2026)
+### 3.1. Estado en el código (25/11/2026)
 
 Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`, `InscripcionRepository`, `ElegibilidadPort`, `PostgresInscripcionRepository`, `InscripcionOrdinariaModule`) **no existen con esos nombres**. En el código, el módulo de inscripciones agrupa sus casos de uso en `InscriptionService` y la referencia más completa de SOLID es el módulo **Pagos**. Rutas relativas a `apps/backend/src/`.
 
@@ -106,9 +106,9 @@ Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`,
 | **O** | Para agregar Yape con Culqi se creó un adaptador nuevo (`CulqiYapeGateway`) sin modificar las reglas de pago con tarjeta. | `modules/pagos/infrastructure/culqi-gateway.ts` | ✅ |
 | **L** | `CulqiGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real. | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts` | ✅ |
 | **I** | `PaymentService` no depende de todo el módulo de inscripciones, sino de una interfaz con un solo método: `inscriptions: { paymentContext(...) }`. | `modules/pagos/application/payment-service.ts` | ✅ |
-| **D** | Los servicios reciben puertos (`PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. **Desviación:** también reciben el cliente de Prisma (`db`) y consultan la base de datos directamente; solo Convocatorias tiene un repositorio. | `modules/*/index.ts`, `modules/convocatorias/infrastructure/prisma-convocatorias-repository.ts` | 🟡 |
+| **D** | Los servicios reciben puertos (`PersistencePort`, `PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. Prisma queda detrás de la frontera de compatibilidad y se inyecta únicamente desde la raíz de composición. | `shared/application/persistence-port.ts`, `modules/*/index.ts` | ✅ |
 
-**Pendiente para cumplir el diseño objetivo:** extraer `InscripcionRepository` y `PagoRepository` (interfaces en `domain/`, implementación con Prisma en `infrastructure/`) para que los servicios de Inscripciones y Pagos no dependan de Prisma.
+Inscripciones y Pagos conservan además repositorios específicos y unidad de trabajo. La prueba de arquitectura impide que cualquier archivo de `application/` vuelva a importar Prisma, código generado, `infrastructure/` o `presentation/`.
 
 ## 4. Cómo funciona cada principio
 

@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import type { AuditLog, RequestMeta } from '../../../shared/audit/audit.js';
-import type { Db } from '../../../shared/db/prisma.js';
+import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { businessRule, notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
 import { presignApplicantUpload, readApplicantUpload } from '../../../shared/storage/uploads.js';
 
-type AppRow = NonNullable<Awaited<ReturnType<Db['application']['findUnique']>>>;
+type AppRow = NonNullable<Awaited<ReturnType<PersistencePort['application']['findUnique']>>>;
 
 /** RF-03.05: documentos que se adjuntan a la inscripción además de la fotografía. */
 const KINDS: { kind: string; name: string; hint: string; applies: (a: AppRow) => boolean; required: (a: AppRow) => boolean }[] = [
@@ -23,7 +23,7 @@ const TYPES: Record<string, (b: Buffer) => boolean> = {
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export class ApplicationDocuments {
-  constructor(private readonly d: { db: Db; audit: AuditLog; storage: FileStorage; limiter: RateLimiter }) {}
+  constructor(private readonly d: { persistence: PersistencePort; audit: AuditLog; storage: FileStorage; limiter: RateLimiter }) {}
 
   /** Postulante, con DNI + código: qué documentos le corresponden y cuáles ya subió. */
   async list(documentNumber: string, applicantCode: string, meta: RequestMeta) {
@@ -69,11 +69,11 @@ export class ApplicationDocuments {
     const sha256 = createHash('sha256').update(content).digest('hex');
     const ext = mime === 'application/pdf' ? 'pdf' : mime === 'image/png' ? 'png' : 'jpg';
     const fileKey = `inscripciones/${app.applicantCode}/${def.kind}-${sha256.slice(0, 12)}.${ext}`;
-    const before = await this.d.db.applicationDocument.findUnique({ where: { applicantCode_kind: { applicantCode: app.applicantCode, kind: def.kind } } });
+    const before = await this.d.persistence.applicationDocument.findUnique({ where: { applicantCode_kind: { applicantCode: app.applicantCode, kind: def.kind } } });
     await this.d.storage.put(fileKey, content, mime);
     if (input.uploadKey) await this.d.storage.delete(input.uploadKey).catch(() => undefined);
     const data = { fileKey, fileName: input.fileName.slice(0, 160), mimeType: mime, sizeBytes: content.length, sha256 };
-    await this.d.db.$transaction(async (tx) => {
+    await this.d.persistence.$transaction(async (tx) => {
       await tx.applicationDocument.upsert({
         where: { applicantCode_kind: { applicantCode: app.applicantCode, kind: def.kind } },
         create: { applicantCode: app.applicantCode, kind: def.kind, ...data }, update: { ...data, uploadedAt: new Date() },
@@ -86,13 +86,13 @@ export class ApplicationDocuments {
 
   /** Panel: documentos adjuntos de una inscripción. */
   async forStaff(applicantCode: string) {
-    const app = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const app = await this.d.persistence.application.findUnique({ where: { applicantCode } });
     if (!app) throw notFound('No existe esa inscripción.');
     return this.view(app);
   }
 
   async file(applicantCode: string, kind: string): Promise<{ content: Buffer; mimeType: string; fileName: string } | { url: string }> {
-    const row = await this.d.db.applicationDocument.findUnique({ where: { applicantCode_kind: { applicantCode, kind } } });
+    const row = await this.d.persistence.applicationDocument.findUnique({ where: { applicantCode_kind: { applicantCode, kind } } });
     // Con S3, un enlace temporal: el archivo no pasa por la Lambda (límite de 6 MB en la respuesta).
     if (row && this.d.storage.presignDownload) return { url: await this.d.storage.presignDownload(row.fileKey, row.fileName, row.mimeType) };
     const content = row ? await this.d.storage.get(row.fileKey) : null;
@@ -108,13 +108,13 @@ export class ApplicationDocuments {
   }
 
   private async locate(documentNumber: string, applicantCode: string) {
-    const app = await this.d.db.application.findUnique({ where: { applicantCode } });
+    const app = await this.d.persistence.application.findUnique({ where: { applicantCode } });
     if (!app || app.documentNumber !== documentNumber.trim().toUpperCase()) throw notFound('No encontramos una inscripción con ese documento y código. Revisa los datos.');
     return app;
   }
 
   private async view(app: AppRow) {
-    const rows = new Map((await this.d.db.applicationDocument.findMany({ where: { applicantCode: app.applicantCode } })).map((r) => [r.kind, r]));
+    const rows = new Map((await this.d.persistence.applicationDocument.findMany({ where: { applicantCode: app.applicantCode } })).map((r) => [r.kind, r]));
     return KINDS.filter((k) => k.applies(app)).map((k) => {
       const r = rows.get(k.kind);
       return {
