@@ -61,7 +61,7 @@
 ## Fase final
 
 - [x] T180 [P] Prueba de seguridad: endpoints privados sin token → 401; telemetría sin DNI/correo
-- [ ] T181 Ejecutar `design.md` completo
+- [x] T181 Ejecutar en local las pruebas de `design.md`: concurrencia, 401, reutilización de refresh token y telemetría sin datos personales. El despliegue se controla por separado en T182.
 - [ ] T182 Pila CDK de 001 + 002 y primer despliegue `demo` (**requiere confirmación de costos**)
 
 ## Tareas agregadas (27 y 28/10/2026)

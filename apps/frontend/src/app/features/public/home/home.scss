@@ -1,4 +1,7 @@
 /* Portada: campo guinda con luces y retícula tenue; a la izquierda el proceso, a la derecha la fachada como tarjeta flotante. */
+/* Reserva el espacio final mientras llegan los bloques desde la API y evita CLS. */
+@media (min-width: 961px) { :host { display: block; min-height: 7100px; } }
+
 .hero { position: relative; overflow: hidden; color: #fff; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center;
   gap: clamp(1.5rem, 4vw, 3.5rem); min-height: min(calc(100svh - 6rem), 820px);
   padding: clamp(1rem, 3.5vh, 4rem) max(var(--margin), calc((100vw - var(--max)) / 2 + var(--margin)));

@@ -21,7 +21,9 @@ import { SiteHeader } from './shared/site-header';
       <app-assistant />
     }
   `,
-  styles: `main { display: block; min-height: 60vh; } main:focus { outline: none; }`,
+  // Reserva el alto de la ventana mientras Angular carga una ruta diferida. Así el
+  // pie no aparece dentro del viewport y luego salta varios miles de píxeles (CLS).
+  styles: `main { display: block; min-height: 100vh; } main:focus { outline: none; }`,
 })
 export class App {
   private readonly router = inject(Router);

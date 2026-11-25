@@ -167,11 +167,11 @@ sequenceDiagram
 
 ### Lista de cierre (definición de terminado)
 
-- [ ] Todos los escenarios de `requirements.md` pasan en E2E.
-- [ ] Prueba de concurrencia: 2 registros simultáneos del mismo DNI → 1 cuenta.
-- [ ] Prueba de cada endpoint privado: sin token → 401.
-- [ ] Prueba de reutilización de refresh token → familia revocada.
-- [ ] Búsqueda de DNI y correo en la telemetría: 0 resultados.
+- [x] Todos los escenarios de `requirements.md` pasan en E2E.
+- [x] Prueba de concurrencia: 2 registros simultáneos del mismo DNI → 1 cuenta.
+- [x] Prueba de cada endpoint privado: sin token → 401.
+- [x] Prueba de reutilización de refresh token → familia revocada.
+- [x] Búsqueda de DNI y correo en la telemetría: 0 resultados.
 - [ ] **Primer despliegue en AWS (`demo`)** de 001 + 002 y ejecución de los dos `design.md` contra la URL de CloudFront.
 
 ## 2. Decisiones técnicas (investigación)

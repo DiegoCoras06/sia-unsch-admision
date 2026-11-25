@@ -317,7 +317,7 @@ paths:
                       properties:
                         type: { type: string, enum: [REGLAMENTO, CRONOGRAMA, TASAS, VACANTES, REQUISITOS, TEMARIO, PROGRAMAS, OTRO] }
                         title: { type: string }
-                        url: { type: string, format: uri }
+                        url: { type: string, format: uri-reference }
                         publishedAt: { type: string, format: date-time }
                         sizeBytes: { type: integer }
 

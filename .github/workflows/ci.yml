@@ -33,6 +33,8 @@ jobs:
         run: npm ci
       - name: Compilar contratos
         run: npm run build -w @sia/contracts
+      - name: Revisar fronteras y calidad estatica
+        run: npm run lint
       - name: Revisar tipos del backend
         run: npm run typecheck -w @sia/backend
       - name: Pruebas del backend con cobertura

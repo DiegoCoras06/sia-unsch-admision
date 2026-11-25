@@ -217,7 +217,7 @@ src/
 
 ---
 
-## 9. Estado de cumplimiento de las reglas (02/11/2026)
+## 9. Estado de cumplimiento de las reglas (25/11/2026)
 
 | Regla | Estado |
 |---|---|
@@ -225,7 +225,7 @@ src/
 | 2. Comunicación solo por la API pública (`index.ts`) | ✅ Ningún módulo importa capas internas de otro |
 | 3. Cada módulo usa solo sus tablas | 🟡 Un esquema de PostgreSQL por módulo; `reportes` lee tablas de otros módulos (solo lectura, para los indicadores) y hay algunas lecturas cruzadas, como `inscripciones` sobre resultados |
 | 4. Integraciones con interfaces y adaptadores | ✅ |
-| 5. Clean Architecture por módulo | 🟡 Capas presentes; la persistencia aún no está detrás de repositorios en la mayoría de módulos |
-| 6. Casos de uso dependen de interfaces | 🟡 Sí para los servicios externos; no para la base de datos |
+| 5. Clean Architecture por módulo | ✅ Dominio y aplicación no importan Prisma, Express, presentación ni infraestructura; ESLint y Jest protegen las fronteras |
+| 6. Casos de uso dependen de interfaces | ✅ Servicios externos y persistencia se reciben como puertos/repositorios mediante inyección |
 | 7. Controladores sin acceso directo a datos | ✅ |
 | 8. Integridad e idempotencia en inscripción y pago | ✅ |

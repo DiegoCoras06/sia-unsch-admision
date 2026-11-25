@@ -67,7 +67,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | Los cambios se realizan en el módulo correspondiente, respetando las responsabilidades y contratos internos de los 12 módulos, sin afectar innecesariamente otras funcionalidades. |
 | **Medida** | Las pruebas del módulo modificado y las pruebas de regresión relacionadas deben aprobarse, y el 100 % de las dependencias verificadas debe respetar las reglas arquitectónicas establecidas. |
 | **Verificación** | Revisar el código, ejecutar pruebas automatizadas y analizar las dependencias entre módulos. |
-| **Estado** | 🟡 Parcial. 281 casos de prueba (Jest) aprobados; los módulos se comunican por su `index.ts` y por eventos; ningún controlador accede a la base de datos y ningún módulo importa capas internas de otro. Las reglas de dependencia se comprueban de forma automática en `tests/unit/arquitectura/limites-modulos.test.ts` (12/11/2026): 12 módulos, uso entre módulos solo por `index.ts` (26 importaciones, 0 infracciones tras corregir la de Soporte), dominio sin Prisma, Express ni infraestructura, y aplicación sin Express. Repositorios (13/11/2026): Convocatorias, Inscripciones y Pagos guardan por su repositorio; la prueba de arquitectura impide que `InscriptionService` y `PaymentService` vuelvan a usar Prisma. Pendiente: los demás servicios de aplicación siguen usando Prisma sin repositorio (ver 03, patrones). |
+| **Estado** | ✅ Cumplido. 300 casos de prueba (Jest) aprobados y cobertura de 93.06 % en líneas, 90.19 % en funciones y 77.46 % en ramas (25/11/2026). Los 12 módulos se comunican únicamente por su `index.ts` y por eventos; los casos de uso dependen de puertos/repositorios y no de Prisma. `tests/unit/arquitectura/limites-modulos.test.ts` y la regla personalizada `architecture/boundaries` de ESLint impiden dependencias desde dominio o aplicación hacia Express, Prisma, presentación o infraestructura, así como importaciones internas entre módulos. Lint y revisión estricta de tipos se ejecutan en CI. |
 
 ## EQ-06. Integridad: consistencia de inscripciones y pagos
 
@@ -93,7 +93,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | La interfaz permite completar los datos, adjuntar documentos y realizar pagos de manera comprensible y accesible. |
 | **Medida** | **Propuesta para validar:** al menos el 90 % de los participantes completa las tareas principales sin asistencia, y las páginas cumplen los criterios aplicables de WCAG 2.2 nivel AA (sin fallas graves ni críticas en la revisión automática). |
 | **Verificación** | Realizar pruebas de usabilidad con usuarios representativos y registrar los resultados; ejecutar pruebas de accesibilidad automáticas (axe) y manuales con lector de pantalla. |
-| **Estado** | 🟡 Parcial. Interfaz revisada con las skills de diseño (impeccable, ui-ux-pro-max): pasos de inscripción, resumen de errores, vista de celular, foco visible de dos tonos, bordes de campo con contraste 3:1, etiquetas visibles, errores con `aria-describedby` y objetivos táctiles de 44 px. Verificación automática con axe-core 4.10 (reglas WCAG 2.0, 2.1 y 2.2, niveles A y AA) en 22 páginas del portal y el ingreso del personal (12/11/2026): 0 fallas, tras corregir el acceso con teclado a las tablas con desplazamiento (4 tablas) y el contraste de 5 etiquetas doradas (de 4.46:1 a 5.53:1). Encuesta SUS integrada (13/11/2026): al terminar la inscripción el postulante responde las 10 afirmaciones del System Usability Scale; se guardan sin datos personales (tabla `inscripciones.usability_surveys`) y el inicio del panel muestra el puntaje promedio, la mediana, la calificación (escala de Sauro y Lewis), el promedio por afirmación, el tiempo mediano de inscripción y los comentarios. Meta: promedio de 68 o más. Pruebas: `tests/unit/inscripciones/sus.test.ts`, `tests/integration/usability-survey.test.ts`. Falta recoger las respuestas de participantes reales y la prueba con lector de pantalla. |
+| **Estado** | 🟡 Parcial solo por validación humana. El 25/11/2026 se verificaron automáticamente 22 rutas en móvil (360 px) y escritorio: 44 combinaciones, 0 desbordes, 0 errores JavaScript y 0 violaciones axe WCAG A/AA. El build productivo obtuvo Lighthouse 96 en rendimiento, 100 en accesibilidad y CLS 0.003. Evidencias: `calidad/resultados/2026-11-25-accesibilidad-responsive.md` y `2026-11-25-lighthouse.md`. La encuesta SUS está integrada y probada; falta recoger respuestas de participantes reales y recorrer el flujo con lector de pantalla. |
 
 ## EQ-08. Interoperabilidad: integración con servicios externos
 
@@ -149,12 +149,12 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | EQ-09 | Confiabilidad | Que las fallas no generen pérdidas o duplicaciones y que la información pueda restaurarse. |
 | EQ-10 | Auditabilidad | Que las operaciones críticas puedan rastrearse. |
 
-## Estado de verificación (12/11/2026)
+## Estado de verificación (25/11/2026)
 
 | Estado | Escenarios |
 |---|---|
-| ✅ Cumplido con evidencia | EQ-04, EQ-06, EQ-08, EQ-10 |
-| 🟡 Parcial | EQ-05, EQ-07, EQ-09 |
+| ✅ Cumplido con evidencia | EQ-04, EQ-05, EQ-06, EQ-08, EQ-10 |
+| 🟡 Parcial | EQ-07, EQ-09 |
 | ⏳ Depende del despliegue en AWS (Paso 11) | EQ-02, EQ-03 |
 | 🟡 Cumple con 2000 usuarios en local (cachés de catálogo y contenidos); falta repetirlo desplegado | EQ-01 |
 

@@ -15,7 +15,7 @@
 - [x] T004 Backend: Express 5, Prisma 7, Zod 4, pino, Vitest; scripts `dev`, `build`, `test` — `apps/backend/package.json`
 - [x] T005 PostgreSQL embebido: `db:start`, `db:stop`, `db:setup` (ADR-014) — `apps/backend/scripts/db.ts`
 - [x] T006 Frontend Angular 22 (standalone, SCSS, rutas, sin SSR en servidor) — `apps/frontend/`
-- [ ] T007 [P] ESLint con fronteras de módulos (ADR-002) y Prettier — `/eslint.config.mjs`
+- [x] T007 [P] ESLint con fronteras de módulos (ADR-002) y Prettier — `/eslint.config.mjs`, `/.prettierrc.json`
 
 ## Fase 2 — Base compartida del backend (bloquea a las historias)
 
@@ -78,9 +78,9 @@
 ## Fase final — Pulido
 
 - [x] T080 Sistema de diseño UNSCH: tokens, componentes base, pie "proyecto académico" — `shared/ui/`
-- [ ] T081 [P] Prueba de contrato: respuestas vs `contracts/openapi.yaml`
-- [ ] T082 [P] Verificación en navegador a 360 px y escritorio; revisión de accesibilidad
-- [ ] T083 Ejecutar `design.md` completo
+- [x] T081 [P] Prueba de contrato: 17 respuestas vs `contracts/openapi.yaml` — `tests/integration/openapi-contract.test.ts`
+- [x] T082 [P] Verificación de 22 rutas a 360 px y escritorio; 0 desbordes, 0 errores y 0 violaciones axe — `calidad/resultados/2026-11-25-accesibilidad-responsive.md`
+- [x] T083 Ejecutar la validación técnica de `design.md`: E2E, semilla, contrato, axe y Lighthouse ≥ 90. La revisión independiente queda como aceptación manual.
 
 ## Aclaración 25/10/2026 (FR-014, FR-015)
 

@@ -174,10 +174,10 @@ Como es la primera funcionalidad, `tasks.md` incluirá una fase de preparación 
 
 ### Lista de cierre (definición de terminado)
 
-- [ ] Todos los escenarios de `requirements.md` pasan en E2E (móvil y escritorio).
-- [ ] Prueba de semilla: 40 opciones, 926 ORD, 1803 en total, 100 % de la Tabla 3.
-- [ ] Respuestas conformes a `contracts/openapi.yaml`.
-- [ ] axe sin violaciones graves; Lighthouse ≥ 90 en rendimiento y accesibilidad del inicio.
+- [x] Todos los escenarios de `requirements.md` pasan en E2E (móvil y escritorio).
+- [x] Prueba de semilla: 40 opciones, 926 ORD, 1803 en total, 100 % de la Tabla 3.
+- [x] Respuestas conformes a `contracts/openapi.yaml` (17 verificaciones automatizadas).
+- [x] axe sin violaciones graves; Lighthouse: rendimiento 96 y accesibilidad 100 (`calidad/resultados/2026-11-25-lighthouse.md`).
 - [ ] `design.md` ejecutado completo por otra persona del equipo.
 
 ## 2. Decisiones técnicas (investigación)

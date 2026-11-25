@@ -32,7 +32,7 @@
 - [x] T330 E2E por la interfaz con la pasarela simulada — `scripts/e2e-pago.mjs`
 - [x] T331 Pago de prueba con tarjeta en el sandbox de Izipay micuentaweb: aprobado el 01/11/2026 (pedido 2700005801, VISA 497010…0055), confirmado por consulta `Order/Get` (`confirmedVia = CONSULTA`), inscripción Apta y correos por SES — `scripts/e2e-pago-micuentaweb.mjs`
 - [x] T354 Sin IPN, la aprobación del navegador se ratifica con la pasarela servidor a servidor antes de confirmar; si no se ratifica, el intento sigue «En proceso» (prueba `payments-server-check.test.ts`)
-- [ ] T355 Prueba de la IPN de micuentaweb con `PUBLIC_API_URL` HTTPS (al desplegar en AWS, Paso 11)
+- [x] T355 No aplica: la IPN de Izipay/micuentaweb fue reemplazada por el cargo servidor a servidor de Culqi (ADR-024).
 - [x] T332 Conciliación con Tesorería (RF-05.11) y devoluciones (RF-05.12) — Paso 10, ver abajo
 
 ## Paso 10 — Conciliación y anulaciones
@@ -53,4 +53,4 @@
 - [x] T350 Puerto `YapeGateway` y adaptador `CulqiYapeGateway` con pruebas unitarias
 - [x] T351 Casos de uso `startYape` y `chargeYape`, rutas `/payments/yape/session` y `/payments/yape/charge`, prueba de integración
 - [x] T352 Pestaña Yape en la ventana de pago (Culqi Checkout solo Yape)
-- [ ] T353 Pago de prueba en Culqi con el celular 900 000 001 (requiere `CULQI_PUBLIC_KEY` y `CULQI_SECRET_KEY`)
+- [x] T353 Pago sandbox Culqi/Yape aprobado el 25/11/2026 con el celular 900 000 001; token `ype_test_*`, cargo autorizado y orden `PAGADA` — `calidad/resultados/2026-11-25-culqi-yape.md`

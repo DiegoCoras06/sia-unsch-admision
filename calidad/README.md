@@ -13,7 +13,9 @@ calidad/
 │   ├── escalabilidad.js    AC03: carga escalonada de 10 a 100 usuarios
 │   └── carga-2000.js       AC01 y AC03: carga progresiva de 50 a 2000 usuarios (Sprint 2)
 ├── usabilidad/
-│   └── axe-consola.js      AC07: revisión de accesibilidad para pegar en la consola del navegador
+│   ├── axe-consola.js      AC07: revisión manual para la consola del navegador
+│   ├── verificar-portal.mjs AC07: axe, responsive, desbordes y errores JS en 22 rutas
+│   └── servir-build.mjs    Servidor del build productivo para Lighthouse
 ├── postman/                Verificación funcional de los 12 módulos (colección, entorno y guía)
 └── resultados/             Reportes generados (uno por fecha)
 ```
@@ -46,7 +48,7 @@ Tarda unos 3 a 5 minutos. Si algo falla, el reporte dice qué prueba y en qué a
 | **AC04 Seguridad** | Sin vulnerabilidades altas; acceso por roles (403); doble factor; datos mínimos al asistente | `verificar.mjs` (npm audit y pruebas de seguridad). Opcional: OWASP ZAP (sección 4) | Reporte del día |
 | **AC05 Mantenibilidad** | Los 12 módulos respetan sus límites; sin errores de tipos | `verificar.mjs` (prueba de arquitectura y revisión de tipos) | Reporte del día |
 | **AC06 Integridad** | Sin inscripciones ni pagos duplicados; montos y rankings correctos | `verificar.mjs` (pruebas de inscripción, pagos, tesorería, tasas y resultados) | Reporte del día |
-| **AC07 Usabilidad** | WCAG 2.2 AA sin fallas; puntaje SUS de 68 o más | `usabilidad/axe-consola.js` en cada página, **Lighthouse** (pestaña del mismo nombre en Chrome) y la **encuesta SUS** del panel | Capturas de axe y Lighthouse; puntaje SUS del panel |
+| **AC07 Usabilidad** | WCAG 2.2 AA sin fallas; puntaje SUS de 68 o más | `node calidad/usabilidad/verificar-portal.mjs`, **Lighthouse** y la **encuesta SUS** del panel | Reportes de axe/responsive y Lighthouse; puntaje SUS del panel |
 | **AC08 Interoperabilidad** | RENIEC (APIPerú), Culqi, SES y S3 responden como se espera | `verificar.mjs` (adaptadores) y, con servicios reales, los comandos de la sección 4 | Reporte del día y salida de los comandos |
 | **AC09 Confiabilidad** | Si la base cae, la API responde 503; los eventos se reintentan sin duplicar; se puede restaurar un respaldo | `verificar.mjs` (pruebas de caída y reintentos) y la restauración en AWS (sección 4) | Reporte del día y tiempo de restauración |
 | **AC10 Auditabilidad** | Cada operación crítica queda con responsable y fecha | `verificar.mjs` (pruebas de auditoría) y la pantalla **Auditoría** del panel | Reporte del día y captura del panel |

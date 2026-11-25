@@ -125,8 +125,10 @@ ${a.archivos.map((r) => `- \`tests/${r.archivo}\`: ${r.aprobadas} aprobadas${r.f
 ${a.fallidas.length ? `\nFallidas:\n${a.fallidas.map((f) => `- ${f}`).join('\n')}\n` : ''}`).join('\n')}
 ## Pruebas manuales pendientes
 
-Ver la sección 4 de \`calidad/README.md\`: k6 (AC01 y AC03), axe y Lighthouse por página y encuesta SUS (AC07),
-comandos con servicios reales (AC08) y restauración de respaldo (AC09).
+Ver la sección 4 de \`calidad/README.md\`: repetir k6 contra el despliegue (AC01 y AC03), recoger encuestas SUS y
+recorrer el flujo con lector de pantalla (AC07), y ejecutar una restauración temporal del respaldo de RDS (AC09).
+La validación axe/responsive y Lighthouse está en \`2026-11-25-accesibilidad-responsive.md\` y
+\`2026-11-25-lighthouse.md\`; la prueba sandbox de Culqi/Yape está en \`2026-11-25-culqi-yape.md\`.
 `;
 
 mkdirSync(path.join(root, 'calidad/resultados'), { recursive: true });

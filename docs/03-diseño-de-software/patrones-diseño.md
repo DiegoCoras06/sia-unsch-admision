@@ -31,7 +31,7 @@ Esta tabla muestra los patrones como están **implementados en el código** al 0
 | Adaptador | Pagos → pasarela | El proveedor de pagos tiene su propio protocolo. | Puerto `PaymentGateway`; adaptadores `CulqiGateway` (tarjeta y Yape) y `MockPaymentGateway` (simulada). |
 | Adaptador | Chatbot IA → OpenRouter | La API de IA usa solicitudes y respuestas propias. | Puerto `LlmProvider` con `OpenRouterProvider` y `RuleBasedProvider` (modo básico sin clave). | `modules/asistente/domain/ports.ts`, `modules/asistente/infrastructure/openrouter-provider.ts` |
 | Adaptador | Notificaciones y documentos → AWS | SES y S3 tienen sus propios SDK. | Puertos `EmailSender` y `FileStorage`; adaptadores para SES, S3, archivos locales y memoria (pruebas). | `shared/email/`, `shared/storage/` |
-| Repositorio | Convocatorias, Inscripciones y Pagos → PostgreSQL | Evitar que las reglas de negocio dependan de consultas SQL. | Interfaces `ConvocatoriasRepository`, `InscriptionRepository` y `PaymentRepository`, implementadas con Prisma. Las transacciones de Inscripciones pasan por una unidad de trabajo (`InscriptionUnitOfWork`) y las de Pagos por `PaymentRepository.settle`. | `modules/convocatorias/domain/ports.ts`, `modules/inscripciones/application/inscription-repository.ts`, `modules/pagos/application/payment-repository.ts` y sus implementaciones en `infrastructure/` |
+| Repositorio / Persistence Port | Casos de uso → PostgreSQL | Evitar que las reglas de negocio dependan de Prisma o consultas SQL. | Interfaces específicas para Convocatorias, Inscripciones y Pagos; `PersistencePort` inyectado para las operaciones de persistencia de los demás módulos. Las transacciones de Inscripciones pasan por `InscriptionUnitOfWork` y las de Pagos por `PaymentRepository.settle`. | `shared/application/persistence-port.ts`, puertos de cada módulo e implementaciones en `infrastructure/` |
 | Fábrica | Selección de adaptadores | Elegir el proveedor real o simulado según la configuración, sin que los casos de uso lo sepan. | Funciones `createPaymentGateway`, `createYapeGateway` y `createIdentityProvider`. | `modules/pagos/index.ts`, `modules/usuarios/index.ts` |
 | Inyección de dependencias | Todos los módulos | Evitar el acoplamiento entre casos de uso e implementaciones concretas. | Cada servicio recibe sus dependencias en el constructor; cada módulo tiene su raíz de composición `createXModule(deps)`. | `modules/*/index.ts`, `app.ts` |
 | Fachada | Comunicación entre módulos | Que un módulo use a otro sin conocer sus clases internas. | El `index.ts` de cada módulo publica solo su API (`ConvocatoriasQueries`, `AccessService`, `IdentityProvider`). | `modules/convocatorias/index.ts`, `modules/seguridad/index.ts` |
@@ -103,7 +103,7 @@ flowchart TB
 
     REP --> DB
     OBS --> DB
-    UC -->|"Prisma (sin repositorio en la mayoría de módulos)"| DB
+    UC -->|"PersistencePort / repositorios"| PORT
 
     ADP -->|"HTTPS"| RENIEC
     ADP -->|"HTTPS"| PAGOS
@@ -124,22 +124,22 @@ flowchart TB
     class RENIEC,PAGOS,IA,AWS externo
 ```
 
-**Nota:** Las flechas continuas representan el flujo de utilización y las discontinuas la implementación de contratos o la composición de dependencias. La flecha directa de los servicios a PostgreSQL muestra la desviación registrada en la sección 7.
+**Nota:** Las flechas continuas representan el flujo de utilización y las discontinuas la implementación de contratos o la composición de dependencias. Prisma y PostgreSQL quedan detrás de adaptadores de infraestructura; dominio y aplicación solo conocen puertos.
 
 ## 6. Beneficios de los patrones
 
 - **Adaptador:** cambiar de pasarela (de Izipay a Culqi, ADR-024) no obligó a modificar las reglas de pago: solo cambió el adaptador.
 - **Fábrica:** el mismo código corre con proveedores simulados en las pruebas y reales con `.env.rds`.
-- **Repositorio:** mantiene el acceso a PostgreSQL de Convocatorias separado del dominio.
-- **Inyección de dependencias:** las 239 pruebas usan relojes, correos y pasarelas simulados sin conexiones reales.
+- **Repositorio/Persistence Port:** mantiene el acceso a PostgreSQL separado del dominio y de los casos de uso en los 12 módulos.
+- **Inyección de dependencias:** las 300 pruebas usan repositorios, relojes, correos y pasarelas simulados sin conexiones reales.
 - **Fachada:** ningún módulo importa capas internas de otro.
 - **Observador:** el pago y el cambio de estado de la inscripción quedan desacoplados y sin pérdida de eventos.
 
-## 7. Diferencias con el diseño inicial y patrones pendientes
+## 7. Diferencias con el diseño inicial y decisiones de implementación
 
-| Patrón | Diseño inicial | Estado al 02/11/2026 |
+| Patrón | Diseño inicial | Estado al 25/11/2026 |
 |---|---|---|
-| Repositorio | En todos los módulos (`inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`) | 🟡 En Convocatorias, Inscripciones (`InscriptionService`) y Pagos (`PaymentService`), los tres módulos centrales del proceso. Los demás servicios usan Prisma directamente; una prueba de arquitectura impide que los servicios migrados vuelvan a hacerlo. |
+| Repositorio | En todos los módulos (`inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`) | ✅ Implementado: repositorios específicos donde existe un agregado complejo y `PersistencePort` para el resto. Prisma solo se usa en infraestructura y en la raíz de composición. ESLint y Jest protegen esta frontera. |
 | Decorador | Caché del repositorio de Convocatorias | ✅ Implementado en memoria, sin Redis: `CachedConvocatoriasRepository` envuelve a `PrismaConvocatoriasRepository` con la misma interfaz, guarda lo leído 5 minutos, comparte consultas simultáneas y se borra con cada cambio desde el panel (`modules/convocatorias/infrastructure/cached-convocatorias-repository.ts`). |
 | Proxy | No previsto | ✅ Implementado (20/11/2026): `invalidatesOnUse` envuelve los servicios del panel de Convocatorias y Configuración; al terminar cada operación borra la caché correspondiente y la vuelve a cargar. La caché de comunicados, portada e imágenes (`shared/cache/memory-cache.ts`) entrega el valor anterior mientras lo renueva en segundo plano. |
 | Observador | Previsto para una iteración posterior | ✅ Implementado con la bandeja de eventos. |
@@ -164,8 +164,8 @@ flowchart TB
 |---|---|
 | Arquitectura | Monolito Modular por Capas |
 | Enfoque | Clean Architecture |
-| Patrones implementados | Adaptador, Fábrica, Inyección de dependencias, Fachada, Observador y Repositorio (parcial) |
-| Patrones pendientes | Repositorio en el resto de módulos, Estrategia y Estado |
+| Patrones implementados | Adaptador, Fábrica, Inyección de dependencias, Fachada, Observador, Repositorio/Persistence Port, Unidad de Trabajo, Decorador y Proxy |
+| Patrones pendientes | Estrategia y Estado solo si nuevas reglas hacen necesaria su complejidad |
 | Backend | Node.js + TypeScript + Express 5 + Prisma 7 |
 | Despliegue | AWS Lambda (`lambda-api.ts`, `lambda-worker.ts`), pendiente del Paso 11 |
 | Comunicación | API REST mediante HTTPS |
@@ -174,6 +174,6 @@ flowchart TB
 
 ## 10. Conclusión
 
-Los patrones Adaptador, Fábrica, Inyección de dependencias, Fachada y Observador están implementados y probados. El patrón Repositorio se aplicó en Convocatorias y queda pendiente en los demás módulos; el Decorador con Redis se descartó mientras la carga no lo justifique.
+Los patrones Adaptador, Fábrica, Inyección de dependencias, Fachada, Observador, Repositorio/Persistence Port, Unidad de Trabajo, Decorador y Proxy están implementados y probados. Redis se descartó porque la caché en memoria satisface la carga medida y evita complejidad operativa innecesaria.
 
 El sistema conserva una arquitectura de Monolito Modular por Capas, con Clean Architecture para organizar las responsabilidades internas y AWS Lambda como destino de despliegue.
