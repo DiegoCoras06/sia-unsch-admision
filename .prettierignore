@@ -3,7 +3,6 @@ node_modules/
 **/coverage/
 **/.pgdata/
 apps/backend/src/generated/
-graphify-out/
 package-lock.json
 apps/backend/swagger/openapi.json
 calidad/postman/*.json

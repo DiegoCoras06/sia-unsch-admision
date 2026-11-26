@@ -51,7 +51,6 @@ export default defineConfig([
       '**/coverage/**',
       '**/.pgdata/**',
       '**/generated/**',
-      'graphify-out/**',
     ],
   },
   {
