@@ -37,6 +37,8 @@ jobs:
         run: npm run lint
       - name: Revisar tipos del backend
         run: npm run typecheck -w @sia/backend
+      - name: Compilar funciones Lambda del backend
+        run: npm run build -w @sia/backend
       - name: Pruebas del backend con cobertura
         run: npm run test:coverage -w @sia/backend
       - name: Resumen de cobertura en la página del CI
