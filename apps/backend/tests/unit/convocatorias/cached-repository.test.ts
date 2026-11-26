@@ -66,10 +66,11 @@ describe('Caché del catálogo (AC01)', () => {
     await expect(cache.options('c1')).resolves.toEqual([]);
   });
 
-  it('con vencimiento 0 no guarda nada (entorno de pruebas)', async () => {
+  it('con vencimiento 0 no guarda datos, pero agrupa consultas simultáneas', async () => {
     const { repo, calls } = fakeRepo();
     const cache = new CachedConvocatoriasRepository(repo, 0);
-    await cache.options('c1');
+    await Promise.all([cache.options('c1'), cache.options('c1')]);
+    expect(calls.options).toBe(1);
     await cache.options('c1');
     expect(calls.options).toBe(2);
   });

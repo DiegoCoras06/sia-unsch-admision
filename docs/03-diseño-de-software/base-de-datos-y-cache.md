@@ -176,6 +176,17 @@ conflictos controlados. No hubo errores 500 ni duplicados. La evidencia reproduc
 Esta prueba cubre el comportamiento transaccional y el pool local. La medición de capacidad máxima, IOPS y conexiones
 de la instancia RDS se realizará en Sprint 3 sobre una copia restaurada y desde la misma región de AWS.
 
+### 5.4 Carga hasta 2000 usuarios sin caché de contenidos, con single-flight (26/11/2026)
+
+Se repitió `carga-2000.js` con `CATALOG_CACHE_TTL_MS=0` y `CONTENT_CACHE_TTL_MS=0`. Para evitar que 2000 solicitudes
+idénticas ocupen el pool con el mismo trabajo, `MemoryCache` y `CachedConvocatoriasRepository` aplican single-flight
+cuando el TTL es cero: comparten solo la consulta que todavía está ejecutándose y eliminan la promesa al terminar. Una
+lectura posterior siempre vuelve a PostgreSQL, por lo que no existe caché de contenidos.
+
+La prueba produjo 886 476 peticiones con p95 total de 1525 ms y 0 % de errores. En la etapa de 2000 VU el p95 fue
+1682 ms y el máximo global 2035 ms. Todas las etapas cumplieron la meta de p95 menor a 3 s y errores menores a 1 %. El
+reporte y la comparación con la versión anterior están en `calidad/resultados/2026-11-26-k6-sin-cache.md`.
+
 ## 6. Recomendaciones para el pico real de inscripción (10 000 a 15 000 personas)
 
 1. **CloudFront** delante de la API para las rutas públicas: la mayoría de las lecturas ni llegarían a la API.

@@ -20,6 +20,7 @@
     "rds:check": "tsx scripts/rds.ts check",
     "rds:setup": "tsx scripts/rds.ts setup",
     "dev:rds": "tsx watch --env-file=.env.rds src/server.ts",
+    "dev:rds:no-cache": "tsx --env-file=.env.rds scripts/server-no-cache.ts",
     "culqi:check": "tsx scripts/culqi.ts",
     "ses:check": "tsx scripts/ses.ts",
     "apiperu:check": "tsx --env-file=.env.rds scripts/apiperu.ts",

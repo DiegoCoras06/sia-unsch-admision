@@ -9,6 +9,8 @@ const schema = z
     FRONTEND_ORIGIN: z.url().default('http://127.0.0.1:4200'),
     DATABASE_URL: z.string().startsWith('postgresql://'),
     DB_MAX_CONNECTIONS: z.coerce.number().int().positive().optional(),
+    CATALOG_CACHE_TTL_MS: z.coerce.number().int().nonnegative().default(300_000),
+    CONTENT_CACHE_TTL_MS: z.coerce.number().int().nonnegative().default(60_000),
     JWT_SECRET: z.string().min(32),
     IDENTITY_TOKEN_SECRET: z.string().min(32),
     HMAC_SECRET: z.string().min(32),

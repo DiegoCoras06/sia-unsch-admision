@@ -84,6 +84,11 @@ Para el Sprint 2, la carga progresiva sube por etapas de 50, 100, 250, 500, 1000
 k6 run calidad/k6/carga-2000.js
 ```
 
+Para validar explícitamente el sistema **sin caché de catálogo ni contenidos**, inicia la API contra RDS con
+`npm run dev:rds:no-cache` y ejecuta el mismo script. El TTL queda en cero; solo se agrupan consultas idénticas que ya
+están en curso (single-flight), sin conservar el resultado. La evidencia del 26/11/2026 llegó a 2000 VU con p95 de
+1682 ms y 0 % de errores: `resultados/2026-11-26-k6-sin-cache.md`.
+
 **Importante:** con la API en tu computadora y la base en RDS (Ohio), cada consulta cruza el continente y los tiempos
 miden sobre todo esa distancia. La medición válida para EQ-01 y EQ-03 es **después del despliegue en AWS**, con la API
 en la misma región que RDS. Antes de correrlas contra RDS, acuérdate de que generan carga en la base de datos.

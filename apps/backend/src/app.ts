@@ -133,7 +133,13 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     { storage: env.FILE_STORAGE, bucket: env.FILE_STORAGE === 's3' ? env.S3_BUCKET : undefined },
     'Almacenamiento de archivos',
   );
-  const convocatorias = createConvocatoriasModule(db, clock, audit, undefined, env.APP_ENV === 'test' ? 0 : 5 * 60_000);
+  const convocatorias = createConvocatoriasModule(
+    db,
+    clock,
+    audit,
+    undefined,
+    env.APP_ENV === 'test' ? 0 : env.CATALOG_CACHE_TTL_MS,
+  );
   const configuracion = createConfiguracionModule(
     db,
     convocatorias.queries,
@@ -141,7 +147,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     audit,
     outbox,
     storage,
-    env.APP_ENV === 'test' ? 0 : 60_000,
+    env.APP_ENV === 'test' ? 0 : env.CONTENT_CACHE_TTL_MS,
   );
   const seguridad = createSeguridadModule({
     db,

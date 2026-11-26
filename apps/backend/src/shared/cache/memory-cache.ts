@@ -11,6 +11,8 @@
  */
 export class MemoryCache {
   private readonly entries = new Map<string, { expires: number; value: Promise<unknown>; refreshing?: boolean }>();
+  /** Consultas idénticas que todavía no terminan; no conserva el resultado después de resolverlas. */
+  private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(
     private readonly ttlMs: number,
@@ -19,7 +21,7 @@ export class MemoryCache {
   ) {}
 
   get<T>(key: string, load: () => Promise<T>): Promise<T> {
-    if (this.ttlMs <= 0) return load();
+    if (this.ttlMs <= 0) return this.singleFlight(key, load);
     const hit = this.entries.get(key);
     if (!hit) return this.store(key, load());
     if (hit.expires <= this.now() && !this.staleWhileRevalidate) {
@@ -52,6 +54,22 @@ export class MemoryCache {
     value.catch(() => {
       if (this.entries.get(key) === entry) this.entries.delete(key);
     });
+    return value;
+  }
+
+  /**
+   * Sin caché de contenidos: agrupa solo las solicitudes que coinciden mientras la consulta está ejecutándose.
+   * Al resolverse o fallar, la promesa se elimina inmediatamente y la próxima lectura vuelve al origen.
+   */
+  private singleFlight<T>(key: string, load: () => Promise<T>): Promise<T> {
+    const active = this.inFlight.get(key);
+    if (active) return active as Promise<T>;
+    const value = load();
+    this.inFlight.set(key, value);
+    const release = () => {
+      if (this.inFlight.get(key) === value) this.inFlight.delete(key);
+    };
+    value.then(release, release);
     return value;
   }
 }

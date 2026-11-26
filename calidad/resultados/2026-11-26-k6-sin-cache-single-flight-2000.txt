@@ -1,0 +1,15 @@
+Carga progresiva hasta 2000 usuarios: 2026-11-26T18:30:54.081Z
+Dirección: http://127.0.0.1:3000/api/v1. Cada etapa: 30 s de subida y 60 s de meseta. Solo lectura.
+Peticiones: 886476, máximo de usuarios: 2000
+
+| Usuarios | Promedio (ms) | Mediana (ms) | p95 (ms) | Errores | Meta: p95 3 s y menos de 1 % de errores |
+|---|---|---|---|---|---|
+| 50 | 442 | 296 | 977 | 0.00 % | Cumple |
+| 100 | 436 | 312 | 985 | 0.00 % | Cumple |
+| 250 | 442 | 311 | 1004 | 0.00 % | Cumple |
+| 500 | 459 | 340 | 1057 | 0.00 % | Cumple |
+| 1000 | 569 | 452 | 1220 | 0.00 % | Cumple |
+| 1500 | 805 | 692 | 1479 | 0.00 % | Cumple |
+| 2000 | 974 | 889 | 1682 | 0.00 % | Cumple |
+
+Toda la prueba: promedio 700 ms, p95 1525 ms, máximo 2035 ms, errores 0.00 %

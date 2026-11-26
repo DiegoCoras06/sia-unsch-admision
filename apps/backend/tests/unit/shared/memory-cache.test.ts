@@ -36,10 +36,11 @@ describe('MemoryCache (AC01, caché de contenidos públicos)', () => {
     expect(await cache.get('k', load)).toBe('ok');
   });
 
-  it('con TTL 0 no guarda nada (entorno de pruebas)', async () => {
+  it('con TTL 0 no guarda contenidos, pero agrupa consultas simultáneas', async () => {
     const cache = new MemoryCache(0);
     const load = jest.fn(async () => 1);
-    await cache.get('k', load);
+    expect(await Promise.all([cache.get('k', load), cache.get('k', load)])).toEqual([1, 1]);
+    expect(load).toHaveBeenCalledTimes(1);
     await cache.get('k', load);
     expect(load).toHaveBeenCalledTimes(2);
   });

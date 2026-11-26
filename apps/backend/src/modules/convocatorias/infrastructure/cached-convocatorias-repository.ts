@@ -12,6 +12,7 @@ import type { ConvocatoriasRepository } from '../domain/ports.js';
  */
 export class CachedConvocatoriasRepository implements ConvocatoriasRepository {
   private readonly entries = new Map<string, { expires: number; value: Promise<unknown> }>();
+  private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(
     private readonly inner: ConvocatoriasRepository,
@@ -25,6 +26,17 @@ export class CachedConvocatoriasRepository implements ConvocatoriasRepository {
   }
 
   private cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+    if (this.ttlMs <= 0) {
+      const active = this.inFlight.get(key);
+      if (active) return active as Promise<T>;
+      const value = load();
+      this.inFlight.set(key, value);
+      const release = () => {
+        if (this.inFlight.get(key) === value) this.inFlight.delete(key);
+      };
+      value.then(release, release);
+      return value;
+    }
     const hit = this.entries.get(key);
     if (hit && hit.expires > this.now()) return hit.value as Promise<T>;
     const value = load();
