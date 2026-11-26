@@ -21,13 +21,23 @@ const root = path.resolve(backend, '../..');
 const src = path.join(backend, 'src');
 
 const MODULOS: Record<string, string> = {
-  convocatorias: 'Convocatorias', configuracion: 'Configuración', inscripciones: 'Inscripciones', pagos: 'Pagos',
-  usuarios: 'Usuarios', seguridad: 'Seguridad', expedientes: 'Expedientes', examenes: 'Exámenes',
-  resultados: 'Resultados', notificaciones: 'Notificaciones', asistente: 'Asistente', reportes: 'Reportes',
+  convocatorias: 'Convocatorias',
+  configuracion: 'Configuración',
+  inscripciones: 'Inscripciones',
+  pagos: 'Pagos',
+  usuarios: 'Usuarios',
+  seguridad: 'Seguridad',
+  expedientes: 'Expedientes',
+  examenes: 'Exámenes',
+  resultados: 'Resultados',
+  notificaciones: 'Notificaciones',
+  asistente: 'Asistente',
+  reportes: 'Reportes',
 };
 const DESCRIPCION_MODULO: Record<string, string> = {
   Sistema: 'Salud de la API y de la base de datos.',
-  Convocatorias: 'Convocatoria vigente, etapas, programas, vacantes, tasas, requisitos y temario (portal público y panel).',
+  Convocatorias:
+    'Convocatoria vigente, etapas, programas, vacantes, tasas, requisitos y temario (portal público y panel).',
   Configuración: 'Contenidos del portal: portada, comunicados, imágenes y funciones por etapa.',
   Inscripciones: 'Inscripción ordinaria, exonerados, CEPRE, reinscripción, ficha, orden de pago y encuesta SUS.',
   Pagos: 'Pago en línea con Culqi (tarjeta y Yape), tesorería, conciliación y anulaciones.',
@@ -62,20 +72,33 @@ const walk = (dir: string): string[] =>
 // ── 1. Contratos detallados del SDD ────────────────────────────────────
 const specs = readdirSync(path.join(root, 'specs'))
   .map((d) => path.join(root, 'specs', d, 'contracts', 'openapi.yaml'))
-  .filter((f) => { try { return statSync(f).isFile(); } catch { return false; } });
+  .filter((f) => {
+    try {
+      return statSync(f).isFile();
+    } catch {
+      return false;
+    }
+  });
 
 const paths: Record<string, Record<string, Operation>> = {};
 const components: Record<string, Json> = { schemas: {}, parameters: {}, responses: {}, securitySchemes: {} };
 const fromSpec = new Set<string>();
 
 for (const file of specs) {
-  const doc = parseYaml(readFileSync(file, 'utf8')) as { paths?: Record<string, Record<string, Operation>>; components?: Record<string, Json>; info?: { title?: string } };
+  const doc = parseYaml(readFileSync(file, 'utf8')) as {
+    paths?: Record<string, Record<string, Operation>>;
+    components?: Record<string, Json>;
+    info?: { title?: string };
+  };
   const spec = path.relative(root, file).split(path.sep).join('/');
   for (const [p, ops] of Object.entries(doc.paths ?? {})) {
     for (const [method, op] of Object.entries(ops)) {
       if (!['get', 'post', 'put', 'patch', 'delete'].includes(method)) continue;
       paths[p] ??= {};
-      paths[p][method] = { ...op, description: [op.description, `Contrato detallado: \`${spec}\`.`].filter(Boolean).join('\n\n') };
+      paths[p][method] = {
+        ...op,
+        description: [op.description, `Contrato detallado: \`${spec}\`.`].filter(Boolean).join('\n\n'),
+      };
       fromSpec.add(`${method} ${p}`);
     }
   }
@@ -87,7 +110,11 @@ for (const file of specs) {
 
 // ── 2. Rutas reales del código ─────────────────────────────────────────
 const ROUTE = /(?:router|r|api)\.(get|post|put|patch|delete)\(\s*'([^']+)'([^\n]*)/g;
-const files = [...walk(path.join(src, 'modules')).filter((f) => f.includes(`${path.sep}presentation${path.sep}`)), path.join(src, 'admin-routes.ts'), path.join(src, 'app.ts')];
+const files = [
+  ...walk(path.join(src, 'modules')).filter((f) => f.includes(`${path.sep}presentation${path.sep}`)),
+  path.join(src, 'admin-routes.ts'),
+  path.join(src, 'app.ts'),
+];
 
 let documentadas = 0;
 for (const file of files) {
@@ -101,16 +128,25 @@ for (const file of files) {
     const start = m.index!;
     const block = text.slice(start, i + 1 < matches.length ? matches[i + 1]!.index : undefined);
     // Comentario inmediatamente anterior a la ruta (// … o /** … */).
-    const before = text.slice(Math.max(0, start - 600), start).split('\n').slice(0, -1);
+    const before = text
+      .slice(Math.max(0, start - 600), start)
+      .split('\n')
+      .slice(0, -1);
     const comment: string[] = [];
     for (let k = before.length - 1; k >= 0; k--) {
       const line = before[k]!.trim();
       if (line.startsWith('//')) comment.unshift(line.replace(/^\/\/\s?/, ''));
-      else if (line.startsWith('*') || line.startsWith('/**')) comment.unshift(line.replace(/^\/?\*+\/?\s?/, '').replace(/\*\/$/, ''));
+      else if (line.startsWith('*') || line.startsWith('/**'))
+        comment.unshift(line.replace(/^\/?\*+\/?\s?/, '').replace(/\*\/$/, ''));
       else break;
     }
     const oas = route.replace(/:([A-Za-z]+)/g, '{$1}').replace(/\.(\{type\}|\{format\})$/, '.$1');
-    const tag = moduleTag && !route.startsWith('/admin') ? moduleTag : PANEL.find(([re]) => re.test(route))?.[1] ?? moduleTag ?? (route.startsWith('/health') ? 'Sistema' : 'Seguridad');
+    const tag =
+      moduleTag && !route.startsWith('/admin')
+        ? moduleTag
+        : (PANEL.find(([re]) => re.test(route))?.[1] ??
+          moduleTag ??
+          (route.startsWith('/health') ? 'Sistema' : 'Seguridad'));
     if (fromSpec.has(`${method} ${oas}`)) {
       paths[oas]![method]!.tags = [tag]; // un grupo por módulo en Swagger
       return;
@@ -118,7 +154,12 @@ for (const file of files) {
     const perm = /g\('([a-z._]+)'\)/.exec(rest)?.[1] ?? /guard\('([a-z._]+)'\)/.exec(rest)?.[1];
     const needsStaff = route.startsWith('/admin') && !route.startsWith('/admin/auth');
     const needsAccount = /^\/me(\/|$)/.test(route) || route === '/auth/logout' || route === '/auth/logout-all';
-    const params = [...oas.matchAll(/\{([A-Za-z]+)\}/g)].map(([, name]) => ({ name, in: 'path', required: true, schema: { type: 'string' } }));
+    const params = [...oas.matchAll(/\{([A-Za-z]+)\}/g)].map(([, name]) => ({
+      name,
+      in: 'path',
+      required: true,
+      schema: { type: 'string' },
+    }));
     const binary = /\.(pdf|xlsx)$|\{(type|format)\}$/.test(route);
     const created = /res\.status\(201\)/.test(block);
     const summary = (comment.join(' ').trim() || `${method.toUpperCase()} ${route}`).replace(/\s+/g, ' ');
@@ -127,16 +168,36 @@ for (const file of files) {
       summary: summary.length > 140 ? `${summary.slice(0, 137)}…` : summary,
       ...(comment.length ? { description: comment.join(' ') } : {}),
       ...(params.length ? { parameters: params } : {}),
-      ...(/req\.query/.test(block) ? { 'x-query': 'Recibe parámetros por query string (ver el esquema de validación del código).' } : {}),
+      ...(/req\.query/.test(block)
+        ? { 'x-query': 'Recibe parámetros por query string (ver el esquema de validación del código).' }
+        : {}),
       ...(/req\.body/.test(block) && method !== 'get'
-        ? { requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', description: 'Cuerpo validado con Zod en el servidor; ver el código de la ruta.' } } } } }
+        ? {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    description: 'Cuerpo validado con Zod en el servidor; ver el código de la ruta.',
+                  },
+                },
+              },
+            },
+          }
         : {}),
       ...(needsStaff || needsAccount ? { security: [{ bearerAuth: [] }] } : {}),
       ...(perm ? { 'x-permiso': perm } : {}),
       responses: {
         [created ? '201' : '200']: binary
-          ? { description: 'Archivo', content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } } }
-          : { description: 'Correcto', content: { 'application/json': { schema: { $ref: '#/components/schemas/Envelope' } } } },
+          ? {
+              description: 'Archivo',
+              content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+            }
+          : {
+              description: 'Correcto',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/Envelope' } } },
+            },
         ...(/req\.(body|query|params)/.test(block) ? { '400': { $ref: '#/components/responses/ErrorGeneral' } } : {}),
         ...(needsStaff || needsAccount ? { '401': { $ref: '#/components/responses/ErrorGeneral' } } : {}),
         ...(perm ? { '403': { $ref: '#/components/responses/ErrorGeneral' } } : {}),
@@ -158,26 +219,43 @@ for (const route of ['/inscriptions', '/payments/session', '/payments/charge']) 
   operation.description = [
     operation.description,
     'Admite `Idempotency-Key`: al repetir la misma solicitud devuelve la respuesta almacenada y evita efectos duplicados.',
-  ].filter(Boolean).join('\n\n');
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   const responses = operation.responses as Json | undefined;
   if (responses) responses['409'] ??= { $ref: '#/components/responses/ErrorGeneral' };
 }
 
 (components.schemas as Json).Envelope ??= {
-  type: 'object', description: 'Sobre de las respuestas correctas.', properties: { data: { description: 'Resultado de la operación' }, meta: { type: 'object' } },
+  type: 'object',
+  description: 'Sobre de las respuestas correctas.',
+  properties: { data: { description: 'Resultado de la operación' }, meta: { type: 'object' } },
 };
 (components.schemas as Json).ErrorEnvelope ??= {
-  type: 'object', properties: { error: { type: 'object', properties: { code: { type: 'string' }, message: { type: 'string' }, requestId: { type: 'string' }, details: { type: 'array', items: { type: 'object' } } } } },
+  type: 'object',
+  properties: {
+    error: {
+      type: 'object',
+      properties: {
+        code: { type: 'string' },
+        message: { type: 'string' },
+        requestId: { type: 'string' },
+        details: { type: 'array', items: { type: 'object' } },
+      },
+    },
+  },
 };
 (components.responses as Json).ErrorGeneral ??= {
-  description: 'Error con código y mensaje en español (400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 conflicto, 429 demasiados intentos, 503 base de datos no disponible).',
+  description:
+    'Error con código y mensaje en español (400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 conflicto, 429 demasiados intentos, 503 base de datos no disponible).',
   content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } },
 };
 (components.parameters as Json).IdempotencyKey ??= {
   name: 'Idempotency-Key',
   in: 'header',
   required: false,
-  description: 'Clave única de 8 a 100 caracteres. Debe conservarse al reintentar exactamente la misma operación durante 24 horas.',
+  description:
+    'Clave única de 8 a 100 caracteres. Debe conservarse al reintentar exactamente la misma operación durante 24 horas.',
   schema: { type: 'string', minLength: 8, maxLength: 100, pattern: '^[A-Za-z0-9._:-]+$' },
 };
 (components.securitySchemes as Json).bearerAuth ??= { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' };
@@ -195,7 +273,9 @@ const doc = {
       'Las rutas con contrato detallado provienen de `specs/<nn>/contracts/openapi.yaml`; las demás se generan del código con `npm run openapi`.',
   },
   servers: [{ url: '/api/v1', description: 'Esta API' }],
-  tags: Object.keys(DESCRIPCION_MODULO).filter((t) => usados.has(t)).map((name) => ({ name, description: DESCRIPCION_MODULO[name] })),
+  tags: Object.keys(DESCRIPCION_MODULO)
+    .filter((t) => usados.has(t))
+    .map((name) => ({ name, description: DESCRIPCION_MODULO[name] })),
   paths: ordenadas,
   components,
 };
@@ -204,4 +284,6 @@ const out = path.join(backend, 'swagger', 'openapi.json');
 mkdirSync(path.dirname(out), { recursive: true });
 writeFileSync(out, `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
 const ops = Object.values(ordenadas).reduce((n, o) => n + Object.keys(o).length, 0);
-console.log(`openapi.json: ${ops} operaciones en ${Object.keys(ordenadas).length} rutas (${fromSpec.size} de contratos detallados, ${documentadas} generadas del código).`);
+console.log(
+  `openapi.json: ${ops} operaciones en ${Object.keys(ordenadas).length} rutas (${fromSpec.size} de contratos detallados, ${documentadas} generadas del código).`,
+);

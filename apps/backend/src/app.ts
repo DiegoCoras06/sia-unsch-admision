@@ -28,7 +28,12 @@ import { createSeguridadModule } from './modules/seguridad/index.js';
 import { createIdentityProvider, createUsuariosModule } from './modules/usuarios/index.js';
 import type { UsabilitySurveyService } from './modules/inscripciones/index.js';
 import { createInscripcionesModule } from './modules/inscripciones/index.js';
-import { createPagosModule, createPaymentGateway, createTesoreria, type PaymentGateway } from './modules/pagos/index.js';
+import {
+  createPagosModule,
+  createPaymentGateway,
+  createTesoreria,
+  type PaymentGateway,
+} from './modules/pagos/index.js';
 import { createAsistenteModule, type LlmProvider } from './modules/asistente/index.js';
 import { LocalFileStorage, type FileStorage } from './shared/storage/file-storage.js';
 import { S3FileStorage } from './shared/storage/s3-file-storage.js';
@@ -83,16 +88,34 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const clock = overrides.clock ?? (env.APP_FIXED_NOW ? shiftedClock(new Date(env.APP_FIXED_NOW)) : systemClock);
   const metrics = new ReliabilityMetrics();
   const circuits = new CircuitBreakerRegistry(clock, metrics);
-  const db = overrides.db ?? createPrismaClient(env.DATABASE_URL, env.dbMaxConnections, env.DB_SSL_CA ? path.resolve(backendDir, env.DB_SSL_CA) : undefined);
-  const rawTransport = overrides.email
-    ?? (env.EMAIL_PROVIDER === 'ses'
-      ? new SesEmailSender({ from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET }, logger)
+  const db =
+    overrides.db ??
+    createPrismaClient(
+      env.DATABASE_URL,
+      env.dbMaxConnections,
+      env.DB_SSL_CA ? path.resolve(backendDir, env.DB_SSL_CA) : undefined,
+    );
+  const rawTransport =
+    overrides.email ??
+    (env.EMAIL_PROVIDER === 'ses'
+      ? new SesEmailSender(
+          { from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET },
+          logger,
+        )
       : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
   const transport: EmailSender = { send: (message) => circuits.execute('email', () => rawTransport.send(message)) };
-  logger.info({ provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
+  logger.info(
+    { provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined },
+    'Correo saliente',
+  );
   // M11: cada correo que envía cualquier módulo queda registrado con su estado (RF-11.09).
   const email = new RecordingEmailSender(db, transport, clock);
-  const eventQueue = overrides.eventQueue !== undefined ? overrides.eventQueue : env.SQS_QUEUE_URL ? new SqsEventQueue(env.SQS_QUEUE_URL, logger) : null;
+  const eventQueue =
+    overrides.eventQueue !== undefined
+      ? overrides.eventQueue
+      : env.SQS_QUEUE_URL
+        ? new SqsEventQueue(env.SQS_QUEUE_URL, logger)
+        : null;
   logger.info({ queue: eventQueue ? 'sqs' : 'local' }, 'Cola de eventos');
   const outbox = new Outbox(db, clock, logger, eventQueue);
   const limiter = new RateLimiter(db, clock);
@@ -101,15 +124,30 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   if (env.APP_FIXED_NOW) logger.warn({ now: clock.now().toISOString() }, 'Reloj simulado activo (APP_FIXED_NOW)');
 
   // ── Módulos ──────────────────────────────────────────────────────────
-  const storage = overrides.storage
-    ?? (env.FILE_STORAGE === 's3' && env.S3_BUCKET
+  const storage =
+    overrides.storage ??
+    (env.FILE_STORAGE === 's3' && env.S3_BUCKET
       ? new S3FileStorage({ bucket: env.S3_BUCKET, region: env.S3_REGION })
       : new LocalFileStorage(path.join(backendDir, '.dev-storage')));
-  logger.info({ storage: env.FILE_STORAGE, bucket: env.FILE_STORAGE === 's3' ? env.S3_BUCKET : undefined }, 'Almacenamiento de archivos');
+  logger.info(
+    { storage: env.FILE_STORAGE, bucket: env.FILE_STORAGE === 's3' ? env.S3_BUCKET : undefined },
+    'Almacenamiento de archivos',
+  );
   const convocatorias = createConvocatoriasModule(db, clock, audit, undefined, env.APP_ENV === 'test' ? 0 : 5 * 60_000);
-  const configuracion = createConfiguracionModule(db, convocatorias.queries, clock, audit, outbox, storage, env.APP_ENV === 'test' ? 0 : 60_000);
+  const configuracion = createConfiguracionModule(
+    db,
+    convocatorias.queries,
+    clock,
+    audit,
+    outbox,
+    storage,
+    env.APP_ENV === 'test' ? 0 : 60_000,
+  );
   const seguridad = createSeguridadModule({
-    db, clock, outbox, limiter,
+    db,
+    clock,
+    outbox,
+    limiter,
     jwtSecret: env.JWT_SECRET,
     identityTokenSecret: env.IDENTITY_TOKEN_SECRET,
     currentCallCode: async () => (await convocatorias.queries.getCurrentCall()).code,
@@ -125,7 +163,11 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     name: rawIdentity.name,
     async lookupDni(dni: string, checkDigit?: string) {
       try {
-        return await circuits.execute('identity', () => rawIdentity.lookupDni(dni, checkDigit), (result) => result.kind === 'UNAVAILABLE');
+        return await circuits.execute(
+          'identity',
+          () => rawIdentity.lookupDni(dni, checkDigit),
+          (result) => result.kind === 'UNAVAILABLE',
+        );
       } catch (error) {
         if (error instanceof CircuitOpenError) return { kind: 'UNAVAILABLE' as const };
         throw error;
@@ -133,7 +175,14 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     },
   };
   const inscripciones = createInscripcionesModule({
-    db, clock, outbox, audit, limiter, storage, identity, email,
+    db,
+    clock,
+    outbox,
+    audit,
+    limiter,
+    storage,
+    identity,
+    email,
     convocatorias: convocatorias.queries,
     access: seguridad.access,
     frontendOrigin: env.FRONTEND_ORIGIN,
@@ -141,10 +190,12 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     // M02 se crea más abajo; la política vigente se consulta en cada inscripción.
     currentConsent: () => usuarios.auth.currentConsent(),
   });
-  const rawPaymentGateway = overrides.paymentGateway ?? createPaymentGateway({
-    provider: env.PAYMENTS_PROVIDER,
-    culqi: { publicKey: env.CULQI_PUBLIC_KEY, secretKey: env.CULQI_SECRET_KEY, apiUrl: env.CULQI_API_URL },
-  });
+  const rawPaymentGateway =
+    overrides.paymentGateway ??
+    createPaymentGateway({
+      provider: env.PAYMENTS_PROVIDER,
+      culqi: { publicKey: env.CULQI_PUBLIC_KEY, secretKey: env.CULQI_SECRET_KEY, apiUrl: env.CULQI_API_URL },
+    });
   const paymentGateway: PaymentGateway = {
     provider: rawPaymentGateway.provider,
     environment: rawPaymentGateway.environment,
@@ -154,12 +205,21 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   };
   logger.info({ provider: paymentGateway.provider, environment: paymentGateway.environment }, 'Pasarela de pagos');
   const pagos = createPagosModule({
-    db, clock, outbox, audit, limiter, logger,
+    db,
+    clock,
+    outbox,
+    audit,
+    limiter,
+    logger,
     gateway: paymentGateway,
     inscriptions: inscripciones.service,
   });
   const asistente = createAsistenteModule({
-    db, clock, limiter, audit, logger,
+    db,
+    clock,
+    limiter,
+    audit,
+    logger,
     convocatorias: convocatorias.queries,
     inscriptions: inscripciones.service,
     payments: pagos.service,
@@ -179,14 +239,27 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     passSecret: `assistant-pass:${env.HMAC_SECRET}`,
     dailyBudgetUsd: env.CHAT_DAILY_BUDGET_USD,
     // Parámetro editable en el panel (RF-13.10); CHAT_RETENTION_DAYS queda como respaldo.
-    retentionDays: async () => Number(await configuracion.admin.parameter('retencion.conversaciones_dias')) || env.CHAT_RETENTION_DAYS,
+    retentionDays: async () =>
+      Number(await configuracion.admin.parameter('retencion.conversaciones_dias')) || env.CHAT_RETENTION_DAYS,
   });
   // Retención de conversaciones (RF-10.11): se aplica al arrancar; el worker la repetirá a diario (ADR-012).
-  setImmediate(() => asistente.service.purgeExpired().catch((error: unknown) => logger.warn({ err: error }, 'no se pudo aplicar la retención del asistente')));
-  logger.info({ model: env.OPENROUTER_API_KEY ? env.OPENROUTER_MODEL : null }, env.OPENROUTER_API_KEY ? 'Asistente: OpenRouter' : 'Asistente: modo básico (sin OPENROUTER_API_KEY)');
+  setImmediate(() =>
+    asistente.service
+      .purgeExpired()
+      .catch((error: unknown) => logger.warn({ err: error }, 'no se pudo aplicar la retención del asistente')),
+  );
+  logger.info(
+    { model: env.OPENROUTER_API_KEY ? env.OPENROUTER_MODEL : null },
+    env.OPENROUTER_API_KEY ? 'Asistente: OpenRouter' : 'Asistente: modo básico (sin OPENROUTER_API_KEY)',
+  );
   const usuarios = createUsuariosModule({
     identityProvider: identity,
-    db, clock, outbox, audit, limiter, email,
+    db,
+    clock,
+    outbox,
+    audit,
+    limiter,
+    email,
     tokens: seguridad.tokens,
     sessions: seguridad.sessions,
     access: seguridad.access,
@@ -200,22 +273,40 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   });
 
   const expedientes = createExpedientesModule({
-    db, clock, outbox, audit, limiter, storage, email,
+    db,
+    clock,
+    outbox,
+    audit,
+    limiter,
+    storage,
+    email,
     convocatorias: convocatorias.queries,
     inscriptions: inscripciones.service,
     // Evaluadores activos para el reparto equitativo (RF-06.03).
-    evaluators: async () => (await usuarios.staffAdmin.list()).filter((u) => u.status === 'ACTIVE' && u.roles.includes('EVALUADOR')).map((u) => ({ id: u.id, name: u.fullName })),
+    evaluators: async () =>
+      (await usuarios.staffAdmin.list())
+        .filter((u) => u.status === 'ACTIVE' && u.roles.includes('EVALUADOR'))
+        .map((u) => ({ id: u.id, name: u.fullName })),
     authenticate: seguridad.authenticate,
     guard: seguridad.guard,
     seesAll: (roles) => hasPermission(roles, 'expedientes.asignar'),
     frontendOrigin: env.FRONTEND_ORIGIN,
   });
   const examenes = createExamenesModule({
-    db, clock, outbox, audit, limiter, storage, email,
+    db,
+    clock,
+    outbox,
+    audit,
+    limiter,
+    storage,
+    email,
     convocatorias: convocatorias.queries,
     inscriptions: inscripciones.service,
     // RN-60: las incidencias van a la Comisión (personal activo de Admisión y administración).
-    commission: async () => (await usuarios.staffAdmin.list()).filter((u) => u.status === 'ACTIVE' && (u.roles.includes('ADMISION') || u.roles.includes('ADMIN'))).map((u) => u.email),
+    commission: async () =>
+      (await usuarios.staffAdmin.list())
+        .filter((u) => u.status === 'ACTIVE' && (u.roles.includes('ADMISION') || u.roles.includes('ADMIN')))
+        .map((u) => u.email),
     authenticate: seguridad.authenticate,
     guard: seguridad.guard,
     secret: `examen-qr:${env.HMAC_SECRET}`,
@@ -224,7 +315,11 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   // El resumen administrativo tolera unos segundos de desfase y evita repetir sus agregaciones costosas.
   const reportes = createReportesModule(db, env.APP_ENV === 'test' ? 0 : 15_000);
   const notificaciones = createNotificacionesModule({
-    db, clock, audit, limiter, transport,
+    db,
+    clock,
+    audit,
+    limiter,
+    transport,
     sources: {
       segment: (f) => inscripciones.service.segment(f),
       pendingPayments: (h) => inscripciones.service.pendingPayments(h),
@@ -238,12 +333,19 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     frontendOrigin: env.FRONTEND_ORIGIN,
   });
   const resultados = createResultadosModule({
-    db, clock, audit, limiter, storage,
+    db,
+    clock,
+    audit,
+    limiter,
+    storage,
     convocatorias: convocatorias.queries,
     ports: {
       exams: examenes.exams,
       inscriptions: inscripciones.service,
-      notify: { render: (k, v) => notificaciones.service.render(k, v), enqueue: (items) => notificaciones.service.enqueue(items) },
+      notify: {
+        render: (k, v) => notificaciones.service.render(k, v),
+        enqueue: (items) => notificaciones.service.enqueue(items),
+      },
       support: seguridad.support,
     },
     authenticate: seguridad.authenticate,
@@ -268,9 +370,19 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   // Archivos CSV de la lectora óptica (M09) y de conciliación (M05), enviados como texto.
   const csvJson = express.json({ limit: '4mb' });
   app.use((req, res, next) => {
-    if (req.method === 'POST' && (/^\/api\/v1\/admin\/results\/exams\/[^/]+\/batches$/.test(req.path) || req.path === '/api/v1/admin/reconciliations')) return csvJson(req, res, next);
+    if (
+      req.method === 'POST' &&
+      (/^\/api\/v1\/admin\/results\/exams\/[^/]+\/batches$/.test(req.path) ||
+        req.path === '/api/v1/admin/reconciliations')
+    )
+      return csvJson(req, res, next);
     // Lista de adjudicados CEPRE (CSV) y cuadro de vacantes (.xlsx en base64).
-    if (req.method === 'POST' && (req.path === '/api/v1/admin/cepre-awardees' || /^\/api\/v1\/admin\/calls\/[^/]+\/vacancies\/import/.test(req.path))) return csvJson(req, res, next);
+    if (
+      req.method === 'POST' &&
+      (req.path === '/api/v1/admin/cepre-awardees' ||
+        /^\/api\/v1\/admin\/calls\/[^/]+\/vacancies\/import/.test(req.path))
+    )
+      return csvJson(req, res, next);
     // Denuncia con evidencia: hasta 5 MB en total, en base64.
     if (req.method === 'POST' && req.path === '/api/v1/support/complaint') return dossierJson(req, res, next);
     if (req.method === 'POST' && req.path === '/api/v1/inscriptions') return photoJson(req, res, next);
@@ -288,35 +400,55 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   const databaseStatus = () => db.$queryRaw`SELECT 1`.then(() => 'ok' as const).catch(() => 'degraded' as const);
   api.get('/health/live', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json({ data: { status: 'alive', uptimeSeconds: Math.round(process.uptime()), time: clock.now().toISOString() } });
+    res.json({
+      data: { status: 'alive', uptimeSeconds: Math.round(process.uptime()), time: clock.now().toISOString() },
+    });
   });
-  api.get('/health/ready', handle(async (_req, res) => {
-    const database = await databaseStatus();
-    res.setHeader('Cache-Control', 'no-store');
-    res.status(database === 'ok' ? 200 : 503).json({ data: { status: database === 'ok' ? 'ready' : 'unavailable', database, time: clock.now().toISOString() } });
-  }));
+  api.get(
+    '/health/ready',
+    handle(async (_req, res) => {
+      const database = await databaseStatus();
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(database === 'ok' ? 200 : 503).json({
+        data: { status: database === 'ok' ? 'ready' : 'unavailable', database, time: clock.now().toISOString() },
+      });
+    }),
+  );
   api.get('/health/dependencies', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json({ data: {
-      circuits: circuits.snapshot(),
-      configured: {
-        identity: env.IDENTITY_PROVIDER === 'apiperu', payments: env.PAYMENTS_PROVIDER === 'culqi',
-        email: env.EMAIL_PROVIDER === 'ses', storage: env.FILE_STORAGE === 's3', openrouter: Boolean(env.OPENROUTER_API_KEY),
+    res.json({
+      data: {
+        circuits: circuits.snapshot(),
+        configured: {
+          identity: env.IDENTITY_PROVIDER === 'apiperu',
+          payments: env.PAYMENTS_PROVIDER === 'culqi',
+          email: env.EMAIL_PROVIDER === 'ses',
+          storage: env.FILE_STORAGE === 's3',
+          openrouter: Boolean(env.OPENROUTER_API_KEY),
+        },
+        time: clock.now().toISOString(),
       },
-      time: clock.now().toISOString(),
-    } });
+    });
   });
-  api.get('/health/metrics', handle(async (_req, res) => {
-    const outboxStats = await outbox.stats().catch(() => null);
-    res.setHeader('Cache-Control', 'no-store');
-    res.json({ data: { ...metrics.snapshot(), circuits: circuits.snapshot(), outbox: outboxStats } });
-  }));
+  api.get(
+    '/health/metrics',
+    handle(async (_req, res) => {
+      const outboxStats = await outbox.stats().catch(() => null);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { ...metrics.snapshot(), circuits: circuits.snapshot(), outbox: outboxStats } });
+    }),
+  );
   // Compatibilidad con monitores ya configurados: equivale a readiness.
-  api.get('/health', handle(async (_req, res) => {
-    const database = await databaseStatus();
-    res.setHeader('Cache-Control', 'no-store');
-    res.status(database === 'ok' ? 200 : 503).json({ data: { status: database === 'ok' ? 'ok' : 'degraded', database, time: clock.now().toISOString() } });
-  }));
+  api.get(
+    '/health',
+    handle(async (_req, res) => {
+      const database = await databaseStatus();
+      res.setHeader('Cache-Control', 'no-store');
+      res
+        .status(database === 'ok' ? 200 : 503)
+        .json({ data: { status: database === 'ok' ? 'ok' : 'degraded', database, time: clock.now().toISOString() } });
+    }),
+  );
   api.use(convocatorias.router);
   api.use(configuracion.router);
   api.use(seguridad.router);
@@ -329,34 +461,47 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
   api.use(notificaciones.router);
   api.use(resultados.router);
   api.use(tesoreria.router);
-  api.use(adminRoutes({
-    authenticate: seguridad.authenticate,
-    guard: seguridad.guard,
-    calls: convocatorias.admin,
-    catalog: convocatorias.catalog,
-    content: configuracion.admin,
-    siteAssets: configuracion.assets,
-    security: new SecurityAdmin({ persistence: db, clock, audit, inscriptions: inscripciones.service, storage }),
-    cepre: inscripciones.cepre,
-    vacancyImport: convocatorias.vacancyImport,
-    inscriptions: inscripciones.service,
-    inscriptionDocuments: inscripciones.documents,
-    usability: inscripciones.survey,
-    reports: reportes.queries,
-    exporters: reportes,
-    knowledge: asistente.knowledge,
-    assistant: asistente.service,
-    integrations: () => integrationStatus(env),
-    reliability: {
-      status: async () => ({ metrics: metrics.snapshot(), circuits: circuits.snapshot(), outbox: await outbox.stats() }),
-      deadLetters: (limit) => outbox.deadLetters(limit),
-      retryDead: async (id, actorId, requestMeta) => {
-        const retried = await outbox.retryDead(id);
-        if (retried) await audit.record({ actorUserId: actorId, action: 'outbox.retry', resourceType: 'outbox_event', resourceId: id, ...requestMeta });
-        return retried;
+  api.use(
+    adminRoutes({
+      authenticate: seguridad.authenticate,
+      guard: seguridad.guard,
+      calls: convocatorias.admin,
+      catalog: convocatorias.catalog,
+      content: configuracion.admin,
+      siteAssets: configuracion.assets,
+      security: new SecurityAdmin({ persistence: db, clock, audit, inscriptions: inscripciones.service, storage }),
+      cepre: inscripciones.cepre,
+      vacancyImport: convocatorias.vacancyImport,
+      inscriptions: inscripciones.service,
+      inscriptionDocuments: inscripciones.documents,
+      usability: inscripciones.survey,
+      reports: reportes.queries,
+      exporters: reportes,
+      knowledge: asistente.knowledge,
+      assistant: asistente.service,
+      integrations: () => integrationStatus(env),
+      reliability: {
+        status: async () => ({
+          metrics: metrics.snapshot(),
+          circuits: circuits.snapshot(),
+          outbox: await outbox.stats(),
+        }),
+        deadLetters: (limit) => outbox.deadLetters(limit),
+        retryDead: async (id, actorId, requestMeta) => {
+          const retried = await outbox.retryDead(id);
+          if (retried)
+            await audit.record({
+              actorUserId: actorId,
+              action: 'outbox.retry',
+              resourceType: 'outbox_event',
+              resourceId: id,
+              ...requestMeta,
+            });
+          return retried;
+        },
       },
-    },
-  }));
+    }),
+  );
 
   // Documentación OpenAPI con Swagger UI en /api/docs (carpeta swagger/).
   montarSwagger(app);
@@ -371,7 +516,25 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       return (await inscripciones.service.anonymizeExpired(years, null)).anonymized;
     },
   };
-  return { app, db, outbox, limiter, clock, logger, metrics, circuits, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: async () => { await convocatorias.warmUp(); await configuracion.warmUp(); } };
+  return {
+    app,
+    db,
+    outbox,
+    limiter,
+    clock,
+    logger,
+    metrics,
+    circuits,
+    assistant: asistente.service,
+    notifications: notificaciones.service,
+    results: resultados.service,
+    retention,
+    usability: inscripciones.survey,
+    warmCatalog: async () => {
+      await convocatorias.warmUp();
+      await configuracion.warmUp();
+    },
+  };
 }
 
 /** Estado de las integraciones para el panel (RF-14.04 a RF-14.07): nunca muestra secretos completos. */
@@ -380,22 +543,36 @@ function integrationStatus(env: Env): Record<string, { label: string; value: str
   return {
     identidad: {
       label: 'Consulta de identidad (RENIEC)',
-      value: env.IDENTITY_PROVIDER === 'apiperu' ? `apiperu.dev, token ${mask(env.APIPERU_TOKEN)}` : 'Simulado con DNI de prueba',
+      value:
+        env.IDENTITY_PROVIDER === 'apiperu'
+          ? `apiperu.dev, token ${mask(env.APIPERU_TOKEN)}`
+          : 'Simulado con DNI de prueba',
       ok: env.IDENTITY_PROVIDER === 'apiperu',
     },
     pagos: {
       label: 'Pasarela de pagos',
-      value: env.PAYMENTS_PROVIDER === 'culqi'
-        ? `Culqi ${env.CULQI_SECRET_KEY?.startsWith('sk_live') ? 'producción' : 'pruebas'} (tarjeta y Yape), llave ${mask(env.CULQI_PUBLIC_KEY)}`
-        : 'Simulada (sin cobros)',
+      value:
+        env.PAYMENTS_PROVIDER === 'culqi'
+          ? `Culqi ${env.CULQI_SECRET_KEY?.startsWith('sk_live') ? 'producción' : 'pruebas'} (tarjeta y Yape), llave ${mask(env.CULQI_PUBLIC_KEY)}`
+          : 'Simulada (sin cobros)',
       ok: env.PAYMENTS_PROVIDER === 'culqi',
     },
     ia: {
       label: 'Asistente con IA (OpenRouter)',
-      value: env.OPENROUTER_API_KEY ? `${env.OPENROUTER_MODEL}, clave ${mask(env.OPENROUTER_API_KEY)}, tope US$ ${env.CHAT_DAILY_BUDGET_USD}/día` : 'Modo básico (sin clave)',
+      value: env.OPENROUTER_API_KEY
+        ? `${env.OPENROUTER_MODEL}, clave ${mask(env.OPENROUTER_API_KEY)}, tope US$ ${env.CHAT_DAILY_BUDGET_USD}/día`
+        : 'Modo básico (sin clave)',
       ok: Boolean(env.OPENROUTER_API_KEY),
     },
-    correo: { label: 'Correo', value: env.EMAIL_PROVIDER === 'ses' ? 'Amazon SES' : 'Archivos locales (.dev-mail)', ok: env.EMAIL_PROVIDER === 'ses' },
-    baseDatos: { label: 'Base de datos', value: env.DB_SSL_CA ? 'PostgreSQL en Amazon RDS con SSL verificado' : 'PostgreSQL local (embebido)', ok: true },
+    correo: {
+      label: 'Correo',
+      value: env.EMAIL_PROVIDER === 'ses' ? 'Amazon SES' : 'Archivos locales (.dev-mail)',
+      ok: env.EMAIL_PROVIDER === 'ses',
+    },
+    baseDatos: {
+      label: 'Base de datos',
+      value: env.DB_SSL_CA ? 'PostgreSQL en Amazon RDS con SSL verificado' : 'PostgreSQL local (embebido)',
+      ok: true,
+    },
   };
 }

@@ -5,16 +5,16 @@ comprobarla**. Repositorio: https://github.com/DiegoCoras06/sia-unsch-admision
 
 ## Resumen
 
-| # | Requisito | Estado | Evidencia principal |
-|---|---|---|---|
-| 1 | Estilo arquitectónico | ✅ | `docs/02-arquitectura-de-software/10-estilo-arquitectonico.md`, ADR-001 (monolito modular) |
-| 2 | Patrón Clean Architecture | ✅ | ADR-002, `docs/03-diseño-de-software/diseño-interno-modulos.md`, prueba de arquitectura |
-| 3 | Especificaciones SDD con criterios de aceptación y tareas | ✅ | `specs/001` a `specs/010` (requisitos, diseño y tareas): 294 de 295 tareas hechas; solo queda el despliegue |
-| 4 | Endpoints REST documentados con OpenAPI y Swagger | ✅ | `/api/docs`, `apps/backend/swagger/openapi.json` (211 operaciones) |
-| 5 | Comportamiento de la base de datos y caché | ✅ | `docs/03-diseño-de-software/base-de-datos-y-cache.md` |
-| 6 | SOLID y patrones de diseño | ✅ | `docs/03-diseño-de-software/principios-diseño.md` y `patrones-diseño.md` |
-| 7 | Pruebas automáticas, cobertura e integración continua | ✅ | 305 pruebas, 93.04 % de líneas, `.github/workflows/ci.yml` |
-| 8 | Pruebas de calidad con Postman y k6 hasta 2000 usuarios | ✅ | `calidad/postman/`, `calidad/k6/`, `calidad/resultados/` |
+| #   | Requisito                                                 | Estado | Evidencia principal                                                                                         |
+| --- | --------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| 1   | Estilo arquitectónico                                     | ✅     | `docs/02-arquitectura-de-software/10-estilo-arquitectonico.md`, ADR-001 (monolito modular)                  |
+| 2   | Patrón Clean Architecture                                 | ✅     | ADR-002, `docs/03-diseño-de-software/diseño-interno-modulos.md`, prueba de arquitectura                     |
+| 3   | Especificaciones SDD con criterios de aceptación y tareas | ✅     | `specs/001` a `specs/010` (requisitos, diseño y tareas): 294 de 295 tareas hechas; solo queda el despliegue |
+| 4   | Endpoints REST documentados con OpenAPI y Swagger         | ✅     | `/api/docs`, `apps/backend/swagger/openapi.json` (211 operaciones)                                          |
+| 5   | Comportamiento de la base de datos y caché                | ✅     | `docs/03-diseño-de-software/base-de-datos-y-cache.md`                                                       |
+| 6   | SOLID y patrones de diseño                                | ✅     | `docs/03-diseño-de-software/principios-diseño.md` y `patrones-diseño.md`                                    |
+| 7   | Pruebas automáticas, cobertura e integración continua     | ✅     | 305 pruebas, 93.04 % de líneas, `.github/workflows/ci.yml`                                                  |
+| 8   | Pruebas de calidad con Postman y k6 hasta 2000 usuarios   | ✅     | `calidad/postman/`, `calidad/k6/`, `calidad/resultados/`                                                    |
 
 ## 1 y 2. Estilo arquitectónico y Clean Architecture
 
@@ -29,18 +29,18 @@ comprobarla**. Repositorio: https://github.com/DiegoCoras06/sia-unsch-admision
 Cada carpeta de `specs/` tiene `requirements.md` (historias con criterios de aceptación «Dado, Cuando, Entonces»),
 `design.md` y `tasks.md`; cuatro tienen además su contrato `contracts/openapi.yaml`.
 
-| Especificación | Tareas hechas |
-|---|---|
-| 001 Portal público | 77 de 77 |
-| 002 Cuentas e identidad | 35 de 36 |
-| 003 Inscripción ordinaria | 33 de 33 |
-| 004 Inscripción de exonerados | 22 de 22 |
-| 005 Pagos | 29 de 29 |
-| 006 Examen y aulas | 23 de 23 |
-| 007 Resultados e ingreso | 16 de 16 |
-| 008 Panel administrativo | 33 de 33 |
-| 009 Asistente con IA | 15 de 15 |
-| 010 Notificaciones | 11 de 11 |
+| Especificación                | Tareas hechas |
+| ----------------------------- | ------------- |
+| 001 Portal público            | 77 de 77      |
+| 002 Cuentas e identidad       | 35 de 36      |
+| 003 Inscripción ordinaria     | 33 de 33      |
+| 004 Inscripción de exonerados | 22 de 22      |
+| 005 Pagos                     | 29 de 29      |
+| 006 Examen y aulas            | 23 de 23      |
+| 007 Resultados e ingreso      | 16 de 16      |
+| 008 Panel administrativo      | 33 de 33      |
+| 009 Asistente con IA          | 15 de 15      |
+| 010 Notificaciones            | 11 de 11      |
 
 Las tareas pendientes dependen del despliegue en AWS (Paso 11).
 
@@ -75,15 +75,16 @@ sus resultados antes y después.
 - **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición
   con Jest (25/11/2026, 305 pruebas en 39 archivos, todas aprobadas):
 
-  | Métrica | Cubierto | Porcentaje |
-  |---|---|---|
-  | Líneas | 12 227 de 13 141 | 93,04 % |
-  | Sentencias | 12 227 de 13 141 | 93,04 % |
-  | Funciones | 758 de 841 | 90,13 % |
-  | Ramas | 2906 de 3742 | 77,65 % |
+  | Métrica    | Cubierto         | Porcentaje |
+  | ---------- | ---------------- | ---------- |
+  | Líneas     | 12 227 de 13 141 | 93,04 %    |
+  | Sentencias | 12 227 de 13 141 | 93,04 %    |
+  | Funciones  | 758 de 841       | 90,13 %    |
+  | Ramas      | 2906 de 3742     | 77,65 %    |
 
   Jest cuenta las líneas de otra forma que Vitest (con Vitest la misma suite daba 88,28 % de líneas y 67,95 % de
   ramas); el código cubierto es el mismo.
+
 - **Carpeta de pruebas:** `apps/backend/tests/`, separada en `unit/` e `integration/`, con su guía en
   `apps/backend/tests/README.md`.
 - **Integración continua:** `.github/workflows/ci.yml` corre en cada envío a GitHub la revisión de tipos, las pruebas
@@ -104,23 +105,23 @@ carpetas de solo lectura pasaron completas con Newman el 20/11/2026: 22 peticion
 
 ### k6 (¿cuántos usuarios soporta?)
 
-| Prueba | Archivo de resultados |
-|---|---|
-| 1 y 10 usuarios, antes y después de la caché del catálogo | `calidad/resultados/2026-11-15-k6-rendimiento-*.txt` |
-| 50 a 2000 usuarios, antes de la caché de contenidos | `calidad/resultados/2026-11-20-k6-carga-2000-sin-cache-contenidos.txt` |
-| 50 a 2000 usuarios, con la caché de contenidos | `calidad/resultados/2026-11-20-k6-carga-2000.txt` |
+| Prueba                                                    | Archivo de resultados                                                  |
+| --------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1 y 10 usuarios, antes y después de la caché del catálogo | `calidad/resultados/2026-11-15-k6-rendimiento-*.txt`                   |
+| 50 a 2000 usuarios, antes de la caché de contenidos       | `calidad/resultados/2026-11-20-k6-carga-2000-sin-cache-contenidos.txt` |
+| 50 a 2000 usuarios, con la caché de contenidos            | `calidad/resultados/2026-11-20-k6-carga-2000.txt`                      |
 
 Resultado con la caché de contenidos (1 597 216 peticiones, solo lectura, API en la computadora y base en RDS):
 
-| Usuarios | Promedio | Mediana | p95 | Errores | Meta |
-|---|---|---|---|---|---|
-| 50 | 2 ms | 1 ms | 5 ms | 0 % | Cumple |
-| 100 | 3 ms | 2 ms | 8 ms | 0 % | Cumple |
-| 250 | 21 ms | 2 ms | 25 ms | 0 % | Cumple |
-| 500 | 7 ms | 1 ms | 32 ms | 0 % | Cumple |
-| 1000 | 16 ms | 4 ms | 70 ms | 0 % | Cumple |
-| 1500 | 241 ms | 196 ms | 482 ms | 0 % | Cumple |
-| 2000 | 503 ms | 494 ms | 589 ms | 0 % | Cumple |
+| Usuarios | Promedio | Mediana | p95    | Errores | Meta   |
+| -------- | -------- | ------- | ------ | ------- | ------ |
+| 50       | 2 ms     | 1 ms    | 5 ms   | 0 %     | Cumple |
+| 100      | 3 ms     | 2 ms    | 8 ms   | 0 %     | Cumple |
+| 250      | 21 ms    | 2 ms    | 25 ms  | 0 %     | Cumple |
+| 500      | 7 ms     | 1 ms    | 32 ms  | 0 %     | Cumple |
+| 1000     | 16 ms    | 4 ms    | 70 ms  | 0 %     | Cumple |
+| 1500     | 241 ms   | 196 ms  | 482 ms | 0 %     | Cumple |
+| 2000     | 503 ms   | 494 ms  | 589 ms | 0 %     | Cumple |
 
 Con 2000 usuarios simultáneos, p95 de 0,59 s y 0 % de errores: cumple la meta de EQ-01 (3 s) en todas las etapas. Sin la
 caché de contenidos solo cumplía hasta 50 usuarios; la comparación y su análisis están en

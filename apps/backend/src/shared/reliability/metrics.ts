@@ -27,14 +27,20 @@ export class ReliabilityMetrics {
   }
 
   snapshot() {
-    const serialize = (source: Map<string, Aggregate>) => Object.fromEntries(
-      [...source.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, {
-        count: value.count,
-        errors: value.errors,
-        averageMs: value.count ? Math.round(value.totalMs / value.count) : 0,
-        maxMs: Math.round(value.maxMs),
-      }]),
-    );
+    const serialize = (source: Map<string, Aggregate>) =>
+      Object.fromEntries(
+        [...source.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, value]) => [
+            key,
+            {
+              count: value.count,
+              errors: value.errors,
+              averageMs: value.count ? Math.round(value.totalMs / value.count) : 0,
+              maxMs: Math.round(value.maxMs),
+            },
+          ]),
+      );
     return {
       startedAt: this.startedAt.toISOString(),
       uptimeSeconds: Math.round(process.uptime()),

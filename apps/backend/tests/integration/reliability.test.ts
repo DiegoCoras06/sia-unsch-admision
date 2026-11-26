@@ -13,18 +13,45 @@ function fakeJpeg(): string {
 }
 
 const inscription = (documentNumber: string) => ({
-  documentType: 'CE', documentNumber, paternalSurname: 'PRUEBA', maternalSurname: 'CONFIABILIDAD', firstNames: 'SPRINT DOS', sex: 'F',
-  maritalStatus: 'SOLTERO', birthUbigeo: '050101', birthDate: '2008-03-14', address: 'Jr. Lima 123, Ayacucho',
-  residenceUbigeo: '050101', economicDependency: 'PADRES', mobile: '987654321', email: `${documentNumber.toLowerCase()}@example.com`,
-  photo: fakeJpeg(), schoolUbigeo: '050101', schoolName: 'IE Prueba', schoolType: 'ESTATAL', graduationYear: 2025,
-  inFourthOrBelow: false, preparation: 'ACADEMIA', attempts: 1, modality: 'ORD', quotaCategory: 'ORD', campus: 'HUAMANGA',
-  optionCode: 'P34', militaryCondition: 'NONE', familyLink: false, declarationAccepted: true, consentVersion: '2026-10-v1',
+  documentType: 'CE',
+  documentNumber,
+  paternalSurname: 'PRUEBA',
+  maternalSurname: 'CONFIABILIDAD',
+  firstNames: 'SPRINT DOS',
+  sex: 'F',
+  maritalStatus: 'SOLTERO',
+  birthUbigeo: '050101',
+  birthDate: '2008-03-14',
+  address: 'Jr. Lima 123, Ayacucho',
+  residenceUbigeo: '050101',
+  economicDependency: 'PADRES',
+  mobile: '987654321',
+  email: `${documentNumber.toLowerCase()}@example.com`,
+  photo: fakeJpeg(),
+  schoolUbigeo: '050101',
+  schoolName: 'IE Prueba',
+  schoolType: 'ESTATAL',
+  graduationYear: 2025,
+  inFourthOrBelow: false,
+  preparation: 'ACADEMIA',
+  attempts: 1,
+  modality: 'ORD',
+  quotaCategory: 'ORD',
+  campus: 'HUAMANGA',
+  optionCode: 'P34',
+  militaryCondition: 'NONE',
+  familyLink: false,
+  declarationAccepted: true,
+  consentVersion: '2026-10-v1',
 });
 
 describe('Confiabilidad transversal del Sprint 2', () => {
   it('separa liveness, readiness, dependencias y métricas sin datos personales', async () => {
     expect((await t.request.get('/api/v1/health/live').expect(200)).body.data.status).toBe('alive');
-    expect((await t.request.get('/api/v1/health/ready').expect(200)).body.data).toMatchObject({ status: 'ready', database: 'ok' });
+    expect((await t.request.get('/api/v1/health/ready').expect(200)).body.data).toMatchObject({
+      status: 'ready',
+      database: 'ok',
+    });
     const dependencies = (await t.request.get('/api/v1/health/dependencies').expect(200)).body.data;
     expect(dependencies).toHaveProperty('circuits');
     expect(JSON.stringify(dependencies)).not.toMatch(/secret|password/i);
@@ -44,7 +71,11 @@ describe('Confiabilidad transversal del Sprint 2', () => {
     expect(replay.body).toEqual(first.body);
     expect(await t.db.application.count({ where: { documentNumber } })).toBe(1);
 
-    const conflict = await t.request.post('/api/v1/inscriptions').set('Idempotency-Key', key).send({ ...body, mobile: '999999999' }).expect(409);
+    const conflict = await t.request
+      .post('/api/v1/inscriptions')
+      .set('Idempotency-Key', key)
+      .send({ ...body, mobile: '999999999' })
+      .expect(409);
     expect(conflict.body.error.code).toBe('IDEMPOTENCY_CONFLICT');
   });
 

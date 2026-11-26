@@ -10,13 +10,12 @@ const PROCESSING_TIMEOUT_MS = 2 * 60_000;
 const TTL_MS = 24 * 60 * 60_000;
 
 /** Solo operaciones de escritura cuyo resultado es seguro de conservar y repetir. */
-const SCOPES = new Set([
-  'POST /api/v1/inscriptions',
-  'POST /api/v1/payments/session',
-  'POST /api/v1/payments/charge',
-]);
+const SCOPES = new Set(['POST /api/v1/inscriptions', 'POST /api/v1/payments/session', 'POST /api/v1/payments/charge']);
 
-const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value ?? null)).digest('hex');
+const digest = (value: unknown) =>
+  createHash('sha256')
+    .update(JSON.stringify(value ?? null))
+    .digest('hex');
 
 /**
  * Implementa `Idempotency-Key` sin guardar el cuerpo de la solicitud. La primera respuesta JSON queda persistida;
@@ -28,14 +27,19 @@ export function idempotency(db: Db, clock: Clock, metrics: ReliabilityMetrics): 
     const raw = req.get('Idempotency-Key');
     if (!SCOPES.has(scope) || !raw) return next();
     const key = raw.trim();
-    if (!KEY.test(key)) return next(new AppError(400, 'INVALID_IDEMPOTENCY_KEY', 'Idempotency-Key debe tener entre 8 y 100 caracteres seguros.'));
+    if (!KEY.test(key))
+      return next(
+        new AppError(400, 'INVALID_IDEMPOTENCY_KEY', 'Idempotency-Key debe tener entre 8 y 100 caracteres seguros.'),
+      );
 
     const requestHash = digest(req.body);
     const now = clock.now();
     const expiresAt = new Date(now.getTime() + TTL_MS);
     let acquired = false;
     try {
-      await db.idempotencyRecord.create({ data: { scope, key, requestHash, state: 'PROCESSING', lockedAt: now, expiresAt } });
+      await db.idempotencyRecord.create({
+        data: { scope, key, requestHash, state: 'PROCESSING', lockedAt: now, expiresAt },
+      });
       acquired = true;
     } catch (createError) {
       const current = await db.idempotencyRecord.findUnique({ where: { scope_key: { scope, key } } }).catch(() => null);
@@ -48,7 +52,9 @@ export function idempotency(db: Db, clock: Clock, metrics: ReliabilityMetrics): 
         acquired = claimed.count === 1;
       } else if (current.requestHash !== requestHash) {
         metrics.recordIdempotency('conflicts');
-        return next(new AppError(409, 'IDEMPOTENCY_CONFLICT', 'La misma Idempotency-Key ya fue usada con otros datos.'));
+        return next(
+          new AppError(409, 'IDEMPOTENCY_CONFLICT', 'La misma Idempotency-Key ya fue usada con otros datos.'),
+        );
       } else if (current.state === 'COMPLETED' && current.statusCode && current.response !== null) {
         metrics.recordIdempotency('replayed');
         res.setHeader('Idempotency-Replayed', 'true');
@@ -65,7 +71,9 @@ export function idempotency(db: Db, clock: Clock, metrics: ReliabilityMetrics): 
     if (!acquired) {
       metrics.recordIdempotency('inProgress');
       res.setHeader('Retry-After', '2');
-      return next(new AppError(409, 'IDEMPOTENCY_IN_PROGRESS', 'La operación con esta Idempotency-Key todavía está en proceso.'));
+      return next(
+        new AppError(409, 'IDEMPOTENCY_IN_PROGRESS', 'La operación con esta Idempotency-Key todavía está en proceso.'),
+      );
     }
 
     metrics.recordIdempotency('acquired');
@@ -75,13 +83,15 @@ export function idempotency(db: Db, clock: Clock, metrics: ReliabilityMetrics): 
     res.json = ((body: unknown) => {
       if (sent) return res;
       sent = true;
-      const persist = res.statusCode >= 500
-        ? db.idempotencyRecord.deleteMany({ where: { scope, key } })
-        : db.idempotencyRecord.updateMany({
-            where: { scope, key, state: 'PROCESSING' },
-            data: { state: 'COMPLETED', statusCode: res.statusCode, response: body as object, lockedAt: clock.now() },
-          });
-      void persist.catch((error: unknown) => req.log.warn({ err: error, scope }, 'no se pudo guardar la respuesta idempotente'))
+      const persist =
+        res.statusCode >= 500
+          ? db.idempotencyRecord.deleteMany({ where: { scope, key } })
+          : db.idempotencyRecord.updateMany({
+              where: { scope, key, state: 'PROCESSING' },
+              data: { state: 'COMPLETED', statusCode: res.statusCode, response: body as object, lockedAt: clock.now() },
+            });
+      void persist
+        .catch((error: unknown) => req.log.warn({ err: error, scope }, 'no se pudo guardar la respuesta idempotente'))
         .finally(() => originalJson(body));
       return res;
     }) as Response['json'];

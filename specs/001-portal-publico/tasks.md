@@ -72,7 +72,7 @@
 
 - [x] T070 [H6] `GET /content/home` (carrusel, autoridades, bloques, accesos según etapa) — `modules/configuracion/`
 - [x] T071 [H6] `GET /calls/{code}/stats` con `EnrollmentStatsProvider` provisional (R-09)
-- [x] T072 [H6] `POST /support/contact`: caso con número, *honeypot*, límite 5/h, correo por outbox — `modules/seguridad/`
+- [x] T072 [H6] `POST /support/contact`: caso con número, _honeypot_, límite 5/h, correo por outbox — `modules/seguridad/`
 - [x] T073 [H6] Secciones institucionales del inicio y página de contacto — `features/public/`
 
 ## Fase final — Pulido

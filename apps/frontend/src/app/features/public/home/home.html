@@ -2,33 +2,54 @@
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__text">
     <div class="hero__inner">
-      <p class="hero__pill" [class.is-open]="status().open"><i aria-hidden="true"></i>{{ status().label }}</p>
-      <h1 id="hero-title"><span class="hero__name">Admisión UNSCH</span> <span class="hero__year">2027-I</span></h1>
-      <p class="hero__lead">Postula a la Universidad Nacional de San Cristóbal de Huamanga. Los exámenes se rinden en la Ciudad Universitaria de Ayacucho.</p>
+      <p class="hero__pill" [class.is-open]="status().open">
+        <i aria-hidden="true"></i>{{ status().label }}
+      </p>
+      <h1 id="hero-title">
+        <span class="hero__name">Admisión UNSCH</span> <span class="hero__year">2027-I</span>
+      </h1>
+      <p class="hero__lead">
+        Postula a la Universidad Nacional de San Cristóbal de Huamanga. Los exámenes se rinden en la
+        Ciudad Universitaria de Ayacucho.
+      </p>
       @if (exams().length) {
         <ul class="hero__dates" aria-label="Fechas de examen">
           @for (e of exams(); track e.code) {
             <li class="hero__date">
-              <span class="hero__day" aria-hidden="true"><b>{{ e.day }}</b><small>{{ e.month }}</small></span>
+              <span class="hero__day" aria-hidden="true"
+                ><b>{{ e.day }}</b
+                ><small>{{ e.month }}</small></span
+              >
               <strong>{{ e.title }}</strong><span>{{ e.when }}</span>
             </li>
           }
         </ul>
       }
       <ul class="hero__stats">
-        <li><b>{{ totalVacancies() || 1803 }}</b><span>vacantes</span></li>
+        <li>
+          <b>{{ totalVacancies() || 1803 }}</b><span>vacantes</span>
+        </li>
         <li><b>34</b><span>programas</span></li>
-        <li><b>{{ options().length || 40 }}</b><span>opciones con especialidades</span></li>
+        <li>
+          <b>{{ options().length || 40 }}</b><span>opciones con especialidades</span>
+        </li>
       </ul>
       <div class="hero__row">
         <div class="hero__actions">
-          <a [routerLink]="quick[primary()].route" class="hero__go">{{ quick[primary()].cta }} <span aria-hidden="true">→</span></a>
+          <a [routerLink]="quick[primary()].route" class="hero__go"
+            >{{ quick[primary()].cta }} <span aria-hidden="true">→</span></a
+          >
           <a routerLink="/cronograma" class="hero__ghost">Ver el cronograma</a>
         </div>
         @if (milestone(); as m) {
           <div class="hero__count">
             <p class="hero__count-label">Faltan para el {{ examLabel(m.name) }}</p>
-            <app-countdown [target]="m.startsAt" [serverNow]="store.call()!.now" [label]="m.name" [tiles]="true" />
+            <app-countdown
+              [target]="m.startsAt"
+              [serverNow]="store.call()!.now"
+              [label]="m.name"
+              [tiles]="true"
+            />
           </div>
         }
       </div>
@@ -36,11 +57,26 @@
   </div>
   <figure class="hero__media">
     <div class="hero__frame">
-      <img [src]="img.src('portada.fachada', 'img/campus-fachada-1280.webp')" [attr.srcset]="img.srcset('portada.fachada', 'img/campus-fachada-640.webp 640w, img/campus-fachada-1280.webp 1280w, img/campus-fachada-1920.webp 1920w, img/campus-fachada-2560.webp 2560w')" sizes="(max-width: 960px) 100vw, 42vw" [alt]="img.alt('portada.fachada', 'Fachada del edificio de la UNSCH con el escudo y el año 1677')" width="1280" height="720" fetchpriority="high">
+      <img
+        [src]="img.src('portada.fachada', 'img/campus-fachada-1280.webp')"
+        [attr.srcset]="
+          img.srcset(
+            'portada.fachada',
+            'img/campus-fachada-640.webp 640w, img/campus-fachada-1280.webp 1280w, img/campus-fachada-1920.webp 1920w, img/campus-fachada-2560.webp 2560w'
+          )
+        "
+        sizes="(max-width: 960px) 100vw, 42vw"
+        [alt]="
+          img.alt('portada.fachada', 'Fachada del edificio de la UNSCH con el escudo y el año 1677')
+        "
+        width="1280"
+        height="720"
+        fetchpriority="high"
+      />
       <span class="hero__seal"><span>Fundada en</span><strong>1677</strong></span>
     </div>
     <figcaption class="hero__badge">
-      <img src="img/escudo-unsch-oficial-120.webp" alt="" width="34" height="45">
+      <img src="img/escudo-unsch-oficial-120.webp" alt="" width="34" height="45" />
       <div><strong>Ciudad Universitaria</strong><span>Ayacucho, Perú</span></div>
     </figcaption>
   </figure>
@@ -52,7 +88,12 @@
     <div>
       <div class="now__head">
         <h2 id="now-title" class="now__title">Ahora en curso</h2>
-        @if (nowStages().length) { <span class="now__live"><i aria-hidden="true"></i>{{ nowStages().length }} {{ nowStages().length === 1 ? 'etapa abierta' : 'etapas abiertas' }}</span> }
+        @if (nowStages().length) {
+          <span class="now__live"
+            ><i aria-hidden="true"></i>{{ nowStages().length }}
+            {{ nowStages().length === 1 ? 'etapa abierta' : 'etapas abiertas' }}</span
+          >
+        }
       </div>
       @if (store.unavailable()) {
         <p>Próximamente se publicará la nueva convocatoria.</p>
@@ -64,8 +105,33 @@
               <strong>{{ s.name }}</strong>
               <span class="now__left" [class.is-soon]="soon(s.endsAt)">{{ left(s.endsAt) }}</span>
             </div>
-            <span class="now__until"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hasta el {{ longDate(s.endsAt) }}</span>
-            <span class="now__track" role="img" [attr.aria-label]="'Avance de la etapa: ' + stageProgress(s) + ' %'"><i [style.width.%]="stageProgress(s)"></i></span>
+            <span class="now__until"
+              ><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                <rect
+                  x="3.5"
+                  y="5"
+                  width="17"
+                  height="15.5"
+                  rx="2.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <path
+                  d="M3.5 10h17M8 3v4M16 3v4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                /></svg
+              >Hasta el {{ longDate(s.endsAt) }}</span
+            >
+            <span
+              class="now__track"
+              role="img"
+              [attr.aria-label]="'Avance de la etapa: ' + stageProgress(s) + ' %'"
+              ><i [style.width.%]="stageProgress(s)"></i
+            ></span>
           </li>
         }
       </ul>
@@ -75,12 +141,36 @@
         @for (q of otherQuick(); track q.key) {
           <li>
             @if (q.enabled) {
-              <a class="quick__item is-on" [routerLink]="quick[q.key].route" [attr.data-icon]="quick[q.key].icon">
-                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state"><i aria-hidden="true"></i>{{ q.reason }}</span><svg class="quick__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <a
+                class="quick__item is-on"
+                [routerLink]="quick[q.key].route"
+                [attr.data-icon]="quick[q.key].icon"
+              >
+                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state"
+                  ><i aria-hidden="true"></i>{{ q.reason }}</span
+                ><svg
+                  class="quick__arrow"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
               </a>
             } @else {
               <span class="quick__item" aria-disabled="true" [attr.data-icon]="quick[q.key].icon">
-                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state">{{ q.reason }}</span>
+                <b>{{ quick[q.key].label ?? q.label }}</b><span class="quick__state">{{
+                  q.reason
+                }}</span>
               </span>
             }
           </li>
@@ -95,7 +185,10 @@
   <div class="frame stack-lg">
     <div class="intro" appReveal>
       <h2 id="finder-title">Tu postulación en tres respuestas</h2>
-      <p class="lead">Elige tu carrera y tu modalidad: te decimos cuántas vacantes hay y cuánto pagas hoy, según el prospecto oficial.</p>
+      <p class="lead">
+        Elige tu carrera y tu modalidad: te decimos cuántas vacantes hay y cuánto pagas hoy, según
+        el prospecto oficial.
+      </p>
     </div>
     <div appReveal="80"><app-application-finder [callCode]="store.code()" /></div>
   </div>
@@ -108,7 +201,10 @@
       <div class="dates__head">
         <div class="stack">
           <h2 id="dates-title">Las fechas que importan</h2>
-          <p>Cada etapa se abre y se cierra sola, en hora de Lima. Fuera de plazo, la inscripción paga un recargo de S/ 65.00.</p>
+          <p>
+            Cada etapa se abre y se cierra sola, en hora de Lima. Fuera de plazo, la inscripción
+            paga un recargo de S/ 65.00.
+          </p>
         </div>
         <a routerLink="/cronograma" class="link-arrow">Cronograma completo</a>
       </div>
@@ -123,30 +219,68 @@
     <div class="areas-head">
       <div class="areas-intro">
         <h2 id="areas-title" appReveal>34 programas en tres áreas</h2>
-        <p class="areas-note">Algunos programas se eligen por especialidad (por ejemplo, Biología o Educación Secundaria), por eso la lista tiene 40 opciones.</p>
+        <p class="areas-note">
+          Algunos programas se eligen por especialidad (por ejemplo, Biología o Educación
+          Secundaria), por eso la lista tiene 40 opciones.
+        </p>
       </div>
-      <a routerLink="/programas" class="areas-search" appReveal="60" data-icon="buscar">Buscar programa y vacantes</a>
+      <a routerLink="/programas" class="areas-search" appReveal="60" data-icon="buscar"
+        >Buscar programa y vacantes</a
+      >
     </div>
     @switch (optionsState()) {
-      @case ('loading') { <div class="skel skel--cards" role="status" aria-label="Cargando los programas de estudio"><span></span><span></span><span></span></div> }
-      @case ('error') { <p class="load-note" role="status">No pudimos cargar los programas ahora. Consulta la lista completa en <a routerLink="/programas">Programas de estudios</a>.</p> }
-    }
-    @if (optionsState() === 'ok') {
-    <div class="areas">
-      @for (a of byArea(); track a.code; let i = $index) {
-        <div class="area" [appReveal]="i * 80">
-          <header class="area__head">
-            <span class="area__num">{{ a.options.length }}</span>
-            <span class="area__title"><strong>{{ a.name }}</strong><small>Área {{ a.code }} · {{ a.options.length === 1 ? 'opción' : 'opciones' }}</small></span>
-          </header>
-          <ul>
-            @for (o of a.options; track o.internalCode) {
-              <li><a [routerLink]="['/programas', o.internalCode]"><span>{{ o.displayName }}</span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
-            }
-          </ul>
+      @case ('loading') {
+        <div class="skel skel--cards" role="status" aria-label="Cargando los programas de estudio">
+          <span></span><span></span><span></span>
         </div>
       }
-    </div>
+      @case ('error') {
+        <p class="load-note" role="status">
+          No pudimos cargar los programas ahora. Consulta la lista completa en
+          <a routerLink="/programas">Programas de estudios</a>.
+        </p>
+      }
+    }
+    @if (optionsState() === 'ok') {
+      <div class="areas">
+        @for (a of byArea(); track a.code; let i = $index) {
+          <div class="area" [appReveal]="i * 80">
+            <header class="area__head">
+              <span class="area__num">{{ a.options.length }}</span>
+              <span class="area__title"
+                ><strong>{{ a.name }}</strong
+                ><small
+                  >Área {{ a.code }} · {{ a.options.length === 1 ? 'opción' : 'opciones' }}</small
+                ></span
+              >
+            </header>
+            <ul>
+              @for (o of a.options; track o.internalCode) {
+                <li>
+                  <a [routerLink]="['/programas', o.internalCode]"
+                    ><span>{{ o.displayName }}</span
+                    ><svg
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path
+                        d="M9 6l6 6-6 6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      /></svg
+                  ></a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
     }
   </div>
 </section>
@@ -159,21 +293,41 @@
         <p class="mision__kicker">Nuestra universidad</p>
         <h2 id="mision-title" class="mision__title">Misión</h2>
         <blockquote class="mision__quote">
-          <p>Brindar formación universitaria a los estudiantes con énfasis en la investigación científica, tecnológica y humanística con principios éticos, responsabilidad social que contribuya al desarrollo sostenible de la región y el país.</p>
+          <p>
+            Brindar formación universitaria a los estudiantes con énfasis en la investigación
+            científica, tecnológica y humanística con principios éticos, responsabilidad social que
+            contribuya al desarrollo sostenible de la región y el país.
+          </p>
         </blockquote>
         <p class="mision__source">Plan Estratégico Institucional de la UNSCH</p>
       </div>
       <div class="mision__principles" appReveal="80">
         <h3>Principios</h3>
         <ol>
-          @for (p of principles; track p; let i = $index) { <li><span class="mision__n" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span><span>{{ p }}</span></li> }
+          @for (p of principles; track p; let i = $index) {
+            <li>
+              <span class="mision__n" aria-hidden="true">{{
+                (i + 1).toString().padStart(2, '0')
+              }}</span><span>{{ p }}</span>
+            </li>
+          }
         </ol>
       </div>
     </div>
 
     <ul class="campus" aria-label="Pabellones de la Ciudad Universitaria de Ayacucho">
       @for (c of campus; track c.src) {
-        <li><img appPhoto [src]="c.src" [alt]="c.alt" [attr.width]="c.w" [attr.height]="c.h" loading="lazy" decoding="async"></li>
+        <li>
+          <img
+            appPhoto
+            [src]="c.src"
+            [alt]="c.alt"
+            [attr.width]="c.w"
+            [attr.height]="c.h"
+            loading="lazy"
+            decoding="async"
+          />
+        </li>
       }
     </ul>
   </div>
@@ -189,13 +343,51 @@
     <div class="steps">
       <a class="steps__card" routerLink="/pasos" fragment="ordinario" appReveal="60">
         <h3>Ordinario, en 4 pasos</h3>
-        <img appPhoto [src]="img.src('portada.ordinario', 'img/pasos-ordinario-1040.webp')" [attr.srcset]="img.srcset('portada.ordinario', 'img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1042" height="822" loading="lazy" decoding="async"
-          [alt]="img.alt('portada.ordinario', 'Infografía del proceso de inscripción en la modalidad Ordinario: registro de datos y orden de pago, pago por admisión, impresión de la ficha de inscripción y publicación de estudiantes aptos')">
+        <img
+          appPhoto
+          [src]="img.src('portada.ordinario', 'img/pasos-ordinario-1040.webp')"
+          [attr.srcset]="
+            img.srcset(
+              'portada.ordinario',
+              'img/pasos-ordinario-640.webp 640w, img/pasos-ordinario-1040.webp 1040w'
+            )
+          "
+          sizes="(max-width: 760px) 100vw, 50vw"
+          width="1042"
+          height="822"
+          loading="lazy"
+          decoding="async"
+          [alt]="
+            img.alt(
+              'portada.ordinario',
+              'Infografía del proceso de inscripción en la modalidad Ordinario: registro de datos y orden de pago, pago por admisión, impresión de la ficha de inscripción y publicación de estudiantes aptos'
+            )
+          "
+        />
       </a>
       <a class="steps__card" routerLink="/pasos" fragment="exonerados" appReveal="120">
         <h3>Exonerados, en 5 pasos</h3>
-        <img appPhoto [src]="img.src('portada.exonerado', 'img/pasos-exonerado-1040.webp')" [attr.srcset]="img.srcset('portada.exonerado', 'img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w')" sizes="(max-width: 760px) 100vw, 50vw" width="1043" height="822" loading="lazy" decoding="async"
-          [alt]="img.alt('portada.exonerado', 'Infografía del proceso de inscripción en la modalidad Exonerado: obtención de autorización, registro de datos, pago por admisión, impresión de la ficha y publicación de estudiantes aptos')">
+        <img
+          appPhoto
+          [src]="img.src('portada.exonerado', 'img/pasos-exonerado-1040.webp')"
+          [attr.srcset]="
+            img.srcset(
+              'portada.exonerado',
+              'img/pasos-exonerado-640.webp 640w, img/pasos-exonerado-1040.webp 1040w'
+            )
+          "
+          sizes="(max-width: 760px) 100vw, 50vw"
+          width="1043"
+          height="822"
+          loading="lazy"
+          decoding="async"
+          [alt]="
+            img.alt(
+              'portada.exonerado',
+              'Infografía del proceso de inscripción en la modalidad Exonerado: obtención de autorización, registro de datos, pago por admisión, impresión de la ficha y publicación de estudiantes aptos'
+            )
+          "
+        />
       </a>
     </div>
   </div>
@@ -206,12 +398,20 @@
   <div class="frame exam__grid">
     <div class="stack-lg">
       <h2 id="exam-title" appReveal>El día del examen</h2>
-      <div class="md md--light" appReveal="60" [innerHTML]="content()?.blocks?.['exam_day'] | md"></div>
+      <div
+        class="md md--light"
+        appReveal="60"
+        [innerHTML]="content()?.blocks?.['exam_day'] | md"
+      ></div>
     </div>
     <aside class="exam__score" appReveal="120" aria-label="Puntaje mínimo y estructura del examen">
       <p class="exam__label">Puntaje mínimo para alcanzar vacante</p>
-      <p class="exam__value"><span class="exam__num">450</span><span class="exam__of">de 1000 puntos</span></p>
-      <div class="exam__bar" role="img" aria-label="450 de 1000 puntos, el 45 % del puntaje máximo"><span style="width: 45%"></span></div>
+      <p class="exam__value">
+        <span class="exam__num">450</span><span class="exam__of">de 1000 puntos</span>
+      </p>
+      <div class="exam__bar" role="img" aria-label="450 de 1000 puntos, el 45 % del puntaje máximo">
+        <span style="width: 45%"></span>
+      </div>
       <p class="exam__label exam__label--gap">Estructura del examen</p>
       <ul class="exam__parts">
         <li><strong>100</strong><span>preguntas de conocimientos</span></li>
@@ -227,19 +427,56 @@
 <section class="section rector" aria-labelledby="rector-title">
   <div class="frame rector__grid">
     <figure class="rector__photo" appReveal>
-      <figcaption class="rector__badge"><img src="img/escudo-unsch-oficial-120.webp" alt="" width="26" height="35">Rector de la UNSCH</figcaption>
-      <img appPhoto [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')" [attr.srcset]="img.srcset('portada.rector', 'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w')" sizes="(max-width: 760px) 100vw, 40vw" [alt]="img.alt('portada.rector', 'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad')"
-        width="709" height="768" loading="lazy" decoding="async">
+      <figcaption class="rector__badge">
+        <img src="img/escudo-unsch-oficial-120.webp" alt="" width="26" height="35" />Rector de la
+        UNSCH
+      </figcaption>
+      <img
+        appPhoto
+        [src]="img.src('portada.rector', 'img/rector-ramirez-roca-960.webp')"
+        [attr.srcset]="
+          img.srcset(
+            'portada.rector',
+            'img/rector-ramirez-roca-480.webp 480w, img/rector-ramirez-roca-960.webp 960w'
+          )
+        "
+        sizes="(max-width: 760px) 100vw, 40vw"
+        [alt]="
+          img.alt(
+            'portada.rector',
+            'Retrato del Dr. Emilio Germán Ramírez Roca, rector de la UNSCH, con terno azul, corbata guinda y la insignia de la universidad'
+          )
+        "
+        width="709"
+        height="768"
+        loading="lazy"
+        decoding="async"
+      />
     </figure>
     <div class="rector__text">
       <p class="rector__kicker" appReveal="30">Autoridad universitaria</p>
       <h2 id="rector-title" appReveal="60">Dr. Emilio Germán Ramírez Roca</h2>
-      <p class="rector__role" appReveal="120">Rector de la Universidad Nacional de San Cristóbal de Huamanga</p>
-      <p appReveal="180">Fundada en 1677 y reabierta en 1959, la UNSCH conduce el Concurso de Admisión 2027-I por medio de su Dirección de Admisión: 1803 vacantes en 34 programas de estudio para los jóvenes de Ayacucho y de todo el país.</p>
+      <p class="rector__role" appReveal="120">
+        Rector de la Universidad Nacional de San Cristóbal de Huamanga
+      </p>
+      <p appReveal="180">
+        Fundada en 1677 y reabierta en 1959, la UNSCH conduce el Concurso de Admisión 2027-I por
+        medio de su Dirección de Admisión: 1803 vacantes en 34 programas de estudio para los jóvenes
+        de Ayacucho y de todo el país.
+      </p>
       <dl class="rector__facts" appReveal="240">
-        <div><dt>1677</dt><dd>año de fundación</dd></div>
-        <div><dt>34</dt><dd>programas de estudio</dd></div>
-        <div><dt>1803</dt><dd>vacantes en 2027-I</dd></div>
+        <div>
+          <dt>1677</dt>
+          <dd>año de fundación</dd>
+        </div>
+        <div>
+          <dt>34</dt>
+          <dd>programas de estudio</dd>
+        </div>
+        <div>
+          <dt>1803</dt>
+          <dd>vacantes en 2027-I</dd>
+        </div>
       </dl>
     </div>
   </div>
@@ -254,37 +491,94 @@
           <p class="news__kicker">Novedades del concurso</p>
           <h2 id="news-title" appReveal>Comunicados</h2>
         </div>
-        <a routerLink="/comunicados" class="news__all">Todos los comunicados <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a routerLink="/comunicados" class="news__all"
+          >Todos los comunicados
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <path
+              d="M5 12h14M13 6l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg
+        ></a>
       </header>
       <ul class="news__list">
         @for (n of news(); track n.id) {
           <li appReveal="60">
             <article class="news__card">
-              <time class="news__date" [attr.datetime]="n.publishedAt" [attr.aria-label]="longDate(n.publishedAt)">
+              <time
+                class="news__date"
+                [attr.datetime]="n.publishedAt"
+                [attr.aria-label]="longDate(n.publishedAt)"
+              >
                 <span class="news__day">{{ day(n.publishedAt) }}</span>
                 <span class="news__month">{{ month(n.publishedAt) }}</span>
               </time>
               <div class="news__body">
-                <p class="news__meta"><span class="news__tag" [attr.data-type]="n.type">{{ newsType[n.type] }}</span>{{ longDate(n.publishedAt) }}</p>
+                <p class="news__meta">
+                  <span class="news__tag" [attr.data-type]="n.type">{{ newsType[n.type] }}</span>{{
+                    longDate(n.publishedAt)
+                  }}
+                </p>
                 <h3>{{ n.title }}</h3>
                 <p class="news__text">{{ n.bodyMarkdown }}</p>
-                <a routerLink="/comunicados" class="news__more">Leer el comunicado <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+                <a routerLink="/comunicados" class="news__more"
+                  >Leer el comunicado
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      d="M5 12h14M13 6l6 6-6 6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    /></svg
+                ></a>
               </div>
             </article>
           </li>
         } @empty {
           @switch (newsState()) {
-            @case ('loading') { <li><div class="skel" role="status" aria-label="Cargando comunicados"><span></span><span></span><span></span></div></li> }
-            @case ('error') { <li class="news__empty"><p role="status">No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.</p></li> }
-            @default { <li class="news__empty"><p>No hay comunicados publicados.</p></li> }
+            @case ('loading') {
+              <li>
+                <div class="skel" role="status" aria-label="Cargando comunicados">
+                  <span></span><span></span><span></span>
+                </div>
+              </li>
+            }
+            @case ('error') {
+              <li class="news__empty">
+                <p role="status">
+                  No pudimos cargar los comunicados ahora. Inténtalo en unos minutos.
+                </p>
+              </li>
+            }
+            @default {
+              <li class="news__empty"><p>No hay comunicados publicados.</p></li>
+            }
           }
         }
       </ul>
     </div>
     @if (content()?.authorities?.[0]; as a) {
       <figure class="quote" appReveal="120">
-        <svg class="quote__mark" viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><path fill="currentColor" d="M0 36V22C0 9.6 6.4 2.2 19.2 0l1.6 4.4C13.4 6.6 10 11 9.6 18H19v18H0Zm28 0V22C28 9.6 34.4 2.2 47.2 0l1.6 4.4C41.4 6.6 38 11 37.6 18H47v18H28Z"/></svg>
-        <blockquote class="quote__text"><p>{{ a.message }}</p></blockquote>
+        <svg class="quote__mark" viewBox="0 0 48 36" width="48" height="36" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M0 36V22C0 9.6 6.4 2.2 19.2 0l1.6 4.4C13.4 6.6 10 11 9.6 18H19v18H0Zm28 0V22C28 9.6 34.4 2.2 47.2 0l1.6 4.4C41.4 6.6 38 11 37.6 18H47v18H28Z"
+          />
+        </svg>
+        <blockquote class="quote__text">
+          <p>{{ a.message }}</p>
+        </blockquote>
         <figcaption class="quote__by">
           <span class="quote__name">{{ a.name }}</span>
           <span class="quote__role">{{ a.position }}</span>

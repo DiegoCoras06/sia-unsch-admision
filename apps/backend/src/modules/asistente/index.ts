@@ -20,7 +20,12 @@ export function createAsistenteModule(deps: {
   audit: AuditLog;
   logger: Logger;
   convocatorias: ConvocatoriasQueries;
-  inscriptions: ToolDeps['inscriptions'] & { paymentContext(documentNumber: string, applicantCode: string): Promise<{ applicantCode: string; firstNames: string }> };
+  inscriptions: ToolDeps['inscriptions'] & {
+    paymentContext(
+      documentNumber: string,
+      applicantCode: string,
+    ): Promise<{ applicantCode: string; firstNames: string }>;
+  };
   payments: ToolDeps['payments'];
   progress?: ToolDeps['progress'];
   support: { createCase(input: { name: string; email: string; message: string }, ipHash: string): Promise<string> };
@@ -33,18 +38,38 @@ export function createAsistenteModule(deps: {
   dailyBudgetUsd: number;
   retentionDays: () => Promise<number>;
 }) {
-  const tools = new AssistantTools({ persistence: deps.db, convocatorias: deps.convocatorias, inscriptions: deps.inscriptions, payments: deps.payments, ...(deps.progress ? { progress: deps.progress } : {}) });
-  const selectedAi = deps.aiOverride !== undefined
-    ? deps.aiOverride
-    : deps.openRouter.apiKey
-      ? new OpenRouterProvider({ apiKey: deps.openRouter.apiKey, model: deps.openRouter.model, referer: deps.openRouter.referer })
-      : null;
+  const tools = new AssistantTools({
+    persistence: deps.db,
+    convocatorias: deps.convocatorias,
+    inscriptions: deps.inscriptions,
+    payments: deps.payments,
+    ...(deps.progress ? { progress: deps.progress } : {}),
+  });
+  const selectedAi =
+    deps.aiOverride !== undefined
+      ? deps.aiOverride
+      : deps.openRouter.apiKey
+        ? new OpenRouterProvider({
+            apiKey: deps.openRouter.apiKey,
+            model: deps.openRouter.model,
+            referer: deps.openRouter.referer,
+          })
+        : null;
   const ai = selectedAi && deps.aiDecorator ? deps.aiDecorator(selectedAi) : selectedAi;
   const service = new AssistantService({
-    persistence: deps.db, clock: deps.clock, limiter: deps.limiter, audit: deps.audit, logger: deps.logger,
-    tools, ai, basic: new RuleBasedProvider(),
-    passSecret: deps.passSecret, dailyBudgetUsd: deps.dailyBudgetUsd, retentionDays: deps.retentionDays,
-    inscriptions: deps.inscriptions, support: deps.support,
+    persistence: deps.db,
+    clock: deps.clock,
+    limiter: deps.limiter,
+    audit: deps.audit,
+    logger: deps.logger,
+    tools,
+    ai,
+    basic: new RuleBasedProvider(),
+    passSecret: deps.passSecret,
+    dailyBudgetUsd: deps.dailyBudgetUsd,
+    retentionDays: deps.retentionDays,
+    inscriptions: deps.inscriptions,
+    support: deps.support,
   });
   const knowledge = new KnowledgeAdmin({ persistence: deps.db, audit: deps.audit });
   return { service, knowledge, router: asistenteRoutes(service) };

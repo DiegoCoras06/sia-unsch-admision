@@ -14,29 +14,66 @@ export interface DomainEvents {
   /** Entró desde un navegador o sistema que la cuenta nunca usó. */
   InicioSesionNuevo: { email: string; device: string; at: string; staff: boolean };
   InscripcionRegistrada: {
-    email: string; firstNames: string; applicantCode: string; program: string; modality: string;
-    total: string; status: string; examDate: string;
+    email: string;
+    firstNames: string;
+    applicantCode: string;
+    program: string;
+    modality: string;
+    total: string;
+    status: string;
+    examDate: string;
   };
   PagoConfirmado: { applicantCode: string; amount: string; operationNumber: string; payMethod: string; paidAt: string };
   PagoDuplicado: { applicantCode: string; transactionId: string; amount: string; operationNumber: string };
   ExpedienteEnviado: { applicantCode: string; email: string; firstNames: string; resubmitted: boolean };
   ExpedienteDictaminado: {
-    applicantCode: string; email: string; firstNames: string;
-    decision: 'AUTORIZADO' | 'OBSERVADO' | 'RECHAZADO' | 'NO_SUBSANADO'; note: string | null; deadline: string | null; observed: string[];
+    applicantCode: string;
+    email: string;
+    firstNames: string;
+    decision: 'AUTORIZADO' | 'OBSERVADO' | 'RECHAZADO' | 'NO_SUBSANADO';
+    note: string | null;
+    deadline: string | null;
+    observed: string[];
   };
   /** M03: Admisión anuló una inscripción (RF-11.03). */
   InscripcionAnulada: { applicantCode: string; email: string; firstNames: string; reason: string };
   CodigoPostulanteRecordado: { applicantCode: string; email: string; firstNames: string };
   /** M08: cambio de aula de un postulante ya publicado (RF-08.09). */
-  AulaCambiada: { applicantCode: string; email: string; firstNames: string; exam: string; room: string; reason: string };
+  AulaCambiada: {
+    applicantCode: string;
+    email: string;
+    firstNames: string;
+    exam: string;
+    room: string;
+    reason: string;
+  };
   /** M07: reprogramación autorizada de un examen (RF-07.09). */
-  ExamenReprogramado: { applicantCode: string; email: string; firstNames: string; exam: string; when: string; reason: string };
+  ExamenReprogramado: {
+    applicantCode: string;
+    email: string;
+    firstNames: string;
+    exam: string;
+    when: string;
+    reason: string;
+  };
   /** M08: incidencia durante el examen, para la Comisión (RN-60). */
-  IncidenciaRegistrada: { to: string[]; exam: string; room: string; type: string; description: string; applicantCode: string | null; at: string };
+  IncidenciaRegistrada: {
+    to: string[];
+    exam: string;
+    room: string;
+    type: string;
+    description: string;
+    applicantCode: string | null;
+    at: string;
+  };
 }
 export type EventType = keyof DomainEvents;
 
-const SECRET_BEARING_EVENTS = new Set<EventType>(['CodigoVerificacionSolicitado', 'RecuperacionSolicitada', 'CodigoPostulanteRecordado']);
+const SECRET_BEARING_EVENTS = new Set<EventType>([
+  'CodigoVerificacionSolicitado',
+  'RecuperacionSolicitada',
+  'CodigoPostulanteRecordado',
+]);
 type Handler<T extends EventType> = (payload: DomainEvents[T], meta: { eventId: string }) => Promise<void>;
 
 /** Un evento enviado a la cola y no procesado en este tiempo se vuelve a enviar (mensaje perdido o con errores). */
@@ -68,7 +105,9 @@ export class Outbox {
   }
 
   async publish<T extends EventType>(tx: Tx, type: T, payload: DomainEvents[T], correlationId?: string): Promise<void> {
-    await tx.outboxEvent.create({ data: { eventType: type, payload: payload as object, correlationId: correlationId ?? null } });
+    await tx.outboxEvent.create({
+      data: { eventType: type, payload: payload as object, correlationId: correlationId ?? null },
+    });
   }
 
   subscribe<T extends EventType>(type: T, handler: Handler<T>): void {
@@ -113,7 +152,9 @@ export class Outbox {
     if (event.nextAttemptAt && event.nextAttemptAt > now) return false;
     const claimed = await this.db.outboxEvent.updateMany({
       where: {
-        id: event.id, processedAt: null, attempts: event.attempts,
+        id: event.id,
+        processedAt: null,
+        attempts: event.attempts,
         OR: [{ claimedAt: null }, { claimedAt: { lt: new Date(now.getTime() - CLAIM_MS) } }],
       },
       data: { attempts: { increment: 1 }, claimedAt: now },
@@ -127,19 +168,29 @@ export class Outbox {
       const redact = SECRET_BEARING_EVENTS.has(event.eventType as EventType);
       await this.db.outboxEvent.update({
         where: { id: event.id },
-        data: { processedAt: this.clock.now(), lastError: null, nextAttemptAt: null, ...(redact ? { payload: { redacted: true } } : {}) },
+        data: {
+          processedAt: this.clock.now(),
+          lastError: null,
+          nextAttemptAt: null,
+          ...(redact ? { payload: { redacted: true } } : {}),
+        },
       });
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.warn({ eventId: event.id, eventType: event.eventType, err: message }, 'falló un suscriptor de la outbox');
+      this.logger.warn(
+        { eventId: event.id, eventType: event.eventType, err: message },
+        'falló un suscriptor de la outbox',
+      );
       const attempts = event.attempts + 1;
       const dead = attempts >= MAX_ATTEMPTS;
       const delay = Math.min(5 * 60_000, RETRY_BASE_MS * 2 ** Math.max(0, attempts - 1));
       await this.db.outboxEvent.update({
         where: { id: event.id },
         data: {
-          lastError: message.slice(0, 500), claimedAt: null, queuedAt: null,
+          lastError: message.slice(0, 500),
+          claimedAt: null,
+          queuedAt: null,
           nextAttemptAt: dead ? null : new Date(this.clock.now().getTime() + delay),
           deadLetteredAt: dead ? this.clock.now() : null,
         },
@@ -191,7 +242,11 @@ export class Outbox {
       this.db.outboxEvent.count({ where: { processedAt: null, deadLetteredAt: null } }),
       this.db.outboxEvent.count({ where: { deadLetteredAt: { not: null } } }),
       this.db.outboxEvent.findFirst({
-        where: { processedAt: null, deadLetteredAt: null, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }] },
+        where: {
+          processedAt: null,
+          deadLetteredAt: null,
+          OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
+        },
         orderBy: { occurredAt: 'asc' },
         select: { occurredAt: true },
       }),
@@ -204,14 +259,29 @@ export class Outbox {
       where: { deadLetteredAt: { not: null } },
       orderBy: { deadLetteredAt: 'desc' },
       take: Math.min(100, Math.max(1, limit)),
-      select: { id: true, eventType: true, occurredAt: true, deadLetteredAt: true, attempts: true, lastError: true, correlationId: true },
+      select: {
+        id: true,
+        eventType: true,
+        occurredAt: true,
+        deadLetteredAt: true,
+        attempts: true,
+        lastError: true,
+        correlationId: true,
+      },
     });
   }
 
   async retryDead(eventId: string): Promise<boolean> {
     const reset = await this.db.outboxEvent.updateMany({
       where: { id: eventId, deadLetteredAt: { not: null }, processedAt: null },
-      data: { attempts: 0, lastError: null, deadLetteredAt: null, nextAttemptAt: null, claimedAt: null, queuedAt: null },
+      data: {
+        attempts: 0,
+        lastError: null,
+        deadLetteredAt: null,
+        nextAttemptAt: null,
+        claimedAt: null,
+        queuedAt: null,
+      },
     });
     if (reset.count) this.kick();
     return reset.count === 1;

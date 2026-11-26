@@ -4,7 +4,10 @@ import type { ReliabilityMetrics } from './metrics.js';
 export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export class CircuitOpenError extends Error {
-  constructor(readonly circuit: string, readonly retryAfterSeconds: number) {
+  constructor(
+    readonly circuit: string,
+    readonly retryAfterSeconds: number,
+  ) {
     super(`El circuito ${circuit} está abierto.`);
     this.name = 'CircuitOpenError';
   }
@@ -28,7 +31,11 @@ export class CircuitBreakerRegistry {
     private readonly resetAfterMs = 30_000,
   ) {}
 
-  async execute<T>(name: string, operation: () => Promise<T>, isFailure: (value: T) => boolean = () => false): Promise<T> {
+  async execute<T>(
+    name: string,
+    operation: () => Promise<T>,
+    isFailure: (value: T) => boolean = () => false,
+  ): Promise<T> {
     const circuit = this.get(name);
     this.allow(name, circuit);
     const started = performance.now();
@@ -52,14 +59,26 @@ export class CircuitBreakerRegistry {
   }
 
   snapshot(): Record<string, { state: CircuitState; failures: number; retryAfterSeconds: number }> {
-    return Object.fromEntries([...this.circuits.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([name, circuit]) => {
-      this.refresh(circuit);
-      return [name, { state: circuit.state, failures: circuit.failures, retryAfterSeconds: this.retryAfter(circuit) }];
-    }));
+    return Object.fromEntries(
+      [...this.circuits.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, circuit]) => {
+          this.refresh(circuit);
+          return [
+            name,
+            { state: circuit.state, failures: circuit.failures, retryAfterSeconds: this.retryAfter(circuit) },
+          ];
+        }),
+    );
   }
 
   private get(name: string): Circuit {
-    const current = this.circuits.get(name) ?? { state: 'CLOSED' as const, failures: 0, openedAt: null, halfOpenRunning: false };
+    const current = this.circuits.get(name) ?? {
+      state: 'CLOSED' as const,
+      failures: 0,
+      openedAt: null,
+      halfOpenRunning: false,
+    };
     this.circuits.set(name, current);
     return current;
   }
@@ -74,7 +93,11 @@ export class CircuitBreakerRegistry {
   }
 
   private refresh(circuit: Circuit): void {
-    if (circuit.state === 'OPEN' && circuit.openedAt && this.clock.now().getTime() - circuit.openedAt.getTime() >= this.resetAfterMs) {
+    if (
+      circuit.state === 'OPEN' &&
+      circuit.openedAt &&
+      this.clock.now().getTime() - circuit.openedAt.getTime() >= this.resetAfterMs
+    ) {
       circuit.state = 'HALF_OPEN';
       circuit.halfOpenRunning = false;
     }

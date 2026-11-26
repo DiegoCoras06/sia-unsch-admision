@@ -28,7 +28,11 @@ describe('Circuit breaker de proveedores externos (EQ-09)', () => {
   it('también cuenta una respuesta controlada como fallo cuando el adaptador así lo indica', async () => {
     const clock = movableClock('2026-11-25T10:00:00-05:00');
     const circuits = new CircuitBreakerRegistry(clock, new ReliabilityMetrics(), 1, 1_000);
-    await circuits.execute('reniec', async () => ({ kind: 'UNAVAILABLE' as const }), (result) => result.kind === 'UNAVAILABLE');
+    await circuits.execute(
+      'reniec',
+      async () => ({ kind: 'UNAVAILABLE' as const }),
+      (result) => result.kind === 'UNAVAILABLE',
+    );
     expect(circuits.snapshot().reniec!.state).toBe('OPEN');
   });
 });

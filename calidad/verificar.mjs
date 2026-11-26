@@ -15,13 +15,65 @@ const hora = new Date().toLocaleTimeString('es-PE', { timeZone: 'America/Lima', 
 
 /** Qué archivos de prueba respaldan cada atributo (un archivo puede respaldar varios). */
 const ATRIBUTOS = [
-  { id: 'AC04', nombre: 'Seguridad', escenario: 'EQ-04', pruebas: ['integration/admin', 'integration/sessions', 'integration/staff-recovery', 'integration/accounts', 'integration/assistant', 'unit/seguridad/', 'unit/usuarios/account-rules'] },
+  {
+    id: 'AC04',
+    nombre: 'Seguridad',
+    escenario: 'EQ-04',
+    pruebas: [
+      'integration/admin',
+      'integration/sessions',
+      'integration/staff-recovery',
+      'integration/accounts',
+      'integration/assistant',
+      'unit/seguridad/',
+      'unit/usuarios/account-rules',
+    ],
+  },
   { id: 'AC05', nombre: 'Mantenibilidad', escenario: 'EQ-05', pruebas: ['unit/arquitectura/'] },
-  { id: 'AC06', nombre: 'Integridad', escenario: 'EQ-06', pruebas: ['integration/inscriptions', 'integration/payments', 'integration/treasury', 'integration/account-inscriptions', 'unit/convocatorias/fee-calculator', 'unit/resultados/', 'unit/examenes/'] },
-  { id: 'AC07', nombre: 'Usabilidad', escenario: 'EQ-07', pruebas: ['integration/usability-survey', 'unit/inscripciones/sus'] },
-  { id: 'AC08', nombre: 'Interoperabilidad', escenario: 'EQ-08', pruebas: ['integration/pago-culqi', 'unit/pagos/', 'unit/usuarios/apiperu', 'unit/email/', 'unit/storage/'] },
-  { id: 'AC09', nombre: 'Confiabilidad', escenario: 'EQ-09', pruebas: ['unit/shared/db-unreachable', 'unit/shared/circuit-breaker', 'integration/event-queue', 'integration/notifications', 'integration/reliability'] },
-  { id: 'AC10', nombre: 'Auditabilidad', escenario: 'EQ-10', pruebas: ['integration/admin', 'integration/results', 'integration/notifications', 'integration/staff-recovery'] },
+  {
+    id: 'AC06',
+    nombre: 'Integridad',
+    escenario: 'EQ-06',
+    pruebas: [
+      'integration/inscriptions',
+      'integration/payments',
+      'integration/treasury',
+      'integration/account-inscriptions',
+      'unit/convocatorias/fee-calculator',
+      'unit/resultados/',
+      'unit/examenes/',
+    ],
+  },
+  {
+    id: 'AC07',
+    nombre: 'Usabilidad',
+    escenario: 'EQ-07',
+    pruebas: ['integration/usability-survey', 'unit/inscripciones/sus'],
+  },
+  {
+    id: 'AC08',
+    nombre: 'Interoperabilidad',
+    escenario: 'EQ-08',
+    pruebas: ['integration/pago-culqi', 'unit/pagos/', 'unit/usuarios/apiperu', 'unit/email/', 'unit/storage/'],
+  },
+  {
+    id: 'AC09',
+    nombre: 'Confiabilidad',
+    escenario: 'EQ-09',
+    pruebas: [
+      'unit/shared/db-unreachable',
+      'unit/shared/circuit-breaker',
+      'integration/event-queue',
+      'integration/notifications',
+      'integration/reliability',
+    ],
+  },
+  {
+    id: 'AC10',
+    nombre: 'Auditabilidad',
+    escenario: 'EQ-10',
+    pruebas: ['integration/admin', 'integration/results', 'integration/notifications', 'integration/staff-recovery'],
+  },
 ];
 
 const run = (cmd, cwd = root) => spawnSync(cmd, { cwd, shell: true, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -37,7 +89,11 @@ try {
   vulnerabilidades = null;
 }
 const totalVuln = vulnerabilidades ? vulnerabilidades.total : null;
-console.log(vulnerabilidades ? `  ${totalVuln} vulnerabilidades (altas: ${vulnerabilidades.high}, críticas: ${vulnerabilidades.critical})` : '  No se pudo leer el resultado de npm audit.');
+console.log(
+  vulnerabilidades
+    ? `  ${totalVuln} vulnerabilidades (altas: ${vulnerabilidades.high}, críticas: ${vulnerabilidades.critical})`
+    : '  No se pudo leer el resultado de npm audit.',
+);
 
 // 2. Pruebas del backend (todas, agrupadas por atributo)
 paso('Pruebas del backend (Jest, base temporal de pruebas)');
@@ -68,7 +124,9 @@ paso('Revisión de tipos del backend y del portal');
 const tiposBack = run('npx tsc --noEmit -p apps/backend/tsconfig.json');
 const tiposFront = run('npx tsc --noEmit -p apps/frontend/tsconfig.app.json');
 const tiposOk = tiposBack.status === 0 && tiposFront.status === 0;
-console.log(`  backend: ${tiposBack.status === 0 ? 'sin errores' : 'con errores'}, portal: ${tiposFront.status === 0 ? 'sin errores' : 'con errores'}`);
+console.log(
+  `  backend: ${tiposBack.status === 0 ? 'sin errores' : 'con errores'}, portal: ${tiposFront.status === 0 ? 'sin errores' : 'con errores'}`,
+);
 
 // 4. Resultado por atributo
 const porAtributo = ATRIBUTOS.map((a) => {
@@ -76,28 +134,46 @@ const porAtributo = ATRIBUTOS.map((a) => {
   const aprobadas = archivos.reduce((n, r) => n + r.aprobadas, 0);
   const fallidas = archivos.flatMap((r) => r.fallidas.map((f) => `${r.archivo}: ${f}`));
   const extras = [];
-  if (a.id === 'AC04') extras.push(totalVuln === 0 ? 'npm audit sin vulnerabilidades' : `npm audit: ${totalVuln ?? '?'} vulnerabilidades`);
+  if (a.id === 'AC04')
+    extras.push(totalVuln === 0 ? 'npm audit sin vulnerabilidades' : `npm audit: ${totalVuln ?? '?'} vulnerabilidades`);
   if (a.id === 'AC05') extras.push(tiposOk ? 'tipos sin errores' : 'errores de tipos');
-  const ok = archivos.length > 0 && fallidas.length === 0 && (a.id !== 'AC04' || totalVuln === 0) && (a.id !== 'AC05' || tiposOk);
+  const ok =
+    archivos.length > 0 &&
+    fallidas.length === 0 &&
+    (a.id !== 'AC04' || totalVuln === 0) &&
+    (a.id !== 'AC05' || tiposOk);
   return { ...a, archivos, aprobadas, fallidas, extras, ok };
 });
 
 // AC01 y AC03: último resultado de la carga progresiva con k6 (calidad/k6/carga-2000.js), si existe.
 const dirResultados = path.join(path.dirname(fileURLToPath(import.meta.url)), 'resultados');
-const ultimoK6 = readdirSync(dirResultados).filter((f) => /^\d{4}-\d{2}-\d{2}-k6-carga-\d+\.txt$/.test(f)).sort().pop();
+const ultimoK6 = readdirSync(dirResultados)
+  .filter((f) => /^\d{4}-\d{2}-\d{2}-k6-carga-\d+\.txt$/.test(f))
+  .sort()
+  .pop();
 const k6 = (() => {
   if (!ultimoK6) return null;
   const texto = readFileSync(path.join(dirResultados, ultimoK6), 'utf8');
-  const filas = [...texto.matchAll(/^\| (\d+) \| [\d.]+ \| [\d.]+ \| ([\d.]+) \| ([\d.]+) % \| (Cumple|No cumple) \|$/gm)];
+  const filas = [
+    ...texto.matchAll(/^\| (\d+) \| [\d.]+ \| [\d.]+ \| ([\d.]+) \| ([\d.]+) % \| (Cumple|No cumple) \|$/gm),
+  ];
   const ultima = filas.at(-1);
   if (!ultima) return null;
-  return { archivo: ultimoK6, usuarios: ultima[1], p95: ultima[2], errores: ultima[3], cumple: filas.every((f) => f[4] === 'Cumple') };
+  return {
+    archivo: ultimoK6,
+    usuarios: ultima[1],
+    p95: ultima[2],
+    errores: ultima[3],
+    cumple: filas.every((f) => f[4] === 'Cumple'),
+  };
 })();
-const filaK6 = (id, nombre, escenario) => k6
-  ? `| ${id} ${nombre} | ${escenario} | ${k6.cumple ? '✅ Cumple en local' : '❌ No cumple en local'} | k6 hasta ${k6.usuarios} usuarios: p95 ${k6.p95} ms, ${k6.errores} % de errores (\`resultados/${k6.archivo}\`); falta repetirla desplegado |`
-  : null;
+const filaK6 = (id, nombre, escenario) =>
+  k6
+    ? `| ${id} ${nombre} | ${escenario} | ${k6.cumple ? '✅ Cumple en local' : '❌ No cumple en local'} | k6 hasta ${k6.usuarios} usuarios: p95 ${k6.p95} ms, ${k6.errores} % de errores (\`resultados/${k6.archivo}\`); falta repetirla desplegado |`
+    : null;
 
-const fila = (a) => `| ${a.id} ${a.nombre} | ${a.escenario} | ${a.ok ? '✅ Pruebas aprobadas' : '❌ Revisar'} | ${a.aprobadas} aprobadas${a.fallidas.length ? `, ${a.fallidas.length} fallidas` : ''} en ${a.archivos.length} ${a.archivos.length === 1 ? 'archivo' : 'archivos'}${a.extras.length ? `; ${a.extras.join('; ')}` : ''} |`;
+const fila = (a) =>
+  `| ${a.id} ${a.nombre} | ${a.escenario} | ${a.ok ? '✅ Pruebas aprobadas' : '❌ Revisar'} | ${a.aprobadas} aprobadas${a.fallidas.length ? `, ${a.fallidas.length} fallidas` : ''} en ${a.archivos.length} ${a.archivos.length === 1 ? 'archivo' : 'archivos'}${a.extras.length ? `; ${a.extras.join('; ')}` : ''} |`;
 
 const reporte = `# Verificación de atributos de calidad: ${hoy}
 
@@ -119,10 +195,14 @@ Dependencias: ${totalVuln === null ? 'sin datos' : `${totalVuln} vulnerabilidade
 
 ## Pruebas por atributo
 
-${porAtributo.map((a) => `### ${a.id} ${a.nombre}
+${porAtributo
+  .map(
+    (a) => `### ${a.id} ${a.nombre}
 
 ${a.archivos.map((r) => `- \`tests/${r.archivo}\`: ${r.aprobadas} aprobadas${r.fallidas.length ? `, ${r.fallidas.length} fallidas` : ''}`).join('\n') || '- Sin pruebas encontradas'}
-${a.fallidas.length ? `\nFallidas:\n${a.fallidas.map((f) => `- ${f}`).join('\n')}\n` : ''}`).join('\n')}
+${a.fallidas.length ? `\nFallidas:\n${a.fallidas.map((f) => `- ${f}`).join('\n')}\n` : ''}`,
+  )
+  .join('\n')}
 ## Pruebas manuales pendientes
 
 Ver la sección 4 de \`calidad/README.md\`: repetir k6 contra el despliegue (AC01 y AC03), recoger encuestas SUS y
@@ -136,6 +216,9 @@ const destino = path.join(root, 'calidad/resultados', `${hoy}.md`);
 writeFileSync(destino, reporte, 'utf8');
 
 console.log('\nResultado por atributo:');
-for (const a of porAtributo) console.log(`  ${a.ok ? '✅' : '❌'} ${a.id} ${a.nombre}: ${a.aprobadas} pruebas${a.fallidas.length ? `, ${a.fallidas.length} fallidas` : ''}`);
+for (const a of porAtributo)
+  console.log(
+    `  ${a.ok ? '✅' : '❌'} ${a.id} ${a.nombre}: ${a.aprobadas} pruebas${a.fallidas.length ? `, ${a.fallidas.length} fallidas` : ''}`,
+  );
 console.log(`\nReporte: ${path.relative(root, destino)}`);
 process.exitCode = porAtributo.every((a) => a.ok) ? 0 : 1;
