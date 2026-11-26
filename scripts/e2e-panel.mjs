@@ -6,7 +6,7 @@
 // Uso: node scripts/e2e-panel.mjs [carpeta-capturas]
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const out = process.argv[2] ?? '.screens/panel';
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4200';
@@ -45,7 +45,7 @@ const temp = /Contraseña (?:temporal|actual): (\S+)/.exec(text)[1];
 const savedSecret = /Clave TOTP: (\S+)/.exec(text)?.[1];
 const NEW_PASSWORD = 'Panel-Admision-Local-2027';
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 900 }, acceptDownloads: true });
   const errors = [];

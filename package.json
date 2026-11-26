@@ -18,6 +18,7 @@
     "dev": "concurrently -k -n api,web -c red,yellow \"npm run dev -w @sia/backend\" \"npm run start -w @sia/frontend\"",
     "build": "npm run build -w @sia/contracts && npm run build -w @sia/backend && npm run build -w @sia/frontend",
     "test": "npm run test -w @sia/backend",
+    "test:e2e": "node scripts/e2e-runner.mjs",
     "typecheck": "npm run typecheck -w @sia/backend",
     "lint": "eslint apps packages scripts calidad --max-warnings=0",
     "format": "prettier --write --ignore-unknown apps packages scripts calidad docs specs *.json *.md *.mjs",

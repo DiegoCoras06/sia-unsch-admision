@@ -5,7 +5,7 @@
 // Uso: node scripts/e2e-examen.mjs [DNI sintético válido 99900001-99900040 aún no inscrito] [carpeta-capturas]
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const dni = process.argv[2] ?? '99900031';
 const out = process.argv[3] ?? '.screens/examen';
@@ -76,7 +76,7 @@ const password = /Contraseña (?:temporal|actual): (\S+)/.exec(admin)[1];
 const secret = /Clave TOTP: (\S+)/.exec(admin)?.[1];
 if (!secret) throw new Error(`Falta la clave TOTP en ${file}: corre antes scripts/e2e-panel.mjs contra la base local.`);
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 try {
   // ── Inscripción ordinaria pagada con la pasarela simulada ──────────
   const ins = await api('/inscriptions', {

@@ -4,7 +4,7 @@
 // Uso: node scripts/e2e-pago.mjs [DNI sintético 99900020-99900040] [carpeta-capturas]
 import { mkdirSync, readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const dni = process.argv[2] ?? '99900025';
 const out = process.argv[3] ?? '.screens/pago';
@@ -37,7 +37,7 @@ function fakeJpeg(width, height) {
   return `data:image/jpeg;base64,${Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]).toString('base64')}`;
 }
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 try {
   const res = await fetch(`${base}/api/v1/inscriptions`, {
     method: 'POST',

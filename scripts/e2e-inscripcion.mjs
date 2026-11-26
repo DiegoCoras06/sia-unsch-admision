@@ -2,17 +2,19 @@
 // DNI autocompleta nombres → datos básicos, foto (recortada en el navegador), académicos y postulación →
 // guardar → constancia con código → consultar en «Mi inscripción».
 // Uso: node scripts/e2e-inscripcion.mjs [DNI sintético 99900020-99900040] [carpeta-capturas] [ancho]
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const dni = process.argv[2] ?? '99900021';
 const out = process.argv[3] ?? '.screens';
 const width = Number(process.argv[4] ?? 1440);
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4200';
 const photo = path.resolve('apps/frontend/public/img/escudo-unsch.jpg');
+mkdirSync(out, { recursive: true });
 const step = (m) => console.log(`✔ ${m}`);
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 const page = await browser.newPage({ viewport: { width, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
@@ -63,7 +65,7 @@ try {
 
   await page.selectOption('#f-area', 'I');
   await page.selectOption('#f-prog', 'P34');
-  await page.getByText('S/ 250.00').first().waitFor();
+  await page.locator('.summary__total:visible, .review__total:visible').filter({ hasText: 'S/ 250.00' }).waitFor();
   step('Resumen en vivo: Ingeniería de Sistemas, S/ 250.00');
   await page.screenshot({ path: path.join(out, `inscripcion-form-${width}.png`), fullPage: true });
   await next();

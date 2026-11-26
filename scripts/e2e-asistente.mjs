@@ -2,14 +2,14 @@
 // «Consultar mi proceso» con DNI + código y respuesta con el estado real.
 // Uso: node scripts/e2e-asistente.mjs [DNI] [código] [carpeta-capturas]
 import { mkdirSync } from 'node:fs';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const [dni = '99900025', code = '27000025', out = '.screens/asistente'] = process.argv.slice(2);
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4200';
 mkdirSync(out, { recursive: true });
 const step = (m) => console.log(`✔ ${m}`);
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errors = [];

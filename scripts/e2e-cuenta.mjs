@@ -4,7 +4,7 @@
 // Uso: node scripts/e2e-cuenta.mjs [DNI de una inscripción local pagada] [carpeta-capturas]
 import { mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const [dni = '99900028', out = '.screens/cuenta'] = process.argv.slice(2);
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4200';
@@ -44,7 +44,7 @@ async function codeFor(address, since) {
   throw new Error('No llegó el código al buzón local');
 }
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errors = [];

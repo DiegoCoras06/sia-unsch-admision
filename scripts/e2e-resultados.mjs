@@ -5,7 +5,7 @@
 // Uso: node scripts/e2e-resultados.mjs [DNI] [código] [carpeta-capturas]
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { chromium } from 'playwright-core';
+import { launchE2eBrowser } from './e2e-browser.mjs';
 
 const dni = process.argv[2] ?? '99900031';
 const code = process.argv[3] ?? '27000124';
@@ -50,7 +50,7 @@ const creds = (file) => {
 const admin = creds('apps/backend/.admin-local.txt');
 const comision = creds('apps/backend/.comision-local.txt');
 
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const browser = await launchE2eBrowser();
 const errors = [];
 async function login(who) {
   const page = await browser.newPage({ viewport: { width: 1366, height: 900 }, acceptDownloads: true });
