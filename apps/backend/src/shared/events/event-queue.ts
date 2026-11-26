@@ -1,20 +1,28 @@
 import { SendMessageBatchCommand, SQSClient } from '@aws-sdk/client-sqs';
 import type { Logger } from 'pino';
 
-/**
- * Cola de eventos (ADR-021). La bandeja de eventos (outbox) solo envía el ID: el contenido sigue en PostgreSQL,
- * así la cola no transporta datos personales y un mensaje repetido no duplica nada (`Outbox.processEvent`).
- */
-export interface EventQueue {
-  send(eventIds: string[]): Promise<void>;
+export interface QueueSendFailure {
+  eventId: string;
+  code: string;
+  message?: string;
 }
 
-/** Mensaje que recibe el worker desde SQS. */
+export interface QueueSendResult {
+  sent: string[];
+  failed: QueueSendFailure[];
+}
+
+/** Puerto de salida de la outbox. Solo una confirmación en `sent` equivale a entrega a la cola. */
+export interface EventQueue {
+  send(eventIds: string[]): Promise<QueueSendResult>;
+}
+
+/** Mensaje mínimo que recibe el worker: los datos personales permanecen en PostgreSQL. */
 export interface QueuedEvent {
   eventId: string;
 }
 
-/** Amazon SQS. La región se toma de la URL de la cola (https://sqs.<región>.amazonaws.com/<cuenta>/<cola>). */
+/** Adaptador Amazon SQS. Admite inyectar el cliente para pruebas unitarias. */
 export class SqsEventQueue implements EventQueue {
   private readonly client: SQSClient;
 
@@ -22,28 +30,53 @@ export class SqsEventQueue implements EventQueue {
     private readonly queueUrl: string,
     private readonly logger: Logger,
     client?: SQSClient,
+    region?: string,
   ) {
-    const region = /sqs\.([a-z0-9-]+)\.amazonaws\.com/.exec(queueUrl)?.[1];
-    this.client = client ?? new SQSClient(region ? { region } : {});
+    const urlRegion = /sqs\.([a-z0-9-]+)\.amazonaws\.com/.exec(queueUrl)?.[1];
+    this.client = client ?? new SQSClient(region || urlRegion ? { region: region ?? urlRegion } : {});
   }
 
-  async send(eventIds: string[]): Promise<void> {
-    // SendMessageBatch admite hasta 10 mensajes por llamada.
-    for (let i = 0; i < eventIds.length; i += 10) {
-      const chunk = eventIds.slice(i, i + 10);
-      const result = await this.client.send(
-        new SendMessageBatchCommand({
-          QueueUrl: this.queueUrl,
-          Entries: chunk.map((eventId, n) => ({
-            Id: String(n),
-            MessageBody: JSON.stringify({ eventId } satisfies QueuedEvent),
-          })),
-        }),
-      );
-      if (result.Failed?.length) {
-        // No se lanza: el evento sigue pendiente en la outbox y la tarea programada lo vuelve a enviar.
-        this.logger.warn({ failed: result.Failed.length }, 'SQS rechazó algunos eventos; se reenviarán');
+  async send(eventIds: string[]): Promise<QueueSendResult> {
+    const sent: string[] = [];
+    const failed: QueueSendFailure[] = [];
+
+    for (let offset = 0; offset < eventIds.length; offset += 10) {
+      const chunk = eventIds.slice(offset, offset + 10);
+      try {
+        const result = await this.client.send(
+          new SendMessageBatchCommand({
+            QueueUrl: this.queueUrl,
+            Entries: chunk.map((eventId, index) => ({
+              Id: String(index),
+              MessageBody: JSON.stringify({ eventId } satisfies QueuedEvent),
+            })),
+          }),
+        );
+        const reported = new Set<string>();
+        for (const entry of result.Successful ?? []) {
+          const eventId = chunk[Number(entry.Id)];
+          if (eventId) {
+            sent.push(eventId);
+            reported.add(eventId);
+          }
+        }
+        for (const entry of result.Failed ?? []) {
+          const eventId = chunk[Number(entry.Id)];
+          if (eventId) {
+            failed.push({ eventId, code: entry.Code ?? 'SQS_REJECTED', message: entry.Message });
+            reported.add(eventId);
+          }
+        }
+        for (const eventId of chunk) {
+          if (!reported.has(eventId)) failed.push({ eventId, code: 'SQS_UNCONFIRMED' });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failed.push(...chunk.map((eventId) => ({ eventId, code: 'SQS_REQUEST_FAILED', message })));
       }
     }
+
+    if (failed.length) this.logger.warn({ failed: failed.length }, 'SQS no confirmó algunos eventos; se reenviarán');
+    return { sent, failed };
   }
 }

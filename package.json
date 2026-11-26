@@ -33,6 +33,7 @@
     "dev:rds:no-cache": "npm run dev:rds:no-cache -w @sia/backend",
     "izipay:check": "npm run izipay:check -w @sia/backend",
     "ses:check": "npm run ses:check -w @sia/backend",
+    "sqs:check": "npm run sqs:check -w @sia/backend",
     "rds:migrate": "npm run rds:migrate -w @sia/backend"
   },
   "devDependencies": {

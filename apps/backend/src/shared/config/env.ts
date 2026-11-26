@@ -57,6 +57,7 @@ const schema = z
       .url()
       .optional()
       .or(z.literal('').transform(() => undefined)),
+    SQS_REGION: z.string().default('us-east-2'),
     APP_FIXED_NOW: z.iso.datetime({ offset: true }).optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),

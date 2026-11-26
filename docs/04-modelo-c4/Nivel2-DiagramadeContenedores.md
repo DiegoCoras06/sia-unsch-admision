@@ -212,7 +212,7 @@ flowchart TB
 | Aplicación Web (Angular)               | ✅ Implementada; publicación S3 + CloudFront preparada en CDK y pendiente de despliegue en Sprint 3                                      |
 | Backend API REST                       | ✅ Implementado (`server.ts` en local, `lambda-api.ts` para Lambda)                                                                      |
 | Worker de tareas                       | ✅ Código listo (`lambda-worker.ts`); en local las tareas corren en el mismo proceso                                                     |
-| Cola de Mensajes (Amazon SQS)          | ✅ Código y pruebas listos (ADR-021); ⏳ la cola se crea en el Paso 11. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso |
+| Cola de Mensajes (Amazon SQS)          | ✅ Código, pruebas e IaC listos (ADR-021); las colas ya existen y se importan. ⏳ Despliegue del worker en Sprint 3 |
 | Base de datos                          | ✅ Amazon RDS PostgreSQL en uso                                                                                                          |
 | Almacenamiento de archivos             | ✅ Amazon S3 en uso                                                                                                                      |
 | API Gateway, CloudFront, Route 53, ACM | 🟡 CloudFront, S3 y OAC preparados en IaC; API Gateway, certificado, DNS y despliegue quedan para Sprint 3                               |

@@ -2,6 +2,9 @@
   "app": "npx tsx bin/sia-unsch.ts",
   "context": {
     "environment": "demo",
-    "region": "us-east-2"
+    "region": "us-east-2",
+    "eventsQueueName": "sia-unsch-events",
+    "eventsDlqName": "sia-unsch-events-dlq",
+    "configParameterPrefix": "/sia-unsch/demo"
   }
 }

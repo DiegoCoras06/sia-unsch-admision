@@ -89,7 +89,7 @@ describe('Confiabilidad transversal del Sprint 2', () => {
     const event = await t.db.outboxEvent.findFirstOrThrow({ where: { payload: { path: ['email'], equals: email } } });
 
     for (let attempt = 1; attempt <= 5; attempt++) {
-      expect(await t.outbox.processEvent(event.id)).toBe(attempt === 5);
+      expect(await t.outbox.processEvent(event.id)).toBe(false);
       clock.advance(6 * 60);
     }
     const dead = await t.db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });

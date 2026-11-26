@@ -3,7 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 
-const assets = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../assets');
+const assets = process.env['APP_ASSETS_DIR']
+  ? path.resolve(process.env['APP_ASSETS_DIR'])
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../assets');
 
 export const ESCUDO = readFileSync(path.join(assets, 'escudo-unsch.png'));
 export const GUINDA = '#7A1C22';

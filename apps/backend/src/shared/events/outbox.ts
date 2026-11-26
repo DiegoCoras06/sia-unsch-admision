@@ -82,6 +82,8 @@ const MAX_ATTEMPTS = 5;
 const RETRY_BASE_MS = 5_000;
 /** Si quien reservó un evento muere sin terminar, otro lo retoma pasado este tiempo. */
 const CLAIM_MS = 2 * 60_000;
+/** Reserva corta del relay; no significa que SQS haya aceptado el mensaje. */
+const RELAY_CLAIM_MS = 2 * 60_000;
 
 /**
  * Transactional Outbox (ADR-008): `publish` guarda el evento en la misma transacción que el cambio de estado.
@@ -146,7 +148,9 @@ export class Outbox {
    */
   async processEvent(eventId: string): Promise<boolean> {
     const event = await this.db.outboxEvent.findUnique({ where: { id: eventId } });
-    if (!event || event.processedAt || event.deadLetteredAt || event.attempts >= MAX_ATTEMPTS) return true;
+    if (!event || event.processedAt) return true;
+    // Un poison message debe continuar fallando para que SQS lo mueva a su DLQ.
+    if (event.deadLetteredAt || event.attempts >= MAX_ATTEMPTS) return false;
     // Reserva el evento: el contador solo no basta, porque otro procesador leería el ya incrementado y lo tomaría también.
     const now = this.clock.now();
     if (event.nextAttemptAt && event.nextAttemptAt > now) return false;
@@ -195,7 +199,7 @@ export class Outbox {
           deadLetteredAt: dead ? this.clock.now() : null,
         },
       });
-      return dead;
+      return false;
     }
   }
 
@@ -206,27 +210,47 @@ export class Outbox {
   private async relay(batchSize: number): Promise<number> {
     const now = this.clock.now();
     const stale = new Date(now.getTime() - REQUEUE_AFTER_MS);
+    const abandonedClaim = new Date(now.getTime() - RELAY_CLAIM_MS);
     const rows = await this.db.$queryRaw<{ id: string }[]>`
-      UPDATE "shared"."outbox" SET "queued_at" = ${now}
+      UPDATE "shared"."outbox" SET "relay_claimed_at" = ${now}
       WHERE "id" IN (
         SELECT "id" FROM "shared"."outbox"
         WHERE "processed_at" IS NULL AND "dead_lettered_at" IS NULL AND "attempts" < ${MAX_ATTEMPTS}
           AND ("next_attempt_at" IS NULL OR "next_attempt_at" <= ${now})
           AND ("queued_at" IS NULL OR "queued_at" < ${stale})
+          AND ("relay_claimed_at" IS NULL OR "relay_claimed_at" < ${abandonedClaim})
         ORDER BY "occurred_at" LIMIT ${batchSize}
         FOR UPDATE SKIP LOCKED
       )
       RETURNING "id"`;
     if (!rows.length) return 0;
+    const ids = rows.map((row) => row.id);
     try {
-      await this.queue!.send(rows.map((r) => r.id));
+      const result = await this.queue!.send(ids);
+      if (result.sent.length) {
+        await this.db.outboxEvent.updateMany({
+          where: { id: { in: result.sent }, relayClaimedAt: now },
+          data: { queuedAt: this.clock.now(), relayClaimedAt: null },
+        });
+      }
+      const failed = new Set(result.failed.map((entry) => entry.eventId));
+      for (const id of ids) if (!result.sent.includes(id)) failed.add(id);
+      if (failed.size) {
+        await this.db.outboxEvent.updateMany({
+          where: { id: { in: [...failed] }, relayClaimedAt: now },
+          data: { relayClaimedAt: null },
+        });
+      }
+      return result.sent.length;
     } catch (error) {
       // Si SQS no responde, se libera la marca y la próxima tarea programada los vuelve a intentar.
       this.logger.error({ err: error }, 'no se pudieron enviar eventos a la cola');
-      await this.db.outboxEvent.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { queuedAt: null } });
+      await this.db.outboxEvent.updateMany({
+        where: { id: { in: ids }, relayClaimedAt: now },
+        data: { relayClaimedAt: null },
+      });
       return 0;
     }
-    return rows.length;
   }
 
   /** Despacho inmediato tras responder, sin bloquear la solicitud. */
@@ -280,6 +304,7 @@ export class Outbox {
         deadLetteredAt: null,
         nextAttemptAt: null,
         claimedAt: null,
+        relayClaimedAt: null,
         queuedAt: null,
       },
     });

@@ -124,6 +124,6 @@ Por estas razones, se considera adecuada para el Sistema Integral de Gestión de
 
 - Los cuatro grupos de módulos están implementados: **Gestión de admisión** (`convocatorias`, `inscripciones`, `expedientes`), **Gestión académica** (`examenes`, `resultados`), **Gestión administrativa** (`usuarios`, `pagos`, `seguridad`, `configuracion`) y **Servicios complementarios** (`asistente`, `notificaciones`, `reportes`).
 - **Redis se retiró del diagrama:** no se usa; queda como opción si la prueba de carga lo justifica.
-- **Mensajería con Amazon SQS:** los eventos se guardan en una bandeja (outbox) en PostgreSQL, se envían a SQS y los procesa un worker (ADR-021). El código está listo; la cola se crea en el despliegue. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso.
+- **Mensajería con Amazon SQS:** los eventos se guardan en una outbox PostgreSQL y los procesa un worker con fallos parciales e idempotencia (ADR-021). La IaC importa las colas existentes, no las crea. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso.
 - **SMS no se implementó** (opcional según RC16): los avisos van por correo.
 - La pasarela de pagos es Culqi, que cobra tarjeta y Yape con un solo adaptador (ADR-024); la pasarela simulada se usa en desarrollo y pruebas.

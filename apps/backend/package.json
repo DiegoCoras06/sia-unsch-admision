@@ -23,6 +23,7 @@
     "dev:rds:no-cache": "tsx --env-file=.env.rds scripts/server-no-cache.ts",
     "culqi:check": "tsx scripts/culqi.ts",
     "ses:check": "tsx scripts/ses.ts",
+    "sqs:check": "tsx scripts/sqs.ts check",
     "apiperu:check": "tsx --env-file=.env.rds scripts/apiperu.ts",
     "rds:migrate": "tsx scripts/rds.ts migrate"
   },
@@ -30,6 +31,7 @@
     "@aws-sdk/client-s3": "^3.1158.0",
     "@aws-sdk/client-sesv2": "^3.1158.0",
     "@aws-sdk/client-sqs": "^3.1161.0",
+    "@aws-sdk/client-ssm": "^3.1161.0",
     "@aws-sdk/s3-presigned-post": "^3.1158.0",
     "@aws-sdk/s3-request-presigner": "^3.1158.0",
     "@codegenie/serverless-express": "5.0.0",

@@ -40,6 +40,18 @@ export class FileEmailSender implements EmailSender {
   }
 }
 
+/** Transporte seguro para validaciones: no escribe archivos ni contacta destinatarios reales. */
+export class ConsoleEmailSender implements EmailSender {
+  constructor(private readonly logger: Logger) {}
+
+  async send(message: EmailMessage): Promise<void> {
+    this.logger.info(
+      { to: maskEmail(message.to), event: message.event, subject: message.subject },
+      'correo de prueba omitido (EMAIL_PROVIDER=console)',
+    );
+  }
+}
+
 /** Sustituto en pruebas: guarda los correos en memoria. */
 export class MemoryEmailSender implements EmailSender {
   readonly sent: EmailMessage[] = [];

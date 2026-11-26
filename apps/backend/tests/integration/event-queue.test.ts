@@ -1,15 +1,16 @@
 // ADR-021: la bandeja de eventos envía los ID a una cola (Amazon SQS en AWS) y el worker los procesa una sola vez.
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from '@jest/globals';
-import type { EventQueue } from '../../src/shared/events/event-queue.js';
+import type { EventQueue, QueueSendResult } from '../../src/shared/events/event-queue.js';
 import { movableClock, testApp } from '../helpers.js';
 
 class FakeQueue implements EventQueue {
   sent: string[] = [];
   failing = false;
-  async send(eventIds: string[]) {
+  async send(eventIds: string[]): Promise<QueueSendResult> {
     if (this.failing) throw new Error('SQS no disponible');
     this.sent.push(...eventIds);
+    return { sent: eventIds, failed: [] };
   }
 }
 
@@ -99,5 +100,21 @@ describe('Bandeja de eventos con cola (ADR-021)', () => {
     expect((await t.db.outboxEvent.findUniqueOrThrow({ where: { id } })).queuedAt).toBeNull();
     await t.outbox.dispatch(500);
     expect(queue.sent).toContain(id);
+  });
+
+  it('solo marca como enviado el ID confirmado por SQS ante un fallo parcial', async () => {
+    const first = await publish(`parcial-a-${randomUUID()}@prueba.test`);
+    const second = await publish(`parcial-b-${randomUUID()}@prueba.test`);
+    const original = queue.send.bind(queue);
+    queue.send = async (ids) => ({
+      sent: ids.filter((id) => id === first),
+      failed: ids.filter((id) => id !== first).map((eventId) => ({ eventId, code: 'InternalError' })),
+    });
+    await t.outbox.dispatch(500);
+    expect((await t.db.outboxEvent.findUniqueOrThrow({ where: { id: first } })).queuedAt).not.toBeNull();
+    expect((await t.db.outboxEvent.findUniqueOrThrow({ where: { id: second } })).queuedAt).toBeNull();
+    queue.send = original;
+    await t.outbox.dispatch(500);
+    expect(queue.sent).toContain(second);
   });
 });

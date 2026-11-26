@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test test/web-stack.test.ts",
+    "test": "tsx --test test/*.test.ts",
     "synth": "cdk synth --quiet",
     "cdk": "cdk"
   },

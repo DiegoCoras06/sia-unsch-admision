@@ -12,7 +12,7 @@ import { AuditLog } from './shared/audit/audit.js';
 import { shiftedClock, systemClock, type Clock } from './shared/clock/clock.js';
 import type { Env } from './shared/config/env.js';
 import { createPrismaClient, type Db } from './shared/db/prisma.js';
-import { FileEmailSender, type EmailSender } from './shared/email/email-sender.js';
+import { ConsoleEmailSender, FileEmailSender, type EmailSender } from './shared/email/email-sender.js';
 import { SesEmailSender } from './shared/email/ses-email-sender.js';
 import { Outbox } from './shared/events/outbox.js';
 import { SqsEventQueue, type EventQueue } from './shared/events/event-queue.js';
@@ -102,7 +102,9 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
           { from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET },
           logger,
         )
-      : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
+      : env.EMAIL_PROVIDER === 'console'
+        ? new ConsoleEmailSender(logger)
+        : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
   const transport: EmailSender = { send: (message) => circuits.execute('email', () => rawTransport.send(message)) };
   logger.info(
     { provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined },
@@ -114,7 +116,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     overrides.eventQueue !== undefined
       ? overrides.eventQueue
       : env.SQS_QUEUE_URL
-        ? new SqsEventQueue(env.SQS_QUEUE_URL, logger)
+        ? new SqsEventQueue(env.SQS_QUEUE_URL, logger, undefined, env.SQS_REGION)
         : null;
   logger.info({ queue: eventQueue ? 'sqs' : 'local' }, 'Cola de eventos');
   const outbox = new Outbox(db, clock, logger, eventQueue);
