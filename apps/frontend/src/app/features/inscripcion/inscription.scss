@@ -18,16 +18,75 @@
   min-width: 0;
 }
 .head {
+  position: relative;
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
+  padding: 0.5rem 0 2rem 2rem;
+  border-bottom: 1px solid var(--stone-deep);
+}
+.head::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 2rem 0;
+  width: 5px;
+  border-radius: 1px 5px 5px 1px;
+  background: linear-gradient(180deg, var(--gold) 0 24%, var(--accent) 24% 100%);
+}
+.head__kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.head__kicker span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 4px rgb(217 180 74 / 0.18);
 }
 .head h1 {
-  font-size: clamp(2.5rem, 5.5vw, 5rem);
+  font-size: clamp(2.75rem, 5vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+.head .lead {
+  margin: 0;
+  max-width: 50ch;
+  color: var(--ink-soft);
+  font-size: clamp(1.0625rem, 1.65vw, 1.3rem);
+  line-height: 1.55;
 }
 .head__links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+.head__links .link-arrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--stone-deep);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 8px 18px -18px rgb(29 20 21 / 0.7);
+  transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease), background-color var(--fast) var(--ease);
+}
+.head__links .link-arrow:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--stone-deep));
+  background: #fffafa;
+}
+.head__links .link-arrow:last-child {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--stone-deep));
 }
 
 /* Tarjeta guinda con profundidad, como el ingreso del panel y las consultas: luces difusas, borde de luz arriba y sombra amplia. */
@@ -488,32 +547,90 @@
 .summary {
   position: sticky;
   top: 6rem;
-  padding: 1.75rem;
+  overflow: hidden;
+  padding: 1.6rem;
   display: grid;
-  gap: 1.25rem;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #fff 0%, var(--stone) 100%);
+  gap: 1.1rem;
+  border-radius: 6px 24px 6px 24px;
+  border: 1px solid var(--stone-deep);
+  background: #fff;
   box-shadow:
-    0 0 0 1px var(--stone-deep),
-    0 24px 48px -30px rgb(29 20 21 / 0.45),
+    0 30px 60px -42px rgb(29 20 21 / 0.55),
     inset 0 1px 0 #fff;
 }
+.summary::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(90deg, var(--accent) 0 72%, var(--gold) 72% 100%);
+}
+.summary__head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.summary__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
 .summary__title {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+.summary__step {
+  flex: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  background: #fbf1d9;
+  color: #6b4a00;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.summary__progress {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--stone-deep);
+}
+.summary__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  transition: width 240ms var(--ease);
 }
 .summary dl {
   margin: 0;
   display: grid;
-  gap: 0.85rem;
+}
+.summary dl > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--stone);
+}
+.summary dl > div:first-child {
+  padding-top: 0;
+}
+.summary dl > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 .summary dt {
-  font-size: var(--size-note);
+  font-size: 0.75rem;
   color: var(--ink-soft);
-  font-weight: 600;
+  font-weight: 700;
 }
 .summary dd {
   margin: 0;
   font-weight: 700;
+  line-height: 1.35;
 }
 /* «Pagarás»: tarjeta guinda con luz dorada; el monto domina y cada concepto se lee como una línea de recibo. */
 .summary__fee {
@@ -554,7 +671,16 @@
 .summary dd.is-empty {
   color: var(--ink-soft);
   font-weight: 500;
-  font-style: italic;
+}
+.summary dd.is-empty::before {
+  content: '';
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.45rem;
+  border: 1.5px solid var(--field-line);
+  border-radius: 50%;
+  vertical-align: 0.05em;
 }
 .summary__line {
   display: flex;
@@ -673,6 +799,21 @@
   }
 }
 @media (max-width: 760px) {
+  .head {
+    padding: 0.25rem 0 1.5rem 1.25rem;
+  }
+  .head::before {
+    bottom: 1.5rem;
+  }
+  .head h1 {
+    font-size: clamp(2.5rem, 13vw, 3.5rem);
+  }
+  .head__links {
+    display: grid;
+  }
+  .head__links .link-arrow {
+    justify-content: space-between;
+  }
   .row {
     grid-template-columns: 1fr;
   }

@@ -25,16 +25,17 @@
     <div class="frame layout">
       <div class="main">
         <header class="head">
+          <p class="head__kicker"><span aria-hidden="true"></span>Proceso de admisión UNSCH</p>
           <h1>Inscripción 2027-I</h1>
           <p class="lead">
-            Llena tus datos como figuran en tu DNI. Con tu número de DNI completamos tus apellidos y
-            nombres. No necesitas crear una cuenta.
+            Escribe tus datos como aparecen en tu documento. Si usas DNI, completaremos tus nombres
+            automáticamente. Puedes inscribirte sin crear una cuenta.
           </p>
-          <div class="head__links">
+          <nav class="head__links" aria-label="Ayuda para completar la inscripción">
             <a routerLink="/pasos" class="link-arrow">Ver los pasos de inscripción</a>
             <a routerLink="/documentos/reglamento" class="link-arrow">Leer el reglamento</a>
             <a routerLink="/mi-inscripcion" class="link-arrow">Ya me inscribí</a>
-          </div>
+          </nav>
         </header>
 
         @if (draft(); as d) {
@@ -1038,7 +1039,23 @@
 
       <!-- Resumen en vivo (mejora sobre el formulario oficial) -->
       <aside class="summary" aria-label="Resumen de tu inscripción">
-        <h2 class="summary__title">Tu inscripción</h2>
+        <div class="summary__head">
+          <div>
+            <p class="summary__kicker">Avance del formulario</p>
+            <h2 class="summary__title">Tu inscripción</h2>
+          </div>
+          <span class="summary__step">{{ step() + 1 }} de {{ steps.length }}</span>
+        </div>
+        <div
+          class="summary__progress"
+          role="progressbar"
+          [attr.aria-label]="'Paso ' + (step() + 1) + ' de ' + steps.length"
+          [attr.aria-valuemin]="1"
+          [attr.aria-valuemax]="steps.length"
+          [attr.aria-valuenow]="step() + 1"
+        >
+          <span [style.width.%]="((step() + 1) / steps.length) * 100"></span>
+        </div>
         <dl>
           <div>
             <dt>Postulante</dt>
