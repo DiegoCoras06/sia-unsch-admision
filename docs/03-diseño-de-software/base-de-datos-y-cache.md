@@ -5,13 +5,13 @@ y por qué se aplicó una caché. Las cifras salen de las pruebas de `calidad/` 
 
 ## 1. La base de datos
 
-| Aspecto | Decisión |
-|---|---|
-| Motor | PostgreSQL 18 en **Amazon RDS** (us-east-2, Ohio), con SSL verificado contra el certificado de AWS |
-| Acceso | Prisma 7 con el adaptador `pg` (`shared/db/prisma.ts`), un solo cliente por proceso |
+| Aspecto      | Decisión                                                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Motor        | PostgreSQL 18 en **Amazon RDS** (us-east-2, Ohio), con SSL verificado contra el certificado de AWS                                                                |
+| Acceso       | Prisma 7 con el adaptador `pg` (`shared/db/prisma.ts`), un solo cliente por proceso                                                                               |
 | Organización | **Un esquema por módulo** (12 esquemas más `shared`), 78 tablas y 19 migraciones. Un módulo no lee las tablas de otro: la prueba de arquitectura lo vigila (AC05) |
-| Conexiones | Pool de 5 conexiones con la API en la computadora (`DB_MAX_CONNECTIONS=5`), 10 por defecto y 1 por instancia en AWS Lambda (ADR-005) |
-| Respaldo | Copias automáticas de RDS y restauración a un momento dado (AC09) |
+| Conexiones   | Pool de 5 conexiones con la API en la computadora (`DB_MAX_CONNECTIONS=5`), 10 por defecto y 1 por instancia en AWS Lambda (ADR-005)                              |
+| Respaldo     | Copias automáticas de RDS y restauración a un momento dado (AC09)                                                                                                 |
 
 Tablas por esquema: convocatorias 24, usuarios 13, seguridad 11, exámenes 10, pagos 10, configuración 8, resultados 8,
 inscripciones 5, expedientes 5, notificaciones 5, asistente 4 y shared 3 (contadores, límites de peticiones y bandeja de
@@ -22,15 +22,15 @@ eventos).
 Durante la inscripción muchas personas escriben a la vez. Estas son las reglas que evitan datos duplicados o
 inconsistentes, todas dentro de la base y no en la memoria de la API, para que valgan aunque haya varias instancias:
 
-| Riesgo | Cómo se evita | Dónde |
-|---|---|---|
-| Dos inscripciones de la misma persona | Restricción única (convocatoria, tipo y número de documento, modalidad) | `inscripciones.applications` |
-| Dos postulantes con el mismo código | Contador atómico `INSERT … ON CONFLICT DO UPDATE … RETURNING` en una sola sentencia | `shared/db/counters.ts` |
-| Un pago registrado dos veces | Restricción única del número de transacción y de la orden; `settle` del repositorio de pagos | `pagos.payment_attempts`, `PaymentRepository` |
-| Inscripción guardada a medias | Unidad de trabajo: la inscripción, sus datos y su evento se guardan en una sola transacción | `InscriptionRepository` con `UnitOfWork` |
-| Un correo o evento enviado dos veces | Bandeja de eventos con `FOR UPDATE SKIP LOCKED`: cada evento lo toma un solo proceso | `shared/events/outbox.ts` |
-| Abuso de formularios públicos | Contador por ventana con `ON CONFLICT`, también atómico | `shared/rate-limit/rate-limiter.ts` |
-| Cambios del panel sin rastro | Cada operación crítica escribe su evento de auditoría en la misma transacción (AC10) | `seguridad.audit_events` |
+| Riesgo                                | Cómo se evita                                                                                | Dónde                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Dos inscripciones de la misma persona | Restricción única (convocatoria, tipo y número de documento, modalidad)                      | `inscripciones.applications`                  |
+| Dos postulantes con el mismo código   | Contador atómico `INSERT … ON CONFLICT DO UPDATE … RETURNING` en una sola sentencia          | `shared/db/counters.ts`                       |
+| Un pago registrado dos veces          | Restricción única del número de transacción y de la orden; `settle` del repositorio de pagos | `pagos.payment_attempts`, `PaymentRepository` |
+| Inscripción guardada a medias         | Unidad de trabajo: la inscripción, sus datos y su evento se guardan en una sola transacción  | `InscriptionRepository` con `UnitOfWork`      |
+| Un correo o evento enviado dos veces  | Bandeja de eventos con `FOR UPDATE SKIP LOCKED`: cada evento lo toma un solo proceso         | `shared/events/outbox.ts`                     |
+| Abuso de formularios públicos         | Contador por ventana con `ON CONFLICT`, también atómico                                      | `shared/rate-limit/rate-limiter.ts`           |
+| Cambios del panel sin rastro          | Cada operación crítica escribe su evento de auditoría en la misma transacción (AC10)         | `seguridad.audit_events`                      |
 
 Si la base no responde, la API contesta **503** con `Retry-After` en lugar de colgarse (AC09).
 
@@ -38,10 +38,10 @@ Si la base no responde, la API contesta **503** con `Retry-After` en lugar de co
 
 La primera medición con k6 (15/11/2026) se hizo con la API en la computadora del equipo (Perú) y la base en RDS (Ohio):
 
-| Usuarios | Peticiones en 1 minuto | Promedio | p95 |
-|---|---|---|---|
-| 1 | | 3455 ms | 9870 ms |
-| 10 | 95 | 8347 ms | 21 894 ms |
+| Usuarios | Peticiones en 1 minuto | Promedio | p95       |
+| -------- | ---------------------- | -------- | --------- |
+| 1        |                        | 3455 ms  | 9870 ms   |
+| 10       | 95                     | 8347 ms  | 21 894 ms |
 
 Dos causas, medidas y no supuestas:
 
@@ -58,15 +58,15 @@ datos que **casi nunca cambian** durante la inscripción y que **todos** los vis
 
 `CachedConvocatoriasRepository` (patrón **Decorador**) envuelve al repositorio de Prisma con la misma interfaz:
 
-| Comportamiento | Detalle |
-|---|---|
-| Qué guarda | Convocatoria vigente, etapas, opciones, vacantes, submodalidades, tasas, requisitos y temario |
-| Cuánto dura | 5 minutos por dato |
-| Precarga | Al arrancar la API y cada 4 minutos, así el primer visitante no espera |
+| Comportamiento        | Detalle                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Qué guarda            | Convocatoria vigente, etapas, opciones, vacantes, submodalidades, tasas, requisitos y temario                |
+| Cuánto dura           | 5 minutos por dato                                                                                           |
+| Precarga              | Al arrancar la API y cada 4 minutos, así el primer visitante no espera                                       |
 | Consultas simultáneas | Si 100 personas piden lo mismo y no está guardado, se hace **una** consulta y las 100 comparten el resultado |
-| Errores | No se guardan: si la base falla, la siguiente petición vuelve a intentar |
-| Cambios del panel | Cada cambio del personal en la convocatoria borra la caché y la vuelve a cargar al instante |
-| Pruebas | En el entorno de pruebas dura 0 s, para que cada prueba vea la base real |
+| Errores               | No se guardan: si la base falla, la siguiente petición vuelve a intentar                                     |
+| Cambios del panel     | Cada cambio del personal en la convocatoria borra la caché y la vuelve a cargar al instante                  |
+| Pruebas               | En el entorno de pruebas dura 0 s, para que cada prueba vea la base real                                     |
 
 ### 4.2 En el navegador y en la CDN (cabeceras HTTP)
 
@@ -91,10 +91,10 @@ deben compartir la caché; queda previsto, y el cambio sería otro Decorador con
 
 Misma prueba, mismas rutas, misma computadora y misma base (15/11/2026):
 
-| Usuarios | Peticiones en 1 minuto | Promedio | p95 | Errores |
-|---|---|---|---|---|
-| 1 | | 40 ms | 135 ms | 0 % |
-| 10 | 3144 | 26 ms | 135 ms | 0 % |
+| Usuarios | Peticiones en 1 minuto | Promedio | p95    | Errores |
+| -------- | ---------------------- | -------- | ------ | ------- |
+| 1        |                        | 40 ms    | 135 ms | 0 %     |
+| 10       | 3144                   | 26 ms    | 135 ms | 0 %     |
 
 El p95 con 10 usuarios bajó de **21,9 s a 0,135 s** (unas 160 veces menos) y la API atendió 33 veces más peticiones.
 
@@ -105,15 +105,15 @@ RDS. Cada usuario pide 4 rutas por segundo: convocatoria, opciones y submodalida
 (**sin caché**, va a la base). 255 085 peticiones en total. Resultado completo en
 `calidad/resultados/2026-11-20-k6-carga-2000.txt`.
 
-| Usuarios | Promedio | Mediana | p95 | Errores | Meta (p95 de 3 s y menos de 1 % de errores) |
-|---|---|---|---|---|---|
-| 50 | 878 ms | 3 ms | 2981 ms | 0 % | Cumple |
-| 100 | 1611 ms | 3 ms | 6497 ms | 0 % | No cumple |
-| 250 | 4478 ms | 3 ms | 18 114 ms | 0 % | No cumple |
-| 500 | 7508 ms | 3 ms | 30 000 ms | 25 % | No cumple |
-| 1000 | 30 000 ms | 30 000 ms | 30 001 ms | 100 % | No cumple |
-| 1500 | 1139 ms | 0 ms | 0 ms | 99,6 % | No cumple |
-| 2000 | 6049 ms | 0 ms | 30 023 ms | 91,2 % | No cumple |
+| Usuarios | Promedio  | Mediana   | p95       | Errores | Meta (p95 de 3 s y menos de 1 % de errores) |
+| -------- | --------- | --------- | --------- | ------- | ------------------------------------------- |
+| 50       | 878 ms    | 3 ms      | 2981 ms   | 0 %     | Cumple                                      |
+| 100      | 1611 ms   | 3 ms      | 6497 ms   | 0 %     | No cumple                                   |
+| 250      | 4478 ms   | 3 ms      | 18 114 ms | 0 %     | No cumple                                   |
+| 500      | 7508 ms   | 3 ms      | 30 000 ms | 25 %    | No cumple                                   |
+| 1000     | 30 000 ms | 30 000 ms | 30 001 ms | 100 %   | No cumple                                   |
+| 1500     | 1139 ms   | 0 ms      | 0 ms      | 99,6 %  | No cumple                                   |
+| 2000     | 6049 ms   | 0 ms      | 30 023 ms | 91,2 %  | No cumple                                   |
 
 **Lectura de los resultados:**
 
@@ -140,24 +140,24 @@ petición también la frena con miles de peticiones por segundo.
 Misma prueba, mismas rutas, misma computadora y misma base. **1 597 216 peticiones** en 12 minutos (6 veces más que la
 primera corrida), sin un solo error. Resultado en `calidad/resultados/2026-11-20-k6-carga-2000.txt`.
 
-| Usuarios | Promedio | Mediana | p95 | Errores | Meta |
-|---|---|---|---|---|---|
-| 50 | 2 ms | 1 ms | 5 ms | 0 % | Cumple |
-| 100 | 3 ms | 2 ms | 8 ms | 0 % | Cumple |
-| 250 | 21 ms | 2 ms | 25 ms | 0 % | Cumple |
-| 500 | 7 ms | 1 ms | 32 ms | 0 % | Cumple |
-| 1000 | 16 ms | 4 ms | 70 ms | 0 % | Cumple |
-| 1500 | 241 ms | 196 ms | 482 ms | 0 % | Cumple |
-| 2000 | 503 ms | 494 ms | 589 ms | 0 % | Cumple |
+| Usuarios | Promedio | Mediana | p95    | Errores | Meta   |
+| -------- | -------- | ------- | ------ | ------- | ------ |
+| 50       | 2 ms     | 1 ms    | 5 ms   | 0 %     | Cumple |
+| 100      | 3 ms     | 2 ms    | 8 ms   | 0 %     | Cumple |
+| 250      | 21 ms    | 2 ms    | 25 ms  | 0 %     | Cumple |
+| 500      | 7 ms     | 1 ms    | 32 ms  | 0 %     | Cumple |
+| 1000     | 16 ms    | 4 ms    | 70 ms  | 0 %     | Cumple |
+| 1500     | 241 ms   | 196 ms  | 482 ms | 0 %     | Cumple |
+| 2000     | 503 ms   | 494 ms  | 589 ms | 0 %     | Cumple |
 
 **Toda la prueba:** promedio 201 ms, p95 572 ms, máximo 3,9 s, 0 % de errores.
 
 | Usuarios | p95 sin caché de contenidos | p95 con caché de contenidos | Errores antes | Errores ahora |
-|---|---|---|---|---|
-| 100 | 6497 ms | 8 ms | 0 % | 0 % |
-| 500 | 30 000 ms | 32 ms | 25 % | 0 % |
-| 1000 | 30 001 ms | 70 ms | 100 % | 0 % |
-| 2000 | 30 023 ms | 589 ms | 91,2 % | 0 % |
+| -------- | --------------------------- | --------------------------- | ------------- | ------------- |
+| 100      | 6497 ms                     | 8 ms                        | 0 %           | 0 %           |
+| 500      | 30 000 ms                   | 32 ms                       | 25 %          | 0 %           |
+| 1000     | 30 001 ms                   | 70 ms                       | 100 %         | 0 %           |
+| 2000     | 30 023 ms                   | 589 ms                      | 91,2 %        | 0 %           |
 
 **Lectura:** con 2000 usuarios simultáneos el p95 es 0,59 s, cinco veces por debajo de la meta de 3 s de EQ-01. El
 tiempo empieza a subir desde 1500 usuarios porque la misma computadora genera la carga y atiende la API en un solo

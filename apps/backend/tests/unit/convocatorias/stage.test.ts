@@ -3,7 +3,11 @@ import { nextMilestone, stageStatus, type Stage } from '../../../src/modules/con
 import { stages as seedStages } from '../../../prisma/seed/call-2027-I.js';
 
 const stages: Stage[] = seedStages.map((s, i) => ({
-  ...s, startsAt: new Date(s.startsAt), endsAt: new Date(s.endsAt), highlight: s.highlight ?? false, sortOrder: i + 1,
+  ...s,
+  startsAt: new Date(s.startsAt),
+  endsAt: new Date(s.endsAt),
+  highlight: s.highlight ?? false,
+  sortOrder: i + 1,
 }));
 const byCode = (code: string) => stages.find((s) => s.code === code)!;
 const at = (iso: string) => new Date(iso);

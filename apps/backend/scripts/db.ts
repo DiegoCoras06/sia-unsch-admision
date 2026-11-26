@@ -35,7 +35,10 @@ const pg = new EmbeddedPostgres({
 function isPortOpen(): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = createConnection({ host: '127.0.0.1', port });
-    socket.once('connect', () => { socket.end(); resolve(true); });
+    socket.once('connect', () => {
+      socket.end();
+      resolve(true);
+    });
     socket.once('error', () => resolve(false));
   });
 }

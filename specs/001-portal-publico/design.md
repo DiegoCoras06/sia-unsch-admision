@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Rama:** `001-portal-publico` · **Fecha:** 25/10/2026 · **Especificación:** [requirements.md](requirements.md)
@@ -17,29 +16,29 @@ Técnicamente: módulos **M01 Convocatorias** y **M14 Configuración** con endpo
 
 ### Contexto técnico
 
-| Aspecto | Valor |
-|---|---|
-| Lenguaje / versión | TypeScript 5.x (`strict`), Node.js 22 LTS |
-| Dependencias principales | Angular (estable vigente), Express, Zod, Prisma, pino, OpenTelemetry SDK |
-| Almacenamiento | PostgreSQL 16 (esquemas `convocatorias`, `configuracion`, `seguridad`, `shared`) |
-| Pruebas | Jest, PostgreSQL embebido, Supertest, Playwright, axe |
-| Plataforma | Navegador (móvil primero) + API REST `/api/v1` |
-| Metas | Inicio < 2.5 s en 4G (SC-005); GET públicos p95 < 300 ms sin caché |
-| Restricciones | Montos exactos de la Tabla 3 (SC-002); hora de Lima; sin CloudWatch |
-| Escala | Picos de miles de visitas en días de cierre; respuestas públicas cacheadas 5 min |
+| Aspecto                  | Valor                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| Lenguaje / versión       | TypeScript 5.x (`strict`), Node.js 22 LTS                                        |
+| Dependencias principales | Angular (estable vigente), Express, Zod, Prisma, pino, OpenTelemetry SDK         |
+| Almacenamiento           | PostgreSQL 16 (esquemas `convocatorias`, `configuracion`, `seguridad`, `shared`) |
+| Pruebas                  | Jest, PostgreSQL embebido, Supertest, Playwright, axe                            |
+| Plataforma               | Navegador (móvil primero) + API REST `/api/v1`                                   |
+| Metas                    | Inicio < 2.5 s en 4G (SC-005); GET públicos p95 < 300 ms sin caché               |
+| Restricciones            | Montos exactos de la Tabla 3 (SC-002); hora de Lima; sin CloudWatch              |
+| Escala                   | Picos de miles de visitas en días de cierre; respuestas públicas cacheadas 5 min |
 
 ### Verificación de la constitución
 
-| Artículo | ¿Cumple? | Nota |
-|---|---|---|
-| I — Especificación primero | ✅ | `requirements.md` aprobada; cada escenario tiene su prueba en `design.md` y `tasks.md` |
-| II — Fidelidad institucional | ✅ | Datos solo desde la semilla basada en `reglas-negocio.md`; pie "proyecto académico" |
-| III — Monolito modular y Clean Architecture | ✅ | M01 y M14 con capas; M01 no lee tablas de M14 |
-| IV — Stack aprobado | ✅ | Sin desviaciones |
-| V — Seguridad y privacidad | ✅ | Endpoints públicos sin datos personales; contacto con límite de uso; datos del caso visibles solo para Soporte |
-| VI — UX móvil y accesible | ✅ | Viewport 360 px y axe en E2E |
-| VII — Definición de terminado | ✅ | Ver lista de cierre al final |
-| IX — RNF | ✅ | RNF-01, 04, 05, 13, 14 atendidos con caché, prerenderizado y pruebas |
+| Artículo                                    | ¿Cumple? | Nota                                                                                                           |
+| ------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| I — Especificación primero                  | ✅       | `requirements.md` aprobada; cada escenario tiene su prueba en `design.md` y `tasks.md`                         |
+| II — Fidelidad institucional                | ✅       | Datos solo desde la semilla basada en `reglas-negocio.md`; pie "proyecto académico"                            |
+| III — Monolito modular y Clean Architecture | ✅       | M01 y M14 con capas; M01 no lee tablas de M14                                                                  |
+| IV — Stack aprobado                         | ✅       | Sin desviaciones                                                                                               |
+| V — Seguridad y privacidad                  | ✅       | Endpoints públicos sin datos personales; contacto con límite de uso; datos del caso visibles solo para Soporte |
+| VI — UX móvil y accesible                   | ✅       | Viewport 360 px y axe en E2E                                                                                   |
+| VII — Definición de terminado               | ✅       | Ver lista de cierre al final                                                                                   |
+| IX — RNF                                    | ✅       | RNF-01, 04, 05, 13, 14 atendidos con caché, prerenderizado y pruebas                                           |
 
 **Re-verificación tras el diseño (Fase 1):** ✅ sin cambios.
 
@@ -101,14 +100,14 @@ Completa en [design.md](design.md): monorepo (R-01), versiones (R-02), hora de L
 
 #### Diseño del dominio (M01)
 
-| Objeto | Tipo | Responsabilidad | Regla / FR |
-|---|---|---|---|
-| `StageWindow` | Objeto de valor | Rango de fechas y `statusAt(now)` | FR-002, R-03 |
-| `NextMilestone` | Servicio de dominio | Primera etapa destacada futura | FR-003 |
-| `Money` | Objeto de valor | Céntimos enteros, suma y formato `S/ 0.00` | R-05 |
+| Objeto          | Tipo                | Responsabilidad                                                                                                                                | Regla / FR    |
+| --------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `StageWindow`   | Objeto de valor     | Rango de fechas y `statusAt(now)`                                                                                                              | FR-002, R-03  |
+| `NextMilestone` | Servicio de dominio | Primera etapa destacada futura                                                                                                                 | FR-003        |
+| `Money`         | Objeto de valor     | Céntimos enteros, suma y formato `S/ 0.00`                                                                                                     | R-05          |
 | `FeeCalculator` | Servicio de dominio | Elige la regla base más específica, suma el recargo si hay etapa extemporánea en curso para la modalidad y devuelve el desglose y advertencias | FR-006, RN-17 |
-| `VacancyMatrix` | Objeto de valor | Totales por opción y categoría; `available(category)` | FR-004 |
-| Puertos | Interfaces | `CallRepository`, `FeeRuleRepository`, `VacancyRepository`, `SyllabusRepository`, `EnrollmentStatsProvider` | ADR-002 |
+| `VacancyMatrix` | Objeto de valor     | Totales por opción y categoría; `available(category)`                                                                                          | FR-004        |
+| Puertos         | Interfaces          | `CallRepository`, `FeeRuleRepository`, `VacancyRepository`, `SyllabusRepository`, `EnrollmentStatsProvider`                                    | ADR-002       |
 
 #### Flujo del simulador de tasa
 
@@ -133,19 +132,19 @@ sequenceDiagram
 
 #### Pantallas (área pública)
 
-| Ruta | Pantalla | Historias |
-|---|---|---|
-| `/` | Inicio: carrusel, etapa actual y cuenta regresiva, accesos rápidos, misión, autoridades, estadísticas | H1, H6 |
-| `/cronograma` | Línea de tiempo con estados | H1 |
-| `/programas` | Buscador con filtros de área y categoría | H2 |
-| `/programas/:codigo` | Ficha de la opción | H2 |
-| `/tasas` | Tabla de tasas + simulador | H3 |
-| `/requisitos` | Requisitos por submodalidad | H4 |
-| `/temario` | Árbol con búsqueda | H4 |
-| `/reglamento` | Artículos en HTML + descarga PDF | H4 |
-| `/comunicados` | Lista y detalle | H5 |
-| `/pasos/ordinario`, `/pasos/exonerado` | Pasos accesibles | FR-009 |
-| `/contacto` | Formulario | H6 |
+| Ruta                                   | Pantalla                                                                                              | Historias |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------- |
+| `/`                                    | Inicio: carrusel, etapa actual y cuenta regresiva, accesos rápidos, misión, autoridades, estadísticas | H1, H6    |
+| `/cronograma`                          | Línea de tiempo con estados                                                                           | H1        |
+| `/programas`                           | Buscador con filtros de área y categoría                                                              | H2        |
+| `/programas/:codigo`                   | Ficha de la opción                                                                                    | H2        |
+| `/tasas`                               | Tabla de tasas + simulador                                                                            | H3        |
+| `/requisitos`                          | Requisitos por submodalidad                                                                           | H4        |
+| `/temario`                             | Árbol con búsqueda                                                                                    | H4        |
+| `/reglamento`                          | Artículos en HTML + descarga PDF                                                                      | H4        |
+| `/comunicados`                         | Lista y detalle                                                                                       | H5        |
+| `/pasos/ordinario`, `/pasos/exonerado` | Pasos accesibles                                                                                      | FR-009    |
+| `/contacto`                            | Formulario                                                                                            | H6        |
 
 ### Bases del repositorio creadas en esta funcionalidad
 
@@ -160,17 +159,17 @@ Como es la primera funcionalidad, `tasks.md` incluirá una fase de preparación 
 
 ### Riesgos
 
-| Riesgo | Mitigación |
-|---|---|
-| Errores al transcribir los PDF a la semilla | Pruebas de totales contra el cuadro oficial y tabla de casos de la Tabla 3 |
+| Riesgo                                                              | Mitigación                                                                                          |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Errores al transcribir los PDF a la semilla                         | Pruebas de totales contra el cuadro oficial y tabla de casos de la Tabla 3                          |
 | Caché de CloudFront muestra estados de etapa desfasados hasta 5 min | Aceptable; los estados críticos (inscripción) se revalidan en el servidor al inscribirse (spec 003) |
-| Supuesto del recargo sobre tasas especiales (R-05) | Marcado como supuesto; es configuración, se corrige sin código |
+| Supuesto del recargo sobre tasas especiales (R-05)                  | Marcado como supuesto; es configuración, se corrige sin código                                      |
 
 ### Seguimiento de complejidad
 
 | Desviación de la constitución | Por qué es necesaria | Alternativa más simple descartada porque |
-|---|---|---|
-| — | — | — |
+| ----------------------------- | -------------------- | ---------------------------------------- |
+| —                             | —                    | —                                        |
 
 ### Lista de cierre (definición de terminado)
 
@@ -208,6 +207,7 @@ apps/frontend   apps/backend   packages/contracts   infra
 ### R-03. Hora oficial y cálculo del estado de las etapas
 
 **Decisión:**
+
 - Las fechas se guardan como `timestamptz` en UTC.
 - Las fechas oficiales se cargan interpretadas en **America/Lima** (UTC−5, sin horario de verano): una etapa "del 07/09 al 06/11" va de `2026-09-07 00:00:00-05` a `2026-11-06 23:59:59.999-05`.
 - El estado se **calcula** en el dominio, no se guarda:
@@ -227,6 +227,7 @@ Finalizada  si ahora >  fin
 ### R-04. Modelo de vacantes: opciones y categorías
 
 **Decisión:** la tabla oficial de 40 filas × 16 columnas se modela como:
+
 - **Opción de postulación** (`P01`–`P40`): un programa o una especialidad (aclaración del 25/10/2026).
 - **Categoría de vacante** (16): `ORD`, `DIS`, `PS-U`, `PS-R`, `DEP`, `CE-I`, `CE-II`, `GRA`, `TI`, `TEN`, `TEI`, `VI-U`, `VI-R`, `AND`, `AMZ`, `COAR`. Cada una apunta a su modalidad/submodalidad y variante.
 - **Vacante**: (convocatoria, opción, categoría) → cantidad. 640 filas para 2027-I.
@@ -237,6 +238,7 @@ Finalizada  si ahora >  fin
 ### R-05. Cálculo de tasas (simulador)
 
 **Decisión:** reglas como datos (ADR-011):
+
 - `fee_rules`: criterios (modalidad, submodalidad, gestión del colegio, condición militar, vínculo familiar) → concepto de la Tabla 3. Se elige la regla **más específica** (mayor `priority`).
 - `surcharge_rules`: recargo según el tipo de etapa en curso para esa modalidad (`EXTEMPORANEOUS`), con regla particular para CEPRE (S/ 50.00) y general (S/ 65.00).
 - El dominio calcula: `monto = base + recargo` y devuelve el **desglose** con la cita legal de cada parte.
@@ -249,6 +251,7 @@ Finalizada  si ahora >  fin
 ### R-06. Contenido oficial en HTML (requisitos, temario, reglamento)
 
 **Decisión:**
+
 - **Requisitos**: datos estructurados (`requirement_documents` + relación con submodalidad) → se reutilizan en el expediente de la spec 004.
 - **Temario**: árbol `syllabus_nodes` (área → curso → sección → tema) cargado desde un JSON semilla transcrito del PDF; búsqueda con `ILIKE` sobre una columna normalizada sin tildes (`unaccent`).
 - **Reglamento**: Markdown por capítulo y artículo, guardado como contenido; el PDF oficial se sirve como descarga.
@@ -260,6 +263,7 @@ Finalizada  si ahora >  fin
 ### R-07. Rendimiento del portal público
 
 **Decisión:**
+
 - Las respuestas GET públicas llevan `Cache-Control: public, max-age=300` y CloudFront las cachea; las estadísticas, `max-age=3600` (Historia 6: "al menos cada hora").
 - Angular **prerenderiza** las páginas cuyo contenido no cambia en la convocatoria (pasos, institucional) y carga los datos dinámicos por API.
 - Imágenes en WebP/AVIF con `srcset`; la imagen del carrusel se carga primero y el resto en diferido.
@@ -270,8 +274,9 @@ Finalizada  si ahora >  fin
 ### R-08. Formulario de contacto y protección contra abuso
 
 **Decisión:**
+
 - Límite de **5 mensajes por hora** por IP (guardada como hash con sal), con contador en PostgreSQL (`rate_limit_counters`, ventana fija). El mismo mecanismo se reutiliza en la spec 002.
-- Campo trampa oculto (*honeypot*): si llega con contenido, se responde 202 sin guardar.
+- Campo trampa oculto (_honeypot_): si llega con contenido, se responde 202 sin guardar.
 - El mensaje crea un **caso de atención** en el módulo M13 con número `C-2027I-000123` y se envía una copia por correo (vía outbox, ADR-008).
 
 **Justificación:** escenario 6.3 de la spec y ausencia de Redis.
@@ -291,13 +296,14 @@ Finalizada  si ahora >  fin
 ### R-11. Pruebas
 
 **Decisión:**
-| Nivel | Herramienta | Qué cubre en 001 |
-|---|---|---|
-| Unitarias | Jest | Estado de etapas, siguiente hito, calculadora de tasas (tabla con todas las combinaciones de la Tabla 3), filtros de vacantes |
-| Integración | Jest + PostgreSQL embebido efímero (ADR-014) | Semilla 2027-I: 40 opciones, 926 ORD, 1803 en total; consultas de búsqueda |
-| Contrato | Supertest + validación contra `contracts/openapi.yaml` | Cada endpoint responde según el contrato |
-| E2E | Playwright (viewport 360 × 800 y escritorio) | Escenarios de aceptación de las Historias 1–3 |
-| Accesibilidad | `@axe-core/playwright` | 0 violaciones graves en las páginas públicas |
+
+| Nivel         | Herramienta                                            | Qué cubre en 001                                                                                                              |
+| ------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Unitarias     | Jest                                                   | Estado de etapas, siguiente hito, calculadora de tasas (tabla con todas las combinaciones de la Tabla 3), filtros de vacantes |
+| Integración   | Jest + PostgreSQL embebido efímero (ADR-014)           | Semilla 2027-I: 40 opciones, 926 ORD, 1803 en total; consultas de búsqueda                                                    |
+| Contrato      | Supertest + validación contra `contracts/openapi.yaml` | Cada endpoint responde según el contrato                                                                                      |
+| E2E           | Playwright (viewport 360 × 800 y escritorio)           | Escenarios de aceptación de las Historias 1–3                                                                                 |
+| Accesibilidad | `@axe-core/playwright`                                 | 0 violaciones graves en las páginas públicas                                                                                  |
 
 **Justificación:** Constitución I.3 (cada escenario se convierte en prueba) y VII.
 
@@ -386,41 +392,46 @@ erDiagram
 ### 2. Entidades del módulo M01 — Convocatorias (`convocatorias`)
 
 #### `admission_calls`
-| Columna | Tipo | Reglas |
-|---|---|---|
-| `code` | `varchar(10)` | Único. Formato `AAAA-I` o `AAAA-II` |
-| `status` | enum | `DRAFT → PUBLISHED → CLOSED → ARCHIVED`. El portal solo muestra `PUBLISHED` y `CLOSED` |
-| `published_at` | `timestamptz` | Obligatorio si `status ≠ DRAFT` |
+
+| Columna        | Tipo          | Reglas                                                                                 |
+| -------------- | ------------- | -------------------------------------------------------------------------------------- |
+| `code`         | `varchar(10)` | Único. Formato `AAAA-I` o `AAAA-II`                                                    |
+| `status`       | enum          | `DRAFT → PUBLISHED → CLOSED → ARCHIVED`. El portal solo muestra `PUBLISHED` y `CLOSED` |
+| `published_at` | `timestamptz` | Obligatorio si `status ≠ DRAFT`                                                        |
 
 **Convocatoria vigente:** la `PUBLISHED` más reciente; si no hay, la respuesta indica "Próximamente" (escenario 1.4).
 
 #### `schedule_stages`
-| Columna | Tipo | Reglas |
-|---|---|---|
-| `code` | `varchar(40)` | Único por convocatoria |
-| `scope` | enum | A qué modalidad aplica la etapa |
-| `kind` | enum | `EXTEMPORANEOUS` activa los recargos (R-05) |
-| `starts_at`, `ends_at` | `timestamptz` | `CHECK (ends_at >= starts_at)` |
-| `highlight` | `bool` | Candidata a "siguiente hito" (exámenes, publicaciones) |
+
+| Columna                | Tipo          | Reglas                                                 |
+| ---------------------- | ------------- | ------------------------------------------------------ |
+| `code`                 | `varchar(40)` | Único por convocatoria                                 |
+| `scope`                | enum          | A qué modalidad aplica la etapa                        |
+| `kind`                 | enum          | `EXTEMPORANEOUS` activa los recargos (R-05)            |
+| `starts_at`, `ends_at` | `timestamptz` | `CHECK (ends_at >= starts_at)`                         |
+| `highlight`            | `bool`        | Candidata a "siguiente hito" (exámenes, publicaciones) |
 
 **Estado calculado** (no se guarda): `UPCOMING | IN_PROGRESS | FINISHED` (research R-03).
 
 #### `academic_areas`, `faculties`, `programs`, `application_options`
-| Entidad | Campos clave | Reglas |
-|---|---|---|
-| `academic_areas` | `code` (`I`, `II`, `III`), `name` | 3 filas fijas |
-| `faculties` | `name`, `dean_name` | — |
-| `programs` | `name`, `faculty_id`, `area_id`, `schedule_number` (1–34) | 34 programas; `schedule_number` resuelve DQ-2 |
+
+| Entidad               | Campos clave                                                                                                                                                 | Reglas                                                                                                                                                                                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `academic_areas`      | `code` (`I`, `II`, `III`), `name`                                                                                                                            | 3 filas fijas                                                                                                                                                                                                                                                            |
+| `faculties`           | `name`, `dean_name`                                                                                                                                          | —                                                                                                                                                                                                                                                                        |
+| `programs`            | `name`, `faculty_id`, `area_id`, `schedule_number` (1–34)                                                                                                    | 34 programas; `schedule_number` resuelve DQ-2                                                                                                                                                                                                                            |
 | `application_options` | `internal_code` (`P01`–`P40`, único), `specialty`, `official_vacancy_code`, `display_name`, `duration_years`, `degree`, `professional_title`, `profile_page` | 40 opciones; `display_name` = "Biología: Microbiología". Duración, grado y título van en la opción porque varían por especialidad (p. ej. Educación Secundaria). El perfil de ingreso se enlaza a su página en el PDF oficial (`profile_page`) en lugar de transcribirlo |
 
 #### `modalities`, `submodalities`, `quota_categories`
-| Entidad | Ejemplos | Reglas |
-|---|---|---|
-| `modalities` | `ORD`, `EXO`, `CEPRE` | — |
-| `submodalities` | `EXO-DIS`, `EXO-PSP`, `EXO-COAR`, `EXO-DEP`, `EXO-GRA`, `EXO-TRI`, `EXO-TEN`, `EXO-TEI`, `EXO-VIC`, `EXO-PIN` | `legal_basis`, `uses_base_documents bool` |
+
+| Entidad            | Ejemplos                                                                                                              | Reglas                                                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modalities`       | `ORD`, `EXO`, `CEPRE`                                                                                                 | —                                                                                                                                                 |
+| `submodalities`    | `EXO-DIS`, `EXO-PSP`, `EXO-COAR`, `EXO-DEP`, `EXO-GRA`, `EXO-TRI`, `EXO-TEN`, `EXO-TEI`, `EXO-VIC`, `EXO-PIN`         | `legal_basis`, `uses_base_documents bool`                                                                                                         |
 | `quota_categories` | `ORD`, `DIS`, `PS-U`, `PS-R`, `DEP`, `CE-I`, `CE-II`, `GRA`, `TI`, `TEN`, `TEI`, `VI-U`, `VI-R`, `AND`, `AMZ`, `COAR` | `modality_id`, `submodality_id` nulo para `ORD`/`CE-*`, `variant` (`URBANO`, `RURAL`, `ANDINO`, `AMAZONICO`, `CICLO_I`, `CICLO_II`), `sort_order` |
 
 #### `vacancies`
+
 - Única por `(call_id, option_id, quota_category_id)`.
 - 2027-I: 40 × 16 = **640 filas**; Σ `ORD` = 926; Σ total = **1803**.
 - Bloqueo: si la convocatoria está `PUBLISHED`, no se permite `UPDATE` salvo con resolución (spec 008, RN-03); en 001 solo se lee.
@@ -431,68 +442,74 @@ erDiagram
 
 **`fee_rules`** — cómo se elige la tasa base:
 
-| Columna | Tipo | Ejemplo |
-|---|---|---|
-| `fee_id` | FK | `T-1.3P` |
-| `modality_code` | `varchar` | `ORD` |
-| `submodality_code` | `varchar` nulo | `EXO-GRA` |
-| `school_type` | enum nulo | `ESTATAL`, `PARTICULAR` |
-| `military_condition` | enum nulo | `NONE`, `ACTIVE`, `DISCHARGED` |
-| `family_link` | `bool` nulo | `true` solo para `T-3` |
-| `priority` | `int` | La regla coincidente con mayor prioridad gana |
+| Columna              | Tipo           | Ejemplo                                       |
+| -------------------- | -------------- | --------------------------------------------- |
+| `fee_id`             | FK             | `T-1.3P`                                      |
+| `modality_code`      | `varchar`      | `ORD`                                         |
+| `submodality_code`   | `varchar` nulo | `EXO-GRA`                                     |
+| `school_type`        | enum nulo      | `ESTATAL`, `PARTICULAR`                       |
+| `military_condition` | enum nulo      | `NONE`, `ACTIVE`, `DISCHARGED`                |
+| `family_link`        | `bool` nulo    | `true` solo para `T-3`                        |
+| `priority`           | `int`          | La regla coincidente con mayor prioridad gana |
 
 Un criterio nulo significa "cualquiera". Ejemplo: `T-3` tiene `family_link = true` y la prioridad más alta.
 
 **`surcharge_rules`** — recargo por etapa:
 
-| `fee_id` | `applies_to_scope` | `stage_kind` | `priority` |
-|---|---|---|---|
-| `T-4` (65.00) | `ORD`, `EXO` | `EXTEMPORANEOUS` | 10 |
-| `T-CEPRE-EXT` (50.00) | `CEPRE` | `EXTEMPORANEOUS` | 20 |
+| `fee_id`              | `applies_to_scope` | `stage_kind`     | `priority` |
+| --------------------- | ------------------ | ---------------- | ---------- |
+| `T-4` (65.00)         | `ORD`, `EXO`       | `EXTEMPORANEOUS` | 10         |
+| `T-CEPRE-EXT` (50.00) | `CEPRE`            | `EXTEMPORANEOUS` | 20         |
 
 #### `requirement_documents`, `submodality_requirements`
-| Entidad | Campos clave |
-|---|---|
-| `requirement_documents` | `code`, `name`, `description`, `article`, `accepted_formats`, `is_base` (los 4 del Art. 36) |
-| `submodality_requirements` | `submodality_id`, `requirement_id`, `mandatory`, `sort_order` |
+
+| Entidad                    | Campos clave                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `requirement_documents`    | `code`, `name`, `description`, `article`, `accepted_formats`, `is_base` (los 4 del Art. 36) |
+| `submodality_requirements` | `submodality_id`, `requirement_id`, `mandatory`, `sort_order`                               |
 
 Requisitos de una submodalidad = (base, si `uses_base_documents`) ∪ (los propios). Reutilizado por la spec 004.
 
 #### `syllabus_nodes`
+
 `id`, `call_id`, `parent_id` (nulo en la raíz), `level` (`AREA | COURSE | SECTION | TOPIC`), `title`, `title_search` (sin tildes, en minúsculas), `sort_order`.
 
 #### `official_documents`
+
 `call_id`, `type` (`REGLAMENTO | CRONOGRAMA | TASAS | VACANTES | REQUISITOS | TEMARIO | PROGRAMAS | OTRO`), `title`, `public_url`, `published_at`, `size_bytes`.
 
 ---
 
 ### 3. Entidades del módulo M14 — Contenido (`configuracion`)
 
-| Entidad | Campos clave | Reglas |
-|---|---|---|
-| `announcements` | `call_id`, `type` (`COMUNICADO | FE_ERRATAS | RESULTADO`), `title`, `body_md`, `affects_section` (`TASAS`, `VACANTES`, …, nulo), `published_at` | Visibles si `published_at ≤ ahora`, ordenados descendentemente |
-| `content_blocks` | `key` (`mission`, `principles`, `purposes`, `steps_ord`, `steps_exo`), `body_md` | Uno por clave |
-| `hero_slides` | `title`, `subtitle`, `image_url`, `cta_label`, `cta_route`, `sort_order`, `active` | Carrusel del inicio |
-| `authority_messages` | `name`, `position`, `message`, `photo_url`, `sort_order` | Carrusel de autoridades |
-| `feature_flags` | `key` (`INSCRIPCION`, `REINSCRIPCION`, `BUSCAR_AULA`, `VER_PUNTAJE`, `IMPRIMIR_DOCUMENTOS`), `enabled`, `linked_stage_code` | Acceso visible solo si `enabled` y la etapa vinculada está en curso (FR-013) |
+| Entidad              | Campos clave                                                                                                                | Reglas                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `announcements`      | `call_id`, `type` (`COMUNICADO                                                                                              | FE_ERRATAS                                                                   | RESULTADO`), `title`, `body_md`, `affects_section` (`TASAS`, `VACANTES`, …, nulo), `published_at` | Visibles si `published_at ≤ ahora`, ordenados descendentemente |
+| `content_blocks`     | `key` (`mission`, `principles`, `purposes`, `steps_ord`, `steps_exo`), `body_md`                                            | Uno por clave                                                                |
+| `hero_slides`        | `title`, `subtitle`, `image_url`, `cta_label`, `cta_route`, `sort_order`, `active`                                          | Carrusel del inicio                                                          |
+| `authority_messages` | `name`, `position`, `message`, `photo_url`, `sort_order`                                                                    | Carrusel de autoridades                                                      |
+| `feature_flags`      | `key` (`INSCRIPCION`, `REINSCRIPCION`, `BUSCAR_AULA`, `VER_PUNTAJE`, `IMPRIMIR_DOCUMENTOS`), `enabled`, `linked_stage_code` | Acceso visible solo si `enabled` y la etapa vinculada está en curso (FR-013) |
 
 ---
 
 ### 4. Entidades transversales
 
 #### `seguridad.support_cases` (casos de atención, creados desde el contacto)
-| Columna | Tipo | Reglas |
-|---|---|---|
-| `case_number` | `varchar(20)` | Único, formato `C-2027I-000123` (secuencia por convocatoria) |
-| `type` | enum | `CONTACT` en 001; `COMPLAINT` y `CHATBOT_ESCALATION` en specs 008 y 009 |
-| `name`, `email`, `phone` | texto | Datos personales; visibles solo para Soporte |
-| `message` | texto | Máximo 2 000 caracteres |
-| `status` | enum | `OPEN → IN_PROGRESS → CLOSED` |
+
+| Columna                  | Tipo          | Reglas                                                                  |
+| ------------------------ | ------------- | ----------------------------------------------------------------------- |
+| `case_number`            | `varchar(20)` | Único, formato `C-2027I-000123` (secuencia por convocatoria)            |
+| `type`                   | enum          | `CONTACT` en 001; `COMPLAINT` y `CHATBOT_ESCALATION` en specs 008 y 009 |
+| `name`, `email`, `phone` | texto         | Datos personales; visibles solo para Soporte                            |
+| `message`                | texto         | Máximo 2 000 caracteres                                                 |
+| `status`                 | enum          | `OPEN → IN_PROGRESS → CLOSED`                                           |
 
 #### `shared.rate_limit_counters`
+
 `key` (p. ej. `contact:<hash-ip>`), `window_start`, `count`. Clave primaria `(key, window_start)`; se borran ventanas de más de 1 día (tarea diaria del worker).
 
 #### `shared.outbox` (definida aquí, usada por todas las funcionalidades — ADR-008)
+
 `id`, `event_type`, `payload jsonb`, `occurred_at`, `correlation_id`, `processed_at` nulo, `attempts`, `last_error`.
 En 001 se publica `CasoContactoCreado` → correo de copia al remitente.
 
@@ -500,17 +517,17 @@ En 001 se publica `CasoContactoCreado` → correo de copia al remitente.
 
 ### 5. Semilla 2027-I (`apps/backend/prisma/seed/2027-I/`)
 
-| Archivo | Contenido | Verificación automática |
-|---|---|---|
-| `call.json` | Convocatoria 2027-I `PUBLISHED` | — |
-| `stages.json` | 13 etapas del cronograma (Tabla 2, ver `reglas-negocio.md` §4) en hora de Lima | Ninguna con fin antes del inicio |
-| `programs.json` | 34 programas, 40 opciones `P01`–`P40`, área, facultad | 18 / 13 / 9 opciones por área |
-| `quota-categories.json` | 16 categorías | — |
-| `vacancies.json` | 640 cantidades | Σ ORD = 926, Σ total = 1803, Σ por columna = cuadro oficial |
-| `fees.json` | 24 conceptos + reglas + recargos | Tabla de casos de la Tabla 3 = 100 % |
-| `requirements.json` | Documentos del Art. 36–49 por submodalidad | Cada submodalidad tiene al menos 1 documento |
-| `syllabus.json` | Temario: 5 áreas, 18 cursos, temas | — |
-| `content.json` | Misión, pasos, carrusel, autoridades | — |
+| Archivo                 | Contenido                                                                      | Verificación automática                                     |
+| ----------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `call.json`             | Convocatoria 2027-I `PUBLISHED`                                                | —                                                           |
+| `stages.json`           | 13 etapas del cronograma (Tabla 2, ver `reglas-negocio.md` §4) en hora de Lima | Ninguna con fin antes del inicio                            |
+| `programs.json`         | 34 programas, 40 opciones `P01`–`P40`, área, facultad                          | 18 / 13 / 9 opciones por área                               |
+| `quota-categories.json` | 16 categorías                                                                  | —                                                           |
+| `vacancies.json`        | 640 cantidades                                                                 | Σ ORD = 926, Σ total = 1803, Σ por columna = cuadro oficial |
+| `fees.json`             | 24 conceptos + reglas + recargos                                               | Tabla de casos de la Tabla 3 = 100 %                        |
+| `requirements.json`     | Documentos del Art. 36–49 por submodalidad                                     | Cada submodalidad tiene al menos 1 documento                |
+| `syllabus.json`         | Temario: 5 áreas, 18 cursos, temas                                             | —                                                           |
+| `content.json`          | Misión, pasos, carrusel, autoridades                                           | —                                                           |
 
 **Fuente única:** `docs/reglas-negocio.md`. Si cambia, se actualiza la semilla y la prueba de integración lo detecta.
 
@@ -539,26 +556,26 @@ npm.cmd run dev                   # API en http://127.0.0.1:3000 · web en http:
 
 ### 3. Validaciones
 
-| # | Acción | Resultado esperado | Valida |
-|---|---|---|---|
-| 1 | Abrir `http://127.0.0.1:4200` | "Admisión 2027-I"; etapa *Inscripción regular — Ordinario* en curso hasta el 06/11; cuenta regresiva al examen de Exonerados del 15/11 | H1-E1 |
-| 2 | Reiniciar con `APP_FIXED_NOW=2026-11-08T10:00:00-05:00` y abrir *Cronograma* | Regular ordinaria "Finalizada"; extemporánea "En curso" con aviso de recargo S/ 65.00 | H1-E2, H1-E3 |
-| 3 | Vaciar la convocatoria (`npm.cmd run db:seed -- --empty`) y abrir el inicio | Aviso "Próximamente" | H1-E4 |
-| 4 | En *Programas*, escribir "sistemas" | Ingeniería de Sistemas · Área I · 20 ORD · 50 en total | H2-E1 |
-| 5 | Filtrar Área III | 9 opciones | H2-E2 |
-| 6 | Elegir la categoría "Graduados y/o titulados" | Arquitectura, Ing. Ambiental, Psicología, Ing. Geológica, Biotecnología, Ecología, Ed. Sec. Matemática y Ed. Sec. CC.SS. aparecen "Sin vacantes en esta modalidad" | H2-E3 |
-| 7 | Abrir la ficha de Ingeniería Agrícola | Facultad de Ciencias Agrarias, 5 años, grado y título, perfil de ingreso, vacantes por modalidad | H2-E4 |
-| 8 | Simulador: Ordinario + estatal (fecha 25/10) | S/ 250.00 | H3-E1 |
-| 9 | Simulador: Ordinario + particular + licenciado | S/ 225.00 con nota "25 % de descuento — Art. 61, Ley 29248" | H3-E2 |
-| 10 | Simulador: Ordinario + estatal con fecha 08/11 | S/ 250.00 + S/ 65.00 = S/ 315.00 | H3-E3 |
-| 11 | Simulador: Exonerados → Graduados | S/ 485.00 | H3-E4 |
-| 12 | Simulador: vínculo familiar UNSCH | S/ 30.00 y advertencia de beneficio por única vez | H3-E5 |
-| 13 | *Requisitos* → Deportista calificado | 4 documentos base + 3 del Art. 40 | H4-E1 |
-| 14 | *Temario* → buscar "trigonometria" (sin tilde) | Lleva a Área II Matemática → Trigonometría | H4-E2 |
-| 15 | Publicar una fe de erratas de tasas (semilla de prueba) y abrir *Tasas* | Aviso destacado enlazado | H5-E1 |
-| 16 | Enviar el formulario de contacto | Número `C-2027I-000001`; correo de copia guardado en `apps/backend/.dev-mail/` | H6-E2 |
-| 17 | Enviar 6 mensajes seguidos | El sexto devuelve 429 con mensaje amable | H6-E3 |
-| 18 | Abrir el inicio con un viewport de 360 px (DevTools) | Sin desplazamiento horizontal | SC-004 |
+| #   | Acción                                                                       | Resultado esperado                                                                                                                                                 | Valida       |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| 1   | Abrir `http://127.0.0.1:4200`                                                | "Admisión 2027-I"; etapa _Inscripción regular — Ordinario_ en curso hasta el 06/11; cuenta regresiva al examen de Exonerados del 15/11                             | H1-E1        |
+| 2   | Reiniciar con `APP_FIXED_NOW=2026-11-08T10:00:00-05:00` y abrir _Cronograma_ | Regular ordinaria "Finalizada"; extemporánea "En curso" con aviso de recargo S/ 65.00                                                                              | H1-E2, H1-E3 |
+| 3   | Vaciar la convocatoria (`npm.cmd run db:seed -- --empty`) y abrir el inicio  | Aviso "Próximamente"                                                                                                                                               | H1-E4        |
+| 4   | En _Programas_, escribir "sistemas"                                          | Ingeniería de Sistemas · Área I · 20 ORD · 50 en total                                                                                                             | H2-E1        |
+| 5   | Filtrar Área III                                                             | 9 opciones                                                                                                                                                         | H2-E2        |
+| 6   | Elegir la categoría "Graduados y/o titulados"                                | Arquitectura, Ing. Ambiental, Psicología, Ing. Geológica, Biotecnología, Ecología, Ed. Sec. Matemática y Ed. Sec. CC.SS. aparecen "Sin vacantes en esta modalidad" | H2-E3        |
+| 7   | Abrir la ficha de Ingeniería Agrícola                                        | Facultad de Ciencias Agrarias, 5 años, grado y título, perfil de ingreso, vacantes por modalidad                                                                   | H2-E4        |
+| 8   | Simulador: Ordinario + estatal (fecha 25/10)                                 | S/ 250.00                                                                                                                                                          | H3-E1        |
+| 9   | Simulador: Ordinario + particular + licenciado                               | S/ 225.00 con nota "25 % de descuento — Art. 61, Ley 29248"                                                                                                        | H3-E2        |
+| 10  | Simulador: Ordinario + estatal con fecha 08/11                               | S/ 250.00 + S/ 65.00 = S/ 315.00                                                                                                                                   | H3-E3        |
+| 11  | Simulador: Exonerados → Graduados                                            | S/ 485.00                                                                                                                                                          | H3-E4        |
+| 12  | Simulador: vínculo familiar UNSCH                                            | S/ 30.00 y advertencia de beneficio por única vez                                                                                                                  | H3-E5        |
+| 13  | _Requisitos_ → Deportista calificado                                         | 4 documentos base + 3 del Art. 40                                                                                                                                  | H4-E1        |
+| 14  | _Temario_ → buscar "trigonometria" (sin tilde)                               | Lleva a Área II Matemática → Trigonometría                                                                                                                         | H4-E2        |
+| 15  | Publicar una fe de erratas de tasas (semilla de prueba) y abrir _Tasas_      | Aviso destacado enlazado                                                                                                                                           | H5-E1        |
+| 16  | Enviar el formulario de contacto                                             | Número `C-2027I-000001`; correo de copia guardado en `apps/backend/.dev-mail/`                                                                                     | H6-E2        |
+| 17  | Enviar 6 mensajes seguidos                                                   | El sexto devuelve 429 con mensaje amable                                                                                                                           | H6-E3        |
+| 18  | Abrir el inicio con un viewport de 360 px (DevTools)                         | Sin desplazamiento horizontal                                                                                                                                      | SC-004       |
 
 ### 4. Pruebas automáticas
 

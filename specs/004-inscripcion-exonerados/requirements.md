@@ -30,7 +30,7 @@ Como exonerado, quiero subir cada documento escaneado y enviarlo a revisión (ME
 
 1. **Dado** la lista de documentos de mi submodalidad, **cuando** subo un PDF o JPG de hasta 5 MB por documento, **entonces** queda marcado "Cargado" con vista previa.
 2. **Dado** que falta algún documento obligatorio, **cuando** intento enviar a revisión, **entonces** el sistema indica cuáles faltan y no envía.
-3. **Dado** que subo un archivo dañado, protegido con contraseña o de tipo no permitido, **cuando** se valida, **entonces** se rechaza con el motivo. *(RF-04.05)*
+3. **Dado** que subo un archivo dañado, protegido con contraseña o de tipo no permitido, **cuando** se valida, **entonces** se rechaza con el motivo. _(RF-04.05)_
 4. **Dado** todos los documentos cargados, **cuando** envío a revisión, **entonces** el expediente pasa a **En revisión**, ya no puedo modificarlo y recibo un correo de confirmación.
 
 ---
@@ -53,8 +53,8 @@ Como evaluador documental, quiero una bandeja de expedientes asignados donde rev
 
 **Escenarios de aceptación:**
 
-1. **Dado** un expediente observado, **cuando** abro mi panel, **entonces** veo cada documento observado con el motivo y la fecha límite. Solo esos documentos se pueden reemplazar. *(RF-04.08)*
-2. **Dado** que reemplazo los documentos observados, **cuando** reenvío, **entonces** el expediente vuelve a **En revisión** y se conserva la versión anterior en el historial. *(RF-06.06)*
+1. **Dado** un expediente observado, **cuando** abro mi panel, **entonces** veo cada documento observado con el motivo y la fecha límite. Solo esos documentos se pueden reemplazar. _(RF-04.08)_
+2. **Dado** que reemplazo los documentos observados, **cuando** reenvío, **entonces** el expediente vuelve a **En revisión** y se conserva la versión anterior en el historial. _(RF-06.06)_
 3. **Dado** que vence la fecha límite sin subsanar, **cuando** el plazo cierra, **entonces** el expediente pasa a **No subsanado** y no puede inscribirse.
 
 ---
@@ -103,21 +103,21 @@ Como evaluador documental, quiero una bandeja de expedientes asignados donde rev
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE ofrecer las submodalidades del Art. 8 con sus variantes (urbano/rural, andino/amazónico, ciclo I/II). *(RF-04.01)*
-- **FR-002**: El sistema DEBE mostrar los documentos requeridos según la submodalidad, configurables por convocatoria. *(RF-04.02, RF-06.01, RF-14.03)*
-- **FR-003**: El sistema DEBE permitir cargar documentos PDF/JPG/PNG de hasta 5 MB, validando tipo real, integridad y tamaño. *(RF-04.04, RF-04.05)*
-- **FR-004**: El sistema DEBE asignar expedientes a evaluadores de forma equitativa o manual. *(RF-06.03)*
-- **FR-005**: El sistema DEBE permitir dictaminar cada documento (Conforme/Observado con motivo) y el expediente (Autorizado/Observado/Rechazado con justificación). *(RF-04.06, RF-04.07, RF-06.04, RF-06.07)*
-- **FR-006**: El sistema DEBE notificar al postulante cada cambio de estado del expediente. *(RF-06.05)*
-- **FR-007**: El sistema DEBE permitir subsanar solo los documentos observados dentro del plazo y conservar todas las versiones. *(RF-04.08, RF-06.06)*
-- **FR-008**: El sistema DEBE impedir elegir programa, pagar o generar ficha si el expediente no está autorizado. *(RN-24, RF-04.09, RF-06.08)*
-- **FR-009**: El sistema DEBE permitir elegir solo programas con vacantes en la submodalidad. *(RF-04.11)*
-- **FR-010**: El sistema DEBE generar la ficha de exonerados con QR verificable. *(RF-04.10)*
-- **FR-011**: El sistema DEBE gestionar la lista de adjudicados CEPRE y su ventana de inscripción. *(Cronograma ítems 5–6)*
-- **FR-012**: El sistema DEBE permitir registrar verificaciones presenciales con responsable. *(Art. 9)*
-- **FR-013**: Los documentos del expediente DEBEN ser privados: solo el titular, su evaluador y roles autorizados pueden verlos y descargarlos. *(RF-06.02, RNF-03, Constitución V.1)*
-- **FR-014**: El sistema DEBE registrar los datos personales, académicos y complementarios propios de cada submodalidad (p. ej. universidad de origen y créditos aprobados en traslados, disciplina deportiva, comunidad indígena, tipo de discapacidad y adecuaciones). *(RF-04.03)*
-- **FR-015**: El sistema DEBE permitir programar evaluaciones especiales por submodalidad cuando la Comisión lo disponga (p. ej. adecuaciones para personas con discapacidad). *(RF-04.12, RN-39)*
+- **FR-001**: El sistema DEBE ofrecer las submodalidades del Art. 8 con sus variantes (urbano/rural, andino/amazónico, ciclo I/II). _(RF-04.01)_
+- **FR-002**: El sistema DEBE mostrar los documentos requeridos según la submodalidad, configurables por convocatoria. _(RF-04.02, RF-06.01, RF-14.03)_
+- **FR-003**: El sistema DEBE permitir cargar documentos PDF/JPG/PNG de hasta 5 MB, validando tipo real, integridad y tamaño. _(RF-04.04, RF-04.05)_
+- **FR-004**: El sistema DEBE asignar expedientes a evaluadores de forma equitativa o manual. _(RF-06.03)_
+- **FR-005**: El sistema DEBE permitir dictaminar cada documento (Conforme/Observado con motivo) y el expediente (Autorizado/Observado/Rechazado con justificación). _(RF-04.06, RF-04.07, RF-06.04, RF-06.07)_
+- **FR-006**: El sistema DEBE notificar al postulante cada cambio de estado del expediente. _(RF-06.05)_
+- **FR-007**: El sistema DEBE permitir subsanar solo los documentos observados dentro del plazo y conservar todas las versiones. _(RF-04.08, RF-06.06)_
+- **FR-008**: El sistema DEBE impedir elegir programa, pagar o generar ficha si el expediente no está autorizado. _(RN-24, RF-04.09, RF-06.08)_
+- **FR-009**: El sistema DEBE permitir elegir solo programas con vacantes en la submodalidad. _(RF-04.11)_
+- **FR-010**: El sistema DEBE generar la ficha de exonerados con QR verificable. _(RF-04.10)_
+- **FR-011**: El sistema DEBE gestionar la lista de adjudicados CEPRE y su ventana de inscripción. _(Cronograma ítems 5–6)_
+- **FR-012**: El sistema DEBE permitir registrar verificaciones presenciales con responsable. _(Art. 9)_
+- **FR-013**: Los documentos del expediente DEBEN ser privados: solo el titular, su evaluador y roles autorizados pueden verlos y descargarlos. _(RF-06.02, RNF-03, Constitución V.1)_
+- **FR-014**: El sistema DEBE registrar los datos personales, académicos y complementarios propios de cada submodalidad (p. ej. universidad de origen y créditos aprobados en traslados, disciplina deportiva, comunidad indígena, tipo de discapacidad y adecuaciones). _(RF-04.03)_
+- **FR-015**: El sistema DEBE permitir programar evaluaciones especiales por submodalidad cuando la Comisión lo disponga (p. ej. adecuaciones para personas con discapacidad). _(RF-04.12, RN-39)_
 
 ### Entidades clave
 
@@ -148,28 +148,28 @@ Como evaluador documental, quiero una bandeja de expedientes asignados donde rev
 
 21 de 21 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-04.01 | ✅ | Modalidad Exonerados y submodalidad (categoría) en el formulario de inscripción |
-| RF-04.02 | ✅ | Requisitos de la submodalidad listados en el expediente, con artículo y formatos |
-| RF-04.03 | ✅ | Datos complementarios por submodalidad (p. ej. puesto, ámbito, logro deportivo) |
-| RF-04.04 | ✅ | Carga de cada documento sustentatorio en línea (PDF, JPG o PNG) |
-| RF-04.05 | ✅ | Firma del archivo, 5 MB, PDF íntegro y sin cifrar, imagen completa y SHA-256 |
-| RF-04.06 | ✅ | Bandeja del evaluador en el panel (permiso expedientes.evaluar) |
-| RF-04.07 | ✅ | Autorizar, observar o rechazar con motivo; auditado |
-| RF-04.08 | ✅ | Subsanación en 72 horas; vencido el plazo pasa a «No subsanado» |
-| RF-04.09 | ✅ | El pago queda bloqueado hasta autorizar el expediente (DOSSIER_NOT_AUTHORIZED) |
-| RF-04.10 | ✅ | Autorizado y pagado: la inscripción pasa a Apta y se habilita la ficha con QR |
-| RF-04.11 | ✅ | Criterios de evaluación por submodalidad editables; se muestran en «Requisitos» y a la Comisión en el expediente |
-| RF-04.12 | ✅ | Evaluación especial programada desde el panel y visible para el postulante |
-| RF-06.01 | ✅ | Documentos por submodalidad (obligatorios u opcionales) editables en el panel |
-| RF-06.02 | ✅ | Visualizar y descargar cada documento desde el panel (descarga auditada) |
-| RF-06.03 | ✅ | Reparto equitativo entre evaluadores activos y reasignación manual |
-| RF-06.04 | ✅ | Observación por documento con nota obligatoria |
-| RF-06.05 | ✅ | Correo al enviar y al dictaminar, con los documentos observados y el plazo |
-| RF-06.06 | ✅ | Versiones de cada documento (la anterior queda «Reemplazado») e historial del expediente |
-| RF-06.07 | ✅ | Dictamen de autorización o rechazo con justificación |
-| RF-06.08 | ✅ | Autorizar exige todos los documentos obligatorios conformes |
-| RF-14.03 | ✅ | Documentos exigidos de la convocatoria editables (nombre, contenido, artículo y formatos) |
+| RF       | Estado | Detalle                                                                                                          |
+| -------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| RF-04.01 | ✅     | Modalidad Exonerados y submodalidad (categoría) en el formulario de inscripción                                  |
+| RF-04.02 | ✅     | Requisitos de la submodalidad listados en el expediente, con artículo y formatos                                 |
+| RF-04.03 | ✅     | Datos complementarios por submodalidad (p. ej. puesto, ámbito, logro deportivo)                                  |
+| RF-04.04 | ✅     | Carga de cada documento sustentatorio en línea (PDF, JPG o PNG)                                                  |
+| RF-04.05 | ✅     | Firma del archivo, 5 MB, PDF íntegro y sin cifrar, imagen completa y SHA-256                                     |
+| RF-04.06 | ✅     | Bandeja del evaluador en el panel (permiso expedientes.evaluar)                                                  |
+| RF-04.07 | ✅     | Autorizar, observar o rechazar con motivo; auditado                                                              |
+| RF-04.08 | ✅     | Subsanación en 72 horas; vencido el plazo pasa a «No subsanado»                                                  |
+| RF-04.09 | ✅     | El pago queda bloqueado hasta autorizar el expediente (DOSSIER_NOT_AUTHORIZED)                                   |
+| RF-04.10 | ✅     | Autorizado y pagado: la inscripción pasa a Apta y se habilita la ficha con QR                                    |
+| RF-04.11 | ✅     | Criterios de evaluación por submodalidad editables; se muestran en «Requisitos» y a la Comisión en el expediente |
+| RF-04.12 | ✅     | Evaluación especial programada desde el panel y visible para el postulante                                       |
+| RF-06.01 | ✅     | Documentos por submodalidad (obligatorios u opcionales) editables en el panel                                    |
+| RF-06.02 | ✅     | Visualizar y descargar cada documento desde el panel (descarga auditada)                                         |
+| RF-06.03 | ✅     | Reparto equitativo entre evaluadores activos y reasignación manual                                               |
+| RF-06.04 | ✅     | Observación por documento con nota obligatoria                                                                   |
+| RF-06.05 | ✅     | Correo al enviar y al dictaminar, con los documentos observados y el plazo                                       |
+| RF-06.06 | ✅     | Versiones de cada documento (la anterior queda «Reemplazado») e historial del expediente                         |
+| RF-06.07 | ✅     | Dictamen de autorización o rechazo con justificación                                                             |
+| RF-06.08 | ✅     | Autorizar exige todos los documentos obligatorios conformes                                                      |
+| RF-14.03 | ✅     | Documentos exigidos de la convocatoria editables (nombre, contenido, artículo y formatos)                        |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

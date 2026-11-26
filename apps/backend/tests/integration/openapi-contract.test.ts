@@ -11,7 +11,9 @@ import { testApp } from '../helpers.js';
 type Json = Record<string, any>;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const addFormats = createRequire(import.meta.url)('ajv-formats') as FormatsPlugin;
-const contract = parse(readFileSync(path.join(root, 'specs/001-portal-publico/contracts/openapi.yaml'), 'utf8')) as Json;
+const contract = parse(
+  readFileSync(path.join(root, 'specs/001-portal-publico/contracts/openapi.yaml'), 'utf8'),
+) as Json;
 const t = testApp('2026-10-25T10:00:00-05:00');
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);

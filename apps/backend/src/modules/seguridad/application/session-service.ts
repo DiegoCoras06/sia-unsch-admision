@@ -13,12 +13,24 @@ export interface SessionMeta {
 
 /** Sesiones con refresh token opaco rotativo (ADR-006). */
 export class SessionService {
-  constructor(private readonly persistence: PersistencePort, private readonly clock: Clock) {}
+  constructor(
+    private readonly persistence: PersistencePort,
+    private readonly clock: Clock,
+  ) {}
 
   /** `newDevice` trae la etiqueta si entra desde un navegador o sistema que esta cuenta nunca usó; en el primer ingreso no avisa. */
-  async create(userId: string, type: 'APPLICANT' | 'STAFF', meta: SessionMeta): Promise<{ sessionId: string; refreshToken: string; expiresAt: Date; newDevice: string | null }> {
+  async create(
+    userId: string,
+    type: 'APPLICANT' | 'STAFF',
+    meta: SessionMeta,
+  ): Promise<{ sessionId: string; refreshToken: string; expiresAt: Date; newDevice: string | null }> {
     const device = deviceLabel(meta.userAgent);
-    const known = await this.persistence.session.findMany({ where: { userId }, select: { userAgent: true }, distinct: ['userAgent'], take: 100 });
+    const known = await this.persistence.session.findMany({
+      where: { userId },
+      select: { userAgent: true },
+      distinct: ['userAgent'],
+      take: 100,
+    });
     const newDevice = device && known.length && !known.some((s) => deviceLabel(s.userAgent) === device) ? device : null;
     return { ...(await this.issue(this.persistence, userId, type, randomUUID(), meta)), newDevice };
   }
@@ -27,15 +39,26 @@ export class SessionService {
   async list(userId: string, currentSessionId: string) {
     const now = this.clock.now();
     const [rows, current] = await Promise.all([
-      this.persistence.session.findMany({ where: { userId, revokedAt: null, expiresAt: { gt: now } }, orderBy: { lastRefreshedAt: 'desc' } }),
+      this.persistence.session.findMany({
+        where: { userId, revokedAt: null, expiresAt: { gt: now } },
+        orderBy: { lastRefreshedAt: 'desc' },
+      }),
       this.persistence.session.findUnique({ where: { id: currentSessionId }, select: { familyId: true } }),
     ]);
-    return rows.map((s) => ({ id: s.familyId, device: deviceLabel(s.userAgent) ?? 'Dispositivo desconocido', lastActiveAt: s.lastRefreshedAt.toISOString(), current: s.familyId === current?.familyId }));
+    return rows.map((s) => ({
+      id: s.familyId,
+      device: deviceLabel(s.userAgent) ?? 'Dispositivo desconocido',
+      lastActiveAt: s.lastRefreshedAt.toISOString(),
+      current: s.familyId === current?.familyId,
+    }));
   }
 
   /** Cierra un dispositivo de esta cuenta. Corta la renovación al instante; su token de acceso vence en 15 minutos o menos (ADR-006). */
   async revokeDevice(userId: string, familyId: string): Promise<boolean> {
-    const { count } = await this.persistence.session.updateMany({ where: { userId, familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: 'USER_REVOKED' } });
+    const { count } = await this.persistence.session.updateMany({
+      where: { userId, familyId, revokedAt: null },
+      data: { revokedAt: this.clock.now(), revokeReason: 'USER_REVOKED' },
+    });
     return count > 0;
   }
 
@@ -70,7 +93,10 @@ export class SessionService {
   async revoke(refreshToken: string, reason = 'LOGOUT'): Promise<string | null> {
     const session = await this.persistence.session.findUnique({ where: { refreshTokenHash: sha256(refreshToken) } });
     if (!session) return null;
-    await this.persistence.session.updateMany({ where: { id: session.id, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
+    await this.persistence.session.updateMany({
+      where: { id: session.id, revokedAt: null },
+      data: { revokedAt: this.clock.now(), revokeReason: reason },
+    });
     return session.userId;
   }
 
@@ -83,17 +109,31 @@ export class SessionService {
   }
 
   private async revokeFamily(familyId: string, reason: string): Promise<void> {
-    await this.persistence.session.updateMany({ where: { familyId, revokedAt: null }, data: { revokedAt: this.clock.now(), revokeReason: reason } });
+    await this.persistence.session.updateMany({
+      where: { familyId, revokedAt: null },
+      data: { revokedAt: this.clock.now(), revokeReason: reason },
+    });
   }
 
-  private async issue(client: PersistencePort | TransactionPort, userId: string, type: 'APPLICANT' | 'STAFF', familyId: string, meta: SessionMeta) {
+  private async issue(
+    client: PersistencePort | TransactionPort,
+    userId: string,
+    type: 'APPLICANT' | 'STAFF',
+    familyId: string,
+    meta: SessionMeta,
+  ) {
     const now = this.clock.now();
     const refreshToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(now.getTime() + SESSION_TTL[type] * 1000);
     const session = await client.session.create({
       data: {
-        userId, familyId, refreshTokenHash: sha256(refreshToken), expiresAt, lastRefreshedAt: now,
-        userAgent: meta.userAgent?.slice(0, 300) ?? null, ipHash: meta.ipHash,
+        userId,
+        familyId,
+        refreshTokenHash: sha256(refreshToken),
+        expiresAt,
+        lastRefreshedAt: now,
+        userAgent: meta.userAgent?.slice(0, 300) ?? null,
+        ipHash: meta.ipHash,
       },
     });
     return { sessionId: session.id, refreshToken, expiresAt };

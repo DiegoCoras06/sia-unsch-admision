@@ -1,8 +1,16 @@
 import data from './ubigeo.json' with { type: 'json' };
 
 type District = [string, string];
-interface Province { id: string; name: string; districts: District[] }
-interface Department { id: string; name: string; provinces: Province[] }
+interface Province {
+  id: string;
+  name: string;
+  districts: District[];
+}
+interface Department {
+  id: string;
+  name: string;
+  provinces: Province[];
+}
 
 const departments = data as Department[];
 const districtIndex = new Map<string, string>();

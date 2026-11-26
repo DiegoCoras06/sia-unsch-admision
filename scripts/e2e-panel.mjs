@@ -17,12 +17,16 @@ const step = (m) => console.log(`✔ ${m}`);
 
 function base32Decode(s) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const ch of s.replace(/=+$/, '').toUpperCase()) {
     value = (value << 5) | A.indexOf(ch);
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -69,15 +73,24 @@ try {
   }
   await page.click('button[type=submit]');
   await page.waitForURL(/\/admin$/, { timeout: 20000 });
-  writeFileSync(file, `Panel de Admisión UNSCH - base LOCAL de pruebas\nCorreo: ${email}\nContraseña actual: ${NEW_PASSWORD}\nClave TOTP: ${secret}\n`);
+  writeFileSync(
+    file,
+    `Panel de Admisión UNSCH - base LOCAL de pruebas\nCorreo: ${email}\nContraseña actual: ${NEW_PASSWORD}\nClave TOTP: ${secret}\n`,
+  );
   await page.locator('.adm-kpi').first().waitFor({ timeout: 20000 });
-  step(`Inicio del panel: ${(await page.locator('.adm-kpi').count())} indicadores`);
+  step(`Inicio del panel: ${await page.locator('.adm-kpi').count()} indicadores`);
   await page.screenshot({ path: `${out}/2-inicio.png`, fullPage: true });
 
   for (const [path, title, shot] of [
-    ['inscripciones', 'Inscripciones', '3-inscripciones'], ['pagos', 'Pagos en línea', '4-pagos'], ['convocatoria', 'Convocatoria', '5-convocatoria'],
-    ['contenido', 'Contenido del portal', '6-contenido'], ['asistente', 'Asistente virtual', '7-asistente'], ['casos', 'Casos de atención', '8-casos'],
-    ['inhabilitados', 'Inhabilitados', '9-inhabilitados'], ['usuarios', 'Usuarios y roles', '10-usuarios'], ['auditoria', 'Auditoría', '11-auditoria'],
+    ['inscripciones', 'Inscripciones', '3-inscripciones'],
+    ['pagos', 'Pagos en línea', '4-pagos'],
+    ['convocatoria', 'Convocatoria', '5-convocatoria'],
+    ['contenido', 'Contenido del portal', '6-contenido'],
+    ['asistente', 'Asistente virtual', '7-asistente'],
+    ['casos', 'Casos de atención', '8-casos'],
+    ['inhabilitados', 'Inhabilitados', '9-inhabilitados'],
+    ['usuarios', 'Usuarios y roles', '10-usuarios'],
+    ['auditoria', 'Auditoría', '11-auditoria'],
     ['configuracion', 'Configuración', '12-configuracion'],
   ]) {
     await page.click(`.adm-side nav a[href="/admin/${path}"]`);
@@ -104,7 +117,10 @@ try {
   step('Tasa editada y revertida; ambos cambios aparecen en la auditoría');
 
   await page.click('.adm-side nav a[href="/admin"]');
-  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('button:has-text("Inscripciones · Excel")')]);
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 30000 }),
+    page.click('button:has-text("Inscripciones · Excel")'),
+  ]);
   const saved = `${out}/${download.suggestedFilename()}`;
   await download.saveAs(saved);
   if (readFileSync(saved).subarray(0, 2).toString() !== 'PK') throw new Error('El Excel descargado no es válido');

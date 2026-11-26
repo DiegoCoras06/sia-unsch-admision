@@ -28,13 +28,22 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
               <p class="me__id">
                 <span>{{ p.documentType }} {{ masked(p.documentNumber) }}</span>
                 <span class="me__badge" [class.is-ok]="p.identityStatus === 'VERIFIED'">
-                  {{ p.identityStatus === 'VERIFIED' ? 'Identidad verificada' : 'Identidad pendiente' }}@if (p.identitySimulated) { (simulada) }
+                  {{
+                    p.identityStatus === 'VERIFIED' ? 'Identidad verificada' : 'Identidad pendiente'
+                  }}
+                  @if (p.identitySimulated) {
+                    (simulada)
+                  }
                 </span>
               </p>
             </div>
             <div class="me__session">
-              <button type="button" class="btn btn--quiet" (click)="logout(false)">Cerrar sesión</button>
-              <button type="button" class="me__all" (click)="logout(true)">Cerrar sesión en todos mis dispositivos</button>
+              <button type="button" class="btn btn--quiet" (click)="logout(false)">
+                Cerrar sesión
+              </button>
+              <button type="button" class="me__all" (click)="logout(true)">
+                Cerrar sesión en todos mis dispositivos
+              </button>
             </div>
           </header>
 
@@ -42,7 +51,11 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
             <section class="me__main" aria-labelledby="ma-ins">
               <h2 id="ma-ins">Mis inscripciones</h2>
               @for (s of inscriptions(); track s.applicantCode) {
-                <app-inscription-receipt [summary]="s" [documentNumber]="p.documentNumber" (updated)="reload()" />
+                <app-inscription-receipt
+                  [summary]="s"
+                  [documentNumber]="p.documentNumber"
+                  (updated)="reload()"
+                />
               } @empty {
                 <div class="me__empty">
                   <p><strong>Aún no tienes inscripciones con tu DNI.</strong></p>
@@ -55,13 +68,61 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
             <aside class="me__side">
               <form class="me__card" (ngSubmit)="save()">
                 <h2>Mis datos de contacto</h2>
-                <p class="acc__hint">Aquí te llegan el código de verificación y los avisos del proceso. Tus nombres y tu DNI solo se corrigen con una solicitud en la Dirección de Admisión (Art. 17.6).</p>
-                <div class="field"><label for="ma-mail">Correo</label><input id="ma-mail" class="input" type="email" name="mail" [(ngModel)]="form.email" autocomplete="email"></div>
-                <div class="field"><label for="ma-cel">Celular</label><input id="ma-cel" class="input" name="cel" [(ngModel)]="form.phone" maxlength="9" inputmode="numeric" autocomplete="tel"></div>
-                <div class="field"><label for="ma-dir">Dirección</label><input id="ma-dir" class="input" name="dir" [(ngModel)]="form.addressLine" autocomplete="street-address"></div>
-                <div class="field"><label for="ma-apo">Apoderado <span class="opt">(si eres menor de edad)</span></label><input id="ma-apo" class="input" name="apo" [(ngModel)]="form.guardianName"></div>
-                <button class="btn me__save" type="submit" [disabled]="busy() || !dirty()" [attr.aria-busy]="busy()">{{ busy() ? 'Guardando…' : dirty() ? 'Guardar cambios' : 'Sin cambios' }}</button>
-                @if (msg()) { <p [class]="msgErr() ? 'alert alert--error' : 'acc__ok me__ok'" role="status">{{ msg() }}</p> }
+                <p class="acc__hint">
+                  Aquí te llegan el código de verificación y los avisos del proceso. Tus nombres y
+                  tu DNI solo se corrigen con una solicitud en la Dirección de Admisión (Art. 17.6).
+                </p>
+                <div class="field">
+                  <label for="ma-mail">Correo</label
+                  ><input
+                    id="ma-mail"
+                    class="input"
+                    type="email"
+                    name="mail"
+                    [(ngModel)]="form.email"
+                    autocomplete="email"
+                  />
+                </div>
+                <div class="field">
+                  <label for="ma-cel">Celular</label
+                  ><input
+                    id="ma-cel"
+                    class="input"
+                    name="cel"
+                    [(ngModel)]="form.phone"
+                    maxlength="9"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                  />
+                </div>
+                <div class="field">
+                  <label for="ma-dir">Dirección</label
+                  ><input
+                    id="ma-dir"
+                    class="input"
+                    name="dir"
+                    [(ngModel)]="form.addressLine"
+                    autocomplete="street-address"
+                  />
+                </div>
+                <div class="field">
+                  <label for="ma-apo"
+                    >Apoderado <span class="opt">(si eres menor de edad)</span></label
+                  ><input id="ma-apo" class="input" name="apo" [(ngModel)]="form.guardianName" />
+                </div>
+                <button
+                  class="btn me__save"
+                  type="submit"
+                  [disabled]="busy() || !dirty()"
+                  [attr.aria-busy]="busy()"
+                >
+                  {{ busy() ? 'Guardando…' : dirty() ? 'Guardar cambios' : 'Sin cambios' }}
+                </button>
+                @if (msg()) {
+                  <p [class]="msgErr() ? 'alert alert--error' : 'acc__ok me__ok'" role="status">
+                    {{ msg() }}
+                  </p>
+                }
               </form>
 
               <section class="me__card" aria-labelledby="ma-ses">
@@ -74,7 +135,13 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
                 @if (activity().length) {
                   <ol class="feed">
                     @for (a of activity(); track $index) {
-                      <li><span class="feed__what">{{ a.description }}</span><time class="feed__when" [attr.datetime]="a.occurredAt">{{ when(a.occurredAt) }}</time></li>
+                      <li>
+                        <span class="feed__what">{{ a.description }}</span><time
+                          class="feed__when"
+                          [attr.datetime]="a.occurredAt"
+                          >{{ when(a.occurredAt) }}</time
+                        >
+                      </li>
                     }
                   </ol>
                 } @else {
@@ -85,48 +152,194 @@ type ContactForm = { email: string; phone: string; addressLine: string; guardian
           </div>
         </div>
       } @else {
-        <div class="frame"><div class="skel" role="status" aria-label="Cargando tu cuenta"><span></span><span></span><span></span><span></span><span></span></div></div>
+        <div class="frame">
+          <div class="skel" role="status" aria-label="Cargando tu cuenta">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
       }
     </section>
   `,
   styles: `
-    .me { display: grid; gap: 2rem; }
-    .me__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem 2rem; }
-    .me__head h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); letter-spacing: -0.035em; line-height: 1; }
-    .me__id { margin: 0.75rem 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-    .me__badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.6rem; border-radius: var(--radius); background: #fbf1d9; color: var(--warn); font-size: var(--size-note); font-weight: 600; }
-    .me__badge::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
-    .me__badge.is-ok { background: #e3f1e8; color: var(--ok); }
-    .me__session { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
-    .me__all { min-height: 2.75rem; padding: 0; font: inherit; font-size: var(--size-note); color: var(--ink-soft); background: none; border: 0;
-      text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
-    .me__all:hover { color: var(--ink); }
+    .me {
+      display: grid;
+      gap: 2rem;
+    }
+    .me__head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem 2rem;
+    }
+    .me__head h1 {
+      font-size: clamp(2.25rem, 5vw, 3.5rem);
+      letter-spacing: -0.035em;
+      line-height: 1;
+    }
+    .me__id {
+      margin: 0.75rem 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+    .me__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius);
+      background: #fbf1d9;
+      color: var(--warn);
+      font-size: var(--size-note);
+      font-weight: 600;
+    }
+    .me__badge::before {
+      content: '';
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .me__badge.is-ok {
+      background: #e3f1e8;
+      color: var(--ok);
+    }
+    .me__session {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+    }
+    .me__all {
+      min-height: 2.75rem;
+      padding: 0;
+      font: inherit;
+      font-size: var(--size-note);
+      color: var(--ink-soft);
+      background: none;
+      border: 0;
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+      cursor: pointer;
+    }
+    .me__all:hover {
+      color: var(--ink);
+    }
 
-    .me__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: clamp(1.5rem, 3vw, 2.5rem); align-items: start; }
-    .me__main { display: grid; gap: 1rem; min-width: 0; }
-    .me__main h2, .me__card h2 { font-size: 1.375rem; letter-spacing: -0.02em; }
-    .me__empty { display: grid; gap: 0.6rem; justify-items: start; padding: 1.75rem; border-radius: var(--radius-lg); background: var(--ground); }
-    .me__empty p { margin: 0; }
-    .me__side { display: grid; gap: 1.25rem; position: sticky; top: 6.5rem; }
-    .me__card { display: grid; gap: 0.9rem; padding: 1.5rem; border-radius: var(--radius-lg); background: var(--ground); border: 1px solid var(--stone-deep); }
-    .me__card .field label { font-weight: 600; }
-    .opt { font-weight: 400; color: var(--ink-soft); }
-    .me__save { width: 100%; }
-    .me__ok { border-radius: var(--radius); margin: 0; }
+    .me__grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+      align-items: start;
+    }
+    .me__main {
+      display: grid;
+      gap: 1rem;
+      min-width: 0;
+    }
+    .me__main h2,
+    .me__card h2 {
+      font-size: 1.375rem;
+      letter-spacing: -0.02em;
+    }
+    .me__empty {
+      display: grid;
+      gap: 0.6rem;
+      justify-items: start;
+      padding: 1.75rem;
+      border-radius: var(--radius-lg);
+      background: var(--ground);
+    }
+    .me__empty p {
+      margin: 0;
+    }
+    .me__side {
+      display: grid;
+      gap: 1.25rem;
+      position: sticky;
+      top: 6.5rem;
+    }
+    .me__card {
+      display: grid;
+      gap: 0.9rem;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      background: var(--ground);
+      border: 1px solid var(--stone-deep);
+    }
+    .me__card .field label {
+      font-weight: 600;
+    }
+    .opt {
+      font-weight: 400;
+      color: var(--ink-soft);
+    }
+    .me__save {
+      width: 100%;
+    }
+    .me__ok {
+      border-radius: var(--radius);
+      margin: 0;
+    }
 
     /* Actividad: línea de tiempo con puntos, la más reciente arriba. */
-    .feed { list-style: none; margin: 0; padding: 0; display: grid; }
-    .feed li { position: relative; display: grid; gap: 0.1rem; padding: 0 0 1rem 1.25rem; }
-    .feed li::before { content: ''; position: absolute; left: 0; top: 0.45em; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
-    .feed li::after { content: ''; position: absolute; left: 0.2rem; top: 1.2em; bottom: 0.1rem; width: 1px; background: var(--stone-deep); }
-    .feed li:last-child { padding-bottom: 0; }
-    .feed li:last-child::after { display: none; }
-    .feed__what { font-weight: 600; }
-    .feed__when { font-size: var(--size-note); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+    .feed {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+    }
+    .feed li {
+      position: relative;
+      display: grid;
+      gap: 0.1rem;
+      padding: 0 0 1rem 1.25rem;
+    }
+    .feed li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.45em;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .feed li::after {
+      content: '';
+      position: absolute;
+      left: 0.2rem;
+      top: 1.2em;
+      bottom: 0.1rem;
+      width: 1px;
+      background: var(--stone-deep);
+    }
+    .feed li:last-child {
+      padding-bottom: 0;
+    }
+    .feed li:last-child::after {
+      display: none;
+    }
+    .feed__what {
+      font-weight: 600;
+    }
+    .feed__when {
+      font-size: var(--size-note);
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
 
     @media (max-width: 960px) {
-      .me__grid { grid-template-columns: minmax(0, 1fr); }
-      .me__side { position: static; }
+      .me__grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .me__side {
+        position: static;
+      }
     }
   `,
 })
@@ -143,13 +356,17 @@ export class MyAccountPage implements OnInit {
   protected readonly when = dateTime;
   protected readonly loadSessions = () => this.account.sessions();
   protected readonly closeSession = (id: string) => this.account.closeSession(id);
-  protected title = (s: string) => s.split(' ')[0]!.charAt(0) + s.split(' ')[0]!.slice(1).toLowerCase();
+  protected title = (s: string) =>
+    s.split(' ')[0]!.charAt(0) + s.split(' ')[0]!.slice(1).toLowerCase();
   /** El documento se muestra parcialmente (como en la constancia): basta para reconocerlo. */
-  protected masked = (doc: string) => (doc.length > 4 ? `${doc.slice(0, 4)}${'•'.repeat(doc.length - 6)}${doc.slice(-2)}` : doc);
+  protected masked = (doc: string) =>
+    doc.length > 4 ? `${doc.slice(0, 4)}${'•'.repeat(doc.length - 6)}${doc.slice(-2)}` : doc;
 
   /** Hay cambios sin guardar: el botón solo se activa entonces. */
   protected dirty(): boolean {
-    return (Object.keys(this.form) as (keyof ContactForm)[]).some((k) => this.form[k].trim() && this.form[k].trim() !== this.saved[k]);
+    return (Object.keys(this.form) as (keyof ContactForm)[]).some(
+      (k) => this.form[k].trim() && this.form[k].trim() !== this.saved[k],
+    );
   }
 
   async ngOnInit() {
@@ -158,7 +375,12 @@ export class MyAccountPage implements OnInit {
       return;
     }
     const p = this.account.profile()!;
-    this.form = { email: p.email, phone: p.phone, addressLine: p.addressLine ?? '', guardianName: p.guardianName ?? '' };
+    this.form = {
+      email: p.email,
+      phone: p.phone,
+      addressLine: p.addressLine ?? '',
+      guardianName: p.guardianName ?? '',
+    };
     this.saved = { ...this.form };
     await this.reload();
   }
@@ -171,7 +393,9 @@ export class MyAccountPage implements OnInit {
 
   protected async save() {
     const changed = Object.fromEntries(
-      Object.entries(this.form).filter(([k, v]) => v.trim() && v.trim() !== this.saved[k as keyof ContactForm]),
+      Object.entries(this.form).filter(
+        ([k, v]) => v.trim() && v.trim() !== this.saved[k as keyof ContactForm],
+      ),
     );
     if (!Object.keys(changed).length) {
       this.msg.set('No hay cambios.');
@@ -182,7 +406,11 @@ export class MyAccountPage implements OnInit {
     try {
       const r = await this.account.updateProfile(changed);
       this.saved = { ...this.form };
-      this.msg.set(r.pendingEmailVerification ? 'Guardado. Confirma tu nuevo correo con el código que te enviamos.' : 'Datos actualizados.');
+      this.msg.set(
+        r.pendingEmailVerification
+          ? 'Guardado. Confirma tu nuevo correo con el código que te enviamos.'
+          : 'Datos actualizados.',
+      );
       this.msgErr.set(false);
       this.activity.set((await this.account.activity()).slice(0, 10));
     } catch (e) {

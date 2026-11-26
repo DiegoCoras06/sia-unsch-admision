@@ -23,16 +23,18 @@ const background = (name: keyof typeof tasks, label: string) => () =>
     })
     .catch((err: unknown) => {
       if (!isDatabaseUnreachable(err)) return application.logger.error({ err }, label);
-      if (!dbDown) application.logger.warn('base de datos no disponible: las tareas en segundo plano esperan a que vuelva');
+      if (!dbDown)
+        application.logger.warn('base de datos no disponible: las tareas en segundo plano esperan a que vuelva');
       dbDown = true;
     });
 
 const timer = setInterval(background('outbox.dispatch', 'worker local'), 5_000);
 
 // AC01: catálogo en memoria desde el arranque y renovado antes de que venza (cada 4 minutos; vence a los 5).
-const warm = () => application.warmCatalog().catch((err: unknown) => {
-  if (!isDatabaseUnreachable(err)) application.logger.warn({ err }, 'no se pudo precargar el catálogo');
-});
+const warm = () =>
+  application.warmCatalog().catch((err: unknown) => {
+    if (!isDatabaseUnreachable(err)) application.logger.warn({ err }, 'no se pudo precargar el catálogo');
+  });
 void warm();
 const warmer = setInterval(warm, 4 * 60_000);
 

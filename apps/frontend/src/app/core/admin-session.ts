@@ -3,7 +3,13 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import type { SessionDto } from '@sia/contracts';
 import { firstValueFrom } from 'rxjs';
 
-export interface StaffMe { id: string; email: string; fullName: string; roles: string[]; permissions: string[] }
+export interface StaffMe {
+  id: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  permissions: string[];
+}
 export interface StaffStep {
   step: 'CHANGE_PASSWORD' | 'SETUP_MFA' | 'MFA';
   challenge: string;
@@ -40,12 +46,17 @@ export class AdminSession {
   can = (permission: string) => this.permissions().has(permission);
 
   // ── Ingreso en pasos ───────────────────────────────────────────────
-  login = (email: string, password: string) => this.post<StaffStep>('/admin/auth/login', { email, password });
-  changePassword = (challenge: string, newPassword: string) => this.post<StaffStep>('/admin/auth/password', { challenge, newPassword });
+  login = (email: string, password: string) =>
+    this.post<StaffStep>('/admin/auth/login', { email, password });
+  changePassword = (challenge: string, newPassword: string) =>
+    this.post<StaffStep>('/admin/auth/password', { challenge, newPassword });
 
   /** Al activar el segundo factor devuelve los códigos de respaldo, que no se vuelven a mostrar (ADR-022). */
   async verifyMfa(challenge: string, code: string): Promise<string[] | undefined> {
-    const r = await this.post<{ accessToken: string; recoveryCodes?: string[] }>('/admin/auth/mfa', { challenge, code });
+    const r = await this.post<{ accessToken: string; recoveryCodes?: string[] }>(
+      '/admin/auth/mfa',
+      { challenge, code },
+    );
     this.token = r.accessToken;
     await this.loadMe();
     return r.recoveryCodes;
@@ -60,7 +71,8 @@ export class AdminSession {
   recoveryStatus = () => this.get<{ remaining: number }>('/admin/me/recovery-codes');
   sessions = () => this.get<SessionDto[]>('/me/sessions');
   closeSession = (id: string) => this.delete<void>(`/me/sessions/${id}`);
-  regenerateRecovery = (code: string) => this.postAuth<{ codes: string[] }>('/admin/me/recovery-codes', { code });
+  regenerateRecovery = (code: string) =>
+    this.postAuth<{ codes: string[] }>('/admin/me/recovery-codes', { code });
 
   /** Recupera la sesión con la cookie (recarga de página). Devuelve si hay sesión del personal. */
   restore(): Promise<boolean> {
@@ -74,7 +86,9 @@ export class AdminSession {
   }
 
   async logout(): Promise<void> {
-    await firstValueFrom(this.http.post(`${API}/auth/logout`, {}, { headers: CLIENT })).catch(() => undefined);
+    await firstValueFrom(this.http.post(`${API}/auth/logout`, {}, { headers: CLIENT })).catch(
+      () => undefined,
+    );
     this.clear();
   }
 
@@ -87,8 +101,12 @@ export class AdminSession {
     const pending = this.performGet<T>(path, query);
     this.inFlightGets.set(key, pending);
     void pending.then(
-      () => { if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key); },
-      () => { if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key); },
+      () => {
+        if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key);
+      },
+      () => {
+        if (this.inFlightGets.get(key) === pending) this.inFlightGets.delete(key);
+      },
     );
     return pending;
   }
@@ -102,7 +120,8 @@ export class AdminSession {
 
     const version = this.readVersion;
     const value = await this.get<T>(path, query);
-    if (version === this.readVersion) this.readCache.set(key, { expiresAt: Date.now() + ttlMs, value });
+    if (version === this.readVersion)
+      this.readCache.set(key, { expiresAt: Date.now() + ttlMs, value });
     return value;
   }
 
@@ -112,24 +131,46 @@ export class AdminSession {
     try {
       return await this.request<T>('GET', path, undefined, query);
     } catch (e) {
-      if (e instanceof HttpErrorResponse && (e.status === 0 || e.status >= 500)) this.loadFailed.set(true);
+      if (e instanceof HttpErrorResponse && (e.status === 0 || e.status >= 500))
+        this.loadFailed.set(true);
       throw e;
     } finally {
       this.pending.update((n) => n - 1);
     }
   }
-  put<T>(path: string, body: unknown) { return this.mutate(this.request<T>('PUT', path, body)); }
-  postAuth<T>(path: string, body: unknown = {}) { return this.mutate(this.request<T>('POST', path, body)); }
-  delete<T>(path: string) { return this.mutate(this.request<T>('DELETE', path)); }
+  put<T>(path: string, body: unknown) {
+    return this.mutate(this.request<T>('PUT', path, body));
+  }
+  postAuth<T>(path: string, body: unknown = {}) {
+    return this.mutate(this.request<T>('POST', path, body));
+  }
+  delete<T>(path: string) {
+    return this.mutate(this.request<T>('DELETE', path));
+  }
 
-  async request<T>(method: string, path: string, body?: unknown, query: Query = {}, retried = false): Promise<T> {
+  async request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    query: Query = {},
+    retried = false,
+  ): Promise<T> {
     try {
-      const res = await firstValueFrom(this.http.request<{ data: T }>(method, `${API}${path}`, {
-        body, params: this.params(query), headers: this.auth(),
-      }));
-      return (res?.data ?? (undefined as T));
+      const res = await firstValueFrom(
+        this.http.request<{ data: T }>(method, `${API}${path}`, {
+          body,
+          params: this.params(query),
+          headers: this.auth(),
+        }),
+      );
+      return res?.data ?? (undefined as T);
     } catch (e) {
-      if (e instanceof HttpErrorResponse && e.status === 401 && !retried && (await this.refresh())) {
+      if (
+        e instanceof HttpErrorResponse &&
+        e.status === 401 &&
+        !retried &&
+        (await this.refresh())
+      ) {
         return this.request<T>(method, path, body, query, true);
       }
       throw e;
@@ -139,16 +180,25 @@ export class AdminSession {
   /** Archivo protegido (p. ej. un documento del expediente) como blob, con el token. */
   async blob(path: string, retried = false): Promise<Blob> {
     try {
-      return await firstValueFrom(this.http.get(`${API}${path}`, { headers: this.auth(), responseType: 'blob' }));
+      return await firstValueFrom(
+        this.http.get(`${API}${path}`, { headers: this.auth(), responseType: 'blob' }),
+      );
     } catch (e) {
-      if (e instanceof HttpErrorResponse && e.status === 401 && !retried && (await this.refresh())) return this.blob(path, true);
+      if (e instanceof HttpErrorResponse && e.status === 401 && !retried && (await this.refresh()))
+        return this.blob(path, true);
       throw e;
     }
   }
 
   /** Descarga un reporte (Excel o PDF) con el token, sin exponerlo en la URL. */
   async download(path: string, query: Query, filename: string): Promise<void> {
-    const blob = await firstValueFrom(this.http.get(`${API}${path}`, { params: this.params(query), headers: this.auth(), responseType: 'blob' }));
+    const blob = await firstValueFrom(
+      this.http.get(`${API}${path}`, {
+        params: this.params(query),
+        headers: this.auth(),
+        responseType: 'blob',
+      }),
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -159,7 +209,13 @@ export class AdminSession {
 
   private async refresh(): Promise<boolean> {
     try {
-      const r = await firstValueFrom(this.http.post<{ data: { accessToken: string; user: { type: string } } }>(`${API}/auth/refresh`, {}, { headers: CLIENT }));
+      const r = await firstValueFrom(
+        this.http.post<{ data: { accessToken: string; user: { type: string } } }>(
+          `${API}/auth/refresh`,
+          {},
+          { headers: CLIENT },
+        ),
+      );
       if (r.data.user.type !== 'STAFF') return false;
       this.token = r.data.accessToken;
       return true;
@@ -179,12 +235,15 @@ export class AdminSession {
   }
 
   private auth() {
-    return this.token ? new HttpHeaders({ Authorization: `Bearer ${this.token}` }) : new HttpHeaders();
+    return this.token
+      ? new HttpHeaders({ Authorization: `Bearer ${this.token}` })
+      : new HttpHeaders();
   }
 
   private params(q: Query) {
     let p = new HttpParams();
-    for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== null && v !== '') p = p.set(k, String(v));
+    for (const [k, v] of Object.entries(q))
+      if (v !== undefined && v !== null && v !== '') p = p.set(k, String(v));
     return p;
   }
 

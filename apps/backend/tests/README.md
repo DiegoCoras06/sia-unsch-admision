@@ -7,12 +7,12 @@ Cada archivo importa lo que usa desde `@jest/globals` (`describe`, `it`, `expect
 
 Desde la raíz del proyecto:
 
-| Comando | Qué hace |
-|---|---|
-| `npm test -w @sia/backend` | Corre todas las pruebas |
-| `npm run test:coverage -w @sia/backend` | Corre todas y genera el reporte de cobertura en `apps/backend/coverage/index.html` |
-| `npm run test:watch -w @sia/backend` | Las vuelve a correr cada vez que guardas un archivo |
-| `npm test -w @sia/backend -- tests/unit/pagos` | Corre solo una carpeta o un archivo |
+| Comando                                        | Qué hace                                                                           |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `npm test -w @sia/backend`                     | Corre todas las pruebas                                                            |
+| `npm run test:coverage -w @sia/backend`        | Corre todas y genera el reporte de cobertura en `apps/backend/coverage/index.html` |
+| `npm run test:watch -w @sia/backend`           | Las vuelve a correr cada vez que guardas un archivo                                |
+| `npm test -w @sia/backend -- tests/unit/pagos` | Corre solo una carpeta o un archivo                                                |
 
 Las pruebas de integración usan una base PostgreSQL temporal (puerto 5434) que se crea al empezar y se borra al terminar
 (`global-setup.ts` y `global-teardown.ts`). **Nunca tocan RDS.** También corren en GitHub Actions con cada envío (`.github/workflows/ci.yml`).

@@ -16,9 +16,16 @@ const lookup = (dni: string, digit = checkDigit(dni)) =>
 async function register(dni: string, email: string, status = 201) {
   const id = await lookup(dni).expect(200);
   const consent = await t.request.get('/api/v1/legal/consent/current').expect(200);
-  return t.request.post('/api/v1/auth/register').send({
-    identityToken: id.body.data.identityToken, email, phone: '987654321', password: PASSWORD, consentVersion: consent.body.data.version,
-  }).expect(status);
+  return t.request
+    .post('/api/v1/auth/register')
+    .send({
+      identityToken: id.body.data.identityToken,
+      email,
+      phone: '987654321',
+      password: PASSWORD,
+      consentVersion: consent.body.data.version,
+    })
+    .expect(status);
 }
 
 async function lastCode(email: string): Promise<string> {
@@ -29,11 +36,16 @@ async function lastCode(email: string): Promise<string> {
 
 async function activeAccount(dni: string, email: string) {
   await register(dni, email);
-  await t.request.post('/api/v1/auth/email/verify').send({ email, code: await lastCode(email) }).expect(200);
+  await t.request
+    .post('/api/v1/auth/email/verify')
+    .send({ email, code: await lastCode(email) })
+    .expect(200);
 }
 
-const login = (identifier: string, password = PASSWORD) => t.request.post('/api/v1/auth/login').send({ identifier, password });
-const cookieOf = (res: { headers: Record<string, unknown> }) => (res.headers['set-cookie'] as string[])[0]!.split(';')[0]!;
+const login = (identifier: string, password = PASSWORD) =>
+  t.request.post('/api/v1/auth/login').send({ identifier, password });
+const cookieOf = (res: { headers: Record<string, unknown> }) =>
+  (res.headers['set-cookie'] as string[])[0]!.split(';')[0]!;
 
 describe('Historia 1 - crear cuenta con DNI', () => {
   it('H1-E1: devuelve nombres del proveedor simulado sin escribirlos', async () => {
@@ -72,7 +84,9 @@ describe('Historia 1 - crear cuenta con DNI', () => {
     const consent = (await t.request.get('/api/v1/legal/consent/current')).body.data.version;
     const token = (await lookup('99900004').expect(200)).body.data.identityToken;
     const attempt = (email: string) =>
-      t.request.post('/api/v1/auth/register').send({ identityToken: token, email, phone: '987654321', password: PASSWORD, consentVersion: consent });
+      t.request
+        .post('/api/v1/auth/register')
+        .send({ identityToken: token, email, phone: '987654321', password: PASSWORD, consentVersion: consent });
     const results = await Promise.all([attempt('race1@example.com'), attempt('race2@example.com')]);
     expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
     expect(await t.db.applicant.count({ where: { documentNumber: '99900004' } })).toBe(1);
@@ -81,8 +95,22 @@ describe('Historia 1 - crear cuenta con DNI', () => {
   it('contraseña común → 422 WEAK_PASSWORD; consentimiento desactualizado → 422', async () => {
     const token = (await lookup('99900005').expect(200)).body.data.identityToken;
     const base = { identityToken: token, email: 'weak@example.com', phone: '987654321' };
-    expect((await t.request.post('/api/v1/auth/register').send({ ...base, password: '1234567890', consentVersion: '2026-10-v1' }).expect(422)).body.error.code).toBe('WEAK_PASSWORD');
-    expect((await t.request.post('/api/v1/auth/register').send({ ...base, password: PASSWORD, consentVersion: 'v0' }).expect(422)).body.error.code).toBe('CONSENT_OUTDATED');
+    expect(
+      (
+        await t.request
+          .post('/api/v1/auth/register')
+          .send({ ...base, password: '1234567890', consentVersion: '2026-10-v1' })
+          .expect(422)
+      ).body.error.code,
+    ).toBe('WEAK_PASSWORD');
+    expect(
+      (
+        await t.request
+          .post('/api/v1/auth/register')
+          .send({ ...base, password: PASSWORD, consentVersion: 'v0' })
+          .expect(422)
+      ).body.error.code,
+    ).toBe('CONSENT_OUTDATED');
   });
 });
 
@@ -91,11 +119,20 @@ describe('Historia 2 - verificar correo', () => {
     await register('99900006', 'h2@example.com');
     const code = await lastCode('h2@example.com');
     for (let i = 1; i <= 4; i++) {
-      const r = await t.request.post('/api/v1/auth/email/verify').send({ email: 'h2@example.com', code: '000000' }).expect(422);
+      const r = await t.request
+        .post('/api/v1/auth/email/verify')
+        .send({ email: 'h2@example.com', code: '000000' })
+        .expect(422);
       expect(r.body.error.attemptsLeft).toBe(5 - i);
     }
-    expect((await t.request.post('/api/v1/auth/email/verify').send({ email: 'h2@example.com', code: '000000' }).expect(422)).body.error.code).toBe('CODE_LOCKED');
-    expect((await t.request.post('/api/v1/auth/email/verify').send({ email: 'h2@example.com', code }).expect(422)).body.error.code).toBe('CODE_LOCKED');
+    expect(
+      (await t.request.post('/api/v1/auth/email/verify').send({ email: 'h2@example.com', code: '000000' }).expect(422))
+        .body.error.code,
+    ).toBe('CODE_LOCKED');
+    expect(
+      (await t.request.post('/api/v1/auth/email/verify').send({ email: 'h2@example.com', code }).expect(422)).body.error
+        .code,
+    ).toBe('CODE_LOCKED');
   });
 
   it('H2-E3: reenvío antes de 60 s → 429', async () => {
@@ -129,7 +166,9 @@ describe('Historia 3 - sesión', () => {
     expect((await login('99900009', 'incorrecta-123').expect(423)).body.error.code).toBe('ACCOUNT_LOCKED');
     await login('99900009').expect(423);
     await t.outbox.dispatch();
-    expect(t.email.sent.some((m) => m.to === 'lock@example.com' && m.subject.startsWith('Aviso de seguridad'))).toBe(true);
+    expect(t.email.sent.some((m) => m.to === 'lock@example.com' && m.subject.startsWith('Aviso de seguridad'))).toBe(
+      true,
+    );
     clock.advance(15 * 60 + 1);
     await login('99900009').expect(200);
   });
@@ -137,7 +176,11 @@ describe('Historia 3 - sesión', () => {
   it('rotación del refresh token y detección de reutilización', async () => {
     const first = await login('99900008').expect(200);
     const rt1 = cookieOf(first);
-    const second = await t.request.post('/api/v1/auth/refresh').set('Cookie', rt1).set('X-SIA-Client', 'web').expect(200);
+    const second = await t.request
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', rt1)
+      .set('X-SIA-Client', 'web')
+      .expect(200);
     const rt2 = cookieOf(second);
     await t.request.post('/api/v1/auth/refresh').set('Cookie', rt1).set('X-SIA-Client', 'web').expect(401);
     await t.request.post('/api/v1/auth/refresh').set('Cookie', rt2).set('X-SIA-Client', 'web').expect(401);
@@ -151,7 +194,11 @@ describe('Historia 3 - sesión', () => {
   it('H3-E4: tras 31 minutos sin renovar → SESSION_IDLE', async () => {
     const res = await login('99900008').expect(200);
     clock.advance(31 * 60);
-    const idle = await t.request.post('/api/v1/auth/refresh').set('Cookie', cookieOf(res)).set('X-SIA-Client', 'web').expect(401);
+    const idle = await t.request
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', cookieOf(res))
+      .set('X-SIA-Client', 'web')
+      .expect(401);
     expect(idle.body.error.code).toBe('SESSION_IDLE');
   });
 
@@ -167,20 +214,40 @@ describe('Historia 4 - recuperar contraseña', () => {
     await activeAccount('99900010', 'reset@example.com');
     const session = await login('99900010').expect(200);
 
-    const exists = await t.request.post('/api/v1/auth/password/forgot').send({ identifier: 'reset@example.com' }).expect(202);
-    const missing = await t.request.post('/api/v1/auth/password/forgot').send({ identifier: 'nadie@example.com' }).expect(202);
+    const exists = await t.request
+      .post('/api/v1/auth/password/forgot')
+      .send({ identifier: 'reset@example.com' })
+      .expect(202);
+    const missing = await t.request
+      .post('/api/v1/auth/password/forgot')
+      .send({ identifier: 'nadie@example.com' })
+      .expect(202);
     expect(exists.body).toEqual(missing.body);
 
     await t.outbox.dispatch();
-    const mail = [...t.email.sent].reverse().find((m) => m.to === 'reset@example.com' && m.subject.startsWith('Recuperación'))!;
+    const mail = [...t.email.sent]
+      .reverse()
+      .find((m) => m.to === 'reset@example.com' && m.subject.startsWith('Recuperación'))!;
     const token = /token=([\w-]+)/.exec(mail.html)![1]!;
 
-    await t.request.post('/api/v1/auth/password/reset').send({ token, newPassword: 'Nueva-Clave-Segura-2026' }).expect(204);
-    await t.request.post('/api/v1/auth/password/reset').send({ token, newPassword: 'Otra-Clave-Segura-2026' }).expect(422);
-    await t.request.post('/api/v1/auth/refresh').set('Cookie', cookieOf(session)).set('X-SIA-Client', 'web').expect(401);
+    await t.request
+      .post('/api/v1/auth/password/reset')
+      .send({ token, newPassword: 'Nueva-Clave-Segura-2026' })
+      .expect(204);
+    await t.request
+      .post('/api/v1/auth/password/reset')
+      .send({ token, newPassword: 'Otra-Clave-Segura-2026' })
+      .expect(422);
+    await t.request
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', cookieOf(session))
+      .set('X-SIA-Client', 'web')
+      .expect(401);
     await login('99900010', 'Nueva-Clave-Segura-2026').expect(200);
 
-    const outbox = await t.db.outboxEvent.findFirst({ where: { eventType: 'RecuperacionSolicitada', processedAt: { not: null } } });
+    const outbox = await t.db.outboxEvent.findFirst({
+      where: { eventType: 'RecuperacionSolicitada', processedAt: { not: null } },
+    });
     expect(outbox?.payload).toEqual({ redacted: true });
   });
 });
@@ -196,12 +263,21 @@ describe('Historias 5 y 6 - perfil y actividad', () => {
 
     const updated = await t.request.patch('/api/v1/me').set(auth).send({ phone: '912345678' }).expect(200);
     expect(updated.body.data.phone).toBe('912345678');
-    expect((await t.request.patch('/api/v1/me').set(auth).send({ firstNames: 'OTRO' }).expect(422)).body.error.code).toBe('IDENTITY_FIELDS_NOT_EDITABLE');
+    expect(
+      (await t.request.patch('/api/v1/me').set(auth).send({ firstNames: 'OTRO' }).expect(422)).body.error.code,
+    ).toBe('IDENTITY_FIELDS_NOT_EDITABLE');
     await t.request.patch('/api/v1/me').set(auth).send({ foo: 'bar' }).expect(400);
 
-    const change = await t.request.patch('/api/v1/me').set(auth).send({ email: 'perfil.nuevo@example.com' }).expect(200);
+    const change = await t.request
+      .patch('/api/v1/me')
+      .set(auth)
+      .send({ email: 'perfil.nuevo@example.com' })
+      .expect(200);
     expect(change.body.meta.pendingEmailVerification).toBe(true);
-    await t.request.post('/api/v1/auth/email/verify').send({ email: 'perfil.nuevo@example.com', code: await lastCode('perfil.nuevo@example.com') }).expect(200);
+    await t.request
+      .post('/api/v1/auth/email/verify')
+      .send({ email: 'perfil.nuevo@example.com', code: await lastCode('perfil.nuevo@example.com') })
+      .expect(200);
     expect((await t.request.get('/api/v1/me').set(auth).expect(200)).body.data.email).toBe('perfil.nuevo@example.com');
 
     const activity = await t.request.get('/api/v1/me/activity').set(auth).expect(200);
@@ -218,9 +294,17 @@ describe('Historias 5 y 6 - perfil y actividad', () => {
 describe('Privacidad en registros (ADR-013)', () => {
   it('el logger redacta DNI, correo, contraseña y tokens', () => {
     const lines: string[] = [];
-    const sink = new Writable({ write(chunk, _enc, cb) { lines.push(String(chunk)); cb(); } });
+    const sink = new Writable({
+      write(chunk, _enc, cb) {
+        lines.push(String(chunk));
+        cb();
+      },
+    });
     const log = pino({ redact: { paths: REDACTED_PATHS, censor: '[REDACTADO]' } }, sink);
-    log.info({ dni: '99900001', email: 'a@b.pe', password: 'x', body: { documentNumber: '99900001', token: 't' } }, 'prueba');
+    log.info(
+      { dni: '99900001', email: 'a@b.pe', password: 'x', body: { documentNumber: '99900001', token: 't' } },
+      'prueba',
+    );
     expect(lines.join('')).not.toMatch(/99900001|a@b\.pe/);
   });
 });

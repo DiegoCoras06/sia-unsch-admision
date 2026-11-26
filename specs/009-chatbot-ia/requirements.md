@@ -17,9 +17,9 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 **Escenarios de aceptación:**
 
-1. **Dado** la pregunta "¿cuánto pago si vengo de colegio particular?", **cuando** el asistente responde, **entonces** indica S/ 300.00 para Ordinario, menciona el recargo extemporáneo y cita la fuente "Tabla N.° 3, Prospecto 2027-I". *(RF-10.02, RF-10.03)*
+1. **Dado** la pregunta "¿cuánto pago si vengo de colegio particular?", **cuando** el asistente responde, **entonces** indica S/ 300.00 para Ordinario, menciona el recargo extemporáneo y cita la fuente "Tabla N.° 3, Prospecto 2027-I". _(RF-10.02, RF-10.03)_
 2. **Dado** la pregunta "¿qué puedo llevar al examen?", **cuando** responde, **entonces** lista lápiz 2B, borrador y tajador, y los objetos prohibidos (Art. 26).
-3. **Dado** una pregunta sin respuesta en la base de conocimientos, **cuando** responde, **entonces** dice que no tiene información verificada y ofrece derivar a un responsable. *(RF-10.16)*
+3. **Dado** una pregunta sin respuesta en la base de conocimientos, **cuando** responde, **entonces** dice que no tiene información verificada y ofrece derivar a un responsable. _(RF-10.16)_
 4. **Dado** una pregunta ajena a la admisión, **cuando** responde, **entonces** aclara amablemente que solo atiende temas del proceso de admisión.
 
 ---
@@ -28,8 +28,8 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 **Escenarios de aceptación:**
 
-1. **Dado** que no inicié sesión, **cuando** pregunto "¿ya se confirmó mi pago?", **entonces** el asistente me pide iniciar sesión y no solicita DNI en el chat. *(RF-10.14)*
-2. **Dado** que inicié sesión, **cuando** pregunto por mi estado, **entonces** responde con los datos reales del sistema (inscripción, pago, expediente, aula si está publicada, resultado si está publicado). *(RF-10.04 a RF-10.08)*
+1. **Dado** que no inicié sesión, **cuando** pregunto "¿ya se confirmó mi pago?", **entonces** el asistente me pide iniciar sesión y no solicita DNI en el chat. _(RF-10.14)_
+2. **Dado** que inicié sesión, **cuando** pregunto por mi estado, **entonces** responde con los datos reales del sistema (inscripción, pago, expediente, aula si está publicada, resultado si está publicado). _(RF-10.04 a RF-10.08)_
 3. **Dado** que el aula no está publicada, **cuando** pregunto por ella, **entonces** indica la fecha de publicación, sin inventar un aula.
 4. **Dado** cualquier consulta personal, **cuando** se procesa, **entonces** el proveedor de IA no recibe mi DNI, nombres ni correo (RNF-11).
 
@@ -39,7 +39,7 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 **Escenarios de aceptación:**
 
-1. **Dado** que pido hablar con una persona o el asistente no resuelve en 3 intentos, **cuando** acepto la derivación, **entonces** se crea un caso de atención con la conversación y recibo el número de caso. *(RF-10.10)*
+1. **Dado** que pido hablar con una persona o el asistente no resuelve en 3 intentos, **cuando** acepto la derivación, **entonces** se crea un caso de atención con la conversación y recibo el número de caso. _(RF-10.10)_
 
 ---
 
@@ -47,7 +47,7 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 **Escenarios de aceptación:**
 
-1. **Dado** que soy de la Oficina de Admisión, **cuando** agrego o edito una entrada (pregunta, respuesta, fuente), **entonces** el asistente la usa desde ese momento. *(RF-10.12)*
+1. **Dado** que soy de la Oficina de Admisión, **cuando** agrego o edito una entrada (pregunta, respuesta, fuente), **entonces** el asistente la usa desde ese momento. _(RF-10.12)_
 2. **Dado** que se publica una fe de erratas, **cuando** se registra, **entonces** las entradas afectadas se marcan para revisión.
 
 ---
@@ -56,7 +56,7 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 **Escenarios de aceptación:**
 
-1. **Dado** el panel del asistente, **cuando** lo abro, **entonces** veo consultas por día, temas frecuentes, tasa de derivación, consumo y costo estimado. *(RF-10.15, RF-12.10)*
+1. **Dado** el panel del asistente, **cuando** lo abro, **entonces** veo consultas por día, temas frecuentes, tasa de derivación, consumo y costo estimado. _(RF-10.15, RF-12.10)_
 2. **Dado** que se alcanza el límite diario de consumo, **cuando** llega una nueva pregunta, **entonces** el asistente responde solo con preguntas frecuentes predefinidas y avisa de la limitación.
 
 ### Casos límite
@@ -69,17 +69,17 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE ofrecer un asistente conversacional en todas las páginas públicas y del postulante. *(RF-10.01)*
-- **FR-002**: El asistente DEBE responder solo con la base de conocimientos oficial y citar la fuente. *(RF-10.02, RF-10.03)*
-- **FR-003**: El asistente DEBE consultar estados del postulante solo con sesión iniciada y a través de servicios internos autorizados. *(RF-10.04 a RF-10.08, RF-10.14)*
-- **FR-004**: El asistente DEBE declarar cuando no tiene información verificada y no inventar datos. *(RF-10.16)*
-- **FR-005**: El sistema DEBE derivar a atención humana creando un caso. *(RF-10.10)*
-- **FR-006**: El sistema DEBE registrar conversaciones según la política de retención. *(RF-10.11)*
-- **FR-007**: El sistema DEBE permitir administrar la base de conocimientos. *(RF-10.12)*
-- **FR-008**: La clave del proveedor de IA DEBE residir solo en el servidor. *(RF-10.13)*
-- **FR-009**: El sistema DEBE controlar consumo, costo, errores y límites de uso. *(RF-10.15)*
-- **FR-010**: El sistema DEBE enmascarar datos personales antes de enviarlos al proveedor. *(RNF-11)*
-- **FR-011**: El asistente DEBE ofrecer instrucciones para incidencias frecuentes de inscripción y pagos. *(RF-10.09)*
+- **FR-001**: El sistema DEBE ofrecer un asistente conversacional en todas las páginas públicas y del postulante. _(RF-10.01)_
+- **FR-002**: El asistente DEBE responder solo con la base de conocimientos oficial y citar la fuente. _(RF-10.02, RF-10.03)_
+- **FR-003**: El asistente DEBE consultar estados del postulante solo con sesión iniciada y a través de servicios internos autorizados. _(RF-10.04 a RF-10.08, RF-10.14)_
+- **FR-004**: El asistente DEBE declarar cuando no tiene información verificada y no inventar datos. _(RF-10.16)_
+- **FR-005**: El sistema DEBE derivar a atención humana creando un caso. _(RF-10.10)_
+- **FR-006**: El sistema DEBE registrar conversaciones según la política de retención. _(RF-10.11)_
+- **FR-007**: El sistema DEBE permitir administrar la base de conocimientos. _(RF-10.12)_
+- **FR-008**: La clave del proveedor de IA DEBE residir solo en el servidor. _(RF-10.13)_
+- **FR-009**: El sistema DEBE controlar consumo, costo, errores y límites de uso. _(RF-10.15)_
+- **FR-010**: El sistema DEBE enmascarar datos personales antes de enviarlos al proveedor. _(RNF-11)_
+- **FR-011**: El asistente DEBE ofrecer instrucciones para incidencias frecuentes de inscripción y pagos. _(RF-10.09)_
 
 ### Entidades clave
 
@@ -105,21 +105,21 @@ Como visitante, quiero preguntar en lenguaje natural y obtener respuestas basada
 
 13 de 14 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-10.01 | 🟡 | Integrado con OpenRouter (ADR-017, probado con proveedor guionado); falta la clave para usar la IA en vivo; mientras, modo básico |
-| RF-10.02 | ✅ | Responde convocatoria, modalidades, requisitos, tasas, cronograma y examen |
-| RF-10.03 | ✅ | Solo con herramientas sobre datos oficiales y base de conocimientos con fuente |
-| RF-10.04 | ✅ | Estado de la inscripción con pase firmado (DNI + código) |
-| RF-10.08 | ✅ | Informa el puntaje, el puesto y la condición cuando se publican los resultados |
-| RF-10.09 | ✅ | Incidencias frecuentes de inscripción y pagos en la base de conocimientos |
-| RF-10.10 | ✅ | Derivación a un caso de atención con la conversación |
-| RF-10.11 | ✅ | Conversaciones enmascaradas con retención de 90 días |
-| RF-10.12 | ✅ | Base de conocimientos editable en el panel; el asistente la usa al instante |
-| RF-10.13 | ✅ | Clave solo en el servidor |
-| RF-10.14 | ✅ | Datos personales solo con pase; el DNI nunca va a la IA |
-| RF-10.15 | ✅ | Límite por IP, presupuesto diario y registro de tokens, costo y errores |
-| RF-10.16 | ✅ | Sin herramienta no hay dato: responde que no tiene información verificada |
-| RF-12.10 | ✅ | Consultas, respuestas con IA, derivaciones, tokens y costo del asistente |
+| RF       | Estado | Detalle                                                                                                                           |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| RF-10.01 | 🟡     | Integrado con OpenRouter (ADR-017, probado con proveedor guionado); falta la clave para usar la IA en vivo; mientras, modo básico |
+| RF-10.02 | ✅     | Responde convocatoria, modalidades, requisitos, tasas, cronograma y examen                                                        |
+| RF-10.03 | ✅     | Solo con herramientas sobre datos oficiales y base de conocimientos con fuente                                                    |
+| RF-10.04 | ✅     | Estado de la inscripción con pase firmado (DNI + código)                                                                          |
+| RF-10.08 | ✅     | Informa el puntaje, el puesto y la condición cuando se publican los resultados                                                    |
+| RF-10.09 | ✅     | Incidencias frecuentes de inscripción y pagos en la base de conocimientos                                                         |
+| RF-10.10 | ✅     | Derivación a un caso de atención con la conversación                                                                              |
+| RF-10.11 | ✅     | Conversaciones enmascaradas con retención de 90 días                                                                              |
+| RF-10.12 | ✅     | Base de conocimientos editable en el panel; el asistente la usa al instante                                                       |
+| RF-10.13 | ✅     | Clave solo en el servidor                                                                                                         |
+| RF-10.14 | ✅     | Datos personales solo con pase; el DNI nunca va a la IA                                                                           |
+| RF-10.15 | ✅     | Límite por IP, presupuesto diario y registro de tokens, costo y errores                                                           |
+| RF-10.16 | ✅     | Sin herramienta no hay dato: responde que no tiene información verificada                                                         |
+| RF-12.10 | ✅     | Consultas, respuestas con IA, derivaciones, tokens y costo del asistente                                                          |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

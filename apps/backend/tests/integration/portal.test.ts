@@ -26,7 +26,9 @@ describe('Historia 1 - convocatoria y cronograma', () => {
   it('H1-E1: etapa en curso y siguiente hito', async () => {
     const res = await t.request.get('/api/v1/calls/current').expect(200);
     expect(res.headers['cache-control']).toBe('public, max-age=60, s-maxage=300, stale-while-revalidate=300');
-    const inProgress = res.body.data.stages.filter((s: { status: string }) => s.status === 'IN_PROGRESS').map((s: { code: string }) => s.code);
+    const inProgress = res.body.data.stages
+      .filter((s: { status: string }) => s.status === 'IN_PROGRESS')
+      .map((s: { code: string }) => s.code);
     expect(inProgress).toContain('ORD_REGULAR');
     expect(res.body.data.nextMilestone).toMatchObject({ code: 'EXAM_EXO', secondsRemaining: 1_803_600 });
   });
@@ -45,7 +47,9 @@ describe('Historia 1 - convocatoria y cronograma', () => {
 describe('Historia 2 - programas y vacantes', () => {
   it('H2-E1: "sistemas" encuentra Ingeniería de Sistemas (20 ORD, 50 en total)', async () => {
     const res = await t.request.get('/api/v1/calls/2027-I/options').query({ q: 'sistemas' }).expect(200);
-    expect(res.body.data).toEqual([expect.objectContaining({ internalCode: 'P34', area: 'I', ordinaryVacancies: 20, totalVacancies: 50 })]);
+    expect(res.body.data).toEqual([
+      expect.objectContaining({ internalCode: 'P34', area: 'I', ordinaryVacancies: 20, totalVacancies: 50 }),
+    ]);
   });
 
   it('búsqueda sin tildes: "biologia" encuentra las 3 especialidades', async () => {
@@ -60,7 +64,12 @@ describe('Historia 2 - programas y vacantes', () => {
 
   it('H2-E4: ficha con facultad, duración, grado, título y 16 categorías', async () => {
     const res = await t.request.get('/api/v1/calls/2027-I/options/P27').expect(200);
-    expect(res.body.data).toMatchObject({ displayName: 'Ingeniería Agrícola', faculty: 'Facultad de Ciencias Agrarias', durationYears: 5, professionalTitle: 'Ingeniero(a) Agrícola' });
+    expect(res.body.data).toMatchObject({
+      displayName: 'Ingeniería Agrícola',
+      faculty: 'Facultad de Ciencias Agrarias',
+      durationYears: 5,
+      professionalTitle: 'Ingeniero(a) Agrícola',
+    });
     expect(res.body.data.vacanciesByCategory).toHaveLength(16);
   });
 
@@ -106,7 +115,14 @@ describe('Historias 4 y 5 - contenido', () => {
 
   it('H5-E1/E2: una fe de erratas sobre tasas aparece primero y filtrable por sección', async () => {
     await t.db.announcement.create({
-      data: { callCode: '2027-I', type: 'FE_ERRATAS', title: 'Fe de erratas (prueba)', bodyMd: 'Texto de prueba', affectsSection: 'TASAS', publishedAt: new Date('2026-10-20T09:00:00-05:00') },
+      data: {
+        callCode: '2027-I',
+        type: 'FE_ERRATAS',
+        title: 'Fe de erratas (prueba)',
+        bodyMd: 'Texto de prueba',
+        affectsSection: 'TASAS',
+        publishedAt: new Date('2026-10-20T09:00:00-05:00'),
+      },
     });
     const all = await t.request.get('/api/v1/announcements').expect(200);
     expect(all.body.data[0].type).toBe('FE_ERRATAS');
@@ -127,7 +143,11 @@ describe('Historia 6 - inicio y contacto', () => {
   });
 
   it('H6-E2/E3: contacto crea caso numerado, envía copia y limita a 5 por hora', async () => {
-    const body = { name: 'Persona de Prueba', email: 'contacto@example.com', message: 'Consulta sobre requisitos de traslado.' };
+    const body = {
+      name: 'Persona de Prueba',
+      email: 'contacto@example.com',
+      message: 'Consulta sobre requisitos de traslado.',
+    };
     const first = await t.request.post('/api/v1/support/contact').send(body).expect(201);
     expect(first.body.data.caseNumber).toMatch(/^C-2027I-\d{6}$/);
     await t.outbox.dispatch();
@@ -140,7 +160,10 @@ describe('Historia 6 - inicio y contacto', () => {
 
   it('el campo trampa responde 201 sin crear caso', async () => {
     const before = await t.db.supportCase.count({ where: { email: 'bot@example.com' } });
-    await t.request.post('/api/v1/support/contact').send({ name: 'Bot', email: 'bot@example.com', message: 'mensaje automático', website: 'http://spam' }).expect(201);
+    await t.request
+      .post('/api/v1/support/contact')
+      .send({ name: 'Bot', email: 'bot@example.com', message: 'mensaje automático', website: 'http://spam' })
+      .expect(201);
     expect(await t.db.supportCase.count({ where: { email: 'bot@example.com' } })).toBe(before);
   });
 });

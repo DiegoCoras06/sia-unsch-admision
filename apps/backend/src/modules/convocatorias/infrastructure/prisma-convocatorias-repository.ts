@@ -32,7 +32,16 @@ export class PrismaConvocatoriasRepository implements ConvocatoriasRepository {
     return this.db.scheduleStage.findMany({
       where: { callId },
       orderBy: { sortOrder: 'asc' },
-      select: { code: true, name: true, scope: true, kind: true, startsAt: true, endsAt: true, highlight: true, sortOrder: true },
+      select: {
+        code: true,
+        name: true,
+        scope: true,
+        kind: true,
+        startsAt: true,
+        endsAt: true,
+        highlight: true,
+        sortOrder: true,
+      },
     });
   }
 
@@ -57,7 +66,13 @@ export class PrismaConvocatoriasRepository implements ConvocatoriasRepository {
 
   async submodalities() {
     const rows = await this.db.submodality.findMany({ orderBy: { sortOrder: 'asc' }, include: { modality: true } });
-    return rows.map((s) => ({ code: s.code, name: s.name, modality: s.modality.code as 'ORD' | 'EXO' | 'CEPRE', legalBasis: s.legalBasis, evaluationCriteria: s.evaluationCriteria }));
+    return rows.map((s) => ({
+      code: s.code,
+      name: s.name,
+      modality: s.modality.code as 'ORD' | 'EXO' | 'CEPRE',
+      legalBasis: s.legalBasis,
+      evaluationCriteria: s.evaluationCriteria,
+    }));
   }
 
   async options(callId: string): Promise<OptionRecord[]> {
@@ -107,23 +122,39 @@ export class PrismaConvocatoriasRepository implements ConvocatoriasRepository {
       })),
       surcharges: surcharges
         .filter((s) => s.appliesToScope === 'ORD' || s.appliesToScope === 'EXO' || s.appliesToScope === 'CEPRE')
-        .map((s) => ({ fee: toFee(s.fee), appliesToScope: s.appliesToScope as 'ORD' | 'EXO' | 'CEPRE', priority: s.priority })),
+        .map((s) => ({
+          fee: toFee(s.fee),
+          appliesToScope: s.appliesToScope as 'ORD' | 'EXO' | 'CEPRE',
+          priority: s.priority,
+        })),
     };
   }
 
   async requirements(callId: string, submodality: string | null) {
     if (!submodality) {
-      const rows = await this.db.requirementDocument.findMany({ where: { callId, isBase: true }, orderBy: { code: 'asc' } });
+      const rows = await this.db.requirementDocument.findMany({
+        where: { callId, isBase: true },
+        orderBy: { code: 'asc' },
+      });
       return rows.map((r) => ({ ...r, mandatory: true }));
     }
     const sub = await this.db.submodality.findUnique({
       where: { code: submodality },
-      include: { requirements: { where: { requirement: { callId } }, include: { requirement: true }, orderBy: { sortOrder: 'asc' } } },
+      include: {
+        requirements: {
+          where: { requirement: { callId } },
+          include: { requirement: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
     });
     if (!sub) return [];
     const own = sub.requirements.map((link) => ({ ...link.requirement, mandatory: link.mandatory }));
     if (!sub.usesBaseDocuments) return own;
-    const base = await this.db.requirementDocument.findMany({ where: { callId, isBase: true }, orderBy: { code: 'asc' } });
+    const base = await this.db.requirementDocument.findMany({
+      where: { callId, isBase: true },
+      orderBy: { code: 'asc' },
+    });
     return [...base.map((r) => ({ ...r, mandatory: true })), ...own];
   }
 

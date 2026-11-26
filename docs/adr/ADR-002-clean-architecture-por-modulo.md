@@ -28,20 +28,23 @@ modules/<modulo>/
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Controladores que llaman directamente a Prisma | Menos archivos | Reglas mezcladas con HTTP y SQL; difícil de probar | Incumple Constitución III.2 |
-| Hexagonal completa con bus de comandos | Muy desacoplado | Ceremonia excesiva para el equipo | Sobrediseño |
-| Capas solo por convención, sin verificación | Simple | Se erosionan con el tiempo | Riesgo alto en equipo de estudiantes |
+| Alternativa                                    | A favor         | En contra                                          | Motivo del descarte                  |
+| ---------------------------------------------- | --------------- | -------------------------------------------------- | ------------------------------------ |
+| Controladores que llaman directamente a Prisma | Menos archivos  | Reglas mezcladas con HTTP y SQL; difícil de probar | Incumple Constitución III.2          |
+| Hexagonal completa con bus de comandos         | Muy desacoplado | Ceremonia excesiva para el equipo                  | Sobrediseño                          |
+| Capas solo por convención, sin verificación    | Simple          | Se erosionan con el tiempo                         | Riesgo alto en equipo de estudiantes |
 
 ## Consecuencias
 
 **Positivas:**
+
 - Las reglas RN se prueban con pruebas unitarias rápidas (Jest).
 - Cambiar una simulación por una integración real no toca el dominio.
 
 **Negativas / riesgos aceptados:**
+
 - Más archivos y mapeo entre entidades de dominio y modelos de Prisma.
 
 **Cómo verificamos que se cumple:**
+
 - El pipeline falla si `domain/` importa algo prohibido o si un módulo importa archivos internos de otro.

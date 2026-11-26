@@ -3,11 +3,11 @@
 **Postman** comprueba que cada módulo responde lo correcto. **k6** (`calidad/k6/`) demuestra cuántos usuarios soporta
 el sistema y con qué tiempos.
 
-| Archivo | Qué es |
-|---|---|
-| `SIA-UNSCH.postman_collection.json` | La colección: 62 peticiones en 14 carpetas, con pruebas automáticas |
-| `local.postman_environment.json` | Variables para la API en tu computadora |
-| `generar-coleccion.py` | Vuelve a generar los dos archivos (`python calidad/postman/generar-coleccion.py`) |
+| Archivo                             | Qué es                                                                            |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `SIA-UNSCH.postman_collection.json` | La colección: 62 peticiones en 14 carpetas, con pruebas automáticas               |
+| `local.postman_environment.json`    | Variables para la API en tu computadora                                           |
+| `generar-coleccion.py`              | Vuelve a generar los dos archivos (`python calidad/postman/generar-coleccion.py`) |
 
 ## 1. Importar en Postman
 
@@ -18,34 +18,34 @@ el sistema y con qué tiempos.
 
 ## 2. Variables del entorno
 
-| Variable | Para qué | Valor |
-|---|---|---|
-| `baseUrl` | Dirección de la API | `http://127.0.0.1:3000/api/v1` (o la de AWS) |
-| `convocatoria`, `programa` | Datos del catálogo | `2027-I`, `P34` |
-| `dni`, `codigo` | Una inscripción de prueba para las consultas del postulante | Las escribes tú |
-| `dniNuevo` | DNI de prueba para crear una inscripción | Lo escribes tú |
-| `adminEmail`, `adminPassword` | Tu cuenta del panel | Las escribes tú; **no se guardan en el proyecto** |
-| `mfaCode` | Código de 6 dígitos del autenticador | Lo escribes justo antes de enviar |
-| `challenge`, `adminToken` | Se llenan solos al ingresar | No los toques |
+| Variable                      | Para qué                                                    | Valor                                             |
+| ----------------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
+| `baseUrl`                     | Dirección de la API                                         | `http://127.0.0.1:3000/api/v1` (o la de AWS)      |
+| `convocatoria`, `programa`    | Datos del catálogo                                          | `2027-I`, `P34`                                   |
+| `dni`, `codigo`               | Una inscripción de prueba para las consultas del postulante | Las escribes tú                                   |
+| `dniNuevo`                    | DNI de prueba para crear una inscripción                    | Lo escribes tú                                    |
+| `adminEmail`, `adminPassword` | Tu cuenta del panel                                         | Las escribes tú; **no se guardan en el proyecto** |
+| `mfaCode`                     | Código de 6 dígitos del autenticador                        | Lo escribes justo antes de enviar                 |
+| `challenge`, `adminToken`     | Se llenan solos al ingresar                                 | No los toques                                     |
 
 ## 3. Carpetas (una por módulo)
 
-| Carpeta | Qué verifica | ¿Necesita sesión? |
-|---|---|---|
-| 00. Salud de la API | Que la API y la base de datos respondan | No |
-| 01. Convocatorias | Convocatoria, etapas, programas, tasas, simulador, requisitos, temario | No |
-| 02. Configuración | Portada, comunicados e imágenes | No |
-| 03. Inscripciones | Formulario, observados, estado con DNI y código | No |
-| 04. Pagos | Estado del pago | No |
-| 05. Usuarios | Ingreso del personal con doble factor, usuarios y roles | Ingreso y panel |
-| 06. Seguridad y auditoría | Auditoría, casos de atención, estado de integraciones | Sí |
-| 07. Expedientes | Expediente del exonerado y panel de evaluación | Panel |
-| 08. Exámenes | Aula del postulante, exámenes, sedes y asistencia | Panel |
-| 09. Resultados | Ingresantes, resultado del postulante, panel de resultados | Panel |
-| 10. Notificaciones | Bandeja del postulante, envíos, plantillas y campañas | Panel |
-| 11. Asistente virtual | Preguntas sugeridas y uso | Panel |
-| 12. Reportes | Indicadores, inscripciones, pagos, encuesta SUS y Excel | Sí |
-| 13. Errores esperados | Que los errores respondan bien (400, 401, 404) | No |
+| Carpeta                   | Qué verifica                                                           | ¿Necesita sesión? |
+| ------------------------- | ---------------------------------------------------------------------- | ----------------- |
+| 00. Salud de la API       | Que la API y la base de datos respondan                                | No                |
+| 01. Convocatorias         | Convocatoria, etapas, programas, tasas, simulador, requisitos, temario | No                |
+| 02. Configuración         | Portada, comunicados e imágenes                                        | No                |
+| 03. Inscripciones         | Formulario, observados, estado con DNI y código                        | No                |
+| 04. Pagos                 | Estado del pago                                                        | No                |
+| 05. Usuarios              | Ingreso del personal con doble factor, usuarios y roles                | Ingreso y panel   |
+| 06. Seguridad y auditoría | Auditoría, casos de atención, estado de integraciones                  | Sí                |
+| 07. Expedientes           | Expediente del exonerado y panel de evaluación                         | Panel             |
+| 08. Exámenes              | Aula del postulante, exámenes, sedes y asistencia                      | Panel             |
+| 09. Resultados            | Ingresantes, resultado del postulante, panel de resultados             | Panel             |
+| 10. Notificaciones        | Bandeja del postulante, envíos, plantillas y campañas                  | Panel             |
+| 11. Asistente virtual     | Preguntas sugeridas y uso                                              | Panel             |
+| 12. Reportes              | Indicadores, inscripciones, pagos, encuesta SUS y Excel                | Sí                |
+| 13. Errores esperados     | Que los errores respondan bien (400, 401, 404)                         | No                |
 
 Cada petición comprueba tres cosas: el **código de respuesta**, que responda en **3 s o menos** (meta de EQ-01) y que
 los datos tengan la forma correcta.
@@ -58,6 +58,7 @@ los datos tengan la forma correcta.
 pasaron por módulo; guarda una captura como evidencia.
 
 **Panel del personal:**
+
 1. Escribe `adminEmail` y `adminPassword` en el entorno.
 2. Envía **05. Usuarios > Ingreso del personal > 1. Correo y contraseña**.
 3. Escribe en `mfaCode` el código de tu aplicación de autenticación y envía **2. Código del autenticador**.

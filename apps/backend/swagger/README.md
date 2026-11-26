@@ -2,11 +2,11 @@
 
 Esta carpeta reúne todo lo de la documentación OpenAPI y Swagger UI del backend.
 
-| Archivo | Qué es |
-|---|---|
-| `openapi.json` | El contrato OpenAPI 3.1 de toda la API: 205 operaciones de los 12 módulos |
-| `generar.ts` | Genera `openapi.json`: une los contratos detallados de `specs/<nn>/contracts/openapi.yaml` con las rutas reales del código |
-| `swagger.ts` | Muestra Swagger UI en `/api/docs` y el contrato en `/api/openapi.json` (lo usa `src/app.ts`) |
+| Archivo        | Qué es                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `openapi.json` | El contrato OpenAPI 3.1 de toda la API: 205 operaciones de los 12 módulos                                                  |
+| `generar.ts`   | Genera `openapi.json`: une los contratos detallados de `specs/<nn>/contracts/openapi.yaml` con las rutas reales del código |
+| `swagger.ts`   | Muestra Swagger UI en `/api/docs` y el contrato en `/api/openapi.json` (lo usa `src/app.ts`)                               |
 
 ## Verla
 

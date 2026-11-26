@@ -24,7 +24,9 @@ try {
     const before = await page.locator('.msg:not(.msg--me)').count();
     await page.fill('#as-q', q);
     await page.click('.ask button[type=submit]');
-    await page.waitForFunction((n) => document.querySelectorAll('.msg:not(.msg--me)').length > n, before, { timeout: 30000 });
+    await page.waitForFunction((n) => document.querySelectorAll('.msg:not(.msg--me)').length > n, before, {
+      timeout: 30000,
+    });
     return (await lastReply().innerText()).replace(/\s+/g, ' ');
   };
 
@@ -41,7 +43,8 @@ try {
   step(`Vacantes: «${vac.slice(0, 80)}…»`);
 
   const anon = await ask('¿Cómo va mi inscripción?');
-  if (!/Consultar mi proceso/.test(anon)) throw new Error(`Sin identificarse debería pedir «Consultar mi proceso»: ${anon}`);
+  if (!/Consultar mi proceso/.test(anon))
+    throw new Error(`Sin identificarse debería pedir «Consultar mi proceso»: ${anon}`);
   step('Sin identificarse: pide usar «Consultar mi proceso»');
   await page.screenshot({ path: `${out}/1-preguntas.png` });
 
@@ -51,7 +54,9 @@ try {
   await page.fill('#as-doc', dni);
   await page.fill('#as-code', code);
   await page.click('.side button[type=submit]');
-  await page.waitForFunction((n) => document.querySelectorAll('.msg:not(.msg--me)').length > n, before, { timeout: 30000 });
+  await page.waitForFunction((n) => document.querySelectorAll('.msg:not(.msg--me)').length > n, before, {
+    timeout: 30000,
+  });
   const mine = (await lastReply().innerText()).replace(/\s+/g, ' ');
   if (!/Tu inscripción en/.test(mine) || mine.includes(dni)) throw new Error(`Estado: ${mine}`);
   step(`Con DNI + código: «${mine.slice(0, 120)}…»`);

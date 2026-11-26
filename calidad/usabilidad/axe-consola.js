@@ -12,13 +12,24 @@
       document.head.appendChild(s);
     });
   }
-  const r = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });
+  const r = await axe.run(document, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+  });
   console.log(`%cAC07 accesibilidad en ${location.pathname}`, 'font-weight:bold;font-size:14px');
   if (!r.violations.length) {
-    console.log(`%c✅ Sin fallas WCAG 2.2 A y AA (${r.passes.length} reglas aprobadas)`, 'color:green;font-weight:bold');
+    console.log(
+      `%c✅ Sin fallas WCAG 2.2 A y AA (${r.passes.length} reglas aprobadas)`,
+      'color:green;font-weight:bold',
+    );
     return;
   }
   console.log(`%c❌ ${r.violations.length} reglas con fallas`, 'color:#b42323;font-weight:bold');
-  console.table(r.violations.map((v) => ({ regla: v.id, impacto: v.impact, elementos: v.nodes.length, ayuda: v.help })));
-  for (const v of r.violations) console.log(v.id, v.nodes.map((n) => n.target.join(' ')));
+  console.table(
+    r.violations.map((v) => ({ regla: v.id, impacto: v.impact, elementos: v.nodes.length, ayuda: v.help })),
+  );
+  for (const v of r.violations)
+    console.log(
+      v.id,
+      v.nodes.map((n) => n.target.join(' ')),
+    );
 })();

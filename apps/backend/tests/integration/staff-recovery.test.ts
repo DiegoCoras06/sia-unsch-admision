@@ -19,7 +19,8 @@ let token = '';
 
 const login = async () => {
   clock.advance(31);
-  return (await t.request.post('/api/v1/admin/auth/login').send({ email: EMAIL, password: PASSWORD }).expect(200)).body.data;
+  return (await t.request.post('/api/v1/admin/auth/login').send({ email: EMAIL, password: PASSWORD }).expect(200)).body
+    .data;
 };
 const recovery = async (code: string) => {
   const { challenge } = await login();
@@ -28,10 +29,14 @@ const recovery = async (code: string) => {
 const as = () => ({ Authorization: `Bearer ${token}` });
 
 beforeAll(async () => {
-  const user = await t.db.user.create({ data: { email: EMAIL, passwordHash: await new Argon2Hasher().hash(PASSWORD), type: 'STAFF', status: 'ACTIVE' } });
+  const user = await t.db.user.create({
+    data: { email: EMAIL, passwordHash: await new Argon2Hasher().hash(PASSWORD), type: 'STAFF', status: 'ACTIVE' },
+  });
   userId = user.id;
   await t.db.staffProfile.create({ data: { userId, fullName: 'Prueba respaldo', mustChangePassword: false } });
-  await t.db.userRole.create({ data: { userId, roleId: (await t.db.role.findUniqueOrThrow({ where: { code: 'SOPORTE' } })).id } });
+  await t.db.userRole.create({
+    data: { userId, roleId: (await t.db.role.findUniqueOrThrow({ where: { code: 'SOPORTE' } })).id },
+  });
 });
 
 describe('Formato de los códigos', () => {
@@ -51,13 +56,19 @@ describe('Códigos de respaldo del personal (ADR-022)', () => {
   it('no sirven para saltarse la activación del segundo factor', async () => {
     const step = await login();
     expect(step.step).toBe('SETUP_MFA');
-    await t.request.post('/api/v1/admin/auth/recovery').send({ challenge: step.challenge, code: 'ABCDE-FGHJK' }).expect(401);
+    await t.request
+      .post('/api/v1/admin/auth/recovery')
+      .send({ challenge: step.challenge, code: 'ABCDE-FGHJK' })
+      .expect(401);
   });
 
   it('se entregan una sola vez al activar y solo se guarda su huella', async () => {
     const step = await login();
     secret = step.mfaSetup.secret;
-    const res = await t.request.post('/api/v1/admin/auth/mfa').send({ challenge: step.challenge, code: totpService.code(secret, clock.now()) }).expect(200);
+    const res = await t.request
+      .post('/api/v1/admin/auth/mfa')
+      .send({ challenge: step.challenge, code: totpService.code(secret, clock.now()) })
+      .expect(200);
     codes = res.body.data.recoveryCodes;
     token = res.body.data.accessToken;
     expect(codes).toHaveLength(10);
@@ -68,7 +79,10 @@ describe('Códigos de respaldo del personal (ADR-022)', () => {
     expect(JSON.stringify(stored)).not.toContain(codes[0]);
 
     const again = await login();
-    const normal = await t.request.post('/api/v1/admin/auth/mfa').send({ challenge: again.challenge, code: totpService.code(secret, clock.now()) }).expect(200);
+    const normal = await t.request
+      .post('/api/v1/admin/auth/mfa')
+      .send({ challenge: again.challenge, code: totpService.code(secret, clock.now()) })
+      .expect(200);
     expect(normal.body.data.recoveryCodes).toBeUndefined();
     token = normal.body.data.accessToken;
   });
@@ -89,7 +103,11 @@ describe('Códigos de respaldo del personal (ADR-022)', () => {
   it('regenerar pide el código actual e invalida los anteriores', async () => {
     await t.request.post('/api/v1/admin/me/recovery-codes').set(as()).send({ code: '000000' }).expect(401);
     clock.advance(31);
-    const res = await t.request.post('/api/v1/admin/me/recovery-codes').set(as()).send({ code: totpService.code(secret, clock.now()) }).expect(200);
+    const res = await t.request
+      .post('/api/v1/admin/me/recovery-codes')
+      .set(as())
+      .send({ code: totpService.code(secret, clock.now()) })
+      .expect(200);
     expect(res.headers['cache-control']).toBe('no-store');
     expect(res.body.data.codes).toHaveLength(10);
     expect((await recovery(codes[1]!)).status).toBe(401);

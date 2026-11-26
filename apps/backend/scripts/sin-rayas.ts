@@ -16,7 +16,9 @@ const db = createPrismaClient(process.env['DATABASE_URL'] ?? '', 2, ca ? path.re
 const q = (id: string) => `"${id.replace(/"/g, '""')}"`;
 
 try {
-  const cols = await db.$queryRaw<{ table_schema: string; table_name: string; column_name: string; data_type: string }[]>`
+  const cols = await db.$queryRaw<
+    { table_schema: string; table_name: string; column_name: string; data_type: string }[]
+  >`
     SELECT c.table_schema, c.table_name, c.column_name, c.data_type
     FROM information_schema.columns c
     JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
@@ -28,7 +30,9 @@ try {
     const table = `${q(c.table_schema)}.${q(c.table_name)}`;
     const col = q(c.column_name);
     const asText = c.data_type.startsWith('json') ? `${col}::text` : col;
-    const [row] = await db.$queryRawUnsafe<{ n: bigint }[]>(`SELECT count(*) AS n FROM ${table} WHERE ${asText} LIKE '%—%'`);
+    const [row] = await db.$queryRawUnsafe<{ n: bigint }[]>(
+      `SELECT count(*) AS n FROM ${table} WHERE ${asText} LIKE '%—%'`,
+    );
     const n = row?.n ?? 0n;
     if (!Number(n)) continue;
     total += Number(n);
@@ -40,7 +44,11 @@ try {
       await db.$executeRawUnsafe(`UPDATE ${table} SET ${col} = ${value} WHERE ${asText} LIKE '%—%'`);
     }
   }
-  console.log(apply ? `Listo: ${total} fila(s) actualizadas.` : `Encontradas ${total} fila(s). Ejecuta con --aplicar para cambiarlas.`);
+  console.log(
+    apply
+      ? `Listo: ${total} fila(s) actualizadas.`
+      : `Encontradas ${total} fila(s). Ejecuta con --aplicar para cambiarlas.`,
+  );
 } finally {
   await db.$disconnect();
 }

@@ -3,10 +3,9 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
-**Rama:** `003-inscripcion-ordinaria` · **Fecha:** 25/10/2026 · **Especificación:** [requirements.md](requirements.md) (ver *Aclaraciones* y ADR-015)
+**Rama:** `003-inscripcion-ordinaria` · **Fecha:** 25/10/2026 · **Especificación:** [requirements.md](requirements.md) (ver _Aclaraciones_ y ADR-015)
 **Alcance de esta iteración:** Historias 1–4 sin cuenta — formulario público, foto, confirmación con orden de pago y seguimiento con DNI + código. Fuera: pago en línea (005), ficha PDF con QR (H5), reinscripción (H6), anulación (H7).
 
 ### Resumen
@@ -15,32 +14,32 @@ Nuevo módulo **M03 Inscripción** (esquema `inscripciones`) con tres endpoints 
 
 ### Contexto técnico
 
-| Aspecto | Valor |
-|---|---|
-| Almacenamiento | PostgreSQL esquema `inscripciones`; foto en `FileStorage` (`LocalFileStorage` en local, S3 en AWS — ADR-010) |
-| Identidad | `MockIdentityProvider` (DNI sintéticos) o `HttpIdentityProvider` configurable con token propio (`IDENTITY_PROVIDER=http`) |
-| Ubigeos | `shared/data/ubigeo.json` (INEI 2016, 1874 distritos) para validar códigos |
-| Foto | JPEG 240 × 320 px ≤ 2 MB; el navegador recorta y redimensiona antes de enviar; el servidor verifica tipo real y dimensiones leyendo la cabecera JPEG |
+| Aspecto        | Valor                                                                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Almacenamiento | PostgreSQL esquema `inscripciones`; foto en `FileStorage` (`LocalFileStorage` en local, S3 en AWS — ADR-010)                                         |
+| Identidad      | `MockIdentityProvider` (DNI sintéticos) o `HttpIdentityProvider` configurable con token propio (`IDENTITY_PROVIDER=http`)                            |
+| Ubigeos        | `shared/data/ubigeo.json` (INEI 2016, 1874 distritos) para validar códigos                                                                           |
+| Foto           | JPEG 240 × 320 px ≤ 2 MB; el navegador recorta y redimensiona antes de enviar; el servidor verifica tipo real y dimensiones leyendo la cabecera JPEG |
 
 ### Verificación de la constitución
 
-| Artículo | ¿Cumple? | Nota |
-|---|---|---|
-| I — Especificación primero | ✅ | Aclaraciones registradas en spec 003 y ADR-015 antes del código |
-| II — Fidelidad institucional | ✅ | Etapas, tasas y vacantes salen de M01; identidad simulada etiquetada |
-| III — Monolito modular | ✅ | M03 solo usa `index.ts` de M01, M02 y M13 |
-| V — Privacidad | ✅ | La consulta de estado enmascara documento y correo; límites de uso por IP |
-| VI — UX | ✅ | Formulario por secciones, resumen en vivo, móvil primero |
+| Artículo                     | ¿Cumple? | Nota                                                                      |
+| ---------------------------- | -------- | ------------------------------------------------------------------------- |
+| I — Especificación primero   | ✅       | Aclaraciones registradas en spec 003 y ADR-015 antes del código           |
+| II — Fidelidad institucional | ✅       | Etapas, tasas y vacantes salen de M01; identidad simulada etiquetada      |
+| III — Monolito modular       | ✅       | M03 solo usa `index.ts` de M01, M02 y M13                                 |
+| V — Privacidad               | ✅       | La consulta de estado enmascara documento y correo; límites de uso por IP |
+| VI — UX                      | ✅       | Formulario por secciones, resumen en vivo, móvil primero                  |
 
 ### Modelo de datos (`inscripciones.applications`)
 
-| Grupo | Campos |
-|---|---|
+| Grupo          | Campos                                                                                                                                                                                             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Identificación | `call_code`, `applicant_code` (único, 8 dígitos Luhn), `document_type` (DNI/CE), `document_number`, `identity_status` (VERIFIED/PENDING) — **único `(call_code, document_type, document_number)`** |
-| Básica | apellidos, nombres, `sex`, `marital_status`, `birth_ubigeo`, `birth_date`, `address`, `residence_ubigeo`, `economic_dependency`, `phone` (opcional), `mobile`, `email`, `photo_key` |
-| Académica | `school_ubigeo`, `school_name`, `school_type`, `graduation_year`, `in_fourth_or_below`, `preparation`, `attempts` |
-| Postulación | `modality` (ORD/EXO/CEPRE), `quota_category` (ORD, DIS, PS-U…), `campus`, `area`, `option_code`, `military_condition`, `family_link`, `no_vacancy_right` |
-| Pago y estado | `fee_total`, `fee_lines` (json), `status` (`PENDIENTE_PAGO`, `PENDIENTE_VALIDACION`, `APTA`, `OBSERVADA`, `ANULADA`), `declaration_accepted_at`, `created_at` |
+| Básica         | apellidos, nombres, `sex`, `marital_status`, `birth_ubigeo`, `birth_date`, `address`, `residence_ubigeo`, `economic_dependency`, `phone` (opcional), `mobile`, `email`, `photo_key`                |
+| Académica      | `school_ubigeo`, `school_name`, `school_type`, `graduation_year`, `in_fourth_or_below`, `preparation`, `attempts`                                                                                  |
+| Postulación    | `modality` (ORD/EXO/CEPRE), `quota_category` (ORD, DIS, PS-U…), `campus`, `area`, `option_code`, `military_condition`, `family_link`, `no_vacancy_right`                                           |
+| Pago y estado  | `fee_total`, `fee_lines` (json), `status` (`PENDIENTE_PAGO`, `PENDIENTE_VALIDACION`, `APTA`, `OBSERVADA`, `ANULADA`), `declaration_accepted_at`, `created_at`                                      |
 
 Exonerados quedan en `PENDIENTE_VALIDACION` (RN-24: requisitos validados por Admisión); ordinarios y CEPRE en `PENDIENTE_PAGO`.
 

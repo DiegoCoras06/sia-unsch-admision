@@ -5,7 +5,10 @@ import { isDatabaseUnreachable } from '../../../src/shared/db/unreachable.js';
 import { errorHandler } from '../../../src/shared/http/middleware.js';
 
 // Forma del error que entrega Prisma cuando no llega a RDS (copiada del registro, sin datos del servidor).
-const unreachable = { name: 'PrismaClientKnownRequestError', meta: { driverAdapterError: { cause: { kind: 'DatabaseNotReachable' } } } };
+const unreachable = {
+  name: 'PrismaClientKnownRequestError',
+  meta: { driverAdapterError: { cause: { kind: 'DatabaseNotReachable' } } },
+};
 
 describe('base de datos no disponible', () => {
   it('reconoce la caída de conexión por el tipo del adaptador o por el código de Prisma', () => {

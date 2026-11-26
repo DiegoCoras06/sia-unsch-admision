@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Rama:** `006-examen-aulas` · **Fecha:** 26/10/2026 · **Spec:** [requirements.md](requirements.md) · **Módulos:** M07 Exámenes, M08 Sedes y aulas
@@ -23,15 +22,15 @@ Un módulo nuevo `examenes` (esquema PostgreSQL `examenes`) con Clean Architectu
 
 ### Decisiones
 
-| Tema | Decisión |
-|---|---|
-| Fuente de aptos | `inscripciones` expone `eligibleFor(callCode, modalities)`; el módulo no lee tablas ajenas (ADR-001). |
-| Asignación única | `exam_assignments` con `UNIQUE(exam_id, applicant_code)` y `UNIQUE(exam_id, room_id, seat)`: la base impide duplicados y sobrecupo (SC-002). |
-| Historial | `assignment_changes` guarda cada movimiento (versión, aula anterior y nueva, motivo, responsable). |
+| Tema                     | Decisión                                                                                                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuente de aptos          | `inscripciones` expone `eligibleFor(callCode, modalities)`; el módulo no lee tablas ajenas (ADR-001).                                                                  |
+| Asignación única         | `exam_assignments` con `UNIQUE(exam_id, applicant_code)` y `UNIQUE(exam_id, room_id, seat)`: la base impide duplicados y sobrecupo (SC-002).                           |
+| Historial                | `assignment_changes` guarda cada movimiento (versión, aula anterior y nueva, motivo, responsable).                                                                     |
 | QR de la ficha de examen | `código.firma` (HMAC `examen:`) dentro de un enlace a `/admin/asistencia`: el responsable lo escanea con la cámara del panel o con un lector que escribe como teclado. |
-| Permisos | `examenes.gestionar` (coordinador) y `asistencia.registrar` (nuevo rol «Responsable de aula»). |
-| Eventos | `AulaCambiada`, `ExamenReprogramado`, `IncidenciaRegistrada` por la outbox → correos (M11 completo en el Paso 10). |
-| Sin conexión | La lista de asistencia funciona en línea; el modo sin conexión queda para el despliegue (🟡). |
+| Permisos                 | `examenes.gestionar` (coordinador) y `asistencia.registrar` (nuevo rol «Responsable de aula»).                                                                         |
+| Eventos                  | `AulaCambiada`, `ExamenReprogramado`, `IncidenciaRegistrada` por la outbox → correos (M11 completo en el Paso 10).                                                     |
+| Sin conexión             | La lista de asistencia funciona en línea; el modo sin conexión queda para el despliegue (🟡).                                                                          |
 
 ### Estructura
 

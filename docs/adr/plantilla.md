@@ -15,15 +15,18 @@
 ## Alternativas consideradas
 
 | Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
+| ----------- | ------- | --------- | ------------------- |
 
 ## Consecuencias
 
 **Positivas:**
+
 - …
 
 **Negativas / riesgos aceptados:**
+
 - …
 
 **Cómo verificamos que se cumple:**
+
 - [Prueba, regla de lint, revisión, métrica]

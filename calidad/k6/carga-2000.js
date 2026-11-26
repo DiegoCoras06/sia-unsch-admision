@@ -18,17 +18,22 @@ const MESETA = 60; // segundos que se mantiene cada etapa
 
 export const options = {
   stages: [
-    ...ETAPAS.flatMap((n) => [{ duration: `${SUBIDA}s`, target: n }, { duration: `${MESETA}s`, target: n }]),
+    ...ETAPAS.flatMap((n) => [
+      { duration: `${SUBIDA}s`, target: n },
+      { duration: `${MESETA}s`, target: n },
+    ]),
     { duration: '30s', target: 0 },
   ],
   thresholds: {
     http_req_duration: ['p(95)<3000'],
     http_req_failed: ['rate<0.01'],
     // Una métrica por etapa (solo la meseta), para ver dónde empieza a degradarse.
-    ...Object.fromEntries(ETAPAS.flatMap((n) => [
-      [`http_req_duration{etapa:${n}}`, ['p(95)<3000']],
-      [`http_req_failed{etapa:${n}}`, ['rate<0.01']],
-    ])),
+    ...Object.fromEntries(
+      ETAPAS.flatMap((n) => [
+        [`http_req_duration{etapa:${n}}`, ['p(95)<3000']],
+        [`http_req_failed{etapa:${n}}`, ['rate<0.01']],
+      ]),
+    ),
   },
   summaryTrendStats: ['avg', 'med', 'p(95)', 'max'],
 };
@@ -70,5 +75,8 @@ export function handleSummary(data) {
     `Toda la prueba: promedio ${total.avg.toFixed(0)} ms, p95 ${total['p(95)'].toFixed(0)} ms, máximo ${total.max.toFixed(0)} ms, errores ${(data.metrics.http_req_failed.values.rate * 100).toFixed(2)} %`,
     '',
   ].join('\n');
-  return { stdout: `\n${texto}`, [`calidad/resultados/${new Date().toISOString().slice(0, 10)}-k6-carga-${ETAPAS[ETAPAS.length - 1]}.txt`]: texto };
+  return {
+    stdout: `\n${texto}`,
+    [`calidad/resultados/${new Date().toISOString().slice(0, 10)}-k6-carga-${ETAPAS[ETAPAS.length - 1]}.txt`]: texto,
+  };
 }

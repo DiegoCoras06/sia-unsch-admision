@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Rama:** `010-notificaciones` · **Fecha:** 26/10/2026 · **Spec:** [requirements.md](requirements.md) · **Módulo:** M11 Notificaciones
@@ -25,12 +24,12 @@ Módulo nuevo `notificaciones` (esquema PostgreSQL `notificaciones`):
 
 ### Decisiones
 
-| Tema | Decisión |
-|---|---|
-| Rebotes | El proveedor de desarrollo no informa rebotes; el estado `REBOTADA` queda previsto para Amazon SES (Paso 11). |
-| SMS | Fuera de esta iteración (FR-008 es opcional). |
-| Datos sensibles | Ni puntajes ni DNI en asuntos o cuerpos (RNF-03); los correos llevan al portal. |
-| Permiso | `notificaciones.gestionar`. |
+| Tema            | Decisión                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| Rebotes         | El proveedor de desarrollo no informa rebotes; el estado `REBOTADA` queda previsto para Amazon SES (Paso 11). |
+| SMS             | Fuera de esta iteración (FR-008 es opcional).                                                                 |
+| Datos sensibles | Ni puntajes ni DNI en asuntos o cuerpos (RNF-03); los correos llevan al portal.                               |
+| Permiso         | `notificaciones.gestionar`.                                                                                   |
 
 ## 2. Actualizaciones de diseño (27 y 28/10/2026)
 

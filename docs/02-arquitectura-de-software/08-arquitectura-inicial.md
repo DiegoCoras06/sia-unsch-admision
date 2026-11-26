@@ -1,4 +1,3 @@
-
 # 5. Diagrama de Arquitectura Inicial
 
 ## 5.1. Estilo arquitectónico
@@ -142,20 +141,20 @@ Implementará los repositorios de datos, los adaptadores externos y la comunicac
 
 ## 5.4. Tecnologías utilizadas
 
-| Tecnología | Función |
-|---|---|
-| Angular | Interfaz web |
-| Node.js y TypeScript | Backend modular |
-| AWS Lambda | Ejecución del backend |
-| Amazon API Gateway | API REST segura |
-| Amazon RDS PostgreSQL | Base de datos |
-| Amazon S3 | Almacenamiento de archivos |
-| Amazon CloudFront | Distribución web |
-| Amazon Route 53 | Dominio |
-| Amazon SQS | Cola de eventos entre el backend y el worker (ADR-021) |
-| Amazon EventBridge Scheduler | Tareas programadas y reenvío de eventos atascados |
-| Amazon SES | Correos electrónicos |
-| AWS Certificate Manager | Certificados HTTPS |
+| Tecnología                   | Función                                                |
+| ---------------------------- | ------------------------------------------------------ |
+| Angular                      | Interfaz web                                           |
+| Node.js y TypeScript         | Backend modular                                        |
+| AWS Lambda                   | Ejecución del backend                                  |
+| Amazon API Gateway           | API REST segura                                        |
+| Amazon RDS PostgreSQL        | Base de datos                                          |
+| Amazon S3                    | Almacenamiento de archivos                             |
+| Amazon CloudFront            | Distribución web                                       |
+| Amazon Route 53              | Dominio                                                |
+| Amazon SQS                   | Cola de eventos entre el backend y el worker (ADR-021) |
+| Amazon EventBridge Scheduler | Tareas programadas y reenvío de eventos atascados      |
+| Amazon SES                   | Correos electrónicos                                   |
+| AWS Certificate Manager      | Certificados HTTPS                                     |
 
 ## 5.5. Justificación arquitectónica
 
@@ -183,14 +182,13 @@ El certificado HTTPS se administrará mediante AWS Certificate Manager.
 
 La arquitectura se implementó con estos ajustes respecto de la vista inicial:
 
-| Elemento de la vista inicial | Cómo quedó | Motivo |
-|---|---|---|
-| 7 módulos de dominio | 12 módulos funcionales, uno por carpeta (ver 03, diseño interno) | El análisis detallado separó convocatorias, expedientes, exámenes, chatbot, reportes, seguridad y configuración |
-| ElastiCache Redis | Retirado del diagrama; previsto solo si la prueba de carga lo exige | Las consultas frecuentes son livianas y el límite de intentos funciona con PostgreSQL; Redis añade un costo fijo |
-| Amazon EventBridge como bus de eventos | Bandeja de eventos (Transactional Outbox) en PostgreSQL que envía los ID a Amazon SQS; un worker los procesa. EventBridge Scheduler queda para las tareas programadas | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 y ADR-021 del repositorio) |
-| Validación de identidad | RENIEC por medio de apiperu.dev | Proveedor autorizado y de bajo costo para el proyecto académico |
-| Pasarela de pagos | Culqi para tarjeta y Yape | Izipay cerró la tienda de pruebas; Culqi cubre los dos medios con un solo flujo (ADR-024) |
-| Route 53, CloudFront, API Gateway, Lambda | Diseñados, pendientes del despliegue | Paso 11 de la hoja de ruta |
+| Elemento de la vista inicial              | Cómo quedó                                                                                                                                                            | Motivo                                                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 7 módulos de dominio                      | 12 módulos funcionales, uno por carpeta (ver 03, diseño interno)                                                                                                      | El análisis detallado separó convocatorias, expedientes, exámenes, chatbot, reportes, seguridad y configuración               |
+| ElastiCache Redis                         | Retirado del diagrama; previsto solo si la prueba de carga lo exige                                                                                                   | Las consultas frecuentes son livianas y el límite de intentos funciona con PostgreSQL; Redis añade un costo fijo              |
+| Amazon EventBridge como bus de eventos    | Bandeja de eventos (Transactional Outbox) en PostgreSQL que envía los ID a Amazon SQS; un worker los procesa. EventBridge Scheduler queda para las tareas programadas | El evento se guarda en la misma transacción que el cambio, así no se pierde ni se duplica (ADR-008 y ADR-021 del repositorio) |
+| Validación de identidad                   | RENIEC por medio de apiperu.dev                                                                                                                                       | Proveedor autorizado y de bajo costo para el proyecto académico                                                               |
+| Pasarela de pagos                         | Culqi para tarjeta y Yape                                                                                                                                             | Izipay cerró la tienda de pruebas; Culqi cubre los dos medios con un solo flujo (ADR-024)                                     |
+| Route 53, CloudFront, API Gateway, Lambda | Diseñados, pendientes del despliegue                                                                                                                                  | Paso 11 de la hoja de ruta                                                                                                    |
 
 Hoy el sistema funciona en local (Node.js + Angular) conectado a los servicios reales de AWS: RDS PostgreSQL, S3 y SES.
-

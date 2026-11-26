@@ -6,8 +6,14 @@ import { CachedConvocatoriasRepository } from '../../../src/modules/convocatoria
 function fakeRepo() {
   const calls = { options: 0, current: 0 };
   const repo = {
-    findCurrentCall: jest.fn(async () => { calls.current++; return { id: 'c1', code: '2027-I', name: 'Concurso', status: 'PUBLISHED' as const }; }),
-    options: jest.fn(async (callId: string) => { calls.options++; return [{ internalCode: `P-${callId}` }]; }),
+    findCurrentCall: jest.fn(async () => {
+      calls.current++;
+      return { id: 'c1', code: '2027-I', name: 'Concurso', status: 'PUBLISHED' as const };
+    }),
+    options: jest.fn(async (callId: string) => {
+      calls.options++;
+      return [{ internalCode: `P-${callId}` }];
+    }),
   } as unknown as ConvocatoriasRepository;
   return { repo, calls };
 }
@@ -48,7 +54,12 @@ describe('Caché del catálogo (AC01)', () => {
 
   it('un error no queda guardado', async () => {
     let fail = true;
-    const repo = { options: jest.fn(async () => { if (fail) throw new Error('sin conexión'); return []; }) } as unknown as ConvocatoriasRepository;
+    const repo = {
+      options: jest.fn(async () => {
+        if (fail) throw new Error('sin conexión');
+        return [];
+      }),
+    } as unknown as ConvocatoriasRepository;
     const cache = new CachedConvocatoriasRepository(repo, 60_000);
     await expect(cache.options('c1')).rejects.toThrow('sin conexión');
     fail = false;

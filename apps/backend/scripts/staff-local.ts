@@ -19,12 +19,32 @@ try {
   const password = `Local-${randomBytes(9).toString('base64url')}`;
   const secret = totpService.newSecret();
   const hash = await new Argon2Hasher().hash(password);
-  const user = await db.user.upsert({ where: { email }, create: { email, passwordHash: hash, type: 'STAFF', status: 'ACTIVE' }, update: { passwordHash: hash, status: 'ACTIVE' } });
-  const profile = { fullName: `Comisión local (${role})`, mustChangePassword: false, mfaSecretEnc: new SecretBox(key).seal(secret), mfaEnabledAt: new Date() };
-  await db.staffProfile.upsert({ where: { userId: user.id }, create: { userId: user.id, ...profile }, update: profile });
+  const user = await db.user.upsert({
+    where: { email },
+    create: { email, passwordHash: hash, type: 'STAFF', status: 'ACTIVE' },
+    update: { passwordHash: hash, status: 'ACTIVE' },
+  });
+  const profile = {
+    fullName: `Comisión local (${role})`,
+    mustChangePassword: false,
+    mfaSecretEnc: new SecretBox(key).seal(secret),
+    mfaEnabledAt: new Date(),
+  };
+  await db.staffProfile.upsert({
+    where: { userId: user.id },
+    create: { userId: user.id, ...profile },
+    update: profile,
+  });
   const r = await db.role.findUniqueOrThrow({ where: { code: role } });
-  await db.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: r.id } }, create: { userId: user.id, roleId: r.id }, update: {} });
-  writeFileSync(file, `Personal LOCAL de pruebas (${role})\nCorreo: ${email}\nContraseña actual: ${password}\nClave TOTP: ${secret}\n`);
+  await db.userRole.upsert({
+    where: { userId_roleId: { userId: user.id, roleId: r.id } },
+    create: { userId: user.id, roleId: r.id },
+    update: {},
+  });
+  writeFileSync(
+    file,
+    `Personal LOCAL de pruebas (${role})\nCorreo: ${email}\nContraseña actual: ${password}\nClave TOTP: ${secret}\n`,
+  );
   console.log(`✔ ${email} (${role}) listo; credenciales en ${file}`);
 } finally {
   await db.$disconnect();

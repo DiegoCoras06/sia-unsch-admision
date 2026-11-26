@@ -5,23 +5,22 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Spec:** [requirements.md](requirements.md) · **Investigación:** [design.md](design.md) · **Contrato:** [contracts/openapi.yaml](./contracts/openapi.yaml) · **Decisión:** [ADR-016](../../docs/adr/ADR-016-pasarela-izipay.md)
 
 ### Alcance de la iteración 1
 
-| Incluido | Requisitos |
-|---|---|
-| Orden de pago única por inscripción, con el monto fijado en la inscripción | FR-001, FR-002 · RF-05.01, RF-05.02 |
-| Pago con el formulario certificado de Izipay (pop-up) iniciado desde la constancia o «Imprimir documentos» | FR-003 · RF-05.03, RF-05.04 |
-| Confirmación solo con mensaje firmado (respuesta del SDK o IPN) y verificación de monto, pedido y transacción | FR-004 · RF-05.05, RF-05.06 |
-| Idempotencia: cada intento se confirma una vez; un segundo pago autorizado de una orden ya pagada queda marcado `DUPLICADO` | FR-005 · RF-05.09 |
-| Registro del intento: id de transacción, número de operación, código de autorización, medio, tarjeta enmascarada, monto, fecha y estado | RF-05.07 |
-| Constancia de pago (no es comprobante SUNAT) e historial de intentos consultable con DNI + código | RF-05.08, RF-05.10 |
-| Inscripción `PENDIENTE_PAGO` → `APTA` por el evento `PagoConfirmado`; correo de confirmación | SC-001 · RF-11.02 |
-| Pasarela simulada (`PAYMENTS_PROVIDER=mock`) para pruebas y uso local sin credenciales | ADR-007 |
+| Incluido                                                                                                                                | Requisitos                          |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Orden de pago única por inscripción, con el monto fijado en la inscripción                                                              | FR-001, FR-002 · RF-05.01, RF-05.02 |
+| Pago con el formulario certificado de Izipay (pop-up) iniciado desde la constancia o «Imprimir documentos»                              | FR-003 · RF-05.03, RF-05.04         |
+| Confirmación solo con mensaje firmado (respuesta del SDK o IPN) y verificación de monto, pedido y transacción                           | FR-004 · RF-05.05, RF-05.06         |
+| Idempotencia: cada intento se confirma una vez; un segundo pago autorizado de una orden ya pagada queda marcado `DUPLICADO`             | FR-005 · RF-05.09                   |
+| Registro del intento: id de transacción, número de operación, código de autorización, medio, tarjeta enmascarada, monto, fecha y estado | RF-05.07                            |
+| Constancia de pago (no es comprobante SUNAT) e historial de intentos consultable con DNI + código                                       | RF-05.08, RF-05.10                  |
+| Inscripción `PENDIENTE_PAGO` → `APTA` por el evento `PagoConfirmado`; correo de confirmación                                            | SC-001 · RF-11.02                   |
+| Pasarela simulada (`PAYMENTS_PROVIDER=mock`) para pruebas y uso local sin credenciales                                                  | ADR-007                             |
 
 **Fuera de esta iteración:** conciliación con archivos de Tesorería (RF-05.11), devoluciones y anulaciones (RF-05.12), pago de otros conceptos.
 
@@ -41,15 +40,16 @@ index.ts       createPagosModule()
 
 **Datos (`pagos`):**
 
-| Tabla | Clave | Contenido |
-|---|---|---|
-| `payment_orders` | `applicant_code` único (una orden por inscripción) | monto, moneda, estado `PENDIENTE` / `PAGADA`, `paid_at` |
-| `payment_attempts` | `transaction_id` único, `order_number` único | proveedor, estado `INICIADO` / `AUTORIZADO` / `RECHAZADO` / `VENCIDO` / `DUPLICADO`, datos de la operación, `confirmed_via` (`SDK` / `IPN` / `CONSULTA`) |
-| `payment_notifications` | — | bitácora inmutable de cada mensaje recibido: origen, firma válida, código, hash del contenido |
+| Tabla                   | Clave                                              | Contenido                                                                                                                                                |
+| ----------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `payment_orders`        | `applicant_code` único (una orden por inscripción) | monto, moneda, estado `PENDIENTE` / `PAGADA`, `paid_at`                                                                                                  |
+| `payment_attempts`      | `transaction_id` único, `order_number` único       | proveedor, estado `INICIADO` / `AUTORIZADO` / `RECHAZADO` / `VENCIDO` / `DUPLICADO`, datos de la operación, `confirmed_via` (`SDK` / `IPN` / `CONSULTA`) |
+| `payment_notifications` | —                                                  | bitácora inmutable de cada mensaje recibido: origen, firma válida, código, hash del contenido                                                            |
 
 **Comunicación entre módulos:** M05 consulta la inscripción con `InscriptionService.paymentContext(dni, código)` (API pública de M03) y publica `PagoConfirmado` en la outbox, en la misma transacción que marca la orden como pagada. M03 se suscribe y pasa la inscripción a `APTA`.
 
 **Seguridad:**
+
 - Clave de API y clave hash solo en el servidor (variables de entorno; Secrets Manager en AWS).
 - Iniciar un pago exige DNI + código de postulante y tiene límite de 10 intentos por hora por IP.
 - La confirmación desde el navegador no es de confianza: solo cuenta el `payloadHttp` cuya firma verifica el servidor.
@@ -73,15 +73,15 @@ Izipay tiene dos productos con APIs distintas. Los ejemplos de GitHub `izipay-pe
 
 `POST {IZIPAY_API_URL}/security/v1/Token/Generate`
 
-| Parte | Valor |
-|---|---|
-| Cabecera `transactionId` | Id único del comercio por transacción, 5–40 caracteres; el mismo se envía luego al SDK |
-| `requestSource` | `ECOMMERCE` |
-| `merchantCode` | Código de comercio |
-| `orderNumber` | Número de pedido, 5–15 caracteres |
-| `publicKey` | **Clave de API del nuevo botón de pagos** (`IZIPAY_API_KEY`), pese al nombre del campo |
-| `amount` | Texto con 2 decimales, p. ej. `"250.00"` |
-| Respuesta | `{ code: "00", message: "OK", response: { token } }` · token de un solo uso, vigencia 15 min |
+| Parte                    | Valor                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| Cabecera `transactionId` | Id único del comercio por transacción, 5–40 caracteres; el mismo se envía luego al SDK       |
+| `requestSource`          | `ECOMMERCE`                                                                                  |
+| `merchantCode`           | Código de comercio                                                                           |
+| `orderNumber`            | Número de pedido, 5–15 caracteres                                                            |
+| `publicKey`              | **Clave de API del nuevo botón de pagos** (`IZIPAY_API_KEY`), pese al nombre del campo       |
+| `amount`                 | Texto con 2 decimales, p. ej. `"250.00"`                                                     |
+| Respuesta                | `{ code: "00", message: "OK", response: { token } }` · token de un solo uso, vigencia 15 min |
 
 **Decisión:** el token se genera solo en el servidor; la clave de API nunca llega al navegador.
 
@@ -92,7 +92,7 @@ Izipay tiene dos productos con APIs distintas. Los ejemplos de GitHub `izipay-pe
 - `checkout.LoadForm({ authorization: token, keyRSA, callbackResponse })`. `keyRSA` es la clave pública RSA del panel (`IZIPAY_PUBLIC_KEY`); es pública por diseño.
 - Medios habilitados por el SDK: tarjetas, QR, Yape, Plin, Apple Pay.
 
-**Decisión:** modo *pop-up* (el postulante no sale de la página); los datos de tarjeta se escriben solo dentro del formulario de Izipay (SC-004).
+**Decisión:** modo _pop-up_ (el postulante no sale de la página); los datos de tarjeta se escriben solo dentro del formulario de Izipay (SC-004).
 
 ### R-04 Respuesta y firma
 

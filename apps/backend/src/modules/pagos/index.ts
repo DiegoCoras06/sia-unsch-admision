@@ -38,14 +38,22 @@ export function createPagosModule(deps: {
 
   // Pago duplicado: queda registrado; Tesorería lo trata como anulación por cobro duplicado (RF-05.12).
   deps.outbox.subscribe('PagoDuplicado', async (e) => {
-    deps.logger.warn({ applicantCode: e.applicantCode, transactionId: e.transactionId }, 'pago duplicado: Tesorería debe registrar la anulación');
+    deps.logger.warn(
+      { applicantCode: e.applicantCode, transactionId: e.transactionId },
+      'pago duplicado: Tesorería debe registrar la anulación',
+    );
   });
 
   return { service, router: pagosRoutes(service) };
 }
 
 /** Tesorería: conciliación y anulaciones (spec 005, Historias 4 y 5); app.ts lo monta con la seguridad ya creada. */
-export function createTesoreria(deps: { db: Db; audit: AuditLog; authenticate: RequestHandler; guard: (p: 'pagos.conciliar' | 'pagos.anular') => RequestHandler }) {
+export function createTesoreria(deps: {
+  db: Db;
+  audit: AuditLog;
+  authenticate: RequestHandler;
+  guard: (p: 'pagos.conciliar' | 'pagos.anular') => RequestHandler;
+}) {
   const service = new TreasuryService({ ...deps, persistence: deps.db });
   return { service, router: treasuryRoutes(service, deps) };
 }

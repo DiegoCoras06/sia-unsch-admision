@@ -22,11 +22,11 @@ El asistente debe orientar sobre la admisión y hacer seguimiento del proceso de
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Darle al modelo todo el reglamento en el prompt | Simple | Caro; responde de memoria y puede mezclar o inventar | RF-10.16 |
-| Pedir el DNI dentro del chat | Una sola caja de texto | El DNI viajaría al proveedor de IA | RNF-11 |
-| Solo reglas, sin IA | Cero costo | No entiende preguntas libres | RF-10.01 pide IA |
+| Alternativa                                     | A favor                | En contra                                            | Motivo del descarte |
+| ----------------------------------------------- | ---------------------- | ---------------------------------------------------- | ------------------- |
+| Darle al modelo todo el reglamento en el prompt | Simple                 | Caro; responde de memoria y puede mezclar o inventar | RF-10.16            |
+| Pedir el DNI dentro del chat                    | Una sola caja de texto | El DNI viajaría al proveedor de IA                   | RNF-11              |
+| Solo reglas, sin IA                             | Cero costo             | No entiende preguntas libres                         | RF-10.01 pide IA    |
 
 ## Consecuencias
 

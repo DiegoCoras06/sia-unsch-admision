@@ -29,7 +29,12 @@ for (const name of await readdir(base)) {
   for (const w of widths) {
     const width = Math.min(w, meta.width ?? w);
     const out = join(base, name.replace(/\.(jpg|png)$/, `-${w}.webp`));
-    await sharp(src).resize({ width, withoutEnlargement: true }).webp({ quality: name.endsWith('.png') ? 90 : 72, alphaQuality: 90 }).toFile(out);
-    console.log(`${name} (${Math.round(before / 1024)} KB, ${meta.width} px) → ${out.split(/[\\/]/).pop()} ${Math.round((await stat(out)).size / 1024)} KB`);
+    await sharp(src)
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality: name.endsWith('.png') ? 90 : 72, alphaQuality: 90 })
+      .toFile(out);
+    console.log(
+      `${name} (${Math.round(before / 1024)} KB, ${meta.width} px) → ${out.split(/[\\/]/).pop()} ${Math.round((await stat(out)).size / 1024)} KB`,
+    );
   }
 }

@@ -91,8 +91,15 @@ try {
   if (errors.length) throw new Error(`Errores de página: ${errors.join(' | ')}`);
   console.log('E2E inscripción: OK');
 } catch (error) {
-  console.error('E2E inscripción FALLÓ:', String(error.message).split('\n').slice(0, 6).join('\n'), '\nURL:', page.url());
-  await page.screenshot({ path: path.join(out, 'e2e-inscripcion-error.png'), fullPage: true, timeout: 10_000 }).catch(() => {});
+  console.error(
+    'E2E inscripción FALLÓ:',
+    String(error.message).split('\n').slice(0, 6).join('\n'),
+    '\nURL:',
+    page.url(),
+  );
+  await page
+    .screenshot({ path: path.join(out, 'e2e-inscripcion-error.png'), fullPage: true, timeout: 10_000 })
+    .catch(() => {});
   process.exitCode = 1;
 } finally {
   await browser.close();

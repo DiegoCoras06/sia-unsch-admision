@@ -32,12 +32,22 @@ const collator = new Intl.Collator('es', { sensitivity: 'base' });
 
 /** Orden de llenado de aulas: puerta, pabellón, piso y código (los grupos quedan juntos y cerca de su puerta). */
 export function roomOrder(a: Seatable, b: Seatable): number {
-  return collator.compare(a.gate, b.gate) || collator.compare(a.building, b.building) || a.floor - b.floor || collator.compare(a.code, b.code);
+  return (
+    collator.compare(a.gate, b.gate) ||
+    collator.compare(a.building, b.building) ||
+    a.floor - b.floor ||
+    collator.compare(a.code, b.code)
+  );
 }
 
 /** Orden de los postulantes: área académica y luego apellidos y nombres (Art. 23, supuesto de la spec 006). */
 export function candidateOrder(a: Candidate, b: Candidate): number {
-  return collator.compare(a.area, b.area) || collator.compare(a.surname, b.surname) || collator.compare(a.firstNames, b.firstNames) || a.applicantCode.localeCompare(b.applicantCode);
+  return (
+    collator.compare(a.area, b.area) ||
+    collator.compare(a.surname, b.surname) ||
+    collator.compare(a.firstNames, b.firstNames) ||
+    a.applicantCode.localeCompare(b.applicantCode)
+  );
 }
 
 /**
@@ -64,7 +74,8 @@ export function distribute(candidates: Candidate[], rooms: Seatable[]): Distribu
   const needy = unique.filter((c) => c.needsAccessible).sort(candidateOrder);
   const accessible = ordered.filter((r) => r.accessible);
   const accessibleSeats = accessible.reduce((s, r) => s + r.capacity, 0);
-  if (needy.length > accessibleSeats) return { ok: false, reason: 'ACCESSIBLE_CAPACITY', missing: needy.length - accessibleSeats };
+  if (needy.length > accessibleSeats)
+    return { ok: false, reason: 'ACCESSIBLE_CAPACITY', missing: needy.length - accessibleSeats };
   let i = 0;
   for (const c of needy) {
     while (used.get(accessible[i]!.id)! >= accessible[i]!.capacity) i++;
@@ -76,5 +87,9 @@ export function distribute(candidates: Candidate[], rooms: Seatable[]): Distribu
     while (used.get(ordered[j]!.id)! >= ordered[j]!.capacity) j++;
     place(c, ordered[j]!);
   }
-  return { ok: true, seats, occupancy: ordered.map((r) => ({ roomId: r.id, used: used.get(r.id)!, capacity: r.capacity })) };
+  return {
+    ok: true,
+    seats,
+    occupancy: ordered.map((r) => ({ roomId: r.id, used: used.get(r.id)!, capacity: r.capacity })),
+  };
 }

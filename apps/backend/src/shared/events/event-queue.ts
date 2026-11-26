@@ -18,7 +18,11 @@ export interface QueuedEvent {
 export class SqsEventQueue implements EventQueue {
   private readonly client: SQSClient;
 
-  constructor(private readonly queueUrl: string, private readonly logger: Logger, client?: SQSClient) {
+  constructor(
+    private readonly queueUrl: string,
+    private readonly logger: Logger,
+    client?: SQSClient,
+  ) {
     const region = /sqs\.([a-z0-9-]+)\.amazonaws\.com/.exec(queueUrl)?.[1];
     this.client = client ?? new SQSClient(region ? { region } : {});
   }
@@ -27,10 +31,15 @@ export class SqsEventQueue implements EventQueue {
     // SendMessageBatch admite hasta 10 mensajes por llamada.
     for (let i = 0; i < eventIds.length; i += 10) {
       const chunk = eventIds.slice(i, i + 10);
-      const result = await this.client.send(new SendMessageBatchCommand({
-        QueueUrl: this.queueUrl,
-        Entries: chunk.map((eventId, n) => ({ Id: String(n), MessageBody: JSON.stringify({ eventId } satisfies QueuedEvent) })),
-      }));
+      const result = await this.client.send(
+        new SendMessageBatchCommand({
+          QueueUrl: this.queueUrl,
+          Entries: chunk.map((eventId, n) => ({
+            Id: String(n),
+            MessageBody: JSON.stringify({ eventId } satisfies QueuedEvent),
+          })),
+        }),
+      );
       if (result.Failed?.length) {
         // No se lanza: el evento sigue pendiente en la outbox y la tarea programada lo vuelve a enviar.
         this.logger.warn({ failed: result.Failed.length }, 'SQS rechazó algunos eventos; se reenviarán');

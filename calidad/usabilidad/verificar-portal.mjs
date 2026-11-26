@@ -9,9 +9,28 @@ const require = createRequire(import.meta.url);
 const axePath = require.resolve('axe-core/axe.min.js');
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
 const routes = [
-  '/', '/cronograma', '/programas', '/programas/P34', '/tasas', '/requisitos', '/temario', '/comunicados',
-  '/pasos', '/denuncias', '/observados', '/carta-aval', '/contacto', '/documentos/reglamento', '/inscripcion',
-  '/mi-inscripcion', '/buscar-aula', '/resultados', '/reinscripcion', '/crear-cuenta', '/ingresar', '/admin/ingreso',
+  '/',
+  '/cronograma',
+  '/programas',
+  '/programas/P34',
+  '/tasas',
+  '/requisitos',
+  '/temario',
+  '/comunicados',
+  '/pasos',
+  '/denuncias',
+  '/observados',
+  '/carta-aval',
+  '/contacto',
+  '/documentos/reglamento',
+  '/inscripcion',
+  '/mi-inscripcion',
+  '/buscar-aula',
+  '/resultados',
+  '/reinscripcion',
+  '/crear-cuenta',
+  '/ingresar',
+  '/admin/ingreso',
 ];
 const viewports = [
   { name: 'movil', width: 360, height: 800 },
@@ -29,7 +48,9 @@ try {
       page.on('pageerror', (error) => pageErrors.push(error.message));
       const response = await page.goto(`${base}${route}`, { waitUntil: 'networkidle', timeout: 30_000 });
       await page.locator('app-root').waitFor({ state: 'visible' });
-      const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth);
+      const overflow = await page.evaluate(
+        () => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth,
+      );
       await page.addScriptTag({ path: axePath });
       const axe = await page.evaluate(async () =>
         globalThis.axe.run(document, {
@@ -53,10 +74,18 @@ try {
 }
 
 const failures = rows.filter((r) => r.status >= 400 || r.overflow > 1 || r.violations.length || r.pageErrors.length);
-const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const date = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Lima',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
 const output = path.resolve(`calidad/resultados/${date}-accesibilidad-responsive.md`);
 const table = rows
-  .map((r) => `| ${r.route} | ${r.viewport} | ${r.status} | ${Math.max(0, r.overflow)} px | ${r.violations.length} | ${r.pageErrors.length} |`)
+  .map(
+    (r) =>
+      `| ${r.route} | ${r.viewport} | ${r.status} | ${Math.max(0, r.overflow)} px | ${r.violations.length} | ${r.pageErrors.length} |`,
+  )
   .join('\n');
 await writeFile(
   output,

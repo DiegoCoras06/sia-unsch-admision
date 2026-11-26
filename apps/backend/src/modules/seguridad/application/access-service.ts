@@ -3,7 +3,10 @@ import type { PersistencePort, TransactionPort } from '../../../shared/applicati
 
 /** Roles y padrón de inhabilitados (M13). */
 export class AccessService {
-  constructor(private readonly persistence: PersistencePort, private readonly clock: Clock) {}
+  constructor(
+    private readonly persistence: PersistencePort,
+    private readonly clock: Clock,
+  ) {}
 
   async rolesOf(userId: string): Promise<string[]> {
     const rows = await this.persistence.userRole.findMany({ where: { userId }, include: { role: true } });

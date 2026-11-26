@@ -36,18 +36,42 @@ export class CachedConvocatoriasRepository implements ConvocatoriasRepository {
     return value;
   }
 
-  findCurrentCall() { return this.cached('currentCall', () => this.inner.findCurrentCall()); }
-  findCall(code: string) { return this.cached(`call:${code}`, () => this.inner.findCall(code)); }
-  stages(callId: string) { return this.cached(`stages:${callId}`, () => this.inner.stages(callId)); }
-  areas() { return this.cached('areas', () => this.inner.areas()); }
-  quotaCategories() { return this.cached('quotaCategories', () => this.inner.quotaCategories()); }
-  submodalities() { return this.cached('submodalities', () => this.inner.submodalities()); }
-  options(callId: string) { return this.cached(`options:${callId}`, () => this.inner.options(callId)); }
-  fees(callId: string) { return this.cached(`fees:${callId}`, () => this.inner.fees(callId)); }
-  feeRules(callId: string) { return this.cached(`feeRules:${callId}`, () => this.inner.feeRules(callId)); }
-  requirements(callId: string, submodality: string | null) {
-    return this.cached(`requirements:${callId}:${submodality ?? ''}`, () => this.inner.requirements(callId, submodality));
+  findCurrentCall() {
+    return this.cached('currentCall', () => this.inner.findCurrentCall());
   }
-  syllabus(callId: string) { return this.cached(`syllabus:${callId}`, () => this.inner.syllabus(callId)); }
-  documents(callId: string) { return this.cached(`documents:${callId}`, () => this.inner.documents(callId)); }
+  findCall(code: string) {
+    return this.cached(`call:${code}`, () => this.inner.findCall(code));
+  }
+  stages(callId: string) {
+    return this.cached(`stages:${callId}`, () => this.inner.stages(callId));
+  }
+  areas() {
+    return this.cached('areas', () => this.inner.areas());
+  }
+  quotaCategories() {
+    return this.cached('quotaCategories', () => this.inner.quotaCategories());
+  }
+  submodalities() {
+    return this.cached('submodalities', () => this.inner.submodalities());
+  }
+  options(callId: string) {
+    return this.cached(`options:${callId}`, () => this.inner.options(callId));
+  }
+  fees(callId: string) {
+    return this.cached(`fees:${callId}`, () => this.inner.fees(callId));
+  }
+  feeRules(callId: string) {
+    return this.cached(`feeRules:${callId}`, () => this.inner.feeRules(callId));
+  }
+  requirements(callId: string, submodality: string | null) {
+    return this.cached(`requirements:${callId}:${submodality ?? ''}`, () =>
+      this.inner.requirements(callId, submodality),
+    );
+  }
+  syllabus(callId: string) {
+    return this.cached(`syllabus:${callId}`, () => this.inner.syllabus(callId));
+  }
+  documents(callId: string) {
+    return this.cached(`documents:${callId}`, () => this.inner.documents(callId));
+  }
 }

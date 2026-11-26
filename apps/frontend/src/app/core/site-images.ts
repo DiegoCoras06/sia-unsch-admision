@@ -12,7 +12,9 @@ export class SiteImages {
   private readonly map = signal<AssetMap>({});
 
   constructor() {
-    inject(HttpClient).get<{ data: AssetMap }>('/api/v1/site-assets').subscribe({ next: (r) => this.map.set(r.data), error: () => undefined });
+    inject(HttpClient)
+      .get<{ data: AssetMap }>('/api/v1/site-assets')
+      .subscribe({ next: (r) => this.map.set(r.data), error: () => undefined });
   }
 
   src(key: string, fallback: string): string {

@@ -14,16 +14,16 @@ El panel lo usan siete perfiles de la Dirección de Admisión con datos personal
 2. **Segundo factor TOTP** (RFC 6238: 6 dígitos, 30 s; Google Authenticator, Microsoft Authenticator, etc.), obligatorio para todo usuario interno (RF-13.06). Primer ingreso: contraseña temporal → nueva contraseña → activar TOTP leyendo un QR. Cada paso devuelve un **desafío firmado de 10 minutos**; la sesión solo se emite después del código TOTP.
 3. **Permisos por rol** en una tabla de código (`seguridad/domain/permissions.ts`), sembrada en la base para listarla. Cada ruta del panel declara su permiso; el servidor lo verifica (RF-13.07) y **registra en auditoría cada intento denegado**.
 
-   | Rol | Ve y gestiona |
-   |---|---|
-   | Administrador general | Todo, incluidos usuarios y configuración |
-   | Oficina de Admisión | Convocatoria, contenido, inscripciones, inhabilitados, asistente, casos, reportes |
-   | Tesorería | Pagos y su reporte |
-   | Evaluador documental | Inscripciones (expedientes en el Paso 7) |
-   | Coordinador de examen | Inscripciones (aulas en el Paso 9) |
-   | Operador de resultados | Inscripciones (resultados en el Paso 10) |
-   | Soporte | Casos de atención y conversaciones del asistente |
-   | Auditor | Auditoría, indicadores y reportes, solo lectura |
+   | Rol                    | Ve y gestiona                                                                     |
+   | ---------------------- | --------------------------------------------------------------------------------- |
+   | Administrador general  | Todo, incluidos usuarios y configuración                                          |
+   | Oficina de Admisión    | Convocatoria, contenido, inscripciones, inhabilitados, asistente, casos, reportes |
+   | Tesorería              | Pagos y su reporte                                                                |
+   | Evaluador documental   | Inscripciones (expedientes en el Paso 7)                                          |
+   | Coordinador de examen  | Inscripciones (aulas en el Paso 9)                                                |
+   | Operador de resultados | Inscripciones (resultados en el Paso 10)                                          |
+   | Soporte                | Casos de atención y conversaciones del asistente                                  |
+   | Auditor                | Auditoría, indicadores y reportes, solo lectura                                   |
 
 4. **Suspender o desactivar** una cuenta revoca todas sus sesiones al instante (RF-13.03, RF-13.08). El último administrador activo no puede quitarse el rol ni suspenderse.
 5. **Escrituras por la API de cada módulo:** el panel es una capa de presentación (`/api/v1/admin/*`). Cambiar fechas, tasas o vacantes lo hace M01; contenido y funciones, M14; inhabilitados y casos, M13; base de conocimientos, M10. Las lecturas agregadas de M12 son consultas de solo lectura.
@@ -32,11 +32,11 @@ El panel lo usan siete perfiles de la Dirección de Admisión con datos personal
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| SMS o correo como segundo factor | Familiar | Costo, depende de proveedor; el correo no es un factor independiente | TOTP no cuesta y funciona sin red |
-| Proveedor externo de identidad (Cognito, Auth0) | Menos código | Otra dependencia y costo para la demo | El portal ya tiene sesiones propias auditadas |
-| Permisos editables por pantalla | Flexible | Riesgo de dejar el sistema sin control | Roles fijos de la spec 008; se pueden ampliar en código |
+| Alternativa                                     | A favor      | En contra                                                            | Motivo del descarte                                     |
+| ----------------------------------------------- | ------------ | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| SMS o correo como segundo factor                | Familiar     | Costo, depende de proveedor; el correo no es un factor independiente | TOTP no cuesta y funciona sin red                       |
+| Proveedor externo de identidad (Cognito, Auth0) | Menos código | Otra dependencia y costo para la demo                                | El portal ya tiene sesiones propias auditadas           |
+| Permisos editables por pantalla                 | Flexible     | Riesgo de dejar el sistema sin control                               | Roles fijos de la spec 008; se pueden ampliar en código |
 
 ## Consecuencias
 

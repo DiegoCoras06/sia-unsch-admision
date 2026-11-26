@@ -21,20 +21,23 @@ Varias acciones no las dispara un usuario sino el reloj o un evento: despachar l
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Cron dentro del Lambda de la API | Un solo Lambda | Lambda no corre en segundo plano | No funciona |
-| SQS + consumidor | Bueno para alto volumen | Más piezas; la outbox ya garantiza entrega | Innecesario por ahora (se reevalúa) |
-| Step Functions | Flujos complejos visuales | Excesivo para tareas simples | Sobrediseño |
+| Alternativa                      | A favor                   | En contra                                  | Motivo del descarte                 |
+| -------------------------------- | ------------------------- | ------------------------------------------ | ----------------------------------- |
+| Cron dentro del Lambda de la API | Un solo Lambda            | Lambda no corre en segundo plano           | No funciona                         |
+| SQS + consumidor                 | Bueno para alto volumen   | Más piezas; la outbox ya garantiza entrega | Innecesario por ahora (se reevalúa) |
+| Step Functions                   | Flujos complejos visuales | Excesivo para tareas simples               | Sobrediseño                         |
 
 ## Consecuencias
 
 **Positivas:**
+
 - Publicaciones exactas sin intervención humana.
 - Mismo comportamiento en local y en AWS.
 
 **Negativas / riesgos aceptados:**
+
 - Retraso de hasta 1 minuto en eventos de la outbox cuando no se dispara de inmediato.
 
 **Cómo verificamos que se cumple:**
+
 - Prueba con reloj simulado: los resultados no son visibles un segundo antes de la hora programada y sí un minuto después.

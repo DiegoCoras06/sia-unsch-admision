@@ -5,7 +5,12 @@ import { notFound, validationError } from '../../../shared/http/errors.js';
 import type { FileStorage } from '../../../shared/storage/file-storage.js';
 
 const CASE_STATUS_LABEL = { OPEN: 'Recibido', IN_PROGRESS: 'En atención', CLOSED: 'Cerrado' } as const;
-const CASE_TYPE_LABEL = { CONTACT: 'Consulta', COMPLAINT: 'Denuncia', CHATBOT_ESCALATION: 'Derivado del asistente', RESULT_REVIEW: 'Revisión de resultados' } as const;
+const CASE_TYPE_LABEL = {
+  CONTACT: 'Consulta',
+  COMPLAINT: 'Denuncia',
+  CHATBOT_ESCALATION: 'Derivado del asistente',
+  RESULT_REVIEW: 'Revisión de resultados',
+} as const;
 
 /**
  * Gestión de M13 desde el panel: auditoría (Historia 4), inhabilitados (Historia 5) y casos (Historia 7).
@@ -17,37 +22,84 @@ export class SecurityAdmin {
       persistence: PersistencePort;
       clock: Clock;
       audit: AuditLog;
-      inscriptions: { annulByDocument(documentType: string, documentNumber: string, resolution: string, actor: string, meta: RequestMeta): Promise<string[]> };
+      inscriptions: {
+        annulByDocument(
+          documentType: string,
+          documentNumber: string,
+          resolution: string,
+          actor: string,
+          meta: RequestMeta,
+        ): Promise<string[]>;
+      };
       storage?: FileStorage;
     },
   ) {}
 
   // ── Auditoría ──────────────────────────────────────────────────────────
-  async auditSearch(f: { actor?: string | undefined; action?: string | undefined; resource?: string | undefined; from?: string | undefined; to?: string | undefined; page: number }) {
+  async auditSearch(f: {
+    actor?: string | undefined;
+    action?: string | undefined;
+    resource?: string | undefined;
+    from?: string | undefined;
+    to?: string | undefined;
+    page: number;
+  }) {
     const actorIds = f.actor
-      ? (await this.d.persistence.user.findMany({ where: { email: { contains: f.actor.toLowerCase() } }, select: { id: true } })).map((u) => u.id)
+      ? (
+          await this.d.persistence.user.findMany({
+            where: { email: { contains: f.actor.toLowerCase() } },
+            select: { id: true },
+          })
+        ).map((u) => u.id)
       : null;
     const where = {
       ...(actorIds ? { actorUserId: { in: actorIds } } : {}),
       ...(f.action ? { action: { contains: f.action } } : {}),
-      ...(f.resource ? { OR: [{ resourceType: { contains: f.resource } }, { resourceId: { contains: f.resource } }] } : {}),
-      ...(f.from || f.to ? { occurredAt: { ...(f.from ? { gte: new Date(f.from) } : {}), ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999-05:00`) } : {}) } } : {}),
+      ...(f.resource
+        ? { OR: [{ resourceType: { contains: f.resource } }, { resourceId: { contains: f.resource } }] }
+        : {}),
+      ...(f.from || f.to
+        ? {
+            occurredAt: {
+              ...(f.from ? { gte: new Date(f.from) } : {}),
+              ...(f.to ? { lte: new Date(`${f.to}T23:59:59.999-05:00`) } : {}),
+            },
+          }
+        : {}),
     };
     const pageSize = 30;
     const [total, rows] = await Promise.all([
       this.d.persistence.auditEvent.count({ where }),
-      this.d.persistence.auditEvent.findMany({ where, orderBy: { occurredAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize }),
+      this.d.persistence.auditEvent.findMany({
+        where,
+        orderBy: { occurredAt: 'desc' },
+        skip: (f.page - 1) * pageSize,
+        take: pageSize,
+      }),
     ]);
     const emails = new Map(
-      (await this.d.persistence.user.findMany({ where: { id: { in: rows.map((r) => r.actorUserId).filter((x): x is string => Boolean(x)) } }, select: { id: true, email: true } }))
-        .map((u) => [u.id, u.email]),
+      (
+        await this.d.persistence.user.findMany({
+          where: { id: { in: rows.map((r) => r.actorUserId).filter((x): x is string => Boolean(x)) } },
+          select: { id: true, email: true },
+        })
+      ).map((u) => [u.id, u.email]),
     );
     return {
-      total, page: f.page, pageSize,
+      total,
+      page: f.page,
+      pageSize,
       items: rows.map((r) => ({
-        id: r.id, occurredAt: r.occurredAt.toISOString(), actor: r.actorUserId ? (emails.get(r.actorUserId) ?? r.actorUserId) : 'Sistema / público',
-        action: r.action, resourceType: r.resourceType, resourceId: r.resourceId, before: r.before, after: r.after,
-        origin: r.ipHash ? `IP ${r.ipHash.slice(0, 8)}…` : null, requestId: r.requestId,
+        id: r.id,
+        occurredAt: r.occurredAt.toISOString(),
+        actor: r.actorUserId ? (emails.get(r.actorUserId) ?? r.actorUserId) : 'Sistema / público',
+        action: r.action,
+        resourceType: r.resourceType,
+        resourceId: r.resourceId,
+        before: r.before,
+        after: r.after,
+        origin: r.ipHash ? `IP ${r.ipHash.slice(0, 8)}…` : null,
+        requestId: r.requestId,
       })),
     };
   }
@@ -57,23 +109,53 @@ export class SecurityAdmin {
     const rows = await this.d.persistence.disqualifiedPerson.findMany({ orderBy: { validFrom: 'desc' } });
     const today = this.d.clock.now();
     return rows.map((r) => ({
-      id: r.id, documentType: r.documentType, documentNumber: r.documentNumber, reason: r.reason, resolution: r.resolution,
-      validFrom: r.validFrom.toISOString().slice(0, 10), validUntil: r.validUntil?.toISOString().slice(0, 10) ?? null,
+      id: r.id,
+      documentType: r.documentType,
+      documentNumber: r.documentNumber,
+      reason: r.reason,
+      resolution: r.resolution,
+      validFrom: r.validFrom.toISOString().slice(0, 10),
+      validUntil: r.validUntil?.toISOString().slice(0, 10) ?? null,
       active: r.validFrom <= today && (!r.validUntil || r.validUntil >= today),
     }));
   }
 
-  async disqualify(input: { documentType: string; documentNumber: string; reason: string; resolution: string; validUntil?: string | undefined }, actor: string, meta: RequestMeta) {
+  async disqualify(
+    input: {
+      documentType: string;
+      documentNumber: string;
+      reason: string;
+      resolution: string;
+      validUntil?: string | undefined;
+    },
+    actor: string,
+    meta: RequestMeta,
+  ) {
     const doc = input.documentNumber.trim().toUpperCase();
-    if (input.documentType === 'DNI' && !/^\d{8}$/.test(doc)) throw validationError('El DNI debe tener 8 dígitos.', [{ field: 'documentNumber', issue: '8 dígitos' }]);
+    if (input.documentType === 'DNI' && !/^\d{8}$/.test(doc))
+      throw validationError('El DNI debe tener 8 dígitos.', [{ field: 'documentNumber', issue: '8 dígitos' }]);
     const row = await this.d.persistence.$transaction(async (tx) => {
       const created = await tx.disqualifiedPerson.create({
         data: {
-          documentType: input.documentType, documentNumber: doc, reason: input.reason.trim(), resolution: input.resolution.trim(),
-          validFrom: new Date(this.d.clock.now().toISOString().slice(0, 10)), validUntil: input.validUntil ? new Date(input.validUntil) : null,
+          documentType: input.documentType,
+          documentNumber: doc,
+          reason: input.reason.trim(),
+          resolution: input.resolution.trim(),
+          validFrom: new Date(this.d.clock.now().toISOString().slice(0, 10)),
+          validUntil: input.validUntil ? new Date(input.validUntil) : null,
         },
       });
-      await this.d.audit.record({ actorUserId: actor, action: 'disqualified.added', resourceType: 'disqualified_person', resourceId: created.id, after: { documentType: input.documentType, resolution: input.resolution }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'disqualified.added',
+          resourceType: 'disqualified_person',
+          resourceId: created.id,
+          after: { documentType: input.documentType, resolution: input.resolution },
+          ...meta,
+        },
+        tx,
+      );
       return created;
     });
     const annulled = await this.d.inscriptions.annulByDocument(input.documentType, doc, input.resolution, actor, meta);
@@ -86,52 +168,121 @@ export class SecurityAdmin {
     if (!row) throw notFound('Registro no encontrado.');
     const today = new Date(this.d.clock.now().toISOString().slice(0, 10));
     await this.d.persistence.$transaction(async (tx) => {
-      await tx.disqualifiedPerson.update({ where: { id }, data: { validUntil: new Date(today.getTime() - 86_400_000) } });
-      await this.d.audit.record({ actorUserId: actor, action: 'disqualified.lifted', resourceType: 'disqualified_person', resourceId: id, ...meta }, tx);
+      await tx.disqualifiedPerson.update({
+        where: { id },
+        data: { validUntil: new Date(today.getTime() - 86_400_000) },
+      });
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'disqualified.lifted',
+          resourceType: 'disqualified_person',
+          resourceId: id,
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
   // ── Casos de atención ──────────────────────────────────────────────────
   async cases(f: { status?: string | undefined; type?: string | undefined; page: number }) {
-    const where = { ...(f.status ? { status: f.status as keyof typeof CASE_STATUS_LABEL } : {}), ...(f.type ? { type: f.type as keyof typeof CASE_TYPE_LABEL } : {}) };
+    const where = {
+      ...(f.status ? { status: f.status as keyof typeof CASE_STATUS_LABEL } : {}),
+      ...(f.type ? { type: f.type as keyof typeof CASE_TYPE_LABEL } : {}),
+    };
     const pageSize = 25;
     const [total, rows] = await Promise.all([
       this.d.persistence.supportCase.count({ where }),
-      this.d.persistence.supportCase.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize, include: { attachments: { orderBy: { createdAt: 'asc' } } } }),
+      this.d.persistence.supportCase.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (f.page - 1) * pageSize,
+        take: pageSize,
+        include: { attachments: { orderBy: { createdAt: 'asc' } } },
+      }),
     ]);
     return {
-      total, page: f.page, pageSize,
+      total,
+      page: f.page,
+      pageSize,
       items: rows.map((c) => ({
-        caseNumber: c.caseNumber, type: c.type, typeLabel: CASE_TYPE_LABEL[c.type], status: c.status, statusLabel: CASE_STATUS_LABEL[c.status],
-        name: c.name, email: c.email, phone: c.phone, message: c.message, createdAt: c.createdAt.toISOString(),
-        attachments: c.attachments.map((a) => ({ id: a.id, fileName: a.fileName, contentType: a.contentType, sizeBytes: a.sizeBytes })),
+        caseNumber: c.caseNumber,
+        type: c.type,
+        typeLabel: CASE_TYPE_LABEL[c.type],
+        status: c.status,
+        statusLabel: CASE_STATUS_LABEL[c.status],
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        message: c.message,
+        createdAt: c.createdAt.toISOString(),
+        attachments: c.attachments.map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          contentType: a.contentType,
+          sizeBytes: a.sizeBytes,
+        })),
       })),
     };
   }
 
-  async setCaseStatus(caseNumber: string, status: keyof typeof CASE_STATUS_LABEL, note: string | undefined, actor: string, meta: RequestMeta) {
+  async setCaseStatus(
+    caseNumber: string,
+    status: keyof typeof CASE_STATUS_LABEL,
+    note: string | undefined,
+    actor: string,
+    meta: RequestMeta,
+  ) {
     const c = await this.d.persistence.supportCase.findUnique({ where: { caseNumber } });
     if (!c) throw notFound('Caso no encontrado.');
     await this.d.persistence.$transaction(async (tx) => {
       await tx.supportCase.update({ where: { caseNumber }, data: { status } });
-      await this.d.audit.record({ actorUserId: actor, action: 'case.status_changed', resourceType: 'support_case', resourceId: caseNumber, before: { status: c.status }, after: { status, note: note ?? null }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'case.status_changed',
+          resourceType: 'support_case',
+          resourceId: caseNumber,
+          before: { status: c.status },
+          after: { status, note: note ?? null },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
   /** Historia 7, escenario 1: evidencia adjunta a la denuncia; cada descarga queda auditada. */
   async caseAttachment(caseNumber: string, attachmentId: string, actor: string, meta: RequestMeta) {
-    const a = await this.d.persistence.supportCaseAttachment.findFirst({ where: { id: attachmentId, supportCase: { caseNumber } } });
+    const a = await this.d.persistence.supportCaseAttachment.findFirst({
+      where: { id: attachmentId, supportCase: { caseNumber } },
+    });
     if (!a || !this.d.storage) throw notFound('Archivo no encontrado.');
     const content = await this.d.storage.get(a.storageKey);
     if (!content) throw notFound('Archivo no encontrado.');
-    await this.d.audit.record({ actorUserId: actor, action: 'case.attachment_downloaded', resourceType: 'support_case', resourceId: caseNumber, after: { fileName: a.fileName }, ...meta });
+    await this.d.audit.record({
+      actorUserId: actor,
+      action: 'case.attachment_downloaded',
+      resourceType: 'support_case',
+      resourceId: caseNumber,
+      after: { fileName: a.fileName },
+      ...meta,
+    });
     return { content, fileName: a.fileName, contentType: a.contentType };
   }
 
   /** Historia 7, escenario 2: el ciudadano consulta el avance con su número de caso (sin datos personales). */
   async publicCaseStatus(caseNumber: string) {
-    const c = await this.d.persistence.supportCase.findUnique({ where: { caseNumber: caseNumber.trim().toUpperCase() } });
+    const c = await this.d.persistence.supportCase.findUnique({
+      where: { caseNumber: caseNumber.trim().toUpperCase() },
+    });
     if (!c) throw notFound('No encontramos un caso con ese número.');
-    return { caseNumber: c.caseNumber, type: CASE_TYPE_LABEL[c.type], status: CASE_STATUS_LABEL[c.status], createdAt: c.createdAt.toISOString() };
+    return {
+      caseNumber: c.caseNumber,
+      type: CASE_TYPE_LABEL[c.type],
+      status: CASE_STATUS_LABEL[c.status],
+      createdAt: c.createdAt.toISOString(),
+    };
   }
 }

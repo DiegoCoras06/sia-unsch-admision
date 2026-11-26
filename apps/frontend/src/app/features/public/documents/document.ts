@@ -16,7 +16,10 @@ import { PdfViewer } from '../../../shared/pdf-viewer';
           @if (doc(); as d) {
             <h1>{{ d.title }}</h1>
             @if (d.html) {
-              <p class="lead">También puedes verlo como página interactiva: <a [routerLink]="d.html">abrir la versión web</a>.</p>
+              <p class="lead">
+                También puedes verlo como página interactiva:
+                <a [routerLink]="d.html">abrir la versión web</a>.
+              </p>
             }
             <app-pdf-viewer [file]="d.file" [title]="d.title" />
           } @else {
@@ -29,12 +32,31 @@ import { PdfViewer } from '../../../shared/pdf-viewer';
     </div>
   `,
   styles: `
-    .page { padding-block: clamp(2.5rem, 6vw, 5rem); }
-    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: clamp(1.5rem, 3vw, 3rem); align-items: start; }
-    .main { display: grid; gap: 1.5rem; }
-    h1 { font-size: clamp(2rem, 4.2vw, 3.75rem); }
-    .lead a { color: var(--gold); font-weight: 700; }
-    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+    .page {
+      padding-block: clamp(2.5rem, 6vw, 5rem);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 18rem;
+      gap: clamp(1.5rem, 3vw, 3rem);
+      align-items: start;
+    }
+    .main {
+      display: grid;
+      gap: 1.5rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 4.2vw, 3.75rem);
+    }
+    .lead a {
+      color: var(--gold);
+      font-weight: 700;
+    }
+    @media (max-width: 960px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   `,
 })
 export class DocumentPage {

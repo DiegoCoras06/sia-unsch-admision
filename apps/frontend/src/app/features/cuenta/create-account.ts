@@ -34,8 +34,13 @@ function demoCheckDigit(dni: string): string {
           @if (step() < 4) {
             <ol class="acc__steps" aria-label="Avance">
               @for (s of steps; track s.n) {
-                <li [class.is-done]="step() > s.n" [class.is-on]="step() === s.n" [attr.aria-current]="step() === s.n ? 'step' : null">
-                  <span aria-hidden="true">{{ s.n }}</span>{{ s.label }}</li>
+                <li
+                  [class.is-done]="step() > s.n"
+                  [class.is-on]="step() === s.n"
+                  [attr.aria-current]="step() === s.n ? 'step' : null"
+                >
+                  <span aria-hidden="true">{{ s.n }}</span>{{ s.label }}
+                </li>
               }
             </ol>
           }
@@ -44,36 +49,119 @@ function demoCheckDigit(dni: string): string {
               <form (ngSubmit)="lookup()" class="acc__card" style="padding:0">
                 <h2>1. Tu DNI</h2>
                 <div class="acc__row">
-                  <div><label for="ca-dni">Número de DNI</label><input id="ca-dni" class="input" name="dni" [(ngModel)]="dni" inputmode="numeric" maxlength="8" required></div>
-                  <div><label for="ca-dv">Dígito</label><input id="ca-dv" class="input" name="dv" [(ngModel)]="dv" maxlength="1" required></div>
+                  <div>
+                    <label for="ca-dni">Número de DNI</label
+                    ><input
+                      id="ca-dni"
+                      class="input"
+                      name="dni"
+                      [(ngModel)]="dni"
+                      inputmode="numeric"
+                      maxlength="8"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label for="ca-dv">Dígito</label
+                    ><input
+                      id="ca-dv"
+                      class="input"
+                      name="dv"
+                      [(ngModel)]="dv"
+                      maxlength="1"
+                      required
+                    />
+                  </div>
                 </div>
-                <p class="acc__hint">El dígito verificador está a la derecha del número, en la parte superior de tu DNI.</p>
-                <button class="btn" type="submit" [disabled]="busy()">Verificar mi identidad</button>
-                <details class="acc__demo"><summary>DNI de prueba (verificación simulada)</summary>
-                  <p>@for (d of demo; track d) { {{ d }}-{{ check(d) }} · }</p></details>
+                <p class="acc__hint">
+                  El dígito verificador está a la derecha del número, en la parte superior de tu
+                  DNI.
+                </p>
+                <button class="btn" type="submit" [disabled]="busy()">
+                  Verificar mi identidad
+                </button>
+                <details class="acc__demo">
+                  <summary>DNI de prueba (verificación simulada)</summary>
+                  <p>
+                    @for (d of demo; track d) {
+                      {{ d }}-{{ check(d) }} ·
+                    }
+                  </p>
+                </details>
               </form>
             }
             @case (2) {
               <form (ngSubmit)="register()" class="acc__card" style="padding:0">
                 <h2>2. Tus datos de contacto</h2>
-                <p class="acc__names">{{ identity()!.firstNames }} {{ identity()!.paternalSurname }} {{ identity()!.maternalSurname }}</p>
-                <label for="ca-mail">Correo</label><input id="ca-mail" class="input" type="email" name="mail" [(ngModel)]="email" autocomplete="email" required>
-                <label for="ca-cel">Celular</label><input id="ca-cel" class="input" name="cel" [(ngModel)]="phone" inputmode="numeric" maxlength="9" autocomplete="tel" required>
-                <label for="ca-pass">Contraseña (mínimo 10 caracteres)</label><input id="ca-pass" class="input" type="password" name="pass" [(ngModel)]="password" autocomplete="new-password" required>
+                <p class="acc__names">
+                  {{ identity()!.firstNames }} {{ identity()!.paternalSurname }}
+                  {{ identity()!.maternalSurname }}
+                </p>
+                <label for="ca-mail">Correo</label
+                ><input
+                  id="ca-mail"
+                  class="input"
+                  type="email"
+                  name="mail"
+                  [(ngModel)]="email"
+                  autocomplete="email"
+                  required
+                />
+                <label for="ca-cel">Celular</label
+                ><input
+                  id="ca-cel"
+                  class="input"
+                  name="cel"
+                  [(ngModel)]="phone"
+                  inputmode="numeric"
+                  maxlength="9"
+                  autocomplete="tel"
+                  required
+                />
+                <label for="ca-pass">Contraseña (mínimo 10 caracteres)</label
+                ><input
+                  id="ca-pass"
+                  class="input"
+                  type="password"
+                  name="pass"
+                  [(ngModel)]="password"
+                  autocomplete="new-password"
+                  required
+                />
                 @if (consent(); as c) {
                   <div class="acc__consent">{{ c.textMarkdown }}</div>
-                  <label class="acc__check"><input type="checkbox" name="ok" [(ngModel)]="accept"> Acepto el tratamiento de mis datos personales (versión {{ c.version }}).</label>
+                  <label class="acc__check"
+                    ><input type="checkbox" name="ok" [(ngModel)]="accept" /> Acepto el tratamiento
+                    de mis datos personales (versión {{ c.version }}).</label
+                  >
                 }
-                <button class="btn" type="submit" [disabled]="busy() || !accept">Crear cuenta</button>
+                <button class="btn" type="submit" [disabled]="busy() || !accept">
+                  Crear cuenta
+                </button>
               </form>
             }
             @case (3) {
               <form (ngSubmit)="verify()" class="acc__card" style="padding:0">
                 <h2>3. Confirma tu correo</h2>
-                <p>Te enviamos un código de 6 dígitos a <strong>{{ maskedEmail() }}</strong>. Vence en 15 minutos.</p>
-                <label for="ca-code">Código</label><input id="ca-code" class="input acc__code" name="code" [(ngModel)]="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+                <p>
+                  Te enviamos un código de 6 dígitos a <strong>{{ maskedEmail() }}</strong>. Vence
+                  en 15 minutos.
+                </p>
+                <label for="ca-code">Código</label
+                ><input
+                  id="ca-code"
+                  class="input acc__code"
+                  name="code"
+                  [(ngModel)]="code"
+                  inputmode="numeric"
+                  maxlength="6"
+                  autocomplete="one-time-code"
+                  required
+                />
                 <button class="btn" type="submit" [disabled]="busy()">Confirmar</button>
-                <button class="btn btn--quiet" type="button" (click)="resend()" [disabled]="busy()">Enviarme otro código</button>
+                <button class="btn btn--quiet" type="button" (click)="resend()" [disabled]="busy()">
+                  Enviarme otro código
+                </button>
               </form>
             }
             @case (4) {
@@ -81,9 +169,16 @@ function demoCheckDigit(dni: string): string {
               <a routerLink="/ingresar" class="btn">Ingresar a mi cuenta</a>
             }
           }
-          @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
-          @if (info()) { <p class="acc__ok" role="status">{{ info() }}</p> }
-          <p class="acc__links"><a routerLink="/ingresar">Ya tengo cuenta</a><a routerLink="/inscripcion">Inscribirme sin cuenta</a></p>
+          @if (error()) {
+            <p class="alert alert--error" role="alert">{{ error() }}</p>
+          }
+          @if (info()) {
+            <p class="acc__ok" role="status">{{ info() }}</p>
+          }
+          <p class="acc__links">
+            <a routerLink="/ingresar">Ya tengo cuenta</a
+            ><a routerLink="/inscripcion">Inscribirme sin cuenta</a>
+          </p>
         </div>
       </div>
     </section>
@@ -99,7 +194,11 @@ export class CreateAccountPage implements OnInit {
   protected readonly identity = signal<IdentityLookupDto | null>(null);
   protected readonly consent = signal<ConsentDto | null>(null);
   protected readonly maskedEmail = signal('');
-  protected readonly steps = [{ n: 1, label: 'DNI' }, { n: 2, label: 'Contacto' }, { n: 3, label: 'Correo' }] as const;
+  protected readonly steps = [
+    { n: 1, label: 'DNI' },
+    { n: 2, label: 'Contacto' },
+    { n: 3, label: 'Correo' },
+  ] as const;
   protected readonly demo = ['99900026', '99900027', '99900028', '99900029'];
   protected readonly check = demoCheckDigit;
   protected dni = '';
@@ -110,7 +209,9 @@ export class CreateAccountPage implements OnInit {
   protected accept = false;
   protected code = '';
 
-  ngOnInit() { void this.account.consent().then((c) => this.consent.set(c)); }
+  ngOnInit() {
+    void this.account.consent().then((c) => this.consent.set(c));
+  }
 
   protected lookup() {
     return this.run(async () => {
@@ -122,7 +223,11 @@ export class CreateAccountPage implements OnInit {
   protected register() {
     return this.run(async () => {
       const r = await this.account.register({
-        identityToken: this.identity()!.identityToken, email: this.email.trim(), phone: this.phone.trim(), password: this.password, consentVersion: this.consent()!.version,
+        identityToken: this.identity()!.identityToken,
+        email: this.email.trim(),
+        phone: this.phone.trim(),
+        password: this.password,
+        consentVersion: this.consent()!.version,
       });
       this.maskedEmail.set(r.maskedEmail);
       this.password = '';
@@ -139,7 +244,9 @@ export class CreateAccountPage implements OnInit {
   }
 
   protected resend() {
-    return this.run(async () => this.info.set((await this.account.resendCode(this.email.trim())).message));
+    return this.run(async () =>
+      this.info.set((await this.account.resendCode(this.email.trim())).message),
+    );
   }
 
   private async run(fn: () => Promise<void>) {

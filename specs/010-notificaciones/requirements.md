@@ -15,10 +15,10 @@
 
 **Escenarios de aceptación:**
 
-1. **Dado** que creo mi cuenta, **cuando** se registra, **entonces** recibo el código de verificación por correo. *(RF-11.01)*
-2. **Dado** que mi pago se confirma, **cuando** cambia el estado, **entonces** recibo un correo con enlace a mi ficha. *(RF-11.02)*
-3. **Dado** que mi expediente es observado, **cuando** el evaluador finaliza la revisión, **entonces** recibo un correo con la fecha límite de subsanación, sin el detalle de documentos sensibles en el asunto. *(RF-11.04)*
-4. **Dado** que se publica la distribución de aulas o los resultados, **cuando** se publican, **entonces** recibo un aviso con enlace a mi panel (sin incluir mi puntaje en el correo). *(RF-11.06, RF-11.07)*
+1. **Dado** que creo mi cuenta, **cuando** se registra, **entonces** recibo el código de verificación por correo. _(RF-11.01)_
+2. **Dado** que mi pago se confirma, **cuando** cambia el estado, **entonces** recibo un correo con enlace a mi ficha. _(RF-11.02)_
+3. **Dado** que mi expediente es observado, **cuando** el evaluador finaliza la revisión, **entonces** recibo un correo con la fecha límite de subsanación, sin el detalle de documentos sensibles en el asunto. _(RF-11.04)_
+4. **Dado** que se publica la distribución de aulas o los resultados, **cuando** se publican, **entonces** recibo un aviso con enlace a mi panel (sin incluir mi puntaje en el correo). _(RF-11.06, RF-11.07)_
 
 ---
 
@@ -34,7 +34,7 @@
 
 **Escenarios de aceptación:**
 
-1. **Dado** una inscripción pendiente de pago, **cuando** faltan 2 días para el cierre de la etapa regular, **entonces** recibo un recordatorio con el monto y el aviso del recargo extemporáneo. *(RF-11.05)*
+1. **Dado** una inscripción pendiente de pago, **cuando** faltan 2 días para el cierre de la etapa regular, **entonces** recibo un recordatorio con el monto y el aviso del recargo extemporáneo. _(RF-11.05)_
 2. **Dado** que soy apto, **cuando** falta 1 día para mi examen, **entonces** recibo la hora límite de ingreso y la lista de qué llevar.
 
 ---
@@ -43,7 +43,7 @@
 
 **Escenarios de aceptación:**
 
-1. **Dado** que soy de la Oficina de Admisión, **cuando** envío un comunicado a "Exonerados con expediente observado", **entonces** solo esos postulantes lo reciben y veo cuántos fueron enviados, entregados y rebotados. *(RF-11.08, RF-11.09)*
+1. **Dado** que soy de la Oficina de Admisión, **cuando** envío un comunicado a "Exonerados con expediente observado", **entonces** solo esos postulantes lo reciben y veo cuántos fueron enviados, entregados y rebotados. _(RF-11.08, RF-11.09)_
 
 ---
 
@@ -63,13 +63,13 @@
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE notificar por correo la creación de cuenta, pagos, cambios de estado, observaciones, aula y resultados. *(RF-11.01 a RF-11.04, RF-11.06, RF-11.07)*
-- **FR-002**: El sistema DEBE enviar recordatorios automáticos de fechas importantes. *(RF-11.05)*
-- **FR-003**: El sistema DEBE permitir comunicados segmentados por modalidad, programa o estado. *(RF-11.08)*
-- **FR-004**: El sistema DEBE registrar estado de envío y entrega de cada notificación. *(RF-11.09)*
-- **FR-005**: El sistema DEBE mostrar las notificaciones dentro de la plataforma. *(MEJ-13)*
-- **FR-006**: El sistema DEBE usar plantillas editables y no incluir datos sensibles en asuntos ni cuerpos de correo. *(RNF-03)*
-- **FR-007**: El sistema DEBE reintentar envíos fallidos sin duplicar. *(RNF-08)*
+- **FR-001**: El sistema DEBE notificar por correo la creación de cuenta, pagos, cambios de estado, observaciones, aula y resultados. _(RF-11.01 a RF-11.04, RF-11.06, RF-11.07)_
+- **FR-002**: El sistema DEBE enviar recordatorios automáticos de fechas importantes. _(RF-11.05)_
+- **FR-003**: El sistema DEBE permitir comunicados segmentados por modalidad, programa o estado. _(RF-11.08)_
+- **FR-004**: El sistema DEBE registrar estado de envío y entrega de cada notificación. _(RF-11.09)_
+- **FR-005**: El sistema DEBE mostrar las notificaciones dentro de la plataforma. _(MEJ-13)_
+- **FR-006**: El sistema DEBE usar plantillas editables y no incluir datos sensibles en asuntos ni cuerpos de correo. _(RNF-03)_
+- **FR-007**: El sistema DEBE reintentar envíos fallidos sin duplicar. _(RNF-08)_
 - **FR-008**: El sistema PUEDE enviar SMS opcionales cuando exista proveedor autorizado.
 
 ### Entidades clave
@@ -95,15 +95,15 @@
 
 7 de 8 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-11.01 | ✅ | Correos de código de verificación y de cuenta creada |
-| RF-11.02 | ✅ | Correos de orden generada y pago confirmado, registrados en M11 |
-| RF-11.04 | ✅ | Correo con los documentos observados y el plazo de subsanación |
-| RF-11.05 | ✅ | Recordatorio de pago 2 días antes del cierre y recordatorio la víspera del examen, sin duplicados y con preferencia |
-| RF-11.06 | ✅ | Aviso único por postulante cuando se publica su aula |
-| RF-11.07 | ✅ | Aviso de resultados disponibles, sin puntaje en el correo |
-| RF-11.08 | ✅ | Comunicados por modalidad, programa y estado con enviados, en cola y fallidos |
-| RF-11.09 | 🟡 | Registro de cada correo con estado e intentos (hasta 3, sin duplicar); el estado «rebotado» llega con Amazon SES (Paso 11) |
+| RF       | Estado | Detalle                                                                                                                    |
+| -------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| RF-11.01 | ✅     | Correos de código de verificación y de cuenta creada                                                                       |
+| RF-11.02 | ✅     | Correos de orden generada y pago confirmado, registrados en M11                                                            |
+| RF-11.04 | ✅     | Correo con los documentos observados y el plazo de subsanación                                                             |
+| RF-11.05 | ✅     | Recordatorio de pago 2 días antes del cierre y recordatorio la víspera del examen, sin duplicados y con preferencia        |
+| RF-11.06 | ✅     | Aviso único por postulante cuando se publica su aula                                                                       |
+| RF-11.07 | ✅     | Aviso de resultados disponibles, sin puntaje en el correo                                                                  |
+| RF-11.08 | ✅     | Comunicados por modalidad, programa y estado con enviados, en cola y fallidos                                              |
+| RF-11.09 | 🟡     | Registro de cada correo con estado e intentos (hasta 3, sin duplicar); el estado «rebotado» llega con Amazon SES (Paso 11) |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

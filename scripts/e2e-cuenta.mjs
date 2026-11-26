@@ -11,17 +11,31 @@ const base = process.env.BASE_URL ?? 'http://127.0.0.1:4200';
 const mailDir = 'apps/backend/.dev-mail';
 mkdirSync(out, { recursive: true });
 const step = (m) => console.log(`✔ ${m}`);
-const checkDigit = (d) => String((11 - ([...d].reduce((a, x, i) => a + Number(x) * [3, 2, 7, 6, 5, 4, 3, 2][i], 0) % 11)) % 10);
+const checkDigit = (d) =>
+  String((11 - ([...d].reduce((a, x, i) => a + Number(x) * [3, 2, 7, 6, 5, 4, 3, 2][i], 0) % 11)) % 10);
 const email = `cuenta.${dni}.${Date.now() % 100000}@example.com`;
 const PASSWORD = 'Huamanga-Cuenta-2027';
 
 async function codeFor(address, since) {
   for (let i = 0; i < 40; i++) {
-    const files = readdirSync(mailDir).filter((f) => f.includes('codigo')).map((f) => path.join(mailDir, f)).sort();
+    const files = readdirSync(mailDir)
+      .filter((f) => f.includes('codigo'))
+      .map((f) => path.join(mailDir, f))
+      .sort();
     for (const f of files.reverse()) {
       const html = readFileSync(f, 'utf8');
-      if (html.includes(address) && Number(f.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/)?.[1].replace(/\D/g, '') ?? 0) >= since) {
-        const m = /(\d{6})/.exec(html.replace(/<[^>]+>/g, ' ').split('código').slice(1).join(' ')) ?? /\b(\d{6})\b/.exec(html);
+      if (
+        html.includes(address) &&
+        Number(f.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/)?.[1].replace(/\D/g, '') ?? 0) >= since
+      ) {
+        const m =
+          /(\d{6})/.exec(
+            html
+              .replace(/<[^>]+>/g, ' ')
+              .split('código')
+              .slice(1)
+              .join(' '),
+          ) ?? /\b(\d{6})\b/.exec(html);
         if (m) return m[1];
       }
     }
@@ -47,7 +61,9 @@ try {
   await page.fill('#ca-pass', PASSWORD);
   await page.check('input[name=ok]');
   // El botón se habilita tras marcar el consentimiento.
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent?.includes('Crear cuenta') && !b.disabled));
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('button')].some((b) => b.textContent?.includes('Crear cuenta') && !b.disabled),
+  );
   await page.click('button:has-text("Crear cuenta")');
   await page.locator('#ca-code').waitFor({ timeout: 20000 });
   await page.fill('#ca-code', await codeFor(email, since - 5));
@@ -62,7 +78,8 @@ try {
   await page.waitForURL(/\/mi-cuenta$/, { timeout: 20000 });
   await page.locator('app-inscription-receipt').first().waitFor({ timeout: 20000 });
   step(`«Mi cuenta» muestra ${await page.locator('app-inscription-receipt').count()} inscripción(es) del mismo DNI`);
-  if (await page.locator('button:has-text("Descargar ficha (PDF)")').count()) step('La ficha se puede descargar desde la cuenta');
+  if (await page.locator('button:has-text("Descargar ficha (PDF)")').count())
+    step('La ficha se puede descargar desde la cuenta');
   await page.screenshot({ path: `${out}/mi-cuenta.png`, fullPage: true });
 
   await page.fill('#ma-cel', '955333444');

@@ -6,61 +6,74 @@ Los actores representan a los usuarios y servicios externos que interactúan con
 
 ## 2. Actores del sistema
 
-| ID | Actor | Tipo | Función principal |
-|---|---|---|---|
-| A01 | Postulante | Usuario | Registrarse, inscribirse en Ordinaria o Exonerados, pagar y consultar resultados. |
-| A02 | Personal de Admisión | Usuario | Gestionar postulantes, inscripciones y convocatorias. |
-| A03 | Administrador | Usuario | Administrar usuarios, roles, modalidades y configuraciones. |
-| A04 | Evaluador Documental | Usuario | Revisar, observar y aprobar expedientes. |
-| A05 | Responsable de Tesorería | Usuario | Verificar pagos y generar reportes de recaudación. |
-| A06 | Coordinador de Exámenes | Usuario | Programar exámenes y asignar sedes y aulas. |
-| A07 | Responsable de Resultados | Usuario | Procesar calificaciones y publicar resultados. |
-| A08 | Personal de Soporte | Usuario | Atender consultas e incidencias de postulantes. |
-| A09 | RENIEC | Sistema externo | Validar la identidad de los postulantes. |
-| A10 | Pasarela de Pagos | Sistema externo | Procesar y confirmar pagos de inscripción. |
-| A11 | Servicio de Correo | Sistema externo | Enviar confirmaciones y notificaciones. |
-| A12 | OpenRouter API | Sistema externo | Procesar consultas del chatbot inteligente. |
-| A13 | Servicio SMS | Sistema externo (opcional, RC16) | Enviar códigos y recordatorios. **No implementado:** los códigos y recordatorios se envían por correo. |
+| ID  | Actor                     | Tipo                             | Función principal                                                                                      |
+| --- | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| A01 | Postulante                | Usuario                          | Registrarse, inscribirse en Ordinaria o Exonerados, pagar y consultar resultados.                      |
+| A02 | Personal de Admisión      | Usuario                          | Gestionar postulantes, inscripciones y convocatorias.                                                  |
+| A03 | Administrador             | Usuario                          | Administrar usuarios, roles, modalidades y configuraciones.                                            |
+| A04 | Evaluador Documental      | Usuario                          | Revisar, observar y aprobar expedientes.                                                               |
+| A05 | Responsable de Tesorería  | Usuario                          | Verificar pagos y generar reportes de recaudación.                                                     |
+| A06 | Coordinador de Exámenes   | Usuario                          | Programar exámenes y asignar sedes y aulas.                                                            |
+| A07 | Responsable de Resultados | Usuario                          | Procesar calificaciones y publicar resultados.                                                         |
+| A08 | Personal de Soporte       | Usuario                          | Atender consultas e incidencias de postulantes.                                                        |
+| A09 | RENIEC                    | Sistema externo                  | Validar la identidad de los postulantes.                                                               |
+| A10 | Pasarela de Pagos         | Sistema externo                  | Procesar y confirmar pagos de inscripción.                                                             |
+| A11 | Servicio de Correo        | Sistema externo                  | Enviar confirmaciones y notificaciones.                                                                |
+| A12 | OpenRouter API            | Sistema externo                  | Procesar consultas del chatbot inteligente.                                                            |
+| A13 | Servicio SMS              | Sistema externo (opcional, RC16) | Enviar códigos y recordatorios. **No implementado:** los códigos y recordatorios se envían por correo. |
 
 ## 3. Descripción de actores
 
 ### A01 – Postulante
+
 Persona que realiza su inscripción, presenta documentos, efectúa pagos, consulta su examen y resultados, y utiliza el chatbot.
 
 ### A02 – Personal de Admisión
+
 Gestiona y supervisa las inscripciones, convocatorias y datos de los postulantes.
 
 ### A03 – Administrador
+
 Administra usuarios, permisos, modalidades, programas de estudios y configuraciones del sistema.
 
 ### A04 – Evaluador Documental
+
 Verifica los requisitos y documentos presentados, especialmente en la modalidad Exonerados.
 
 ### A05 – Responsable de Tesorería
+
 Supervisa las transacciones, confirma pagos y genera reportes financieros.
 
 ### A06 – Coordinador de Exámenes
+
 Organiza los exámenes, asigna aulas, sedes y horarios a los postulantes.
 
 ### A07 – Responsable de Resultados
+
 Gestiona calificaciones, órdenes de mérito y publicación de resultados oficiales.
 
 ### A08 – Personal de Soporte
+
 Resuelve incidencias y atiende consultas derivadas del chatbot.
 
 ### A09 – RENIEC
+
 Servicio externo que permite validar la identidad de los postulantes.
 
 ### A10 – Pasarela de Pagos
+
 Servicio externo encargado de procesar y confirmar los pagos de inscripción.
 
 ### A11 – Servicio de Correo Electrónico
+
 Envía notificaciones, confirmaciones y comunicaciones del proceso.
 
 ### A12 – OpenRouter API
+
 Servicio externo de inteligencia artificial utilizado por el chatbot para brindar orientación y seguimiento.
 
 ### A13 – Servicio SMS
+
 Servicio externo que permite enviar códigos de verificación y recordatorios. Es opcional según la restricción RC16 y no se ha implementado: hoy los códigos de verificación y los recordatorios llegan por correo (Amazon SES). Se agregaría como un adaptador más del módulo de Notificaciones.
 
 ## 4. Resumen
@@ -71,14 +84,14 @@ Servicio externo que permite enviar códigos de verificación y recordatorios. E
 
 ## 5. Estado de implementación (02/11/2026)
 
-| Actor | Cómo está implementado |
-|---|---|
-| A01 Postulante | Portal público: inscripción sin cuenta, pago, «Imprimir documentos», «Buscar aula», «Ver puntaje», asistente y cuenta opcional. |
-| A02 a A08 Personal | Panel administrativo con 9 roles (Administrador general, Oficina de Admisión, Tesorería, Evaluador documental, Coordinador de examen, Responsable de aula, Operador de resultados, Soporte y Auditor), contraseña + segundo factor TOTP (ADR-018). |
-| A09 RENIEC | Por medio de apiperu.dev (`ApiPeruIdentityProvider`); con simulador para desarrollo. |
-| A10 Pasarela de pagos | Culqi: tarjeta y Yape en el mismo formulario (ADR-024), en ambiente de pruebas. |
-| A11 Servicio de correo | Amazon SES (`SesEmailSender`). |
-| A12 OpenRouter API | Asistente virtual con herramientas sobre datos oficiales (ADR-017); modo básico por reglas si no hay clave. |
-| A13 Servicio SMS | No implementado (opcional). |
+| Actor                  | Cómo está implementado                                                                                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A01 Postulante         | Portal público: inscripción sin cuenta, pago, «Imprimir documentos», «Buscar aula», «Ver puntaje», asistente y cuenta opcional.                                                                                                                    |
+| A02 a A08 Personal     | Panel administrativo con 9 roles (Administrador general, Oficina de Admisión, Tesorería, Evaluador documental, Coordinador de examen, Responsable de aula, Operador de resultados, Soporte y Auditor), contraseña + segundo factor TOTP (ADR-018). |
+| A09 RENIEC             | Por medio de apiperu.dev (`ApiPeruIdentityProvider`); con simulador para desarrollo.                                                                                                                                                               |
+| A10 Pasarela de pagos  | Culqi: tarjeta y Yape en el mismo formulario (ADR-024), en ambiente de pruebas.                                                                                                                                                                    |
+| A11 Servicio de correo | Amazon SES (`SesEmailSender`).                                                                                                                                                                                                                     |
+| A12 OpenRouter API     | Asistente virtual con herramientas sobre datos oficiales (ADR-017); modo básico por reglas si no hay clave.                                                                                                                                        |
+| A13 Servicio SMS       | No implementado (opcional).                                                                                                                                                                                                                        |
 
 El sistema se desarrollará mediante una arquitectura de Monolito Modular por Capas, aplicando los principios de Arquitectura Limpia (Clean Architecture).

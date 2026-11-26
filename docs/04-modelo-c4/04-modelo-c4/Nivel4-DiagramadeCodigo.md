@@ -16,13 +16,13 @@ Los nombres de clases y métodos representan una propuesta de diseño que se det
 
 ## 2. Distribución por capas
 
-| Capa | Elementos propuestos | Responsabilidad |
-|---|---|---|
-| Interfaces | Controladores de Inscripciones y Pagos. | Recibir solicitudes, validar su formato y devolver respuestas HTTP. |
-| Aplicación | Casos de uso de registro, inicio de pago y confirmación. | Coordinar validaciones, operaciones transaccionales e integraciones. |
-| Dominio | Entidades Inscripción y Pago, reglas por modalidad y contratos. | Mantener las reglas y transiciones válidas del negocio. |
-| Infraestructura | Repositorios PostgreSQL, adaptadores de pasarela y Outbox. | Implementar persistencia, comunicación externa y registro de eventos. |
-| Composición | Configuración de módulos e inyección de dependencias. | Conectar los casos de uso con sus implementaciones concretas. |
+| Capa            | Elementos propuestos                                            | Responsabilidad                                                       |
+| --------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Interfaces      | Controladores de Inscripciones y Pagos.                         | Recibir solicitudes, validar su formato y devolver respuestas HTTP.   |
+| Aplicación      | Casos de uso de registro, inicio de pago y confirmación.        | Coordinar validaciones, operaciones transaccionales e integraciones.  |
+| Dominio         | Entidades Inscripción y Pago, reglas por modalidad y contratos. | Mantener las reglas y transiciones válidas del negocio.               |
+| Infraestructura | Repositorios PostgreSQL, adaptadores de pasarela y Outbox.      | Implementar persistencia, comunicación externa y registro de eventos. |
+| Composición     | Configuración de módulos e inyección de dependencias.           | Conectar los casos de uso con sus implementaciones concretas.         |
 
 ## 3. Diagrama de clases de Inscripciones
 
@@ -218,19 +218,19 @@ Posteriormente, el consumidor de Inscripciones actualizará su información en o
 
 ## 6. Responsabilidades principales
 
-| Elemento | Responsabilidad |
-|---|---|
-| `RegistrarInscripcionUseCase` | Verificar condiciones, prevenir duplicidades y coordinar el registro. |
-| `Inscripcion` | Aplicar reglas por modalidad y controlar la habilitación. |
-| `IniciarPagoUseCase` | Consultar el contexto autorizado y solicitar la operación al proveedor. |
-| `ConfirmarPagoUseCase` | Verificar el resultado externo, comprobar los datos y registrar la confirmación idempotente. |
-| `Pago` | Proteger las transiciones y condiciones de la transacción. |
-| `InscripcionesRepository` | Definir las operaciones de persistencia de inscripciones. |
-| `PagosRepository` | Definir las operaciones de persistencia de pagos. |
-| `UnidadTrabajo` | Ejecutar operaciones que requieran una transacción común. |
-| `EventOutbox` | Registrar eventos dentro de la transacción de negocio. |
-| `PagoConfirmadoHandler` | Aplicar el pago confirmado a la inscripción y revisar sus requisitos. |
-| Adaptadores de pasarela | Traducir solicitudes, verificar respuestas y consultar al proveedor. |
+| Elemento                      | Responsabilidad                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `RegistrarInscripcionUseCase` | Verificar condiciones, prevenir duplicidades y coordinar el registro.                        |
+| `Inscripcion`                 | Aplicar reglas por modalidad y controlar la habilitación.                                    |
+| `IniciarPagoUseCase`          | Consultar el contexto autorizado y solicitar la operación al proveedor.                      |
+| `ConfirmarPagoUseCase`        | Verificar el resultado externo, comprobar los datos y registrar la confirmación idempotente. |
+| `Pago`                        | Proteger las transiciones y condiciones de la transacción.                                   |
+| `InscripcionesRepository`     | Definir las operaciones de persistencia de inscripciones.                                    |
+| `PagosRepository`             | Definir las operaciones de persistencia de pagos.                                            |
+| `UnidadTrabajo`               | Ejecutar operaciones que requieran una transacción común.                                    |
+| `EventOutbox`                 | Registrar eventos dentro de la transacción de negocio.                                       |
+| `PagoConfirmadoHandler`       | Aplicar el pago confirmado a la inscripción y revisar sus requisitos.                        |
+| Adaptadores de pasarela       | Traducir solicitudes, verificar respuestas y consultar al proveedor.                         |
 
 ## 7. Secuencia de registro de inscripción
 
@@ -333,15 +333,14 @@ Notificaciones procesará los eventos que le correspondan mediante su propio con
 
 ## 11. Patrones y principios relacionados
 
-| Patrón o principio | Aplicación propuesta |
-|---|---|
-| Repositorio | Persistencia mediante contratos de Inscripciones y Pagos. |
-| Adaptador | Integraciones con Izipay micuentaweb y Culqi. |
-| Inyección de dependencias | Conexión de casos de uso con repositorios y proveedores. |
-| Fábrica simple | Construcción de adaptadores según la configuración. |
-| Publicación y suscripción | Reacción de Inscripciones y Notificaciones a eventos. |
-| Transactional Outbox | Registro conjunto de operaciones y eventos. |
-| Responsabilidad Única | Separación de HTTP, coordinación, reglas y persistencia. |
+| Patrón o principio        | Aplicación propuesta                                                  |
+| ------------------------- | --------------------------------------------------------------------- |
+| Repositorio               | Persistencia mediante contratos de Inscripciones y Pagos.             |
+| Adaptador                 | Integraciones con Izipay micuentaweb y Culqi.                         |
+| Inyección de dependencias | Conexión de casos de uso con repositorios y proveedores.              |
+| Fábrica simple            | Construcción de adaptadores según la configuración.                   |
+| Publicación y suscripción | Reacción de Inscripciones y Notificaciones a eventos.                 |
+| Transactional Outbox      | Registro conjunto de operaciones y eventos.                           |
+| Responsabilidad Única     | Separación de HTTP, coordinación, reglas y persistencia.              |
 | Segregación de Interfaces | Contratos específicos para consultas, repositorios y métodos de pago. |
-| Inversión de Dependencias | Casos de uso independientes de PostgreSQL y proveedores concretos. |
-
+| Inversión de Dependencias | Casos de uso independientes de PostgreSQL y proveedores concretos.    |

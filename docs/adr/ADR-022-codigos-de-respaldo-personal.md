@@ -19,20 +19,23 @@ El personal entra con contraseña + TOTP. Si pierde el celular, solo otro admini
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Solo el restablecimiento por un administrador (estado anterior) | Sin código nuevo | El último administrador queda fuera | No cubre el riesgo |
-| Recuperación por correo | Familiar | El correo no es un factor independiente de la contraseña (ADR-018) | Debilita el segundo factor |
-| Guardar los códigos cifrados | Se podrían volver a mostrar | Quien lea la base con la clave los obtiene | Un código solo necesita compararse |
+| Alternativa                                                     | A favor                     | En contra                                                          | Motivo del descarte                |
+| --------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------ | ---------------------------------- |
+| Solo el restablecimiento por un administrador (estado anterior) | Sin código nuevo            | El último administrador queda fuera                                | No cubre el riesgo                 |
+| Recuperación por correo                                         | Familiar                    | El correo no es un factor independiente de la contraseña (ADR-018) | Debilita el segundo factor         |
+| Guardar los códigos cifrados                                    | Se podrían volver a mostrar | Quien lea la base con la clave los obtiene                         | Un código solo necesita compararse |
 
 ## Consecuencias
 
 **Positivas:**
+
 - El personal recupera el acceso sin depender de nadie, y queda registro.
 
 **Negativas / riesgos aceptados:**
+
 - Quien obtenga la contraseña y un código impreso puede entrar: por eso se pide guardarlos en un lugar seguro y cada uso se audita.
 - Nueva tabla `usuarios.staff_recovery_codes`: hay que aplicar la migración en RDS (`npm run rds:migrate`).
 
 **Cómo verificamos que se cumple:**
+
 - `tests/integration/staff-recovery.test.ts`: entrega única, solo huella en la base, un solo uso, formato flexible, rechazo durante la activación, auditoría y regeneración.

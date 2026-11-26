@@ -23,13 +23,24 @@ import { SiteHeader } from './shared/site-header';
   `,
   // Reserva el alto de la ventana mientras Angular carga una ruta diferida. Así el
   // pie no aparece dentro del viewport y luego salta varios miles de píxeles (CLS).
-  styles: `main { display: block; min-height: 100vh; } main:focus { outline: none; }`,
+  styles: `
+    main {
+      display: block;
+      min-height: 100vh;
+    }
+    main:focus {
+      outline: none;
+    }
+  `,
 })
 export class App {
   private readonly router = inject(Router);
   /** El panel del personal tiene su propio marco: sin encabezado, pie ni asistente del portal. */
   protected readonly inPanel = toSignal(
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map(() => this.router.url.startsWith('/admin'))),
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.router.url.startsWith('/admin')),
+    ),
     { initialValue: location.pathname.startsWith('/admin') },
   );
 

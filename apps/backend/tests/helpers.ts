@@ -10,7 +10,10 @@ import { syntheticCheckDigit } from '../src/modules/usuarios/infrastructure/synt
 export const TEST_URL = 'postgresql://sia_test:sia_test_only@127.0.0.1:5434/sia_test';
 
 /** Aplicación real contra la base de pruebas, con reloj controlable y correo en memoria. */
-export function testApp(now: string | Clock = '2026-10-25T10:00:00-05:00', extra: Pick<AppOverrides, 'assistantAi' | 'paymentGateway' | 'eventQueue'> = {}) {
+export function testApp(
+  now: string | Clock = '2026-10-25T10:00:00-05:00',
+  extra: Pick<AppOverrides, 'assistantAi' | 'paymentGateway' | 'eventQueue'> = {},
+) {
   const env = loadEnv({
     NODE_ENV: 'test',
     APP_ENV: 'test',
@@ -23,7 +26,14 @@ export function testApp(now: string | Clock = '2026-10-25T10:00:00-05:00', extra
   const email = new MemoryEmailSender();
   const storage = new MemoryFileStorage();
   const clock = typeof now === 'string' ? fixedClock(now) : now;
-  const application = createApplication(env, { clock, email, storage, logger: pino({ level: 'silent' }), assistantAi: null, ...extra });
+  const application = createApplication(env, {
+    clock,
+    email,
+    storage,
+    logger: pino({ level: 'silent' }),
+    assistantAi: null,
+    ...extra,
+  });
   return { ...application, email, storage, request: supertest(application.app) };
 }
 

@@ -7,35 +7,101 @@ import { dateTime } from '../core/format';
 @Component({
   selector: 'app-active-sessions',
   template: `
-    @if (error()) { <p class="as__error" role="alert">{{ error() }}</p> }
+    @if (error()) {
+      <p class="as__error" role="alert">{{ error() }}</p>
+    }
     @if (list(); as rows) {
       <ul class="as">
         @for (s of rows; track s.id) {
           <li>
             <span class="as__who">
               <strong>{{ s.device }}</strong>
-              <span>{{ s.current ? 'Este dispositivo' : 'Última actividad: ' + when(s.lastActiveAt) }}</span>
+              <span>{{
+                s.current ? 'Este dispositivo' : 'Última actividad: ' + when(s.lastActiveAt)
+              }}</span>
             </span>
-            @if (!s.current) { <button type="button" class="as__out" [disabled]="busy()" (click)="end(s)" [attr.aria-label]="'Cerrar la sesión de ' + s.device">Cerrar</button> }
+            @if (!s.current) {
+              <button
+                type="button"
+                class="as__out"
+                [disabled]="busy()"
+                (click)="end(s)"
+                [attr.aria-label]="'Cerrar la sesión de ' + s.device"
+              >
+                Cerrar
+              </button>
+            }
           </li>
-        } @empty { <li class="as__none">No hay otras sesiones abiertas.</li> }
+        } @empty {
+          <li class="as__none">No hay otras sesiones abiertas.</li>
+        }
       </ul>
-      @if (rows.length > 1) { <p class="as__note">La sesión cerrada termina en 15 minutos como máximo.</p> }
+      @if (rows.length > 1) {
+        <p class="as__note">La sesión cerrada termina en 15 minutos como máximo.</p>
+      }
     } @else if (!error()) {
-      <div class="skel" role="status" aria-label="Cargando las sesiones"><span></span><span></span></div>
+      <div class="skel" role="status" aria-label="Cargando las sesiones">
+        <span></span><span></span>
+      </div>
     }
   `,
   styles: `
-    :host { display: grid; gap: 0.5rem; }
-    .as { list-style: none; margin: 0; padding: 0; display: grid; }
-    .as li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--stone-deep); }
-    .as li:last-child { border-bottom: 0; }
-    .as__who { display: grid; gap: 0.1rem; min-width: 0; }
-    .as__who span { font-size: var(--size-note); color: var(--ink-soft); }
-    .as__out { min-height: 2.75rem; padding: 0 0.75rem; font: inherit; font-size: var(--size-note); font-weight: 600; color: var(--accent); background: none; border: 1px solid var(--field-line); border-radius: var(--radius); cursor: pointer; }
-    .as__out:hover { background: var(--stone); }
-    .as__none, .as__note { color: var(--ink-soft); font-size: var(--size-note); margin: 0; }
-    .as__error { margin: 0; color: var(--danger); font-size: var(--size-note); }
+    :host {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .as {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+    }
+    .as li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--stone-deep);
+    }
+    .as li:last-child {
+      border-bottom: 0;
+    }
+    .as__who {
+      display: grid;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+    .as__who span {
+      font-size: var(--size-note);
+      color: var(--ink-soft);
+    }
+    .as__out {
+      min-height: 2.75rem;
+      padding: 0 0.75rem;
+      font: inherit;
+      font-size: var(--size-note);
+      font-weight: 600;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--field-line);
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .as__out:hover {
+      background: var(--stone);
+    }
+    .as__none,
+    .as__note {
+      color: var(--ink-soft);
+      font-size: var(--size-note);
+      margin: 0;
+    }
+    .as__error {
+      margin: 0;
+      color: var(--danger);
+      font-size: var(--size-note);
+    }
   `,
 })
 export class ActiveSessions implements OnInit {
@@ -46,7 +112,9 @@ export class ActiveSessions implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly when = dateTime;
 
-  ngOnInit() { void this.reload(); }
+  ngOnInit() {
+    void this.reload();
+  }
 
   private async reload() {
     try {

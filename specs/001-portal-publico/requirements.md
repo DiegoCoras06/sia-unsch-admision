@@ -118,21 +118,21 @@ Como visitante, quiero ver el mensaje de las autoridades, la misión, las estad�
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE mostrar la convocatoria vigente con nombre, periodo y estado. *(RF-01.01, RF-01.06)*
-- **FR-002**: El sistema DEBE mostrar el cronograma con cada etapa marcada como Próxima, En curso o Finalizada según la hora de Lima. *(RF-01.03, RF-01.07, MEJ-09)*
-- **FR-003**: El sistema DEBE mostrar una cuenta regresiva hacia el siguiente hito relevante. *(MEJ-09)*
-- **FR-004**: El sistema DEBE listar las 40 opciones de postulación agrupadas por área y programa, con buscador y filtros por área, modalidad y submodalidad. *(RF-01.04, RF-01.05, MEJ-08)*
-- **FR-005**: El sistema DEBE mostrar la ficha de cada programa: facultad, área, duración, grado, título, perfil de ingreso y vacantes por modalidad. *(MEJ-08)*
-- **FR-006**: El sistema DEBE calcular la tasa según modalidad, submodalidad, tipo de colegio, condición militar, vínculo familiar y periodo (regular/extemporáneo), citando el concepto de la Tabla N.° 3. *(RF-05.01, RF-14.02, MEJ-07)*
-- **FR-007**: El sistema DEBE publicar requisitos por submodalidad, temario y reglamento en HTML navegable, con descarga del PDF oficial. *(RF-01.06, MEJ-10)*
-- **FR-008**: El sistema DEBE publicar comunicados y fe de erratas con fecha, tipo y vínculo a la sección afectada. *(RF-01.08)*
-- **FR-009**: El sistema DEBE mostrar las infografías de pasos para Ordinario y Exonerados como pasos HTML accesibles. *(MEJ-10)*
-- **FR-010**: El sistema DEBE mostrar contenido institucional editable (mensajes de autoridades, misión, principios, fines, carrusel). *(RF-14.01, MEJ-17)*
-- **FR-011**: El sistema DEBE mostrar estadísticas agregadas de inscritos por modalidad, sin datos personales. *(RF-12.01)*
-- **FR-012**: El sistema DEBE ofrecer un formulario de contacto que genere número de caso y limite el abuso. *(MEJ-14)*
-- **FR-013**: El sistema DEBE ofrecer accesos directos visibles a Inscripción, Reinscripción, Buscar aula, Ver puntaje e Imprimir documentos, habilitados solo durante su etapa. *(RF-14.08)*
-- **FR-014**: El sistema DEBE mostrar cada documento oficial (reglamento, cronograma, requisitos, tasas, vacantes, temario, programas) **como PDF dentro de la página**, con un botón para verlo completo en otra pestaña y un menú lateral de documentos, como el portal oficial. *(Aclaración 25/10/2026)*
-- **FR-015**: El encabezado DEBE ofrecer los menús **Contenido** (todos los documentos y consultas) y **Pasos** (Ordinario, Exonerados), y los botones **Inscripción** y **Reinscripción**. *(Aclaración 25/10/2026)*
+- **FR-001**: El sistema DEBE mostrar la convocatoria vigente con nombre, periodo y estado. _(RF-01.01, RF-01.06)_
+- **FR-002**: El sistema DEBE mostrar el cronograma con cada etapa marcada como Próxima, En curso o Finalizada según la hora de Lima. _(RF-01.03, RF-01.07, MEJ-09)_
+- **FR-003**: El sistema DEBE mostrar una cuenta regresiva hacia el siguiente hito relevante. _(MEJ-09)_
+- **FR-004**: El sistema DEBE listar las 40 opciones de postulación agrupadas por área y programa, con buscador y filtros por área, modalidad y submodalidad. _(RF-01.04, RF-01.05, MEJ-08)_
+- **FR-005**: El sistema DEBE mostrar la ficha de cada programa: facultad, área, duración, grado, título, perfil de ingreso y vacantes por modalidad. _(MEJ-08)_
+- **FR-006**: El sistema DEBE calcular la tasa según modalidad, submodalidad, tipo de colegio, condición militar, vínculo familiar y periodo (regular/extemporáneo), citando el concepto de la Tabla N.° 3. _(RF-05.01, RF-14.02, MEJ-07)_
+- **FR-007**: El sistema DEBE publicar requisitos por submodalidad, temario y reglamento en HTML navegable, con descarga del PDF oficial. _(RF-01.06, MEJ-10)_
+- **FR-008**: El sistema DEBE publicar comunicados y fe de erratas con fecha, tipo y vínculo a la sección afectada. _(RF-01.08)_
+- **FR-009**: El sistema DEBE mostrar las infografías de pasos para Ordinario y Exonerados como pasos HTML accesibles. _(MEJ-10)_
+- **FR-010**: El sistema DEBE mostrar contenido institucional editable (mensajes de autoridades, misión, principios, fines, carrusel). _(RF-14.01, MEJ-17)_
+- **FR-011**: El sistema DEBE mostrar estadísticas agregadas de inscritos por modalidad, sin datos personales. _(RF-12.01)_
+- **FR-012**: El sistema DEBE ofrecer un formulario de contacto que genere número de caso y limite el abuso. _(MEJ-14)_
+- **FR-013**: El sistema DEBE ofrecer accesos directos visibles a Inscripción, Reinscripción, Buscar aula, Ver puntaje e Imprimir documentos, habilitados solo durante su etapa. _(RF-14.08)_
+- **FR-014**: El sistema DEBE mostrar cada documento oficial (reglamento, cronograma, requisitos, tasas, vacantes, temario, programas) **como PDF dentro de la página**, con un botón para verlo completo en otra pestaña y un menú lateral de documentos, como el portal oficial. _(Aclaración 25/10/2026)_
+- **FR-015**: El encabezado DEBE ofrecer los menús **Contenido** (todos los documentos y consultas) y **Pasos** (Ordinario, Exonerados), y los botones **Inscripción** y **Reinscripción**. _(Aclaración 25/10/2026)_
 
 ### Entidades clave
 
@@ -167,19 +167,19 @@ Como visitante, quiero ver el mensaje de las autoridades, la misión, las estad�
 
 12 de 12 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-01.01 | ✅ | Crear (copiando una convocatoria), modificar y administrar desde el panel |
-| RF-01.03 | ✅ | Fechas de cada etapa editables, validadas y auditadas |
-| RF-01.04 | ✅ | Facultades, áreas y programas editables en «Catálogo del concurso», con auditoría |
-| RF-01.05 | ✅ | Vacantes editables por programa y categoría, con resolución si está publicada |
-| RF-01.06 | ✅ | Portal: convocatoria, reglamento y requisitos como PDF, temario y cronograma |
-| RF-01.07 | ✅ | La inscripción se abre y cierra según la etapa (STAGE_CLOSED) |
-| RF-01.08 | ✅ | Comunicados y fe de erratas publicados desde el panel |
-| RF-05.01 | ✅ | Simulador y cálculo de tasa en el servidor |
-| RF-12.01 | ✅ | Panel con inscritos, aptos, recaudación y pendientes |
-| RF-14.01 | ✅ | Textos, comunicados e imágenes de la portada editables en el panel (con descripción y vuelta a la original) |
-| RF-14.02 | ✅ | Tasas editables por convocatoria, con confirmación si es 0 |
-| RF-14.08 | ✅ | Funciones activadas según la etapa del proceso |
+| RF       | Estado | Detalle                                                                                                     |
+| -------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| RF-01.01 | ✅     | Crear (copiando una convocatoria), modificar y administrar desde el panel                                   |
+| RF-01.03 | ✅     | Fechas de cada etapa editables, validadas y auditadas                                                       |
+| RF-01.04 | ✅     | Facultades, áreas y programas editables en «Catálogo del concurso», con auditoría                           |
+| RF-01.05 | ✅     | Vacantes editables por programa y categoría, con resolución si está publicada                               |
+| RF-01.06 | ✅     | Portal: convocatoria, reglamento y requisitos como PDF, temario y cronograma                                |
+| RF-01.07 | ✅     | La inscripción se abre y cierra según la etapa (STAGE_CLOSED)                                               |
+| RF-01.08 | ✅     | Comunicados y fe de erratas publicados desde el panel                                                       |
+| RF-05.01 | ✅     | Simulador y cálculo de tasa en el servidor                                                                  |
+| RF-12.01 | ✅     | Panel con inscritos, aptos, recaudación y pendientes                                                        |
+| RF-14.01 | ✅     | Textos, comunicados e imágenes de la portada editables en el panel (con descripción y vuelta a la original) |
+| RF-14.02 | ✅     | Tasas editables por convocatoria, con confirmación si es 0                                                  |
+| RF-14.08 | ✅     | Funciones activadas según la etapa del proceso                                                              |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

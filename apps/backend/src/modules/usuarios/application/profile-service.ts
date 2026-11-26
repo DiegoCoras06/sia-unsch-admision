@@ -64,7 +64,11 @@ export class ProfileService {
   async update(userId: string, body: Record<string, unknown>, input: UpdateProfileRequestDto, meta: RequestMeta) {
     const forbiddenFields = Object.keys(body).filter((k) => IDENTITY_FIELDS.includes(k));
     if (forbiddenFields.length) {
-      throw businessRule('IDENTITY_FIELDS_NOT_EDITABLE', 'Tus nombres y documento provienen del registro de identidad. Para corregirlos, presenta una solicitud a la Dirección de Admisión.', { fields: forbiddenFields });
+      throw businessRule(
+        'IDENTITY_FIELDS_NOT_EDITABLE',
+        'Tus nombres y documento provienen del registro de identidad. Para corregirlos, presenta una solicitud a la Dirección de Admisión.',
+        { fields: forbiddenFields },
+      );
     }
     const user = await this.persistence.user.findUnique({ where: { id: userId }, include: { applicant: true } });
     if (!user?.applicant) throw notFound('Perfil no encontrado.');
@@ -87,21 +91,46 @@ export class ProfileService {
             ...(input.guardianName !== undefined ? { guardianName: input.guardianName } : {}),
           },
         });
-        await this.audit.record({ actorUserId: userId, action: 'profile.updated', resourceType: 'applicant', resourceId: user.applicant!.id, after: { fields: changed }, ...meta }, tx);
+        await this.audit.record(
+          {
+            actorUserId: userId,
+            action: 'profile.updated',
+            resourceType: 'applicant',
+            resourceId: user.applicant!.id,
+            after: { fields: changed },
+            ...meta,
+          },
+          tx,
+        );
       }
       if (emailChange) {
         const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
         const now = this.clock.now();
         await tx.emailVerificationCode.create({
           data: {
-            userId, email: emailChange,
+            userId,
+            email: emailChange,
             codeHmac: createHmac('sha256', this.hmacSecret).update(`${userId}:${code}`).digest('hex'),
             expiresAt: new Date(now.getTime() + 15 * 60_000),
             sentAt: now,
           },
         });
-        await this.audit.record({ actorUserId: userId, action: 'profile.email_change_requested', resourceType: 'user', resourceId: userId, ...meta }, tx);
-        await this.outbox.publish(tx, 'CodigoVerificacionSolicitado', { userId, email: emailChange, code, firstNames: user.applicant!.firstNames });
+        await this.audit.record(
+          {
+            actorUserId: userId,
+            action: 'profile.email_change_requested',
+            resourceType: 'user',
+            resourceId: userId,
+            ...meta,
+          },
+          tx,
+        );
+        await this.outbox.publish(tx, 'CodigoVerificacionSolicitado', {
+          userId,
+          email: emailChange,
+          code,
+          firstNames: user.applicant!.firstNames,
+        });
       }
     });
     if (emailChange) this.outbox.kick();

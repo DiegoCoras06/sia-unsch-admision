@@ -7,7 +7,10 @@ import { tooManyRequests } from '../http/errors.js';
  * y compartido entre instancias de Lambda.
  */
 export class RateLimiter {
-  constructor(private readonly db: Db, private readonly clock: Clock) {}
+  constructor(
+    private readonly db: Db,
+    private readonly clock: Clock,
+  ) {}
 
   /** Cuenta un intento; si supera el límite lanza 429 con Retry-After. */
   async consume(key: string, limit: number, windowSeconds: number): Promise<void> {

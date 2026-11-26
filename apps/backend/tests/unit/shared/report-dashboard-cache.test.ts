@@ -34,7 +34,10 @@ describe('ReportQueries: caché breve del dashboard', () => {
 
     await reports.dashboard({ modality: 'ORD' }, { inscripciones: true, pagos: false, asistente: false, casos: false });
     await reports.dashboard({ modality: 'EXO' }, { inscripciones: true, pagos: false, asistente: false, casos: false });
-    await reports.dashboard({ modality: 'EXO' }, { inscripciones: false, pagos: false, asistente: false, casos: false });
+    await reports.dashboard(
+      { modality: 'EXO' },
+      { inscripciones: false, pagos: false, asistente: false, casos: false },
+    );
 
     expect(inscriptions).toHaveBeenCalledTimes(2);
   });

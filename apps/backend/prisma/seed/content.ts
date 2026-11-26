@@ -37,9 +37,30 @@ export const contentBlocks: { key: string; bodyMd: string }[] = [
 ];
 
 export const heroSlides = [
-  { title: 'UNSCH', subtitle: 'Admisión 2027-I', imageUrl: '/img/campus-fachada.jpg', ctaLabel: 'Inscripción', ctaRoute: '/inscripcion', sortOrder: 1 },
-  { title: '34 programas de estudios', subtitle: 'Examen de exonerados: 15 de noviembre · Examen ordinario: 22 de noviembre · Ayacucho, Perú', imageUrl: '/img/campus-aereo.jpg', ctaLabel: 'Ver programas', ctaRoute: '/programas', sortOrder: 2 },
-  { title: 'Dirección de Admisión', subtitle: 'Proceso de admisión 2027-I', imageUrl: '/img/pabellon-agrarias.jpg', ctaLabel: 'Ver cronograma', ctaRoute: '/cronograma', sortOrder: 3 },
+  {
+    title: 'UNSCH',
+    subtitle: 'Admisión 2027-I',
+    imageUrl: '/img/campus-fachada.jpg',
+    ctaLabel: 'Inscripción',
+    ctaRoute: '/inscripcion',
+    sortOrder: 1,
+  },
+  {
+    title: '34 programas de estudios',
+    subtitle: 'Examen de exonerados: 15 de noviembre · Examen ordinario: 22 de noviembre · Ayacucho, Perú',
+    imageUrl: '/img/campus-aereo.jpg',
+    ctaLabel: 'Ver programas',
+    ctaRoute: '/programas',
+    sortOrder: 2,
+  },
+  {
+    title: 'Dirección de Admisión',
+    subtitle: 'Proceso de admisión 2027-I',
+    imageUrl: '/img/pabellon-agrarias.jpg',
+    ctaLabel: 'Ver cronograma',
+    ctaRoute: '/cronograma',
+    sortOrder: 3,
+  },
 ];
 
 export const authorityMessages = [
@@ -54,11 +75,43 @@ export const authorityMessages = [
 ];
 
 export const featureFlags = [
-  { key: 'INSCRIPCION', label: 'Inscripción', route: '/inscripcion', linkedStageCodes: ['ORD_REGULAR', 'ORD_EXTEMP', 'EXO_REGULAR', 'EXO_EXTEMP', 'CEPRE_REGULAR', 'CEPRE_EXTEMP'], sortOrder: 1 },
+  {
+    key: 'INSCRIPCION',
+    label: 'Inscripción',
+    route: '/inscripcion',
+    linkedStageCodes: ['ORD_REGULAR', 'ORD_EXTEMP', 'EXO_REGULAR', 'EXO_EXTEMP', 'CEPRE_REGULAR', 'CEPRE_EXTEMP'],
+    sortOrder: 1,
+  },
   { key: 'REINSCRIPCION', label: 'Reinscripción', route: '/reinscripcion', linkedStageCodes: ['REINS'], sortOrder: 2 },
-  { key: 'IMPRIMIR_DOCUMENTOS', label: 'Imprimir documentos', route: '/mi-inscripcion', linkedStageCodes: ['ORD_FICHA', 'ORD_EXTEMP', 'EXO_REGULAR', 'EXO_EXTEMP', 'CEPRE_REGULAR', 'CEPRE_EXTEMP', 'REINS'], sortOrder: 3 },
-  { key: 'BUSCAR_AULA', label: 'Buscar aula', route: '/buscar-aula', linkedStageCodes: ['EXAM_EXO', 'EXAM_ORD'], sortOrder: 4 },
-  { key: 'VER_PUNTAJE', label: 'Ver puntaje', route: '/resultados', linkedStageCodes: ['EXAM_EXO', 'EXAM_ORD', 'DELIVERY'], sortOrder: 5 },
+  {
+    key: 'IMPRIMIR_DOCUMENTOS',
+    label: 'Imprimir documentos',
+    route: '/mi-inscripcion',
+    linkedStageCodes: [
+      'ORD_FICHA',
+      'ORD_EXTEMP',
+      'EXO_REGULAR',
+      'EXO_EXTEMP',
+      'CEPRE_REGULAR',
+      'CEPRE_EXTEMP',
+      'REINS',
+    ],
+    sortOrder: 3,
+  },
+  {
+    key: 'BUSCAR_AULA',
+    label: 'Buscar aula',
+    route: '/buscar-aula',
+    linkedStageCodes: ['EXAM_EXO', 'EXAM_ORD'],
+    sortOrder: 4,
+  },
+  {
+    key: 'VER_PUNTAJE',
+    label: 'Ver puntaje',
+    route: '/resultados',
+    linkedStageCodes: ['EXAM_EXO', 'EXAM_ORD', 'DELIVERY'],
+    sortOrder: 5,
+  },
 ];
 
 export const announcements = [

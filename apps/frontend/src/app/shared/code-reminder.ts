@@ -16,24 +16,71 @@ import { ApiService, apiErrorMessage } from '../core/api.service';
       <form class="remind__form" (ngSubmit)="send()">
         <label for="rc-doc">DNI o carné de extranjería</label>
         <div class="remind__row">
-          <input id="rc-doc" class="input" name="doc" [(ngModel)]="doc" inputmode="numeric" maxlength="12" autocomplete="off" required>
-          <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">{{ busy() ? 'Enviando…' : 'Enviarme el código' }}</button>
+          <input
+            id="rc-doc"
+            class="input"
+            name="doc"
+            [(ngModel)]="doc"
+            inputmode="numeric"
+            maxlength="12"
+            autocomplete="off"
+            required
+          />
+          <button class="btn btn--gold" type="submit" [disabled]="busy()" [attr.aria-busy]="busy()">
+            {{ busy() ? 'Enviando…' : 'Enviarme el código' }}
+          </button>
         </div>
       </form>
-      @if (done()) { <p class="remind__ok" role="status">{{ done() }}</p> }
-      @if (error()) { <p class="alert alert--error" role="alert">{{ error() }}</p> }
+      @if (done()) {
+        <p class="remind__ok" role="status">{{ done() }}</p>
+      }
+      @if (error()) {
+        <p class="alert alert--error" role="alert">{{ error() }}</p>
+      }
     </details>
   `,
   styles: `
-    .remind { display: grid; gap: 0.75rem; }
-    .remind summary { cursor: pointer; font-weight: 700; text-decoration: underline; text-underline-offset: 0.2em; min-height: 2.75rem; display: flex; align-items: center; }
-    .remind[open] { padding: 1rem 1.25rem; background: var(--accent-press); }
-    .remind__form { display: grid; gap: 0.4rem; }
-    .remind__form label { font-weight: 600; }
-    .remind__row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .remind__row .input { flex: 1 1 12rem; width: auto; background: #fff; border-color: #fff; }
-    .remind__row .input:focus { border-color: var(--gold); }
-    .remind__ok { font-weight: 600; }
+    .remind {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .remind summary {
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+      min-height: 2.75rem;
+      display: flex;
+      align-items: center;
+    }
+    .remind[open] {
+      padding: 1rem 1.25rem;
+      background: var(--accent-press);
+    }
+    .remind__form {
+      display: grid;
+      gap: 0.4rem;
+    }
+    .remind__form label {
+      font-weight: 600;
+    }
+    .remind__row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .remind__row .input {
+      flex: 1 1 12rem;
+      width: auto;
+      background: #fff;
+      border-color: #fff;
+    }
+    .remind__row .input:focus {
+      border-color: var(--gold);
+    }
+    .remind__ok {
+      font-weight: 600;
+    }
   `,
 })
 export class CodeReminder {

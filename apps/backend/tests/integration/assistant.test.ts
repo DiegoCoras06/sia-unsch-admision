@@ -19,16 +19,27 @@ class ScriptedProvider implements LlmProvider {
 }
 const usage = { tokensIn: 120, tokensOut: 40, costUsd: 0.00002 };
 const toolCall = (name: string, args: Record<string, unknown> = {}): LlmResponse => ({
-  content: null, toolCalls: [{ id: `c-${name}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }], usage, model: 'guion',
+  content: null,
+  toolCalls: [{ id: `c-${name}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }],
+  usage,
+  model: 'guion',
 });
 
 // Guion: primero pide las tasas; con el resultado, redacta citando el monto que devolvió la herramienta.
 const scripted = new ScriptedProvider((messages) => {
   const last = messages.at(-1)!;
   if (last.role === 'user') return toolCall('consultar_tasas');
-  const tool = JSON.parse((last as { content: string }).content) as { tasas: { concepto: string; monto: string }[]; _fuente: string };
+  const tool = JSON.parse((last as { content: string }).content) as {
+    tasas: { concepto: string; monto: string }[];
+    _fuente: string;
+  };
   const estatal = tool.tasas.find((t) => /estatal/i.test(t.concepto))!;
-  return { content: `${estatal.concepto}: ${estatal.monto}.\n\nFuente: ${tool._fuente}`, toolCalls: [], usage, model: 'guion' };
+  return {
+    content: `${estatal.concepto}: ${estatal.monto}.\n\nFuente: ${tool._fuente}`,
+    toolCalls: [],
+    usage,
+    model: 'guion',
+  };
 });
 
 const basic = testApp('2026-10-25T10:00:00-05:00');
@@ -43,7 +54,27 @@ const ask = (t: typeof basic, message: string, extra: Record<string, unknown> = 
   t.request.post('/api/v1/assistant/messages').send({ message, ...extra });
 
 function fakeJpeg(): string {
-  const sof = Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, 320 >> 8, 320 & 255, 0, 240, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  const sof = Buffer.from([
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    320 >> 8,
+    320 & 255,
+    0,
+    240,
+    0x03,
+    1,
+    0x22,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
   return `data:image/jpeg;base64,${Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]).toString('base64')}`;
 }
 
@@ -87,17 +118,53 @@ describe('Modo básico (sin clave de OpenRouter): responde solo con datos reales
 
 describe('Seguimiento con pase firmado (Historia 2)', () => {
   it('DNI + código dan un pase; con él responde el estado real; un pase alterado no sirve', async () => {
-    const reg = await basic.request.post('/api/v1/inscriptions').send({
-      documentType: 'DNI', documentNumber: '99900015', paternalSurname: 'X', maternalSurname: 'Y', firstNames: 'Z', sex: 'M',
-      maritalStatus: 'SOLTERO', birthUbigeo: '050101', birthDate: '2008-02-02', address: 'Jr. Lima 200, Ayacucho', residenceUbigeo: '050101',
-      economicDependency: 'PADRES', mobile: '987654321', email: 'chat@example.com', photo: fakeJpeg(), schoolUbigeo: '050101',
-      schoolName: 'IE San Ramón', schoolType: 'ESTATAL', graduationYear: 2025, inFourthOrBelow: false, preparation: 'ACADEMIA', attempts: 1,
-      modality: 'ORD', quotaCategory: 'ORD', campus: 'HUAMANGA', optionCode: 'P34', militaryCondition: 'NONE', familyLink: false, declarationAccepted: true, consentVersion: '2026-10-v1',
-    }).expect(201);
+    const reg = await basic.request
+      .post('/api/v1/inscriptions')
+      .send({
+        documentType: 'DNI',
+        documentNumber: '99900015',
+        paternalSurname: 'X',
+        maternalSurname: 'Y',
+        firstNames: 'Z',
+        sex: 'M',
+        maritalStatus: 'SOLTERO',
+        birthUbigeo: '050101',
+        birthDate: '2008-02-02',
+        address: 'Jr. Lima 200, Ayacucho',
+        residenceUbigeo: '050101',
+        economicDependency: 'PADRES',
+        mobile: '987654321',
+        email: 'chat@example.com',
+        photo: fakeJpeg(),
+        schoolUbigeo: '050101',
+        schoolName: 'IE San Ramón',
+        schoolType: 'ESTATAL',
+        graduationYear: 2025,
+        inFourthOrBelow: false,
+        preparation: 'ACADEMIA',
+        attempts: 1,
+        modality: 'ORD',
+        quotaCategory: 'ORD',
+        campus: 'HUAMANGA',
+        optionCode: 'P34',
+        militaryCondition: 'NONE',
+        familyLink: false,
+        declarationAccepted: true,
+        consentVersion: '2026-10-v1',
+      })
+      .expect(201);
     const code = reg.body.data.applicantCode as string;
 
-    await basic.request.post('/api/v1/assistant/identify').send({ documentNumber: '12345678', applicantCode: code }).expect(404);
-    const pass = (await basic.request.post('/api/v1/assistant/identify').send({ documentNumber: '99900015', applicantCode: code }).expect(200)).body.data;
+    await basic.request
+      .post('/api/v1/assistant/identify')
+      .send({ documentNumber: '12345678', applicantCode: code })
+      .expect(404);
+    const pass = (
+      await basic.request
+        .post('/api/v1/assistant/identify')
+        .send({ documentNumber: '99900015', applicantCode: code })
+        .expect(200)
+    ).body.data;
     expect(pass.accessToken.startsWith(`${code}.`)).toBe(true);
 
     const res = await ask(basic, '¿Cómo va mi inscripción?', { accessToken: pass.accessToken }).expect(200);
@@ -116,14 +183,19 @@ describe('Seguimiento con pase firmado (Historia 2)', () => {
 
 describe('Con IA (OpenRouter guionado)', () => {
   it('el modelo responde con lo que devolvió la herramienta y el proveedor nunca recibe el DNI (RNF-11)', async () => {
-    const res = await ask(ai, 'Mi DNI es 99900030 y mi correo es ana@example.com, ¿cuánto pago si vengo de colegio estatal?').expect(200);
+    const res = await ask(
+      ai,
+      'Mi DNI es 99900030 y mi correo es ana@example.com, ¿cuánto pago si vengo de colegio estatal?',
+    ).expect(200);
     expect(res.body.data.mode).toBe('ia');
     expect(res.body.data.reply).toContain('S/ 250.00');
     const sent = JSON.stringify(scripted.requests);
     expect(sent).not.toContain('99900030');
     expect(sent).not.toContain('ana@example.com');
     expect(sent).toContain('[número]');
-    const saved = await ai.db.chatMessage.findFirst({ where: { conversationId: res.body.data.conversationId, role: 'user' } });
+    const saved = await ai.db.chatMessage.findFirst({
+      where: { conversationId: res.body.data.conversationId, role: 'user' },
+    });
     expect(saved?.content).not.toContain('99900030');
   });
 
@@ -152,17 +224,22 @@ describe('Derivación y retención', () => {
   it('«Hablar con una persona» crea un caso con la conversación (RF-10.10)', async () => {
     const chat = (await ask(basic, 'Quiero hablar con una persona').expect(200)).body.data;
     expect(chat.suggestHandoff).toBe(true);
-    const res = await basic.request.post('/api/v1/assistant/handoff')
-      .send({ conversationId: chat.conversationId, name: 'Rosa Quispe', email: 'rosa@example.com' }).expect(201);
+    const res = await basic.request
+      .post('/api/v1/assistant/handoff')
+      .send({ conversationId: chat.conversationId, name: 'Rosa Quispe', email: 'rosa@example.com' })
+      .expect(201);
     expect(res.body.data.caseNumber).toMatch(/^C-2027I-\d{6}$/);
-    const supportCase = await basic.db.supportCase.findUniqueOrThrow({ where: { caseNumber: res.body.data.caseNumber } });
+    const supportCase = await basic.db.supportCase.findUniqueOrThrow({
+      where: { caseNumber: res.body.data.caseNumber },
+    });
     expect(supportCase.type).toBe('CHATBOT_ESCALATION');
     expect(supportCase.message).toContain('Quiero hablar con una persona');
   });
 
   it('borra las conversaciones más antiguas que la retención (RF-10.11)', async () => {
     const old = await basic.db.chatConversation.create({ data: {} });
-    await basic.db.$executeRaw`UPDATE asistente.conversations SET updated_at = now() - interval '400 days' WHERE id = ${old.id}::uuid`;
+    await basic.db
+      .$executeRaw`UPDATE asistente.conversations SET updated_at = now() - interval '400 days' WHERE id = ${old.id}::uuid`;
     const recent = await basic.db.chatConversation.create({ data: {} });
     expect(await basic.assistant.purgeExpired()).toBeGreaterThanOrEqual(1);
     expect(await basic.db.chatConversation.findUnique({ where: { id: old.id } })).toBeNull();

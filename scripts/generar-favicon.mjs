@@ -58,7 +58,13 @@ const master = await sharp(Buffer.from(plate))
   .toBuffer();
 
 const out = [
-  ['favicon-16.png', 16], ['favicon-32.png', 32], ['favicon-48.png', 48], ['favicon-96.png', 96], ['favicon-180.png', 180], ['favicon-192.png', 192], ['favicon-512.png', 512],
+  ['favicon-16.png', 16],
+  ['favicon-32.png', 32],
+  ['favicon-48.png', 48],
+  ['favicon-96.png', 96],
+  ['favicon-180.png', 180],
+  ['favicon-192.png', 192],
+  ['favicon-512.png', 512],
 ];
 for (const [name, size] of out) {
   await sharp(master).resize(size, size, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(img(name));

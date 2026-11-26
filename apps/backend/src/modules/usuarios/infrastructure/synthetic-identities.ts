@@ -12,8 +12,35 @@ export interface SyntheticIdentity {
   scenario: 'VALID' | 'MINOR' | 'EXPIRED' | 'DISQUALIFIED' | 'PROVIDER_TIMEOUT' | 'E2E';
 }
 
-const FIRST = ['MARÍA ELENA', 'JOSÉ LUIS', 'ROSA', 'CARLOS ALBERTO', 'LUZ MARINA', 'JUAN CARLOS', 'ANA LUCÍA', 'PEDRO', 'CARMEN ROSA', 'MIGUEL ÁNGEL'];
-const SURNAMES = ['QUISPE', 'HUAMÁN', 'MAMANI', 'CCORAHUA', 'PALOMINO', 'GUTIÉRREZ', 'RAMOS', 'CHÁVEZ', 'MENDOZA', 'ALLCCA', 'SULCA', 'BAUTISTA', 'TINEO', 'CONDORI', 'PARIONA'];
+const FIRST = [
+  'MARÍA ELENA',
+  'JOSÉ LUIS',
+  'ROSA',
+  'CARLOS ALBERTO',
+  'LUZ MARINA',
+  'JUAN CARLOS',
+  'ANA LUCÍA',
+  'PEDRO',
+  'CARMEN ROSA',
+  'MIGUEL ÁNGEL',
+];
+const SURNAMES = [
+  'QUISPE',
+  'HUAMÁN',
+  'MAMANI',
+  'CCORAHUA',
+  'PALOMINO',
+  'GUTIÉRREZ',
+  'RAMOS',
+  'CHÁVEZ',
+  'MENDOZA',
+  'ALLCCA',
+  'SULCA',
+  'BAUTISTA',
+  'TINEO',
+  'CONDORI',
+  'PARIONA',
+];
 
 /** Dígito verificador de la simulación: suma ponderada módulo 11 (no es el algoritmo oficial de RENIEC). */
 export function syntheticCheckDigit(dni: string): string {

@@ -5,7 +5,14 @@ import type { Clock } from '../../../shared/clock/clock.js';
 import type { PersistencePort } from '../../../shared/application/persistence-port.js';
 import { notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
-import { LIMITS, NO_INFO_REPLY, SUGGESTIONS, SYSTEM_PROMPT, asksForHuman, maskPersonal } from '../domain/assistant-rules.js';
+import {
+  LIMITS,
+  NO_INFO_REPLY,
+  SUGGESTIONS,
+  SYSTEM_PROMPT,
+  asksForHuman,
+  maskPersonal,
+} from '../domain/assistant-rules.js';
 import type { LlmMessage, LlmProvider, LlmResponse } from '../domain/ports.js';
 import type { AssistantTools } from './tools.js';
 
@@ -35,7 +42,12 @@ export class AssistantService {
       dailyBudgetUsd: number;
       /** Días de retención (parámetro del panel, RF-13.10). */
       retentionDays: () => Promise<number>;
-      inscriptions: { paymentContext(documentNumber: string, applicantCode: string): Promise<{ applicantCode: string; firstNames: string }> };
+      inscriptions: {
+        paymentContext(
+          documentNumber: string,
+          applicantCode: string,
+        ): Promise<{ applicantCode: string; firstNames: string }>;
+      };
       support: { createCase(input: { name: string; email: string; message: string }, ipHash: string): Promise<string> };
     },
   ) {}
@@ -50,8 +62,18 @@ export class AssistantService {
     const ctx = await this.d.inscriptions.paymentContext(documentNumber, applicantCode);
     const expiresAt = new Date(this.d.clock.now().getTime() + LIMITS.passTtlSeconds * 1000);
     const payload = `${ctx.applicantCode}.${expiresAt.getTime()}`;
-    await this.d.audit.record({ actorUserId: null, action: 'assistant.identify', resourceType: 'application', resourceId: ctx.applicantCode, ...meta });
-    return { accessToken: `${payload}.${this.sign(payload)}`, expiresAt: expiresAt.toISOString(), firstName: ctx.firstNames.split(' ')[0] ?? '' };
+    await this.d.audit.record({
+      actorUserId: null,
+      action: 'assistant.identify',
+      resourceType: 'application',
+      resourceId: ctx.applicantCode,
+      ...meta,
+    });
+    return {
+      accessToken: `${payload}.${this.sign(payload)}`,
+      expiresAt: expiresAt.toISOString(),
+      firstName: ctx.firstNames.split(' ')[0] ?? '',
+    };
   }
 
   /** Código de postulante del pase, o null si no hay pase, está alterado o venció. */
@@ -67,11 +89,17 @@ export class AssistantService {
   }
 
   /** Historias 1 y 2: una pregunta; el proveedor solo responde con lo que devuelven las herramientas. */
-  async chat(input: { conversationId?: string | undefined; message: string; accessToken?: string | undefined }, meta: RequestMeta): Promise<AssistantReply> {
+  async chat(
+    input: { conversationId?: string | undefined; message: string; accessToken?: string | undefined },
+    meta: RequestMeta,
+  ): Promise<AssistantReply> {
     await this.d.limiter.consume(`assistant:${meta.ipHash}`, 30, 3600);
     const text = input.message.trim();
     if (!text) throw validationError('Escribe tu pregunta.', [{ field: 'message', issue: 'vacío' }]);
-    if (text.length > LIMITS.maxInputChars) throw validationError(`Tu mensaje es muy largo (máximo ${LIMITS.maxInputChars} caracteres).`, [{ field: 'message', issue: 'muy largo' }]);
+    if (text.length > LIMITS.maxInputChars)
+      throw validationError(`Tu mensaje es muy largo (máximo ${LIMITS.maxInputChars} caracteres).`, [
+        { field: 'message', issue: 'muy largo' },
+      ]);
 
     const applicantCode = this.verifyPass(input.accessToken);
     const conversation = input.conversationId
@@ -79,7 +107,8 @@ export class AssistantService {
       : null;
     if (input.conversationId && !conversation) throw notFound('La conversación ya no existe. Empieza una nueva.');
     const conv = conversation ?? (await this.d.persistence.chatConversation.create({ data: {} }));
-    if (applicantCode && !conv.identified) await this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { identified: true } });
+    if (applicantCode && !conv.identified)
+      await this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { identified: true } });
 
     const history = await this.d.persistence.chatMessage.findMany({
       where: { conversationId: conv.id },
@@ -98,7 +127,10 @@ export class AssistantService {
     try {
       outcome = await this.run(useAi ? this.d.ai! : this.d.basic, messages, applicantCode);
     } catch (error) {
-      this.d.logger.warn({ err: error instanceof Error ? error.message : String(error) }, 'falló el proveedor de IA; se responde en modo básico');
+      this.d.logger.warn(
+        { err: error instanceof Error ? error.message : String(error) },
+        'falló el proveedor de IA; se responde en modo básico',
+      );
       await this.bumpUsage({ errors: 1 });
       outcome = await this.run(this.d.basic, messages, applicantCode);
     }
@@ -106,17 +138,28 @@ export class AssistantService {
     const noInfo = outcome.empty || outcome.reply === NO_INFO_REPLY;
     const failedTurns = noInfo ? conv.failedTurns + 1 : conv.failedTurns;
     await this.d.persistence.$transaction([
-      this.d.persistence.chatMessage.create({ data: { conversationId: conv.id, role: 'user', content: masked, mode: outcome.mode } }),
+      this.d.persistence.chatMessage.create({
+        data: { conversationId: conv.id, role: 'user', content: masked, mode: outcome.mode },
+      }),
       this.d.persistence.chatMessage.create({
         data: {
-          conversationId: conv.id, role: 'assistant', content: outcome.reply.slice(0, 4000), mode: outcome.mode,
-          tools: outcome.tools, tokensIn: outcome.tokensIn, tokensOut: outcome.tokensOut,
+          conversationId: conv.id,
+          role: 'assistant',
+          content: outcome.reply.slice(0, 4000),
+          mode: outcome.mode,
+          tools: outcome.tools,
+          tokensIn: outcome.tokensIn,
+          tokensOut: outcome.tokensOut,
         },
       }),
       this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { failedTurns } }),
     ]);
     await this.bumpUsage({
-      requests: 1, aiReplies: outcome.mode === 'ia' ? 1 : 0, tokensIn: outcome.tokensIn, tokensOut: outcome.tokensOut, costUsd: outcome.costUsd,
+      requests: 1,
+      aiReplies: outcome.mode === 'ia' ? 1 : 0,
+      tokensIn: outcome.tokensIn,
+      tokensOut: outcome.tokensOut,
+      costUsd: outcome.costUsd,
     });
 
     return {
@@ -130,15 +173,26 @@ export class AssistantService {
   }
 
   /** Historia 3: crea un caso de atención con la conversación enmascarada (RF-10.10). */
-  async handoff(input: { conversationId: string; name: string; email: string; note?: string | undefined }, meta: RequestMeta) {
+  async handoff(
+    input: { conversationId: string; name: string; email: string; note?: string | undefined },
+    meta: RequestMeta,
+  ) {
     const conv = await this.d.persistence.chatConversation.findUnique({
       where: { id: input.conversationId },
       include: { messages: { orderBy: { createdAt: 'asc' }, take: 40 } },
     });
     if (!conv) throw notFound('La conversación ya no existe.');
     if (conv.caseNumber) return { caseNumber: conv.caseNumber };
-    const transcript = conv.messages.map((m) => `${m.role === 'user' ? 'Postulante' : 'Asistente'}: ${m.content}`).join('\n');
-    const message = [`Derivado desde el asistente virtual.${input.note ? ` Nota: ${maskPersonal(input.note)}` : ''}`, '', transcript].join('\n').slice(0, 1900);
+    const transcript = conv.messages
+      .map((m) => `${m.role === 'user' ? 'Postulante' : 'Asistente'}: ${m.content}`)
+      .join('\n');
+    const message = [
+      `Derivado desde el asistente virtual.${input.note ? ` Nota: ${maskPersonal(input.note)}` : ''}`,
+      '',
+      transcript,
+    ]
+      .join('\n')
+      .slice(0, 1900);
     const caseNumber = await this.d.support.createCase({ name: input.name, email: input.email, message }, meta.ipHash);
     await this.d.persistence.chatConversation.update({ where: { id: conv.id }, data: { handedOff: true, caseNumber } });
     await this.bumpUsage({ handoffs: 1 });
@@ -155,7 +209,10 @@ export class AssistantService {
   /** RF-10.15 / RF-12.10: consumo de los últimos días. */
   async usage(days = 14) {
     const since = new Date(this.today().getTime() - (days - 1) * 86_400_000);
-    const rows = await this.d.persistence.chatUsageDaily.findMany({ where: { day: { gte: since } }, orderBy: { day: 'asc' } });
+    const rows = await this.d.persistence.chatUsageDaily.findMany({
+      where: { day: { gte: since } },
+      orderBy: { day: 'asc' },
+    });
     return rows.map((r) => ({ ...r, day: r.day.toISOString().slice(0, 10), costUsd: Number(r.costUsd) }));
   }
 
@@ -186,11 +243,25 @@ export class AssistantService {
         tools.push(tc.function.name);
         result.sources.forEach((s) => sources.add(s));
         empty = Boolean(result.empty);
-        messages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: JSON.stringify({ ...result.data, _fuente: result.sources[0] ?? null }) });
+        messages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          name: tc.function.name,
+          content: JSON.stringify({ ...result.data, _fuente: result.sources[0] ?? null }),
+        });
       }
     }
     const reply = res?.content?.trim() || NO_INFO_REPLY;
-    return { reply, sources: [...sources], tools, tokensIn, tokensOut, costUsd, mode: provider.mode, empty: empty && !tools.includes('estado_de_mi_proceso') };
+    return {
+      reply,
+      sources: [...sources],
+      tools,
+      tokensIn,
+      tokensOut,
+      costUsd,
+      mode: provider.mode,
+      empty: empty && !tools.includes('estado_de_mi_proceso'),
+    };
   }
 
   private async withinBudget(): Promise<boolean> {
@@ -199,8 +270,16 @@ export class AssistantService {
     return !row || Number(row.costUsd) < this.d.dailyBudgetUsd;
   }
 
-  private async bumpUsage(delta: Partial<Record<'requests' | 'aiReplies' | 'tokensIn' | 'tokensOut' | 'errors' | 'handoffs' | 'costUsd', number>>) {
-    const inc = Object.fromEntries(Object.entries(delta).filter(([, v]) => v).map(([k, v]) => [k, { increment: v }]));
+  private async bumpUsage(
+    delta: Partial<
+      Record<'requests' | 'aiReplies' | 'tokensIn' | 'tokensOut' | 'errors' | 'handoffs' | 'costUsd', number>
+    >,
+  ) {
+    const inc = Object.fromEntries(
+      Object.entries(delta)
+        .filter(([, v]) => v)
+        .map(([k, v]) => [k, { increment: v }]),
+    );
     await this.d.persistence.chatUsageDaily.upsert({
       where: { day: this.today() },
       create: { day: this.today(), ...Object.fromEntries(Object.entries(delta).map(([k, v]) => [k, v ?? 0])) },

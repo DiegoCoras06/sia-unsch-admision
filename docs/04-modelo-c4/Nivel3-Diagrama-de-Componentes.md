@@ -12,23 +12,22 @@ Descomponer el contenedor **Backend API REST del Sistema Integral de Gestión de
 
 El backend está diseñado como un **Monolito Modular por Capas**, organizado internamente mediante **Clean Architecture**, y se desplegará como una única aplicación en AWS Lambda.
 
-| **Aspecto** | **Descripción** |
-|---|---|
-| Pregunta que responde | ¿Cómo está organizado internamente el backend y qué responsabilidades tiene cada módulo? |
-| Audiencia | Arquitectos de software, desarrolladores y equipo técnico. |
-| Qué es un componente | Unidad funcional con una responsabilidad definida y una interfaz pública. En este proyecto, cada módulo del monolito representa un componente. |
-| Arquitectura | Monolito Modular por Capas. |
-| Enfoque interno | Clean Architecture. |
-| Contenedor detallado | Backend API REST – AWS Lambda. |
-| Nivel anterior | `Nivel2-Diagrama-de-Contenedores.md` |
-| Siguiente nivel | `Nivel4-Diagrama-de-Codigo.md` |
+| **Aspecto**           | **Descripción**                                                                                                                                |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pregunta que responde | ¿Cómo está organizado internamente el backend y qué responsabilidades tiene cada módulo?                                                       |
+| Audiencia             | Arquitectos de software, desarrolladores y equipo técnico.                                                                                     |
+| Qué es un componente  | Unidad funcional con una responsabilidad definida y una interfaz pública. En este proyecto, cada módulo del monolito representa un componente. |
+| Arquitectura          | Monolito Modular por Capas.                                                                                                                    |
+| Enfoque interno       | Clean Architecture.                                                                                                                            |
+| Contenedor detallado  | Backend API REST – AWS Lambda.                                                                                                                 |
+| Nivel anterior        | `Nivel2-Diagrama-de-Contenedores.md`                                                                                                           |
+| Siguiente nivel       | `Nivel4-Diagrama-de-Codigo.md`                                                                                                                 |
 
 ---
 
 ## 2. Diagrama
 
 ### Diagrama de componentes del Backend API REST – UNSCH
-
 
 ```mermaid
 flowchart TB
@@ -93,42 +92,42 @@ flowchart TB
 
 ## 3. Componentes
 
-| **Componente** | **Responsabilidad** | **Funcionalidades principales** | **Carpeta en el código** |
-|---|---|---|---|
-| **API REST** | Punto de entrada HTTP del backend. | Rutas `/api/v1`, autenticación, autorización, validación de solicitudes y manejo de errores. | `src/api/` |
-| **M01 – Convocatorias** | Administrar los procesos de admisión. | Crear convocatorias, configurar cronogramas, modalidades, programas y vacantes. | `src/modules/convocatorias/` |
-| **M02 – Usuarios e Identidad** | Gestionar la información de postulantes y usuarios. | Registro, actualización de datos y validación de identidad mediante RENIEC. | `src/modules/usuarios/` |
-| **M03 – Inscripciones** | Gestionar las inscripciones de todas las modalidades. | Registro de postulaciones ordinarias y de exonerados, selección de programa, ficha y estado. | `modules/inscripciones` |
-| **M04 – Pagos** | Gestionar los pagos de inscripción. | Generación de órdenes, integración con pasarela, confirmación y conciliación de pagos. | `src/modules/pagos/` |
-| **M05 – Expedientes** | Administrar la documentación de postulantes. | Carga, revisión, validación y observación de documentos. | `src/modules/expedientes/` |
-| **M06 – Exámenes, Sedes y Aulas** | Organizar las evaluaciones y sus ambientes. | Programación de exámenes, sedes, aulas, capacidades, asignación y asistencia. | `modules/examenes` |
-| **M07 – Resultados** | Gestionar las calificaciones y resultados de admisión. | Procesamiento, validación, orden de mérito y publicación de resultados. | `src/modules/resultados/` |
-| **M08 – Chatbot IA** | Proporcionar orientación automatizada. | Atención de consultas frecuentes e integración con OpenRouter API. | `src/modules/chatbot-ia/` |
-| **M09 – Notificaciones** | Gestionar la comunicación con postulantes. | Envío de confirmaciones, avisos, observaciones y recordatorios. | `src/modules/notificaciones/` |
-| **M10 – Reportes** | Generar información estadística y administrativa. | Reportes de inscritos, pagos, modalidades, exámenes y resultados. | `src/modules/reportes/` |
-| **M11 – Seguridad** | Controlar el acceso a funcionalidades. | Autenticación, autorización, roles, permisos y auditoría de acciones. | `src/modules/seguridad/` |
-| **M12 – Configuración** | Gestionar parámetros generales del sistema. | Configuración institucional, parámetros operativos e integraciones. | `src/modules/configuracion/` |
-| **Infraestructura Compartida** | Proporcionar mecanismos técnicos reutilizables. | Conexiones, manejo de errores, clientes AWS y utilidades transversales. | `src/shared/` |
+| **Componente**                    | **Responsabilidad**                                    | **Funcionalidades principales**                                                              | **Carpeta en el código**      |
+| --------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ----------------------------- |
+| **API REST**                      | Punto de entrada HTTP del backend.                     | Rutas `/api/v1`, autenticación, autorización, validación de solicitudes y manejo de errores. | `src/api/`                    |
+| **M01 – Convocatorias**           | Administrar los procesos de admisión.                  | Crear convocatorias, configurar cronogramas, modalidades, programas y vacantes.              | `src/modules/convocatorias/`  |
+| **M02 – Usuarios e Identidad**    | Gestionar la información de postulantes y usuarios.    | Registro, actualización de datos y validación de identidad mediante RENIEC.                  | `src/modules/usuarios/`       |
+| **M03 – Inscripciones**           | Gestionar las inscripciones de todas las modalidades.  | Registro de postulaciones ordinarias y de exonerados, selección de programa, ficha y estado. | `modules/inscripciones`       |
+| **M04 – Pagos**                   | Gestionar los pagos de inscripción.                    | Generación de órdenes, integración con pasarela, confirmación y conciliación de pagos.       | `src/modules/pagos/`          |
+| **M05 – Expedientes**             | Administrar la documentación de postulantes.           | Carga, revisión, validación y observación de documentos.                                     | `src/modules/expedientes/`    |
+| **M06 – Exámenes, Sedes y Aulas** | Organizar las evaluaciones y sus ambientes.            | Programación de exámenes, sedes, aulas, capacidades, asignación y asistencia.                | `modules/examenes`            |
+| **M07 – Resultados**              | Gestionar las calificaciones y resultados de admisión. | Procesamiento, validación, orden de mérito y publicación de resultados.                      | `src/modules/resultados/`     |
+| **M08 – Chatbot IA**              | Proporcionar orientación automatizada.                 | Atención de consultas frecuentes e integración con OpenRouter API.                           | `src/modules/chatbot-ia/`     |
+| **M09 – Notificaciones**          | Gestionar la comunicación con postulantes.             | Envío de confirmaciones, avisos, observaciones y recordatorios.                              | `src/modules/notificaciones/` |
+| **M10 – Reportes**                | Generar información estadística y administrativa.      | Reportes de inscritos, pagos, modalidades, exámenes y resultados.                            | `src/modules/reportes/`       |
+| **M11 – Seguridad**               | Controlar el acceso a funcionalidades.                 | Autenticación, autorización, roles, permisos y auditoría de acciones.                        | `src/modules/seguridad/`      |
+| **M12 – Configuración**           | Gestionar parámetros generales del sistema.            | Configuración institucional, parámetros operativos e integraciones.                          | `src/modules/configuracion/`  |
+| **Infraestructura Compartida**    | Proporcionar mecanismos técnicos reutilizables.        | Conexiones, manejo de errores, clientes AWS y utilidades transversales.                      | `src/shared/`                 |
 
 ---
 
 ## 4. Relaciones entre componentes
 
-| **Origen** | **Destino** | **Descripción** | **Tipo de comunicación** |
-|---|---|---|---|
-| Aplicación Web | API REST | Envía solicitudes para ejecutar funcionalidades del sistema. | HTTPS / JSON |
-| API REST | Módulos funcionales | Invoca los casos de uso correspondientes. | Llamada en memoria |
-| Inscripciones | Convocatorias | Consulta convocatorias activas, modalidades y vacantes. | Llamada en memoria mediante API pública |
-| Inscripciones | Usuarios | Comprueba la información y validación del postulante. | Llamada en memoria mediante API pública |
-| Pagos | Inscripciones | Comunica la confirmación de pagos con el evento `PagoConfirmado`. | Evento mediante outbox y Amazon SQS |
-| Expedientes | Inscripciones | Consulta información de las inscripciones. | Llamada en memoria |
-| Resultados | Exámenes, Sedes y Aulas | Consulta información de las evaluaciones programadas. | Llamada en memoria |
-| Chatbot IA | Convocatorias | Consulta información pública sobre procesos de admisión. | API pública del módulo |
-| Notificaciones | Pagos | Recibe solicitudes o eventos de confirmación de pago. | Evento interno o mensajería |
-| Notificaciones | Resultados | Recibe solicitudes de comunicación sobre resultados publicados. | Evento interno o mensajería |
-| Reportes | Convocatorias | Obtiene información autorizada de procesos de admisión. | API pública del módulo |
-| Reportes | Resultados | Obtiene información estadística de evaluaciones y resultados. | API pública del módulo |
-| API REST | Seguridad | Valida autenticación y permisos de acceso. | Middleware y llamada en memoria |
+| **Origen**     | **Destino**             | **Descripción**                                                   | **Tipo de comunicación**                |
+| -------------- | ----------------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| Aplicación Web | API REST                | Envía solicitudes para ejecutar funcionalidades del sistema.      | HTTPS / JSON                            |
+| API REST       | Módulos funcionales     | Invoca los casos de uso correspondientes.                         | Llamada en memoria                      |
+| Inscripciones  | Convocatorias           | Consulta convocatorias activas, modalidades y vacantes.           | Llamada en memoria mediante API pública |
+| Inscripciones  | Usuarios                | Comprueba la información y validación del postulante.             | Llamada en memoria mediante API pública |
+| Pagos          | Inscripciones           | Comunica la confirmación de pagos con el evento `PagoConfirmado`. | Evento mediante outbox y Amazon SQS     |
+| Expedientes    | Inscripciones           | Consulta información de las inscripciones.                        | Llamada en memoria                      |
+| Resultados     | Exámenes, Sedes y Aulas | Consulta información de las evaluaciones programadas.             | Llamada en memoria                      |
+| Chatbot IA     | Convocatorias           | Consulta información pública sobre procesos de admisión.          | API pública del módulo                  |
+| Notificaciones | Pagos                   | Recibe solicitudes o eventos de confirmación de pago.             | Evento interno o mensajería             |
+| Notificaciones | Resultados              | Recibe solicitudes de comunicación sobre resultados publicados.   | Evento interno o mensajería             |
+| Reportes       | Convocatorias           | Obtiene información autorizada de procesos de admisión.           | API pública del módulo                  |
+| Reportes       | Resultados              | Obtiene información estadística de evaluaciones y resultados.     | API pública del módulo                  |
+| API REST       | Seguridad               | Valida autenticación y permisos de acceso.                        | Middleware y llamada en memoria         |
 
 **Regla:** la comunicación entre módulos del monolito se realiza mediante sus interfaces públicas. No se utilizarán solicitudes HTTP entre módulos que se ejecutan dentro de la misma aplicación.
 
@@ -136,34 +135,34 @@ flowchart TB
 
 ## 5. Relaciones con contenedores y sistemas externos
 
-| **Componente** | **Destino** | **Descripción** | **Protocolo** | **Patrón aplicado** |
-|---|---|---|---|---|
-| Módulos con persistencia | Amazon RDS PostgreSQL | Cada módulo accede a su propio esquema de PostgreSQL; Convocatorias lo hace mediante su repositorio y los demás con Prisma desde el servicio. | PostgreSQL / TLS | Repositorio (parcial) |
-| Usuarios | RENIEC (apiperu) | Solicita la validación de identidad de postulantes. | HTTPS / API autorizada | Adaptador + Fábrica |
-| Pagos | Culqi | Cobra con tarjeta y Yape: el servidor crea el cargo con el token del formulario. | HTTPS / REST | Adaptador + Fábrica |
-| Chatbot IA | OpenRouter API | Solicita respuestas de modelos de inteligencia artificial. | HTTPS / REST | Adaptador |
-| Notificaciones | Amazon SES | Solicita el envío de mensajes electrónicos. | AWS SDK / HTTPS | Adaptador |
-| Pagos, Expedientes, Inscripciones | Bandeja de eventos y Amazon SQS | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan. | SQL / TLS y AWS SDK | Observador |
-| Expedientes | Amazon S3 | Almacena y recupera documentos de postulantes. | AWS SDK / HTTPS | Repositorio de archivos / Adaptador |
-| Inscripciones | Amazon S3 | Guarda y recupera fichas y documentos generados. | AWS SDK / HTTPS | Adaptador |
-| Backend API REST | Grafana Cloud | Envía logs, trazas y métricas con OpenTelemetry (al desplegar). | OTLP / HTTPS | Observabilidad |
+| **Componente**                    | **Destino**                     | **Descripción**                                                                                                                               | **Protocolo**          | **Patrón aplicado**                 |
+| --------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------- |
+| Módulos con persistencia          | Amazon RDS PostgreSQL           | Cada módulo accede a su propio esquema de PostgreSQL; Convocatorias lo hace mediante su repositorio y los demás con Prisma desde el servicio. | PostgreSQL / TLS       | Repositorio (parcial)               |
+| Usuarios                          | RENIEC (apiperu)                | Solicita la validación de identidad de postulantes.                                                                                           | HTTPS / API autorizada | Adaptador + Fábrica                 |
+| Pagos                             | Culqi                           | Cobra con tarjeta y Yape: el servidor crea el cargo con el token del formulario.                                                              | HTTPS / REST           | Adaptador + Fábrica                 |
+| Chatbot IA                        | OpenRouter API                  | Solicita respuestas de modelos de inteligencia artificial.                                                                                    | HTTPS / REST           | Adaptador                           |
+| Notificaciones                    | Amazon SES                      | Solicita el envío de mensajes electrónicos.                                                                                                   | AWS SDK / HTTPS        | Adaptador                           |
+| Pagos, Expedientes, Inscripciones | Bandeja de eventos y Amazon SQS | Publican eventos (`PagoConfirmado`, `ExpedienteDictaminado`…) que otros módulos escuchan.                                                     | SQL / TLS y AWS SDK    | Observador                          |
+| Expedientes                       | Amazon S3                       | Almacena y recupera documentos de postulantes.                                                                                                | AWS SDK / HTTPS        | Repositorio de archivos / Adaptador |
+| Inscripciones                     | Amazon S3                       | Guarda y recupera fichas y documentos generados.                                                                                              | AWS SDK / HTTPS        | Adaptador                           |
+| Backend API REST                  | Grafana Cloud                   | Envía logs, trazas y métricas con OpenTelemetry (al desplegar).                                                                               | OTLP / HTTPS           | Observabilidad                      |
 
 ---
 
 ## 6. Reglas del Monolito Modular
 
-| **#** | **Regla** | **Motivo** |
-|---|---|---|
-| 1 | Todos los módulos funcionales se despliegan juntos como una única aplicación backend en AWS Lambda. | Mantener una arquitectura monolítica modular y simplificar el despliegue. |
-| 2 | Cada módulo debe comunicarse con otro únicamente mediante su API pública (`index.ts`). | Evitar dependencias directas de implementaciones internas. |
-| 3 | Un módulo no debe consultar ni modificar directamente las tablas de otro módulo. | Mantener la independencia lógica y la propiedad de los datos. |
-| 4 | Cada integración externa debe tener un módulo responsable y utilizar interfaces y adaptadores. | Centralizar las integraciones y facilitar el cambio de proveedores. |
-| 5 | Cada módulo se organizará internamente mediante Clean Architecture. | Separar las reglas de negocio de los detalles tecnológicos. |
-| 6 | Los casos de uso dependerán de interfaces y no de implementaciones concretas. | Cumplir el principio de inversión de dependencias. |
-| 7 | Los controladores no accederán directamente a PostgreSQL ni a servicios externos. | Mantener la separación entre presentación e infraestructura. |
-| 8 | Las operaciones críticas de inscripción y pago deberán utilizar mecanismos de integridad e idempotencia. | Evitar duplicidades e inconsistencias. |
-| 9 | Las operaciones asíncronas se realizarán mediante mecanismos de mensajería cuando sea necesario. | Reducir el acoplamiento temporal entre procesos. |
-| 10 | Las operaciones administrativas estarán protegidas mediante autenticación y autorización basada en roles. | Garantizar la seguridad de los procesos de admisión. |
+| **#** | **Regla**                                                                                                 | **Motivo**                                                                |
+| ----- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1     | Todos los módulos funcionales se despliegan juntos como una única aplicación backend en AWS Lambda.       | Mantener una arquitectura monolítica modular y simplificar el despliegue. |
+| 2     | Cada módulo debe comunicarse con otro únicamente mediante su API pública (`index.ts`).                    | Evitar dependencias directas de implementaciones internas.                |
+| 3     | Un módulo no debe consultar ni modificar directamente las tablas de otro módulo.                          | Mantener la independencia lógica y la propiedad de los datos.             |
+| 4     | Cada integración externa debe tener un módulo responsable y utilizar interfaces y adaptadores.            | Centralizar las integraciones y facilitar el cambio de proveedores.       |
+| 5     | Cada módulo se organizará internamente mediante Clean Architecture.                                       | Separar las reglas de negocio de los detalles tecnológicos.               |
+| 6     | Los casos de uso dependerán de interfaces y no de implementaciones concretas.                             | Cumplir el principio de inversión de dependencias.                        |
+| 7     | Los controladores no accederán directamente a PostgreSQL ni a servicios externos.                         | Mantener la separación entre presentación e infraestructura.              |
+| 8     | Las operaciones críticas de inscripción y pago deberán utilizar mecanismos de integridad e idempotencia.  | Evitar duplicidades e inconsistencias.                                    |
+| 9     | Las operaciones asíncronas se realizarán mediante mecanismos de mensajería cuando sea necesario.          | Reducir el acoplamiento temporal entre procesos.                          |
+| 10    | Las operaciones administrativas estarán protegidas mediante autenticación y autorización basada en roles. | Garantizar la seguridad de los procesos de admisión.                      |
 
 ---
 
@@ -194,38 +193,38 @@ src/
 
 ### Responsabilidades por capa
 
-| **Capa** | **Responsabilidad** |
-|---|---|
-| Dominio | Definir entidades, reglas de negocio e interfaces. |
-| Aplicación | Coordinar los casos de uso y procesos funcionales. |
-| Infraestructura | Implementar repositorios, adaptadores y conexiones externas. |
-| Presentación | Gestionar solicitudes HTTP, validaciones de entrada y respuestas REST. |
-| Composición | Configurar las dependencias e implementaciones concretas. |
+| **Capa**        | **Responsabilidad**                                                    |
+| --------------- | ---------------------------------------------------------------------- |
+| Dominio         | Definir entidades, reglas de negocio e interfaces.                     |
+| Aplicación      | Coordinar los casos de uso y procesos funcionales.                     |
+| Infraestructura | Implementar repositorios, adaptadores y conexiones externas.           |
+| Presentación    | Gestionar solicitudes HTTP, validaciones de entrada y respuestas REST. |
+| Composición     | Configurar las dependencias e implementaciones concretas.              |
 
 ---
 
 ## 8. Patrones de diseño aplicados
 
-| **Patrón** | **Aplicación en el sistema** | **Beneficio** |
-|---|---|---|
-| Repositorio | Persistencia de convocatorias (pendiente en inscripciones, pagos y resultados). | Separar las reglas de negocio de PostgreSQL. |
-| Adaptador | Integraciones con RENIEC, Culqi, OpenRouter API, Amazon SES y S3. | Evitar dependencia directa de proveedores externos. |
-| Observador | Bandeja de eventos entre módulos (`Outbox.publish` / `subscribe`). | Reaccionar a pagos y dictámenes sin acoplar los módulos. |
-| Fábrica | Selección del adaptador real o simulado según la configuración. | Usar los mismos casos de uso en pruebas y en producción. |
-| Inyección de Dependencias | Composición de casos de uso, repositorios y adaptadores. | Facilitar las pruebas y el mantenimiento. |
-| Fachada | Interfaces públicas entre módulos. | Reducir el acoplamiento entre componentes. |
+| **Patrón**                | **Aplicación en el sistema**                                                    | **Beneficio**                                            |
+| ------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Repositorio               | Persistencia de convocatorias (pendiente en inscripciones, pagos y resultados). | Separar las reglas de negocio de PostgreSQL.             |
+| Adaptador                 | Integraciones con RENIEC, Culqi, OpenRouter API, Amazon SES y S3.               | Evitar dependencia directa de proveedores externos.      |
+| Observador                | Bandeja de eventos entre módulos (`Outbox.publish` / `subscribe`).              | Reaccionar a pagos y dictámenes sin acoplar los módulos. |
+| Fábrica                   | Selección del adaptador real o simulado según la configuración.                 | Usar los mismos casos de uso en pruebas y en producción. |
+| Inyección de Dependencias | Composición de casos de uso, repositorios y adaptadores.                        | Facilitar las pruebas y el mantenimiento.                |
+| Fachada                   | Interfaces públicas entre módulos.                                              | Reducir el acoplamiento entre componentes.               |
 
 ---
 
 ## 9. Estado de cumplimiento de las reglas (25/11/2026)
 
-| Regla | Estado |
-|---|---|
-| 1. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API (`lambda-api.ts`) y tareas (`lambda-worker.ts`) |
-| 2. Comunicación solo por la API pública (`index.ts`) | ✅ Ningún módulo importa capas internas de otro |
-| 3. Cada módulo usa solo sus tablas | 🟡 Un esquema de PostgreSQL por módulo; `reportes` lee tablas de otros módulos (solo lectura, para los indicadores) y hay algunas lecturas cruzadas, como `inscripciones` sobre resultados |
-| 4. Integraciones con interfaces y adaptadores | ✅ |
-| 5. Clean Architecture por módulo | ✅ Dominio y aplicación no importan Prisma, Express, presentación ni infraestructura; ESLint y Jest protegen las fronteras |
-| 6. Casos de uso dependen de interfaces | ✅ Servicios externos y persistencia se reciben como puertos/repositorios mediante inyección |
-| 7. Controladores sin acceso directo a datos | ✅ |
-| 8. Integridad e idempotencia en inscripción y pago | ✅ |
+| Regla                                                | Estado                                                                                                                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Un único backend desplegable                      | ✅ Un backend con dos puntos de entrada en Lambda: API (`lambda-api.ts`) y tareas (`lambda-worker.ts`)                                                                                     |
+| 2. Comunicación solo por la API pública (`index.ts`) | ✅ Ningún módulo importa capas internas de otro                                                                                                                                            |
+| 3. Cada módulo usa solo sus tablas                   | 🟡 Un esquema de PostgreSQL por módulo; `reportes` lee tablas de otros módulos (solo lectura, para los indicadores) y hay algunas lecturas cruzadas, como `inscripciones` sobre resultados |
+| 4. Integraciones con interfaces y adaptadores        | ✅                                                                                                                                                                                         |
+| 5. Clean Architecture por módulo                     | ✅ Dominio y aplicación no importan Prisma, Express, presentación ni infraestructura; ESLint y Jest protegen las fronteras                                                                 |
+| 6. Casos de uso dependen de interfaces               | ✅ Servicios externos y persistencia se reciben como puertos/repositorios mediante inyección                                                                                               |
+| 7. Controladores sin acceso directo a datos          | ✅                                                                                                                                                                                         |
+| 8. Integridad e idempotencia en inscripción y pago   | ✅                                                                                                                                                                                         |

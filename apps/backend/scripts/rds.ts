@@ -46,16 +46,22 @@ async function check(): Promise<void> {
   try {
     await c.connect();
     const v = await c.query<{ version: string }>('SELECT version()');
-    const dbs = await c.query<{ datname: string }>("SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY 1");
+    const dbs = await c.query<{ datname: string }>(
+      'SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY 1',
+    );
     const ssl = await c.query<{ ssl: boolean }>('SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()');
     console.log(`✔ Conectado. ${v.rows[0]?.version.split(',')[0]}`);
-    console.log(`✔ SSL activo: ${ssl.rows[0]?.ssl ? 'sí' : 'no'} (certificado verificado con ${path.basename(caFile)})`);
+    console.log(
+      `✔ SSL activo: ${ssl.rows[0]?.ssl ? 'sí' : 'no'} (certificado verificado con ${path.basename(caFile)})`,
+    );
     console.log(`  Bases: ${dbs.rows.map((r) => r.datname).join(', ')}`);
   } catch (error) {
     const e = error as { code?: string; message?: string };
     console.error(`✘ No se pudo conectar: ${e.code ?? ''} ${e.message ?? error}`);
     if (e.code === 'ETIMEDOUT' || e.code === 'ECONNREFUSED' || /timeout/i.test(e.message ?? '')) {
-      console.error('  Revisa en la consola de RDS: «Acceso público: Sí» y que el grupo de seguridad permita el puerto 5432 desde tu IP.');
+      console.error(
+        '  Revisa en la consola de RDS: «Acceso público: Sí» y que el grupo de seguridad permita el puerto 5432 desde tu IP.',
+      );
     }
     if (e.code === '28P01') console.error('  Usuario o contraseña incorrectos.');
     process.exitCode = 1;
@@ -79,7 +85,10 @@ async function setup(): Promise<void> {
   await c.end();
 
   const env = { ...process.env, ...parsed };
-  for (const args of [['prisma', 'migrate', 'deploy'], ['tsx', 'prisma/seed/index.ts']]) {
+  for (const args of [
+    ['prisma', 'migrate', 'deploy'],
+    ['tsx', 'prisma/seed/index.ts'],
+  ]) {
     console.log(`→ npx ${args.join(' ')}`);
     const r = spawnSync('npx', args, { cwd: backendDir, env, stdio: 'inherit', shell: true });
     if (r.status !== 0) {
@@ -94,7 +103,12 @@ async function setup(): Promise<void> {
 async function migrate(): Promise<void> {
   await check();
   if (process.exitCode) return;
-  const r = spawnSync('npx', ['prisma', 'migrate', 'deploy'], { cwd: backendDir, env: { ...process.env, ...parsed }, stdio: 'inherit', shell: true });
+  const r = spawnSync('npx', ['prisma', 'migrate', 'deploy'], {
+    cwd: backendDir,
+    env: { ...process.env, ...parsed },
+    stdio: 'inherit',
+    shell: true,
+  });
   if (r.status !== 0) process.exit(1);
   console.log('✔ Migraciones aplicadas en RDS.');
 }

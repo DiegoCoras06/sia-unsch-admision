@@ -86,19 +86,19 @@ Como postulante, quiero crear una cuenta con mi DNI, correo y celular, para gest
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE permitir el registro con DNI (o pasaporte/CE para extranjeros), correo y celular. *(RF-02.01)*
-- **FR-002**: El sistema DEBE consultar el proveedor de identidad para obtener nombres y validar la vigencia del DNI; en esta versión el proveedor es **simulado y etiquetado** como tal. *(RF-02.02, RN-21, Constitución II.3)*
-- **FR-003**: El sistema DEBE impedir el registro de personas del registro de inhabilitados. *(RN-09, RF-02.03)*
-- **FR-004**: El sistema DEBE impedir más de una cuenta por documento de identidad y por correo. *(RF-02.03)*
-- **FR-005**: El sistema DEBE exigir contraseñas de al menos 10 caracteres, rechazando las más comunes, y almacenarlas solo como hash. *(RF-02.04)*
-- **FR-006**: El sistema DEBE verificar el correo con un código de 6 dígitos que vence en 15 minutos. *(RF-02.06)*
-- **FR-007**: El sistema DEBE permitir iniciar sesión, cerrar sesión y recuperar la contraseña con enlace de un solo uso. *(RF-02.05)*
-- **FR-008**: El sistema DEBE bloquear temporalmente tras 5 intentos fallidos y notificar al titular. *(RF-13.07)*
-- **FR-009**: El sistema DEBE registrar el consentimiento de tratamiento de datos con fecha, hora y versión del texto aceptado. *(RF-13.09, RNF-03)*
-- **FR-010**: El sistema DEBE generar un código de postulante único por cuenta. *(RF-02.08)*
-- **FR-011**: El sistema DEBE permitir editar solo los datos de contacto; los de identidad requieren trámite ante Admisión. *(RF-02.07, RN-07)*
-- **FR-012**: El sistema DEBE registrar la actividad principal del postulante. *(RF-02.08)*
-- **FR-013**: El sistema DEBE permitir al titular cerrar todas sus sesiones abiertas. *(RF-13.08)*
+- **FR-001**: El sistema DEBE permitir el registro con DNI (o pasaporte/CE para extranjeros), correo y celular. _(RF-02.01)_
+- **FR-002**: El sistema DEBE consultar el proveedor de identidad para obtener nombres y validar la vigencia del DNI; en esta versión el proveedor es **simulado y etiquetado** como tal. _(RF-02.02, RN-21, Constitución II.3)_
+- **FR-003**: El sistema DEBE impedir el registro de personas del registro de inhabilitados. _(RN-09, RF-02.03)_
+- **FR-004**: El sistema DEBE impedir más de una cuenta por documento de identidad y por correo. _(RF-02.03)_
+- **FR-005**: El sistema DEBE exigir contraseñas de al menos 10 caracteres, rechazando las más comunes, y almacenarlas solo como hash. _(RF-02.04)_
+- **FR-006**: El sistema DEBE verificar el correo con un código de 6 dígitos que vence en 15 minutos. _(RF-02.06)_
+- **FR-007**: El sistema DEBE permitir iniciar sesión, cerrar sesión y recuperar la contraseña con enlace de un solo uso. _(RF-02.05)_
+- **FR-008**: El sistema DEBE bloquear temporalmente tras 5 intentos fallidos y notificar al titular. _(RF-13.07)_
+- **FR-009**: El sistema DEBE registrar el consentimiento de tratamiento de datos con fecha, hora y versión del texto aceptado. _(RF-13.09, RNF-03)_
+- **FR-010**: El sistema DEBE generar un código de postulante único por cuenta. _(RF-02.08)_
+- **FR-011**: El sistema DEBE permitir editar solo los datos de contacto; los de identidad requieren trámite ante Admisión. _(RF-02.07, RN-07)_
+- **FR-012**: El sistema DEBE registrar la actividad principal del postulante. _(RF-02.08)_
+- **FR-013**: El sistema DEBE permitir al titular cerrar todas sus sesiones abiertas. _(RF-13.08)_
 
 ### Entidades clave
 
@@ -129,18 +129,18 @@ Como postulante, quiero crear una cuenta con mi DNI, correo y celular, para gest
 
 11 de 11 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-02.01 | ✅ | Inscripción y cuenta opcional con DNI, correo y celular |
-| RF-02.02 | ✅ | Consulta de DNI con apiperu.dev (token solo en el servidor): autocompleta nombres y apellidos; si no responde, el postulante los escribe |
-| RF-02.03 | ✅ | Una inscripción por DNI y convocatoria; registro de inhabilitados |
-| RF-02.04 | ✅ | Cuenta opcional con contraseña segura (argon2, mínimo 10 caracteres, lista de comunes) |
-| RF-02.05 | ✅ | Ingresar, cerrar sesión (también en todos los dispositivos) y recuperar la contraseña por correo |
-| RF-02.06 | ✅ | Código de 6 dígitos por correo al crear la cuenta y al cambiar de correo |
-| RF-02.07 | ✅ | «Mi cuenta»: correo, celular, dirección y apoderado |
-| RF-02.08 | ✅ | Código de postulante con dígito Luhn y auditoría de actividades |
-| RF-13.07 | ✅ | Permiso por ruta; cada acceso denegado queda auditado |
-| RF-13.08 | ✅ | Suspender, cambiar roles o restablecer cierra todas las sesiones |
-| RF-13.09 | ✅ | Consentimiento versionado al crear cuenta y al inscribirse (versión y huella del texto) |
+| RF       | Estado | Detalle                                                                                                                                  |
+| -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-02.01 | ✅     | Inscripción y cuenta opcional con DNI, correo y celular                                                                                  |
+| RF-02.02 | ✅     | Consulta de DNI con apiperu.dev (token solo en el servidor): autocompleta nombres y apellidos; si no responde, el postulante los escribe |
+| RF-02.03 | ✅     | Una inscripción por DNI y convocatoria; registro de inhabilitados                                                                        |
+| RF-02.04 | ✅     | Cuenta opcional con contraseña segura (argon2, mínimo 10 caracteres, lista de comunes)                                                   |
+| RF-02.05 | ✅     | Ingresar, cerrar sesión (también en todos los dispositivos) y recuperar la contraseña por correo                                         |
+| RF-02.06 | ✅     | Código de 6 dígitos por correo al crear la cuenta y al cambiar de correo                                                                 |
+| RF-02.07 | ✅     | «Mi cuenta»: correo, celular, dirección y apoderado                                                                                      |
+| RF-02.08 | ✅     | Código de postulante con dígito Luhn y auditoría de actividades                                                                          |
+| RF-13.07 | ✅     | Permiso por ruta; cada acceso denegado queda auditado                                                                                    |
+| RF-13.08 | ✅     | Suspender, cambiar roles o restablecer cierra todas las sesiones                                                                         |
+| RF-13.09 | ✅     | Consentimiento versionado al crear cuenta y al inscribirse (versión y huella del texto)                                                  |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

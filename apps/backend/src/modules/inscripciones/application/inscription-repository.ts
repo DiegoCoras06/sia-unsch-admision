@@ -53,7 +53,10 @@ export interface ApplicationRecord {
   updatedAt: Date;
 }
 /** Datos para crear una inscripción (los que tienen valor por defecto son opcionales). */
-export type NewApplication = Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'anonymizedAt' | 'reinscriptionOf'> & {
+export type NewApplication = Omit<
+  ApplicationRecord,
+  'id' | 'createdAt' | 'updatedAt' | 'anonymizedAt' | 'reinscriptionOf'
+> & {
   id?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -102,10 +105,22 @@ export interface InscriptionUnitOfWork {
  */
 export interface InscriptionRepository {
   findByCode(applicantCode: string): Promise<ApplicationRecord | null>;
-  existsForDocument(callCode: string, documentType: string, documentNumber: string, modality?: string): Promise<boolean>;
+  existsForDocument(
+    callCode: string,
+    documentType: string,
+    documentNumber: string,
+    modality?: string,
+  ): Promise<boolean>;
   findInCallByDocument(callCode: string, documentNumber: string): Promise<ApplicationRecord | null>;
-  listByDocument(documentType: string, documentNumber: string, opts?: { excludeAnnulled?: boolean }): Promise<ApplicationRecord[]>;
-  list(filter: ApplicationFilter, opts?: { orderBy?: 'createdAt' | 'applicantCode'; skip?: number; take?: number }): Promise<ApplicationRecord[]>;
+  listByDocument(
+    documentType: string,
+    documentNumber: string,
+    opts?: { excludeAnnulled?: boolean },
+  ): Promise<ApplicationRecord[]>;
+  list(
+    filter: ApplicationFilter,
+    opts?: { orderBy?: 'createdAt' | 'applicantCode'; skip?: number; take?: number },
+  ): Promise<ApplicationRecord[]>;
   count(filter: ApplicationFilter): Promise<number>;
   /** Inscripciones de convocatorias anteriores a `callCode`, creadas antes de `before` y aún no anonimizadas. */
   listExpired(currentCallCode: string, before: Date, take: number): Promise<ApplicationRecord[]>;

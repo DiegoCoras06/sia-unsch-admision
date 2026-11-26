@@ -8,11 +8,11 @@
 
 Mostrar las clases reales de los módulos Inscripción y Pagos y cómo colaboran para **registrar una inscripción y confirmar su pago**. La versión 1.0 de este documento describía un diseño objetivo con una clase por caso de uso y repositorios (`RegistrarInscripcionUseCase`, `InscripcionRepository`, `PaymentPort`); puede consultarse en el historial de Git. La sección 3 resume las diferencias.
 
-| Capa | En el código |
-|---|---|
-| Presentación | `presentation/routes.ts`: rutas REST con validación Zod |
-| Aplicación | `InscriptionService`, `PaymentService` |
-| Dominio | `inscription-rules.ts`, `payment-rules.ts`, puertos en `domain/ports.ts` |
+| Capa            | En el código                                                                                        |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| Presentación    | `presentation/routes.ts`: rutas REST con validación Zod                                             |
+| Aplicación      | `InscriptionService`, `PaymentService`                                                              |
+| Dominio         | `inscription-rules.ts`, `payment-rules.ts`, puertos en `domain/ports.ts`                            |
 | Infraestructura | Adaptadores de pasarela en `pagos/infrastructure/`; bandeja de eventos en `shared/events/outbox.ts` |
 
 ## 2. Diagrama de clases
@@ -94,14 +94,14 @@ classDiagram
 
 ## 3. Diferencias con el diseño del sprint 1
 
-| Diseño objetivo | Código real |
-|---|---|
+| Diseño objetivo                                                                  | Código real                                                                                   |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Una clase por caso de uso (`RegistrarInscripcionUseCase`, `ProcesarPagoUseCase`) | Un servicio por módulo (`InscriptionService`, `PaymentService`) con un método por caso de uso |
-| `InscripcionRepository` / `PostgresInscripcionRepository`, `PagoRepository` | No existen: los servicios usan Prisma directamente (pendiente) |
-| `PaymentPort` y `PaymentGatewayAdapter` | `PaymentGateway` con 2 adaptadores: `CulqiGateway` (tarjeta y Yape) y `MockPaymentGateway` |
-| `ElegibilidadPort` | La elegibilidad se valida en `InscriptionService` con datos de `ConvocatoriasQueries` |
-| `ConfirmarPagoInscripcionUseCase` llamado por Pagos | Pagos publica `PagoConfirmado` y Inscripciones reacciona (Observador), sin llamada directa |
-| Entidad `Inscripcion` con estados | Tipo `InscriptionStatus` (generado por Prisma) + reglas en `inscription-rules.ts` |
+| `InscripcionRepository` / `PostgresInscripcionRepository`, `PagoRepository`      | No existen: los servicios usan Prisma directamente (pendiente)                                |
+| `PaymentPort` y `PaymentGatewayAdapter`                                          | `PaymentGateway` con 2 adaptadores: `CulqiGateway` (tarjeta y Yape) y `MockPaymentGateway`    |
+| `ElegibilidadPort`                                                               | La elegibilidad se valida en `InscriptionService` con datos de `ConvocatoriasQueries`         |
+| `ConfirmarPagoInscripcionUseCase` llamado por Pagos                              | Pagos publica `PagoConfirmado` y Inscripciones reacciona (Observador), sin llamada directa    |
+| Entidad `Inscripcion` con estados                                                | Tipo `InscriptionStatus` (generado por Prisma) + reglas en `inscription-rules.ts`             |
 
 ## 4. Secuencia: registrar inscripción y confirmar pago
 
@@ -146,12 +146,12 @@ La tarjeta y el código de Yape van directo a Culqi; el servidor solo recibe un 
 
 ## 5. Patrones y principios visibles
 
-| Patrón o principio | Dónde |
-|---|---|
-| Adaptador | `PaymentGateway` con `CulqiGateway` y `MockPaymentGateway` |
-| Fábrica | `createPaymentGateway` elige Culqi o la simulada según `PAYMENTS_PROVIDER` |
-| Observador | `PagoConfirmado` en la bandeja de eventos; Inscripciones lo escucha |
-| Segregación de interfaces | `PaymentService` solo conoce `paymentContext()` de Inscripciones |
+| Patrón o principio        | Dónde                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| Adaptador                 | `PaymentGateway` con `CulqiGateway` y `MockPaymentGateway`                               |
+| Fábrica                   | `createPaymentGateway` elige Culqi o la simulada según `PAYMENTS_PROVIDER`               |
+| Observador                | `PagoConfirmado` en la bandeja de eventos; Inscripciones lo escucha                      |
+| Segregación de interfaces | `PaymentService` solo conoce `paymentContext()` de Inscripciones                         |
 | Inversión de dependencias | Cumplida para los servicios externos; pendiente para la base de datos (sin repositorios) |
 
 ## 6. Conclusión

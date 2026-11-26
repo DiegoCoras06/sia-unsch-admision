@@ -1,4 +1,3 @@
-
 # 6. Componentes Arquitectónicos
 
 ## 6.1. Descripción general
@@ -120,5 +119,3 @@ Esta estructura facilita el desarrollo, mantenimiento y despliegue, manteniendo 
 Además, permite integrar servicios AWS sin la complejidad de administrar múltiples microservicios.
 
 Por estas razones, se considera adecuada para el Sistema Integral de Gestión del Proceso de Admisión UNSCH.
-
-

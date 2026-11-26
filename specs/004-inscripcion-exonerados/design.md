@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Spec:** [requirements.md](requirements.md) · **Tareas:** [tasks.md](./tasks.md) · **Decisiones:** ADR-010 (documentos privados), ADR-015 (sin cuenta obligatoria), ADR-018 (permisos del panel)
@@ -22,26 +21,26 @@ Mientras el expediente no esté autorizado **no se puede pagar** (RN-24, FR-008)
 
 ### Alcance de la iteración 1
 
-| Historia | Incluido | Queda |
-|---|---|---|
-| H1 Documentos por submodalidad | Lista de M01 (base común + propios; graduados sin base común) | — |
-| H2 Expediente digital | PDF/JPG/PNG ≤ 5 MB; tipo real por firma del archivo, PDF íntegro (`%%EOF`) y sin contraseña, JPG/PNG completos; SHA-256; envío a revisión con faltantes | — |
-| H3 Evaluación | Bandeja por evaluador, Conforme/Observado con motivo, Autorizar/Observar/Rechazar con justificación, asignación equitativa automática o manual | — |
-| H4 Subsanación | Solo documentos observados, plazo dentro de la etapa, versiones conservadas, «No subsanado» al vencer | — |
-| H5 Inscripción autorizada | Pago y ficha solo con expediente autorizado | — |
-| H6 Adjudicados CEPRE | — | Lista de adjudicados y ventana propia (siguiente iteración) |
-| H7 Presencial | Verificación presencial con responsable | — |
-| FR-014 / FR-015 | Datos complementarios por submodalidad; evaluación especial programada por el evaluador | — |
+| Historia                       | Incluido                                                                                                                                                | Queda                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| H1 Documentos por submodalidad | Lista de M01 (base común + propios; graduados sin base común)                                                                                           | —                                                           |
+| H2 Expediente digital          | PDF/JPG/PNG ≤ 5 MB; tipo real por firma del archivo, PDF íntegro (`%%EOF`) y sin contraseña, JPG/PNG completos; SHA-256; envío a revisión con faltantes | —                                                           |
+| H3 Evaluación                  | Bandeja por evaluador, Conforme/Observado con motivo, Autorizar/Observar/Rechazar con justificación, asignación equitativa automática o manual          | —                                                           |
+| H4 Subsanación                 | Solo documentos observados, plazo dentro de la etapa, versiones conservadas, «No subsanado» al vencer                                                   | —                                                           |
+| H5 Inscripción autorizada      | Pago y ficha solo con expediente autorizado                                                                                                             | —                                                           |
+| H6 Adjudicados CEPRE           | —                                                                                                                                                       | Lista de adjudicados y ventana propia (siguiente iteración) |
+| H7 Presencial                  | Verificación presencial con responsable                                                                                                                 | —                                                           |
+| FR-014 / FR-015                | Datos complementarios por submodalidad; evaluación especial programada por el evaluador                                                                 | —                                                           |
 
 ### Diseño
 
 **Módulo M06 Expedientes** (`src/modules/expedientes`), esquema `expedientes`:
 
-| Tabla | Contenido |
-|---|---|
-| `dossiers` | una por inscripción EXO: estado, evaluador asignado, plazo de subsanación, decisión y motivo, verificación presencial, datos complementarios, evaluación especial |
-| `dossier_documents` | cada versión de cada documento: archivo, tipo, tamaño, SHA-256, estado (Cargado, Conforme, Observado, Reemplazado) y motivo |
-| `dossier_events` | historial: envío, revisión, observación, decisión, asignación (RF-06.06) |
+| Tabla               | Contenido                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dossiers`          | una por inscripción EXO: estado, evaluador asignado, plazo de subsanación, decisión y motivo, verificación presencial, datos complementarios, evaluación especial |
+| `dossier_documents` | cada versión de cada documento: archivo, tipo, tamaño, SHA-256, estado (Cargado, Conforme, Observado, Reemplazado) y motivo                                       |
+| `dossier_events`    | historial: envío, revisión, observación, decisión, asignación (RF-06.06)                                                                                          |
 
 - M06 lee los requisitos de M01 y el contexto de la inscripción de M03 por sus API públicas; publica `ExpedienteDictaminado` en la outbox y **M03 cambia el estado de la inscripción** (autorizado → Pendiente de pago; observado → Observada; rechazado o no subsanado → Anulada) y envía el correo (RF-06.05).
 - M05 rechaza iniciar un pago con la inscripción Pendiente de validación u Observada.

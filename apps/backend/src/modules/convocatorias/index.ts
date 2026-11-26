@@ -8,7 +8,10 @@ import type { AuditLog } from '../../shared/audit/audit.js';
 import { CallAdmin } from './application/call-admin.js';
 import { CatalogAdmin } from './application/catalog-admin.js';
 import type { EnrollmentStatsProvider } from './domain/ports.js';
-import { PrismaConvocatoriasRepository, pendingEnrollmentStats } from './infrastructure/prisma-convocatorias-repository.js';
+import {
+  PrismaConvocatoriasRepository,
+  pendingEnrollmentStats,
+} from './infrastructure/prisma-convocatorias-repository.js';
 import { CachedConvocatoriasRepository } from './infrastructure/cached-convocatorias-repository.js';
 import { convocatoriasRoutes } from './presentation/routes.js';
 
@@ -16,7 +19,13 @@ export type { Stage, StageStatus } from './domain/stage.js';
 export { stageStatus } from './domain/stage.js';
 export type { ConvocatoriasQueries } from './application/convocatorias-queries.js';
 
-export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog, stats: EnrollmentStatsProvider = pendingEnrollmentStats, cacheTtlMs = 5 * 60_000) {
+export function createConvocatoriasModule(
+  db: Db,
+  clock: Clock,
+  audit: AuditLog,
+  stats: EnrollmentStatsProvider = pendingEnrollmentStats,
+  cacheTtlMs = 5 * 60_000,
+) {
   // AC01: el catálogo se lee una vez y se guarda en memoria (ver CachedConvocatoriasRepository).
   const repo = new CachedConvocatoriasRepository(new PrismaConvocatoriasRepository(db), cacheTtlMs);
   const queries = new ConvocatoriasQueries(repo, stats, clock);
@@ -25,8 +34,14 @@ export function createConvocatoriasModule(db: Db, clock: Clock, audit: AuditLog,
     if (cacheTtlMs <= 0) return;
     const { code } = await queries.getCurrentCall();
     await Promise.all([
-      queries.searchOptions(code, {}), queries.listSubmodalities(code), queries.listQuotaCategories(code), queries.listFees(code),
-      queries.listAreas(code), queries.listRequirements(code), queries.getSyllabus(code), queries.listDocuments(code),
+      queries.searchOptions(code, {}),
+      queries.listSubmodalities(code),
+      queries.listQuotaCategories(code),
+      queries.listFees(code),
+      queries.listAreas(code),
+      queries.listRequirements(code),
+      queries.getSyllabus(code),
+      queries.listDocuments(code),
     ]);
   };
   const invalidate = () => {

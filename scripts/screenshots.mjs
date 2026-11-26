@@ -25,21 +25,37 @@ for (const width of widths) {
     await page.evaluate(() => document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-in')));
     // Recorre la página para que carguen las imágenes con loading="lazy" y vuelve arriba.
     await page.evaluate(async () => {
-      for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); }
+      for (let y = 0; y < document.body.scrollHeight; y += 600) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 120));
+      }
       window.scrollTo(0, 0);
     });
-    await page.evaluate(() => Promise.race([
-      Promise.all([...document.images].filter((i) => !i.complete).map((i) => new Promise((r) => { i.onload = i.onerror = r; }))),
-      new Promise((r) => setTimeout(r, 6000)),
-    ]));
+    await page.evaluate(() =>
+      Promise.race([
+        Promise.all(
+          [...document.images]
+            .filter((i) => !i.complete)
+            .map(
+              (i) =>
+                new Promise((r) => {
+                  i.onload = i.onerror = r;
+                }),
+            ),
+        ),
+        new Promise((r) => setTimeout(r, 6000)),
+      ]),
+    );
     await page.waitForTimeout(900);
     const metrics = await page.evaluate(() => {
       const h1 = document.querySelector('h1');
       const lh = h1 ? parseFloat(getComputedStyle(h1).lineHeight) : 0;
-      const headings = [...document.querySelectorAll('h1, h2, h3')].map((h) => {
-        const l = parseFloat(getComputedStyle(h).lineHeight) || 1;
-        return { text: h.textContent.trim().slice(0, 40), lines: Math.round(h.getBoundingClientRect().height / l) };
-      }).filter((h) => h.lines > 2);
+      const headings = [...document.querySelectorAll('h1, h2, h3')]
+        .map((h) => {
+          const l = parseFloat(getComputedStyle(h).lineHeight) || 1;
+          return { text: h.textContent.trim().slice(0, 40), lines: Math.round(h.getBoundingClientRect().height / l) };
+        })
+        .filter((h) => h.lines > 2);
       return {
         h1Lines: h1 && lh ? Math.round(h1.getBoundingClientRect().height / lh) : null,
         overflowX: document.documentElement.scrollWidth > window.innerWidth,

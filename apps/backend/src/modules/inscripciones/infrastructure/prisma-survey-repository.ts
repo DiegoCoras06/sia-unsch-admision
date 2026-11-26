@@ -5,7 +5,15 @@ import { SurveyAlreadyAnsweredError, type SurveyRepository } from '../applicatio
 export class PrismaSurveyRepository implements SurveyRepository {
   constructor(private readonly db: Db) {}
 
-  async save(data: { callCode: string; applicantCode: string; answers: number[]; score: number; comment: string | null; durationSeconds: number | null; device: string | null }) {
+  async save(data: {
+    callCode: string;
+    applicantCode: string;
+    answers: number[];
+    score: number;
+    comment: string | null;
+    durationSeconds: number | null;
+    device: string | null;
+  }) {
     try {
       await this.db.usabilitySurvey.create({ data: { ...data, score: data.score.toFixed(2) } });
     } catch (e) {
@@ -17,7 +25,12 @@ export class PrismaSurveyRepository implements SurveyRepository {
   async list(callCode: string) {
     const rows = await this.db.usabilitySurvey.findMany({ where: { callCode }, orderBy: { createdAt: 'desc' } });
     return rows.map((r) => ({
-      answers: r.answers, score: Number(r.score), comment: r.comment, durationSeconds: r.durationSeconds, device: r.device, createdAt: r.createdAt,
+      answers: r.answers,
+      score: Number(r.score),
+      comment: r.comment,
+      durationSeconds: r.durationSeconds,
+      device: r.device,
+      createdAt: r.createdAt,
     }));
   }
 }

@@ -1,4 +1,3 @@
-
 # 6. Componentes Arquitectónicos
 
 ## 6.1. Descripción general
@@ -128,4 +127,3 @@ Por estas razones, se considera adecuada para el Sistema Integral de Gestión de
 - **Mensajería con Amazon SQS:** los eventos se guardan en una bandeja (outbox) en PostgreSQL, se envían a SQS y los procesa un worker (ADR-021). El código está listo; la cola se crea en el despliegue. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso.
 - **SMS no se implementó** (opcional según RC16): los avisos van por correo.
 - La pasarela de pagos es Culqi, que cobra tarjeta y Yape con un solo adaptador (ADR-024); la pasarela simulada se usa en desarrollo y pruebas.
-

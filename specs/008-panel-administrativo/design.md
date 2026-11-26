@@ -3,24 +3,23 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Spec:** [requirements.md](requirements.md) · **Decisión:** [ADR-018](../../docs/adr/ADR-018-panel-acceso-personal.md) · **Tareas:** [tasks.md](./tasks.md)
 
 ### Alcance de la iteración 1
 
-| Historia | Incluido | Queda para otra iteración |
-|---|---|---|
-| H1 Convocatoria | Editar fechas de etapas (con validación y aviso de superposición), tasas (confirmación si es 0), vacantes con resolución y motivo; copiar la convocatoria a un periodo nuevo | Importar vacantes desde Excel |
-| H2 Indicadores | Inscripciones por estado, modalidad y programa; recaudación y transacciones; uso del asistente; filtros; Excel y PDF; vista según rol | Expedientes y aulas (llegan con los pasos 7 y 9) |
-| H3 Usuarios | Crear, roles, activar/suspender/desactivar con cierre de sesiones; primer ingreso con TOTP; último administrador protegido | — |
-| H4 Auditoría | Búsqueda por usuario, acción, recurso y fechas; sin opción de editar | — |
-| H5 Inhabilitados | Registrar y retirar; anular inscripciones del mismo documento con la resolución | — |
-| H6 Contenido | Comunicados y fe de erratas; bloques de texto del portal | Envío segmentado (Paso 10, M11) |
-| H7 Casos | Lista, detalle, cambio de estado; consulta pública por número de caso | Denuncia anónima con evidencia |
-| H8 Configuración | Funciones por etapa; estado de integraciones (secretos enmascarados); fallas de la outbox con reintento; respaldos y política de retención | Edición de credenciales desde el panel (se mantienen en variables de entorno / Secrets Manager) |
-| Asistente (009) | Editar la base de conocimientos; indicadores de uso | — |
+| Historia         | Incluido                                                                                                                                                                     | Queda para otra iteración                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| H1 Convocatoria  | Editar fechas de etapas (con validación y aviso de superposición), tasas (confirmación si es 0), vacantes con resolución y motivo; copiar la convocatoria a un periodo nuevo | Importar vacantes desde Excel                                                                   |
+| H2 Indicadores   | Inscripciones por estado, modalidad y programa; recaudación y transacciones; uso del asistente; filtros; Excel y PDF; vista según rol                                        | Expedientes y aulas (llegan con los pasos 7 y 9)                                                |
+| H3 Usuarios      | Crear, roles, activar/suspender/desactivar con cierre de sesiones; primer ingreso con TOTP; último administrador protegido                                                   | —                                                                                               |
+| H4 Auditoría     | Búsqueda por usuario, acción, recurso y fechas; sin opción de editar                                                                                                         | —                                                                                               |
+| H5 Inhabilitados | Registrar y retirar; anular inscripciones del mismo documento con la resolución                                                                                              | —                                                                                               |
+| H6 Contenido     | Comunicados y fe de erratas; bloques de texto del portal                                                                                                                     | Envío segmentado (Paso 10, M11)                                                                 |
+| H7 Casos         | Lista, detalle, cambio de estado; consulta pública por número de caso                                                                                                        | Denuncia anónima con evidencia                                                                  |
+| H8 Configuración | Funciones por etapa; estado de integraciones (secretos enmascarados); fallas de la outbox con reintento; respaldos y política de retención                                   | Edición de credenciales desde el panel (se mantienen en variables de entorno / Secrets Manager) |
+| Asistente (009)  | Editar la base de conocimientos; indicadores de uso                                                                                                                          | —                                                                                               |
 
 ### Diseño
 

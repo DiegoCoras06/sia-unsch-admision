@@ -11,7 +11,15 @@ import type { FileStorage } from '../../shared/storage/file-storage.js';
 import { configuracionRoutes } from './presentation/routes.js';
 import { MemoryCache, invalidatesOnUse } from '../../shared/cache/memory-cache.js';
 
-export function createConfiguracionModule(db: Db, convocatorias: ConvocatoriasQueries, clock: Clock, audit: AuditLog, outbox: Outbox, storage: FileStorage, cacheTtlMs = 60_000) {
+export function createConfiguracionModule(
+  db: Db,
+  convocatorias: ConvocatoriasQueries,
+  clock: Clock,
+  audit: AuditLog,
+  outbox: Outbox,
+  storage: FileStorage,
+  cacheTtlMs = 60_000,
+) {
   // AC01: comunicados, portada e imágenes del portal en memoria; se renuevan cada minuto sin hacer esperar a nadie.
   const cache = new MemoryCache(cacheTtlMs);
   const queries = new ConfiguracionQueries(db, convocatorias, clock, cache);

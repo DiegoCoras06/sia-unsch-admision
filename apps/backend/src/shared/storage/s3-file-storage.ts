@@ -17,7 +17,15 @@ export class S3FileStorage implements FileStorage {
   }
 
   async put(key: string, content: Buffer, contentType: string): Promise<void> {
-    await this.s3.send(new PutObjectCommand({ Bucket: this.cfg.bucket, Key: key, Body: content, ContentType: contentType, ServerSideEncryption: 'AES256' }));
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.cfg.bucket,
+        Key: key,
+        Body: content,
+        ContentType: contentType,
+        ServerSideEncryption: 'AES256',
+      }),
+    );
   }
 
   async get(key: string): Promise<Buffer | null> {
@@ -38,7 +46,10 @@ export class S3FileStorage implements FileStorage {
     const { url, fields } = await createPresignedPost(this.s3, {
       Bucket: this.cfg.bucket,
       Key: key,
-      Conditions: [['content-length-range', 1, maxBytes], ['eq', '$Content-Type', contentType]],
+      Conditions: [
+        ['content-length-range', 1, maxBytes],
+        ['eq', '$Content-Type', contentType],
+      ],
       Fields: { 'Content-Type': contentType, 'x-amz-server-side-encryption': 'AES256' },
       Expires: 300,
     });
@@ -47,10 +58,15 @@ export class S3FileStorage implements FileStorage {
 
   async presignDownload(key: string, fileName: string, contentType: string): Promise<string> {
     const safe = fileName.replace(/["\r\n]/g, '').slice(0, 150) || 'documento';
-    return getSignedUrl(this.s3, new GetObjectCommand({
-      Bucket: this.cfg.bucket, Key: key,
-      ResponseContentType: contentType,
-      ResponseContentDisposition: `inline; filename*=UTF-8''${encodeURIComponent(safe)}`,
-    }), { expiresIn: 120 });
+    return getSignedUrl(
+      this.s3,
+      new GetObjectCommand({
+        Bucket: this.cfg.bucket,
+        Key: key,
+        ResponseContentType: contentType,
+        ResponseContentDisposition: `inline; filename*=UTF-8''${encodeURIComponent(safe)}`,
+      }),
+      { expiresIn: 120 },
+    );
   }
 }

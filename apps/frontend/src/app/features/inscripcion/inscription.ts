@@ -1,8 +1,23 @@
-import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import type { ConsentDto, FeeQuoteDto, InscriptionOptionsDto, InscriptionSummaryDto, OptionSummaryDto } from '@sia/contracts';
+import type {
+  ConsentDto,
+  FeeQuoteDto,
+  InscriptionOptionsDto,
+  InscriptionSummaryDto,
+  OptionSummaryDto,
+} from '@sia/contracts';
 import { startWith } from 'rxjs';
 import { AccountSession } from '../../core/account-session';
 import { ApiService, apiErrorCode, apiErrorDetails, apiErrorMessage } from '../../core/api.service';
@@ -14,7 +29,10 @@ import { UsabilitySurvey } from './usability-survey';
 import { PhotoCapture } from './photo-capture';
 
 /** Borrador local de la inscripción (RF-03.06): solo en este navegador, nunca en el servidor sin cuenta. */
-interface Draft { savedAt: string; values: Record<string, unknown> }
+interface Draft {
+  savedAt: string;
+  values: Record<string, unknown>;
+}
 const DRAFT_KEY = 'sia-borrador-inscripcion';
 function readDraft(): Draft | null {
   try {
@@ -35,12 +53,33 @@ function clearDraft(): void {
 
 /** Etiquetas de los campos para el resumen de errores. */
 const LABELS: Record<string, string> = {
-  documentNumber: 'Número de documento', paternalSurname: 'Apellido paterno', maternalSurname: 'Apellido materno', firstNames: 'Nombres',
-  sex: 'Sexo', maritalStatus: 'Estado civil', birthUbigeo: 'Lugar de nacimiento', birthDate: 'Fecha de nacimiento', address: 'Dirección actual',
-  residenceUbigeo: 'Lugar de residencia', economicDependency: 'Dependencia económica', mobile: 'Celular', email: 'Correo electrónico',
-  photo: 'Fotografía', schoolUbigeo: 'Lugar del colegio', schoolName: 'Nombre del colegio', schoolType: 'Gestión del colegio',
-  graduationYear: 'Año en que culminó', inFourthOrBelow: '¿Cursa 4.º o inferior?', preparation: 'Tipo de preparación', attempts: 'Veces que postula',
-  modality: 'Modalidad', quotaCategory: 'Tipo', area: 'Área', optionCode: 'Programa de estudio', declarationAccepted: 'Declaración jurada', consentAccepted: 'Tratamiento de datos personales',
+  documentNumber: 'Número de documento',
+  paternalSurname: 'Apellido paterno',
+  maternalSurname: 'Apellido materno',
+  firstNames: 'Nombres',
+  sex: 'Sexo',
+  maritalStatus: 'Estado civil',
+  birthUbigeo: 'Lugar de nacimiento',
+  birthDate: 'Fecha de nacimiento',
+  address: 'Dirección actual',
+  residenceUbigeo: 'Lugar de residencia',
+  economicDependency: 'Dependencia económica',
+  mobile: 'Celular',
+  email: 'Correo electrónico',
+  photo: 'Fotografía',
+  schoolUbigeo: 'Lugar del colegio',
+  schoolName: 'Nombre del colegio',
+  schoolType: 'Gestión del colegio',
+  graduationYear: 'Año en que culminó',
+  inFourthOrBelow: '¿Cursa 4.º o inferior?',
+  preparation: 'Tipo de preparación',
+  attempts: 'Veces que postula',
+  modality: 'Modalidad',
+  quotaCategory: 'Tipo',
+  area: 'Área',
+  optionCode: 'Programa de estudio',
+  declarationAccepted: 'Declaración jurada',
+  consentAccepted: 'Tratamiento de datos personales',
 };
 
 /**
@@ -48,11 +87,42 @@ const LABELS: Record<string, string> = {
  * en cinco pasos con validación por paso y una revisión final antes de la declaración jurada (irreversible).
  */
 const STEPS = [
-  { title: 'Tus datos', fields: ['modality', 'documentNumber', 'paternalSurname', 'maternalSurname', 'firstNames', 'sex', 'birthDate', 'birthUbigeo', 'maritalStatus', 'economicDependency'] },
-  { title: 'Domicilio y contacto', fields: ['address', 'residenceUbigeo', 'phone', 'mobile', 'email'] },
+  {
+    title: 'Tus datos',
+    fields: [
+      'modality',
+      'documentNumber',
+      'paternalSurname',
+      'maternalSurname',
+      'firstNames',
+      'sex',
+      'birthDate',
+      'birthUbigeo',
+      'maritalStatus',
+      'economicDependency',
+    ],
+  },
+  {
+    title: 'Domicilio y contacto',
+    fields: ['address', 'residenceUbigeo', 'phone', 'mobile', 'email'],
+  },
   { title: 'Fotografía', fields: ['photo'] },
-  { title: 'Colegio', fields: ['schoolUbigeo', 'schoolName', 'schoolType', 'graduationYear', 'inFourthOrBelow', 'preparation', 'attempts'] },
-  { title: 'Postulación', fields: ['quotaCategory', 'militaryCondition', 'campus', 'area', 'optionCode', 'familyLink'] },
+  {
+    title: 'Colegio',
+    fields: [
+      'schoolUbigeo',
+      'schoolName',
+      'schoolType',
+      'graduationYear',
+      'inFourthOrBelow',
+      'preparation',
+      'attempts',
+    ],
+  },
+  {
+    title: 'Postulación',
+    fields: ['quotaCategory', 'militaryCondition', 'campus', 'area', 'optionCode', 'familyLink'],
+  },
   { title: 'Revisión', fields: ['declarationAccepted', 'consentAccepted'] },
 ] as const;
 
@@ -92,7 +162,20 @@ const fold = (t: string) => t.normalize('NFD').replace(DIACRITICS, '').toLowerCa
 /** Subgrupos del paso 1: con muchos datos pendientes, el resumen se muestra por subgrupo. */
 const SUBGROUPS: { title: string; fields: string[] }[] = [
   { title: 'Modalidad', fields: ['modality'] },
-  { title: 'Identidad', fields: ['documentNumber', 'paternalSurname', 'maternalSurname', 'firstNames', 'sex', 'birthDate', 'birthUbigeo', 'maritalStatus', 'economicDependency'] },
+  {
+    title: 'Identidad',
+    fields: [
+      'documentNumber',
+      'paternalSurname',
+      'maternalSurname',
+      'firstNames',
+      'sex',
+      'birthDate',
+      'birthUbigeo',
+      'maritalStatus',
+      'economicDependency',
+    ],
+  },
   { title: 'Dónde vives', fields: ['address', 'residenceUbigeo'] },
   { title: 'Cómo te contactamos', fields: ['phone', 'mobile', 'email'] },
 ];
@@ -101,18 +184,47 @@ const SHORT_LIST = 4;
 
 /** Elemento al que lleva cada enlace del resumen de errores. */
 const FIELD_TARGET: Record<string, string> = {
-  documentNumber: '#f-doc', paternalSurname: '#f-ap', maternalSurname: '#f-am', firstNames: '#f-nom', sex: '[formcontrolname="sex"]',
-  maritalStatus: '#f-civil', birthUbigeo: '#nac-dep', address: '#f-dir', residenceUbigeo: '#res-dep', birthDate: '#f-fnac',
-  economicDependency: '#f-dep', phone: '#f-tel', mobile: '#f-cel', email: '#f-mail', photo: '#foto-file', schoolUbigeo: '#col-dep',
-  schoolName: '#f-col', schoolType: '[formcontrolname="schoolType"]', graduationYear: '#f-anio', inFourthOrBelow: '#f-cuarto',
-  preparation: '#f-prep', attempts: '#f-veces', modality: '#f-mod', quotaCategory: '#f-tipo', campus: '#f-sede', optionCode: '#f-prog',
-  declarationAccepted: '[formcontrolname="declarationAccepted"]', consentAccepted: '[formcontrolname="consentAccepted"]',
+  documentNumber: '#f-doc',
+  paternalSurname: '#f-ap',
+  maternalSurname: '#f-am',
+  firstNames: '#f-nom',
+  sex: '[formcontrolname="sex"]',
+  maritalStatus: '#f-civil',
+  birthUbigeo: '#nac-dep',
+  address: '#f-dir',
+  residenceUbigeo: '#res-dep',
+  birthDate: '#f-fnac',
+  economicDependency: '#f-dep',
+  phone: '#f-tel',
+  mobile: '#f-cel',
+  email: '#f-mail',
+  photo: '#foto-file',
+  schoolUbigeo: '#col-dep',
+  schoolName: '#f-col',
+  schoolType: '[formcontrolname="schoolType"]',
+  graduationYear: '#f-anio',
+  inFourthOrBelow: '#f-cuarto',
+  preparation: '#f-prep',
+  attempts: '#f-veces',
+  modality: '#f-mod',
+  quotaCategory: '#f-tipo',
+  campus: '#f-sede',
+  optionCode: '#f-prog',
+  declarationAccepted: '[formcontrolname="declarationAccepted"]',
+  consentAccepted: '[formcontrolname="consentAccepted"]',
 };
 
 /** Spec 003 (iteración 1, ADR-015): formulario público de inscripción, como el oficial, por pasos y con resumen en vivo. */
 @Component({
   selector: 'app-inscription',
-  imports: [ReactiveFormsModule, RouterLink, UbigeoSelect, PhotoCapture, InscriptionReceipt, UsabilitySurvey],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UbigeoSelect,
+    PhotoCapture,
+    InscriptionReceipt,
+    UsabilitySurvey,
+  ],
   templateUrl: './inscription.html',
   styleUrl: './inscription.scss',
 })
@@ -125,7 +237,9 @@ export class InscriptionPage {
   protected readonly consent = signal<ConsentDto | null>(null);
   protected readonly programs = signal<OptionSummaryDto[]>([]);
   protected readonly quote = signal<FeeQuoteDto | null>(null);
-  protected readonly lookupState = signal<'idle' | 'loading' | 'found' | 'manual' | 'unavailable' | 'registered'>('idle');
+  protected readonly lookupState = signal<
+    'idle' | 'loading' | 'found' | 'manual' | 'unavailable' | 'registered'
+  >('idle');
   protected readonly simulated = signal(false);
   protected readonly submitting = signal(false);
   protected readonly submitted = signal(false);
@@ -135,7 +249,11 @@ export class InscriptionPage {
   /** Para la encuesta SUS: cuánto tomó inscribirse (desde que se abrió el formulario). */
   protected readonly startedAt = Date.now();
   /** Spec 004, Historia 6: programa y ciclo adjudicados por el CEPRE (o por qué no puede elegir esa modalidad). */
-  protected readonly cepreAward = signal<{ optionCode: string; program: string; cycle: string } | null>(null);
+  protected readonly cepreAward = signal<{
+    optionCode: string;
+    program: string;
+    cycle: string;
+  } | null>(null);
   protected readonly cepreError = signal<string | null>(null);
   protected readonly demoDnis = ['99900020', '99900021', '99900022', '99900023', '99900042'];
   protected readonly money = soles;
@@ -189,37 +307,66 @@ export class InscriptionPage {
   });
 
   // Valores del formulario como señales para el resumen en vivo.
-  private readonly v = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue())), { initialValue: this.form.getRawValue() });
-  protected readonly modality = computed(() => this.options()?.modalities.find((m) => m.code === this.v().modality) ?? null);
+  private readonly v = toSignal(this.form.valueChanges.pipe(startWith(this.form.getRawValue())), {
+    initialValue: this.form.getRawValue(),
+  });
+  protected readonly modality = computed(
+    () => this.options()?.modalities.find((m) => m.code === this.v().modality) ?? null,
+  );
   private readonly callStore = inject(CallStore);
   /** Plazo de la modalidad elegida, según el cronograma en curso (y el aviso de validación para exonerados). */
   protected readonly modalityNote = computed(() => {
     const m = this.modality();
     if (!m) return '';
-    const stage = this.callStore.current().find((s) => s.code === `${m.code}_REGULAR` || s.code === `${m.code}_EXTEMP`);
-    const when = stage ? `Inscripción abierta hasta el ${longDate(stage.endsAt)}${stage.code.endsWith('_EXTEMP') ? ', con recargo por extemporánea' : ''}.` : '';
-    const extra = m.code === 'EXO' ? ' Antes de pagar, un evaluador revisa tu expediente en línea.' : m.code === 'CEPRE' ? ' Solo para adjudicados del CEPRE-UNSCH.' : '';
+    const stage = this.callStore
+      .current()
+      .find((s) => s.code === `${m.code}_REGULAR` || s.code === `${m.code}_EXTEMP`);
+    const when = stage
+      ? `Inscripción abierta hasta el ${longDate(stage.endsAt)}${stage.code.endsWith('_EXTEMP') ? ', con recargo por extemporánea' : ''}.`
+      : '';
+    const extra =
+      m.code === 'EXO'
+        ? ' Antes de pagar, un evaluador revisa tu expediente en línea.'
+        : m.code === 'CEPRE'
+          ? ' Solo para adjudicados del CEPRE-UNSCH.'
+          : '';
     return (when + extra).trim();
   });
-  protected readonly category = computed(() => this.modality()?.categories.find((c) => c.code === this.v().quotaCategory) ?? null);
+  protected readonly category = computed(
+    () => this.modality()?.categories.find((c) => c.code === this.v().quotaCategory) ?? null,
+  );
   /** Texto del buscador de programa (no es parte del formulario ni del borrador). */
   protected readonly programQuery = signal('');
   protected readonly visiblePrograms = computed(() => {
     const q = fold(this.programQuery());
-    return this.programs().filter((p) =>
-      (!this.v().area || p.area === this.v().area) && (p.categoryVacancies ?? 0) > 0
-      // El programa ya elegido sigue en la lista aunque no coincida con la búsqueda.
-      && (!q || fold(p.displayName).includes(q) || p.internalCode === this.v().optionCode));
+    return this.programs().filter(
+      (p) =>
+        (!this.v().area || p.area === this.v().area) &&
+        (p.categoryVacancies ?? 0) > 0 &&
+        // El programa ya elegido sigue en la lista aunque no coincida con la búsqueda.
+        (!q || fold(p.displayName).includes(q) || p.internalCode === this.v().optionCode),
+    );
   });
-  protected readonly selectedProgram = computed(() => this.programs().find((p) => p.internalCode === this.v().optionCode) ?? null);
-  protected readonly fullName = computed(() => [this.v().firstNames, this.v().paternalSurname, this.v().maternalSurname].filter(Boolean).join(' '));
+  protected readonly selectedProgram = computed(
+    () => this.programs().find((p) => p.internalCode === this.v().optionCode) ?? null,
+  );
+  protected readonly fullName = computed(() =>
+    [this.v().firstNames, this.v().paternalSurname, this.v().maternalSurname]
+      .filter(Boolean)
+      .join(' '),
+  );
   protected readonly namesLocked = computed(() => this.lookupState() === 'found');
-  protected readonly label = (group: 'maritalStatus' | 'economicDependency' | 'preparation' | 'campuses', key: string) =>
-    (this.options()?.[group] as Record<string, string> | undefined)?.[key] ?? key;
+  protected readonly label = (
+    group: 'maritalStatus' | 'economicDependency' | 'preparation' | 'campuses',
+    key: string,
+  ) => (this.options()?.[group] as Record<string, string> | undefined)?.[key] ?? key;
 
   constructor() {
     this.api.inscriptionOptions().subscribe((o) => this.options.set(o));
-    void inject(AccountSession).consent().then((c) => this.consent.set(c)).catch(() => undefined);
+    void inject(AccountSession)
+      .consent()
+      .then((c) => this.consent.set(c))
+      .catch(() => undefined);
 
     // Al elegir modalidad: primer tipo disponible y reinicio del programa.
     this.form.controls.modality.valueChanges.subscribe((m) => {
@@ -227,7 +374,9 @@ export class InscriptionPage {
       this.form.patchValue({ quotaCategory: first, optionCode: '' });
       if (m !== 'ORD') this.form.controls.militaryCondition.setValue('NONE');
     });
-    this.form.controls.area.valueChanges.subscribe(() => this.form.controls.optionCode.setValue(''));
+    this.form.controls.area.valueChanges.subscribe(() =>
+      this.form.controls.optionCode.setValue(''),
+    );
 
     // Adjudicados CEPRE: con el DNI completo se precargan el programa y el ciclo de la lista oficial.
     const checkCepre = () => {
@@ -241,9 +390,12 @@ export class InscriptionPage {
           this.form.patchValue({ quotaCategory: a.quotaCategory, area: a.area as never });
           this.form.controls.optionCode.setValue(a.optionCode);
         },
-        error: (e) => this.cepreError.set((e as { status?: number }).status === 404
-          ? 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.'
-          : 'No pudimos consultar la lista de adjudicados. Inténtalo de nuevo en unos minutos.'),
+        error: (e) =>
+          this.cepreError.set(
+            (e as { status?: number }).status === 404
+              ? 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.'
+              : 'No pudimos consultar la lista de adjudicados. Inténtalo de nuevo en unos minutos.',
+          ),
       });
     };
     this.form.controls.modality.valueChanges.subscribe(checkCepre);
@@ -263,7 +415,8 @@ export class InscriptionPage {
       const cat = this.category();
       const v = this.v();
       if (!call || !cat || !v.modality) return;
-      const needsSchool = v.modality === 'ORD' || cat.submodality === 'EXO-PSP' || cat.submodality === 'EXO-COAR';
+      const needsSchool =
+        v.modality === 'ORD' || cat.submodality === 'EXO-PSP' || cat.submodality === 'EXO-COAR';
       if (needsSchool && !v.schoolType) {
         this.quote.set(null);
         return;
@@ -317,8 +470,19 @@ export class InscriptionPage {
 
   private saveDraft(): void {
     if (this.draftOff()) return;
-    const { photo: _p, declarationAccepted: _d, consentAccepted: _c, ...values } = this.form.getRawValue();
-    if (!Object.values(values).some((x) => x !== '' && x !== 'DNI' && x !== 'ORD' && x !== 'HUAMANGA' && x !== 'NONE' && x !== false)) return;
+    const {
+      photo: _p,
+      declarationAccepted: _d,
+      consentAccepted: _c,
+      ...values
+    } = this.form.getRawValue();
+    if (
+      !Object.values(values).some(
+        (x) =>
+          x !== '' && x !== 'DNI' && x !== 'ORD' && x !== 'HUAMANGA' && x !== 'NONE' && x !== false,
+      )
+    )
+      return;
     const savedAt = new Date().toISOString();
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt, values }));
@@ -352,7 +516,12 @@ export class InscriptionPage {
     clearDraft();
   }
 
-  protected readonly when = (iso: string) => new Date(iso).toLocaleString('es-PE', { timeZone: 'America/Lima', dateStyle: 'medium', timeStyle: 'short' });
+  protected readonly when = (iso: string) =>
+    new Date(iso).toLocaleString('es-PE', {
+      timeZone: 'America/Lima',
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
 
   private lookup(dni: string): void {
     this.lookupState.set('loading');
@@ -364,7 +533,11 @@ export class InscriptionPage {
           return;
         }
         if (r.found) {
-          this.form.patchValue({ paternalSurname: r.paternalSurname ?? '', maternalSurname: r.maternalSurname ?? '', firstNames: r.firstNames ?? '' });
+          this.form.patchValue({
+            paternalSurname: r.paternalSurname ?? '',
+            maternalSurname: r.maternalSurname ?? '',
+            firstNames: r.firstNames ?? '',
+          });
           if (r.birthDate) this.form.controls.birthDate.setValue(r.birthDate);
           this.lookupState.set('found');
         } else {
@@ -393,14 +566,19 @@ export class InscriptionPage {
     if (c.errors?.['pattern'] && name === 'mobile') return 'Debe tener 9 dígitos y empezar con 9.';
     if (c.errors?.['pattern'] && name === 'graduationYear') return 'Escribe el año con 4 dígitos.';
     if (c.errors?.['pattern']) return 'Formato inválido.';
-    if (c.errors?.['minlength']) return name === 'address' ? 'Escribe la dirección completa (al menos 5 caracteres).' : 'Es demasiado corto.';
+    if (c.errors?.['minlength'])
+      return name === 'address'
+        ? 'Escribe la dirección completa (al menos 5 caracteres).'
+        : 'Es demasiado corto.';
     return 'Revisa este dato.';
   }
 
   protected readonly invalidFields = computed(() => {
     this.v();
     this.submitted();
-    return Object.keys(this.form.controls).filter((k) => this.form.get(k)?.invalid).map((k) => LABELS[k] ?? k);
+    return Object.keys(this.form.controls)
+      .filter((k) => this.form.get(k)?.invalid)
+      .map((k) => LABELS[k] ?? k);
   });
 
   /** Campos del paso con datos pendientes, con su nombre para el mensaje. */
@@ -411,11 +589,15 @@ export class InscriptionPage {
   private missingIn(step: number) {
     const target = (f: string) => FIELD_TARGET[f] ?? `[formcontrolname="${f}"]`;
     const missing: string[] = STEPS[step]!.fields.filter((f) => this.form.get(f)?.invalid);
-    if (step > 1 || missing.length <= SHORT_LIST) return missing.map((f) => ({ label: LABELS[f] ?? f, target: target(f) }));
+    if (step > 1 || missing.length <= SHORT_LIST)
+      return missing.map((f) => ({ label: LABELS[f] ?? f, target: target(f) }));
     // Muchos pendientes: una línea por subgrupo que lleva a su primer dato pendiente.
     return SUBGROUPS.map((g) => ({ g, left: missing.filter((f) => g.fields.includes(f)) }))
       .filter(({ left }) => left.length)
-      .map(({ g, left }) => ({ label: `${g.title}: ${left.map((f) => (LABELS[f] ?? f).toLowerCase()).join(', ')}`, target: target(left[0]!) }));
+      .map(({ g, left }) => ({
+        label: `${g.title}: ${left.map((f) => (LABELS[f] ?? f).toLowerCase()).join(', ')}`,
+        target: target(left[0]!),
+      }));
   }
 
   /** Resumen visible: el foco va a él para que el lector de pantalla lo lea y desde ahí se salta a cada campo. */
@@ -457,7 +639,9 @@ export class InscriptionPage {
     for (const f of STEPS[i]!.fields) this.form.get(f)?.markAsTouched();
     if (i === 0 && this.lookupState() === 'registered') {
       this.stepMissing.set([]);
-      this.stepError.set('Este documento ya tiene una inscripción. Consúltala en «Ya me inscribí».');
+      this.stepError.set(
+        'Este documento ya tiene una inscripción. Consúltala en «Ya me inscribí».',
+      );
       return;
     }
     if (this.pending(i).length) {
@@ -473,7 +657,8 @@ export class InscriptionPage {
 
   /** Ir a un paso: hacia atrás siempre; hacia adelante solo si los anteriores están completos. */
   protected goTo(target: number): void {
-    if (target > this.step() && STEPS.slice(0, target).some((_, i) => this.pending(i).length > 0)) return;
+    if (target > this.step() && STEPS.slice(0, target).some((_, i) => this.pending(i).length > 0))
+      return;
     this.stepError.set(null);
     this.stepMissing.set([]);
     this.step.set(target);
@@ -485,7 +670,9 @@ export class InscriptionPage {
   }
 
   protected canOpen(target: number): boolean {
-    return target <= this.step() || !STEPS.slice(0, target).some((_, i) => this.pending(i).length > 0);
+    return (
+      target <= this.step() || !STEPS.slice(0, target).some((_, i) => this.pending(i).length > 0)
+    );
   }
 
   protected submit(): void {
@@ -558,7 +745,9 @@ export class InscriptionPage {
         error: (e) => {
           this.submitting.set(false);
           this.serverError.set(apiErrorMessage(e));
-          this.serverFieldErrors.set(Object.fromEntries(apiErrorDetails(e).map((d) => [d.field, d.issue])));
+          this.serverFieldErrors.set(
+            Object.fromEntries(apiErrorDetails(e).map((d) => [d.field, d.issue])),
+          );
           if (apiErrorCode(e) === 'ALREADY_REGISTERED') this.lookupState.set('registered');
         },
       });

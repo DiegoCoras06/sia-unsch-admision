@@ -23,7 +23,20 @@ describe('Documentación OpenAPI (Sprint 2)', () => {
   it('es OpenAPI 3.1 y agrupa las operaciones por los 12 módulos', () => {
     expect(doc.openapi).toBe('3.1.0');
     const tags = doc.tags.map((t) => t.name);
-    for (const m of ['Convocatorias', 'Configuración', 'Inscripciones', 'Pagos', 'Usuarios', 'Seguridad', 'Expedientes', 'Exámenes', 'Resultados', 'Notificaciones', 'Asistente', 'Reportes']) {
+    for (const m of [
+      'Convocatorias',
+      'Configuración',
+      'Inscripciones',
+      'Pagos',
+      'Usuarios',
+      'Seguridad',
+      'Expedientes',
+      'Exámenes',
+      'Resultados',
+      'Notificaciones',
+      'Asistente',
+      'Reportes',
+    ]) {
       expect(tags).toContain(m);
     }
     for (const ops of Object.values(doc.paths)) {
@@ -36,10 +49,15 @@ describe('Documentación OpenAPI (Sprint 2)', () => {
   });
 
   it('documenta cada ruta declarada en el código', () => {
-    const files = [...walk(path.join(src, 'modules')).filter((f) => f.includes(`${path.sep}presentation${path.sep}`)), path.join(src, 'admin-routes.ts')];
+    const files = [
+      ...walk(path.join(src, 'modules')).filter((f) => f.includes(`${path.sep}presentation${path.sep}`)),
+      path.join(src, 'admin-routes.ts'),
+    ];
     const faltan: string[] = [];
     for (const file of files) {
-      for (const [, method, route] of readFileSync(file, 'utf8').matchAll(/(?:router|r|api)\.(get|post|put|patch|delete)\(\s*'([^']+)'/g)) {
+      for (const [, method, route] of readFileSync(file, 'utf8').matchAll(
+        /(?:router|r|api)\.(get|post|put|patch|delete)\(\s*'([^']+)'/g,
+      )) {
         const oas = route!.replace(/:([A-Za-z]+)/g, '{$1}');
         if (!doc.paths[oas]?.[method!]) faltan.push(`${method!.toUpperCase()} ${route}`);
       }

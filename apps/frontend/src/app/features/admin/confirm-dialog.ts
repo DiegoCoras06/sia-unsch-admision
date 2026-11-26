@@ -1,4 +1,12 @@
-import { Component, ElementRef, Injectable, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Injectable,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 interface Ask {
   title: string;
@@ -16,7 +24,10 @@ interface Ask {
 export class AdmConfirm {
   readonly current = signal<Ask | null>(null);
 
-  confirm(message: string, opts: { title?: string; action?: string; danger?: boolean } = {}): Promise<boolean> {
+  confirm(
+    message: string,
+    opts: { title?: string; action?: string; danger?: boolean } = {},
+  ): Promise<boolean> {
     this.current()?.resolve(false);
     return new Promise<boolean>((resolve) => {
       this.current.set({
@@ -44,16 +55,26 @@ export class AdmConfirm {
 @Component({
   selector: 'app-adm-confirm',
   template: `
-    <dialog #dlg class="adm-confirm" aria-labelledby="adm-confirm-title" aria-describedby="adm-confirm-msg"
-      (cancel)="$event.preventDefault(); svc.close(false)" (click)="backdrop($event)">
+    <dialog
+      #dlg
+      class="adm-confirm"
+      aria-labelledby="adm-confirm-title"
+      aria-describedby="adm-confirm-msg"
+      (cancel)="$event.preventDefault(); svc.close(false)"
+      (click)="backdrop($event)"
+    >
       @if (svc.current(); as a) {
         <div class="adm-confirm__card" [class.is-danger]="a.danger">
           <span class="adm-confirm__icon" aria-hidden="true">{{ a.danger ? '!' : '?' }}</span>
           <h2 id="adm-confirm-title">{{ a.title }}</h2>
           <p id="adm-confirm-msg">{{ a.message }}</p>
           <div class="adm-confirm__actions">
-            <button type="button" class="adm-confirm__no" (click)="svc.close(false)" autofocus>Cancelar</button>
-            <button type="button" class="adm-confirm__yes" (click)="svc.close(true)">{{ a.action }}</button>
+            <button type="button" class="adm-confirm__no" (click)="svc.close(false)" autofocus>
+              Cancelar
+            </button>
+            <button type="button" class="adm-confirm__yes" (click)="svc.close(true)">
+              {{ a.action }}
+            </button>
           </div>
         </div>
       }
@@ -67,8 +88,9 @@ export class AdmConfirmHost {
   constructor() {
     effect(() => {
       const d = this.dlg().nativeElement;
-      if (this.svc.current()) { if (!d.open) d.showModal(); }
-      else if (d.open) d.close();
+      if (this.svc.current()) {
+        if (!d.open) d.showModal();
+      } else if (d.open) d.close();
     });
   }
 

@@ -15,8 +15,10 @@ export class MarkdownPipe implements PipeTransform {
     return blocks
       .map((block) => {
         const lines = block.split('\n');
-        if (lines.every((l) => /^- /.test(l))) return `<ul>${lines.map((l) => `<li>${inline(l.slice(2))}</li>`).join('')}</ul>`;
-        if (lines.every((l) => /^\d+\. /.test(l))) return `<ol>${lines.map((l) => `<li>${inline(l.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`;
+        if (lines.every((l) => /^- /.test(l)))
+          return `<ul>${lines.map((l) => `<li>${inline(l.slice(2))}</li>`).join('')}</ul>`;
+        if (lines.every((l) => /^\d+\. /.test(l)))
+          return `<ol>${lines.map((l) => `<li>${inline(l.replace(/^\d+\. /, ''))}</li>`).join('')}</ol>`;
         if (/^## /.test(block)) return `<h3>${inline(block.slice(3))}</h3>`;
         return `<p>${lines.map(inline).join('<br>')}</p>`;
       })

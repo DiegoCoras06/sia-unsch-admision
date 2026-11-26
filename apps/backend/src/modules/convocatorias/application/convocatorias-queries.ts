@@ -1,13 +1,29 @@
 import type {
-  AreaDto, CurrentCallDto, FeeDto, FeeQuoteDto, OfficialDocumentDto, OptionDetailDto, OptionSummaryDto, OptionsMeta,
-  QuotaCategoryDto, RequirementDto, StatsDto, SyllabusNodeDto,
+  AreaDto,
+  CurrentCallDto,
+  FeeDto,
+  FeeQuoteDto,
+  OfficialDocumentDto,
+  OptionDetailDto,
+  OptionSummaryDto,
+  OptionsMeta,
+  QuotaCategoryDto,
+  RequirementDto,
+  StatsDto,
+  SyllabusNodeDto,
 } from '@sia/contracts';
 import type { Clock } from '../../../shared/clock/clock.js';
 import { toLimaIso } from '../../../shared/clock/clock.js';
 import { notFound } from '../../../shared/http/errors.js';
 import { normalizeForSearch } from '../../../shared/text/normalize.js';
 import { quoteFee, type FeeCriteria } from '../domain/fee-calculator.js';
-import type { CallSummary, ConvocatoriasRepository, EnrollmentStatsProvider, OptionRecord, SubmodalityRecord } from '../domain/ports.js';
+import type {
+  CallSummary,
+  ConvocatoriasRepository,
+  EnrollmentStatsProvider,
+  OptionRecord,
+  SubmodalityRecord,
+} from '../domain/ports.js';
 import { nextMilestone, stageStatus, stagesInProgress, type Stage } from '../domain/stage.js';
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
@@ -49,7 +65,12 @@ export class ConvocatoriasQueries {
         highlight: s.highlight,
       })),
       nextMilestone: milestone
-        ? { code: milestone.stage.code, name: milestone.stage.name, startsAt: toLimaIso(milestone.stage.startsAt), secondsRemaining: milestone.secondsRemaining }
+        ? {
+            code: milestone.stage.code,
+            name: milestone.stage.name,
+            startsAt: toLimaIso(milestone.stage.startsAt),
+            secondsRemaining: milestone.secondsRemaining,
+          }
         : null,
     };
   }
@@ -106,7 +127,11 @@ export class ConvocatoriasQueries {
       degree: option.degree,
       professionalTitle: option.professionalTitle,
       profileMarkdown: `El perfil de ingreso completo está en el documento oficial de programas de estudio (página ${option.profilePage}).`,
-      vacanciesByCategory: categories.map((c) => ({ category: c.code, name: c.name, quantity: option.vacancies[c.code] ?? 0 })),
+      vacanciesByCategory: categories.map((c) => ({
+        category: c.code,
+        name: c.name,
+        quantity: option.vacancies[c.code] ?? 0,
+      })),
     };
   }
 
@@ -127,7 +152,13 @@ export class ConvocatoriasQueries {
   async listFees(callCode: string): Promise<FeeDto[]> {
     const call = await this.requireCall(callCode);
     const fees = await this.repo.fees(call.id);
-    return fees.map((f) => ({ code: f.code, concept: f.concept, amount: f.amount.toString(), kind: f.kind, legalNote: f.legalNote }));
+    return fees.map((f) => ({
+      code: f.code,
+      concept: f.concept,
+      amount: f.amount.toString(),
+      kind: f.kind,
+      legalNote: f.legalNote,
+    }));
   }
 
   /** H3 - FR-006. `at` simula otra fecha solo para mostrar el recargo. */
@@ -138,7 +169,12 @@ export class ConvocatoriasQueries {
     return {
       total: quote.total.toString(),
       currency: 'PEN',
-      lines: quote.lines.map((l) => ({ code: l.code, concept: l.concept, amount: l.amount.toString(), legalNote: l.legalNote })),
+      lines: quote.lines.map((l) => ({
+        code: l.code,
+        concept: l.concept,
+        amount: l.amount.toString(),
+        legalNote: l.legalNote,
+      })),
       warnings: quote.warnings,
     };
   }
@@ -161,7 +197,14 @@ export class ConvocatoriasQueries {
         .map((n) => {
           const nodePath = [...path, n.title];
           const children = build(n.id, nodePath);
-          return { id: n.id, level: n.level, title: n.title, path: nodePath, children, hit: !term || n.searchText.includes(term) };
+          return {
+            id: n.id,
+            level: n.level,
+            title: n.title,
+            path: nodePath,
+            children,
+            hit: !term || n.searchText.includes(term),
+          };
         })
         .filter((n) => n.hit || n.children.length > 0)
         .map(({ hit: _hit, ...n }) => n);
@@ -171,7 +214,13 @@ export class ConvocatoriasQueries {
   async listDocuments(callCode: string): Promise<OfficialDocumentDto[]> {
     const call = await this.requireCall(callCode);
     const docs = await this.repo.documents(call.id);
-    return docs.map((d) => ({ type: d.type, title: d.title, url: d.publicUrl, publishedAt: toLimaIso(d.publishedAt), sizeBytes: d.sizeBytes }));
+    return docs.map((d) => ({
+      type: d.type,
+      title: d.title,
+      url: d.publicUrl,
+      publishedAt: toLimaIso(d.publishedAt),
+      sizeBytes: d.sizeBytes,
+    }));
   }
 
   /** H6 - FR-011, sin datos personales. */

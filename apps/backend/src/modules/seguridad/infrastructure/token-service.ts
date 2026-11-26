@@ -14,7 +14,11 @@ export class JoseTokenService {
   private readonly accessKey: Uint8Array;
   private readonly identityKey: Uint8Array;
 
-  constructor(accessSecret: string, identitySecret: string, private readonly now: () => Date) {
+  constructor(
+    accessSecret: string,
+    identitySecret: string,
+    private readonly now: () => Date,
+  ) {
     this.accessKey = new TextEncoder().encode(accessSecret);
     this.identityKey = new TextEncoder().encode(identitySecret);
   }
@@ -33,8 +37,17 @@ export class JoseTokenService {
 
   async verifyAccess(token: string): Promise<AccessClaims | null> {
     try {
-      const { payload } = await jwtVerify(token, this.accessKey, { issuer: 'sia-unsch', audience: 'sia-api', currentDate: this.now() });
-      return { sub: String(payload.sub), sid: String(payload['sid']), typ: payload['typ'] as AccessClaims['typ'], roles: (payload['roles'] as string[]) ?? [] };
+      const { payload } = await jwtVerify(token, this.accessKey, {
+        issuer: 'sia-unsch',
+        audience: 'sia-api',
+        currentDate: this.now(),
+      });
+      return {
+        sub: String(payload.sub),
+        sid: String(payload['sid']),
+        typ: payload['typ'] as AccessClaims['typ'],
+        roles: (payload['roles'] as string[]) ?? [],
+      };
     } catch {
       return null;
     }
@@ -54,7 +67,11 @@ export class JoseTokenService {
   /** Devuelve null si el token es inválido; 'expired' si venció. */
   async verifyIdentity<T>(token: string): Promise<T | null | 'expired'> {
     try {
-      const { payload } = await jwtVerify(token, this.identityKey, { issuer: 'sia-unsch', audience: 'sia-registration', currentDate: this.now() });
+      const { payload } = await jwtVerify(token, this.identityKey, {
+        issuer: 'sia-unsch',
+        audience: 'sia-registration',
+        currentDate: this.now(),
+      });
       return payload as T;
     } catch (error) {
       return error instanceof errors.JWTExpired ? 'expired' : null;

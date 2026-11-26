@@ -27,12 +27,16 @@ async function processQueue(event: SqsEvent) {
   for (const record of event.Records) {
     try {
       const { eventId } = JSON.parse(record.body) as QueuedEvent;
-      if (!(await application.outbox.processEvent(eventId))) batchItemFailures.push({ itemIdentifier: record.messageId });
+      if (!(await application.outbox.processEvent(eventId)))
+        batchItemFailures.push({ itemIdentifier: record.messageId });
     } catch (error) {
       application.logger.error({ err: error, messageId: record.messageId }, 'mensaje de la cola no procesado');
       batchItemFailures.push({ itemIdentifier: record.messageId });
     }
   }
-  application.logger.info({ received: event.Records.length, failed: batchItemFailures.length }, 'lote de la cola procesado');
+  application.logger.info(
+    { received: event.Records.length, failed: batchItemFailures.length },
+    'lote de la cola procesado',
+  );
   return { batchItemFailures };
 }

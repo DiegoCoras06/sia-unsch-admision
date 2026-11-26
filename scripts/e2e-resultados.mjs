@@ -16,12 +16,16 @@ const step = (m) => console.log(`✔ ${m}`);
 
 function base32Decode(s) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const ch of s.replace(/=+$/, '').toUpperCase()) {
     value = (value << 5) | A.indexOf(ch);
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -37,7 +41,11 @@ function totp(secret) {
 }
 const creds = (file) => {
   const t = readFileSync(file, 'utf8');
-  return { email: /Correo: (\S+)/.exec(t)[1], password: /Contraseña (?:temporal|actual): (\S+)/.exec(t)[1], secret: /Clave TOTP: (\S+)/.exec(t)[1] };
+  return {
+    email: /Correo: (\S+)/.exec(t)[1],
+    password: /Contraseña (?:temporal|actual): (\S+)/.exec(t)[1],
+    secret: /Clave TOTP: (\S+)/.exec(t)[1],
+  };
 };
 const admin = creds('apps/backend/.admin-local.txt');
 const comision = creds('apps/backend/.comision-local.txt');
@@ -64,7 +72,10 @@ try {
 
   // ── Cerrar la asistencia del examen ordinario ──────────────────────
   await op.click('.adm-side nav a[href="/admin/examenes"]');
-  await op.locator('.adm-table tbody tr', { hasText: 'Examen Ordinario' }).locator('button:has-text("Gestionar")').click();
+  await op
+    .locator('.adm-table tbody tr', { hasText: 'Examen Ordinario' })
+    .locator('button:has-text("Gestionar")')
+    .click();
   const close = op.locator('button:has-text("Cerrar asistencia")');
   await op.locator('h2', { hasText: 'Distribución automática' }).waitFor({ timeout: 20000 });
   if (await close.count()) {

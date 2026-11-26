@@ -31,8 +31,12 @@ export class MemoryCache {
       const fresh = load();
       // El valor nuevo reemplaza al anterior solo cuando llega bien; si falla, se intenta en la siguiente petición.
       fresh.then(
-        () => { if (this.entries.get(key) === hit) this.entries.set(key, { expires: this.now() + this.ttlMs, value: fresh }); },
-        () => { hit.refreshing = false; },
+        () => {
+          if (this.entries.get(key) === hit) this.entries.set(key, { expires: this.now() + this.ttlMs, value: fresh });
+        },
+        () => {
+          hit.refreshing = false;
+        },
       );
     }
     return hit.value as Promise<T>;

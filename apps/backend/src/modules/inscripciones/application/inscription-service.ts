@@ -13,8 +13,18 @@ import { DuplicateApplicationError, type InscriptionRepository } from './inscrip
 import type { AccessService } from '../../seguridad/index.js';
 import { applicantCodeFromSequence, type IdentityProvider } from '../../usuarios/index.js';
 import {
-  CAMPUSES, ECONOMIC_DEPENDENCY, MARITAL_STATUS, MODALITIES, PAYMENT_ENTITIES, PHOTO, PREPARATION, STATUS_LABEL,
-  initialStatus, isPlausibleGraduationYear, maskDocument, type InscriptionStatus,
+  CAMPUSES,
+  ECONOMIC_DEPENDENCY,
+  MARITAL_STATUS,
+  MODALITIES,
+  PAYMENT_ENTITIES,
+  PHOTO,
+  PREPARATION,
+  STATUS_LABEL,
+  initialStatus,
+  isPlausibleGraduationYear,
+  maskDocument,
+  type InscriptionStatus,
 } from '../domain/inscription-rules.js';
 
 /** Tasa de reinscripción (Tabla N.° 3, ítem 5) y submodalidades que no pueden reinscribirse (Art. 21). */
@@ -96,8 +106,16 @@ export interface PaymentContext {
   documentNumber: string;
 }
 
-const longDate = (d: Date) => d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const shortDate = (d: Date) => d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'long' });
+const longDate = (d: Date) =>
+  d.toLocaleDateString('es-PE', {
+    timeZone: 'America/Lima',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+const shortDate = (d: Date) =>
+  d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'long' });
 
 /** Casos de uso de la inscripción pública (spec 003 iteración 1, ADR-015). */
 export class InscriptionService {
@@ -126,14 +144,30 @@ export class InscriptionService {
     await this.d.limiter.consume(`inscription-lookup:${meta.ipHash}`, 20, 3600);
     const callCode = await this.callCode();
     const alreadyRegistered = await this.d.repo.existsForDocument(callCode, documentType, documentNumber);
-    const empty = { found: false, paternalSurname: null, maternalSurname: null, firstNames: null, birthDate: null, simulated: this.d.identity.simulated, alreadyRegistered };
+    const empty = {
+      found: false,
+      paternalSurname: null,
+      maternalSurname: null,
+      firstNames: null,
+      birthDate: null,
+      simulated: this.d.identity.simulated,
+      alreadyRegistered,
+    };
     if (documentType !== 'DNI') return empty;
-    if (!/^\d{8}$/.test(documentNumber)) throw validationError('El DNI debe tener 8 dígitos.', [{ field: 'documentNumber', issue: '8 dígitos' }]);
+    if (!/^\d{8}$/.test(documentNumber))
+      throw validationError('El DNI debe tener 8 dígitos.', [{ field: 'documentNumber', issue: '8 dígitos' }]);
     const result = await this.d.identity.lookupDni(documentNumber);
-    if (result.kind === 'EXPIRED') throw businessRule('DOCUMENT_EXPIRED', 'Tu DNI no está vigente. Renuévalo antes de inscribirte (Art. 17.2).');
+    if (result.kind === 'EXPIRED')
+      throw businessRule('DOCUMENT_EXPIRED', 'Tu DNI no está vigente. Renuévalo antes de inscribirte (Art. 17.2).');
     if (result.kind === 'UNAVAILABLE') return { ...empty, unavailable: true };
     if (result.kind !== 'MATCHED') return empty;
-    await this.d.audit.record({ actorUserId: null, action: 'identity.lookup', resourceType: 'document', resourceId: maskDocument(documentNumber), ...meta });
+    await this.d.audit.record({
+      actorUserId: null,
+      action: 'identity.lookup',
+      resourceType: 'document',
+      resourceId: maskDocument(documentNumber),
+      ...meta,
+    });
     return {
       found: true,
       paternalSurname: result.paternalSurname,
@@ -149,7 +183,10 @@ export class InscriptionService {
   async options() {
     const call = await this.d.convocatorias.getCurrentCall();
     const categories = await this.d.convocatorias.listQuotaCategories(call.code);
-    const open = (scope: string) => call.stages.some((s) => s.scope === scope && (s.kind === 'REGULAR' || s.kind === 'EXTEMPORANEOUS') && s.status === 'IN_PROGRESS');
+    const open = (scope: string) =>
+      call.stages.some(
+        (s) => s.scope === scope && (s.kind === 'REGULAR' || s.kind === 'EXTEMPORANEOUS') && s.status === 'IN_PROGRESS',
+      );
     return {
       callCode: call.code,
       /** La consulta de DNI es simulada (identidades de prueba) y no RENIEC real. */
@@ -162,7 +199,9 @@ export class InscriptionService {
         code,
         name: MODALITIES[code],
         open: open(code),
-        categories: categories.filter((c) => c.modality === code).map((c) => ({ code: c.code, name: c.name, submodality: c.submodality })),
+        categories: categories
+          .filter((c) => c.modality === code)
+          .map((c) => ({ code: c.code, name: c.name, submodality: c.submodality })),
       })),
     };
   }
@@ -176,11 +215,16 @@ export class InscriptionService {
     // 0. RF-13.09: el consentimiento debe ser sobre la versión vigente del texto.
     const consent = this.d.currentConsent ? await this.d.currentConsent() : null;
     if (consent && input.consentVersion !== consent.version) {
-      throw businessRule('CONSENT_OUTDATED', 'La política de tratamiento de datos cambió. Vuelve a leerla y acéptala para continuar.');
+      throw businessRule(
+        'CONSENT_OUTDATED',
+        'La política de tratamiento de datos cambió. Vuelve a leerla y acéptala para continuar.',
+      );
     }
 
     // 1. Etapa abierta para la modalidad.
-    const stages = call.stages.filter((s) => s.scope === input.modality && (s.kind === 'REGULAR' || s.kind === 'EXTEMPORANEOUS'));
+    const stages = call.stages.filter(
+      (s) => s.scope === input.modality && (s.kind === 'REGULAR' || s.kind === 'EXTEMPORANEOUS'),
+    );
     if (!stages.some((s) => s.status === 'IN_PROGRESS')) {
       const next = stages.find((s) => s.status === 'UPCOMING');
       throw businessRule(
@@ -193,48 +237,81 @@ export class InscriptionService {
 
     // 1.1 Una inscripción por documento en la convocatoria (la reinscripción al Ordinario tiene su propio caso de uso).
     if (await this.d.repo.existsForDocument(call.code, input.documentType, input.documentNumber)) {
-      throw conflict('ALREADY_REGISTERED', 'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.');
+      throw conflict(
+        'ALREADY_REGISTERED',
+        'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.',
+      );
     }
 
     // 1.2 Adjudicados CEPRE (spec 004, Historia 6): solo quien figura en la lista, con el programa y el ciclo adjudicados.
     if (input.modality === 'CEPRE') {
-      const awardee = input.documentType === 'DNI'
-        ? await this.d.repo.findCepreAwardee(call.code, input.documentNumber)
-        : null;
-      if (!awardee) throw businessRule('NOT_CEPRE_AWARDEE', 'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.');
+      const awardee =
+        input.documentType === 'DNI' ? await this.d.repo.findCepreAwardee(call.code, input.documentNumber) : null;
+      if (!awardee)
+        throw businessRule(
+          'NOT_CEPRE_AWARDEE',
+          'Tu DNI no figura en la lista de adjudicados del CEPRE-UNSCH. Elige otra modalidad o consulta en la Dirección de Admisión.',
+        );
       input = { ...input, optionCode: awardee.optionCode, quotaCategory: awardee.cycle };
     }
 
     // 2. Padrón de inhabilitados (RN-09).
     if (await this.d.access.isDisqualified(input.documentType, input.documentNumber)) {
-      throw businessRule('REGISTRATION_NOT_ALLOWED', 'No es posible registrar la inscripción. Acércate a la Dirección de Admisión.');
+      throw businessRule(
+        'REGISTRATION_NOT_ALLOWED',
+        'No es posible registrar la inscripción. Acércate a la Dirección de Admisión.',
+      );
     }
 
     // 3. Ubigeos, fechas y año de egreso.
-    for (const [field, code] of [['birthUbigeo', input.birthUbigeo], ['residenceUbigeo', input.residenceUbigeo], ['schoolUbigeo', input.schoolUbigeo]] as const) {
-      if (!isValidDistrict(code)) throw businessRule('INVALID_UBIGEO', 'Elige departamento, provincia y distrito.', { details: [{ field, issue: 'ubigeo inválido' }] });
+    for (const [field, code] of [
+      ['birthUbigeo', input.birthUbigeo],
+      ['residenceUbigeo', input.residenceUbigeo],
+      ['schoolUbigeo', input.schoolUbigeo],
+    ] as const) {
+      if (!isValidDistrict(code))
+        throw businessRule('INVALID_UBIGEO', 'Elige departamento, provincia y distrito.', {
+          details: [{ field, issue: 'ubigeo inválido' }],
+        });
     }
     const birthDate = new Date(`${input.birthDate}T00:00:00Z`);
-    if (Number.isNaN(birthDate.getTime()) || birthDate.getTime() > now.getTime() || now.getUTCFullYear() - birthDate.getUTCFullYear() > 90) {
+    if (
+      Number.isNaN(birthDate.getTime()) ||
+      birthDate.getTime() > now.getTime() ||
+      now.getUTCFullYear() - birthDate.getUTCFullYear() > 90
+    ) {
       throw validationError('Revisa tu fecha de nacimiento.', [{ field: 'birthDate', issue: 'fecha inválida' }]);
     }
     if (!isPlausibleGraduationYear(input.graduationYear, now)) {
-      throw validationError('Revisa el año en que culminaste el colegio.', [{ field: 'graduationYear', issue: 'año inválido' }]);
+      throw validationError('Revisa el año en que culminaste el colegio.', [
+        { field: 'graduationYear', issue: 'año inválido' },
+      ]);
     }
 
     // 4. Categoría de la modalidad y vacantes del programa.
     const categories = await this.d.convocatorias.listQuotaCategories(call.code);
     const category = categories.find((c) => c.code === input.quotaCategory && c.modality === input.modality);
-    if (!category) throw validationError('Elige el tipo de tu modalidad.', [{ field: 'quotaCategory', issue: 'no corresponde a la modalidad' }]);
+    if (!category)
+      throw validationError('Elige el tipo de tu modalidad.', [
+        { field: 'quotaCategory', issue: 'no corresponde a la modalidad' },
+      ]);
     const option = await this.d.convocatorias.getOption(call.code, input.optionCode);
     const vacancies = option.vacanciesByCategory.find((v) => v.category === category.code)?.quantity ?? 0;
-    if (vacancies === 0) throw businessRule('NO_VACANCIES', `${option.displayName} no ofrece vacantes en ${category.name}. Elige otro programa o tipo.`);
+    if (vacancies === 0)
+      throw businessRule(
+        'NO_VACANCIES',
+        `${option.displayName} no ofrece vacantes en ${category.name}. Elige otro programa o tipo.`,
+      );
 
     // 5. Foto (RN-22): JPEG 240 × 320, ≤ 2 MB.
     const photo = this.decodePhoto(input.photo);
 
     // 6. Identidad: si el proveedor reconoce el DNI, prevalecen sus nombres.
-    let names = { paternalSurname: input.paternalSurname.trim(), maternalSurname: input.maternalSurname.trim(), firstNames: input.firstNames.trim() };
+    let names = {
+      paternalSurname: input.paternalSurname.trim(),
+      maternalSurname: input.maternalSurname.trim(),
+      firstNames: input.firstNames.trim(),
+    };
     let identityStatus: 'VERIFIED' | 'PENDING' = 'PENDING';
     if (input.documentType === 'DNI') {
       const r = await this.d.identity.lookupDni(input.documentNumber);
@@ -256,7 +333,9 @@ export class InscriptionService {
 
     const status = initialStatus(input.modality);
     const examStage = call.stages.find((s) => s.kind === 'EXAM' && s.scope === input.modality);
-    const examDate = examStage ? longDate(new Date(examStage.startsAt)) : 'Adjudicado por el CEPRE-UNSCH: no rinde examen';
+    const examDate = examStage
+      ? longDate(new Date(examStage.startsAt))
+      : 'Adjudicado por el CEPRE-UNSCH: no rinde examen';
 
     try {
       const created = await this.d.repo.transaction(async (uow) => {
@@ -264,50 +343,71 @@ export class InscriptionService {
         const applicantCode = applicantCodeFromSequence(await uow.nextApplicantCodeValue());
         const photoKey = `inscripciones/${call.code}/${applicantCode}.jpg`;
         const row = await uow.create({
-            callCode: call.code,
-            applicantCode,
-            documentType: input.documentType,
-            documentNumber: input.documentNumber,
-            identityStatus,
-            ...Object.fromEntries(Object.entries(names).map(([k, v]) => [k, v.toUpperCase()])) as typeof names,
-            sex: input.sex,
-            maritalStatus: input.maritalStatus,
-            birthUbigeo: input.birthUbigeo,
-            birthDate,
-            address: input.address.trim(),
-            residenceUbigeo: input.residenceUbigeo,
-            economicDependency: input.economicDependency,
-            phone: input.phone || null,
-            mobile: input.mobile,
-            email: input.email.trim().toLowerCase(),
-            photoKey,
-            schoolUbigeo: input.schoolUbigeo,
-            schoolName: input.schoolName.trim().toUpperCase(),
-            schoolType: input.schoolType,
-            graduationYear: input.graduationYear,
-            inFourthOrBelow: input.inFourthOrBelow,
-            preparation: input.preparation,
-            attempts: input.attempts,
-            modality: input.modality,
-            quotaCategory: category.code,
-            campus: input.campus,
-            area: option.area,
-            optionCode: option.internalCode,
-            militaryCondition: input.modality === 'ORD' ? input.militaryCondition : 'NONE',
-            familyLink: input.familyLink,
-            noVacancyRight: input.inFourthOrBelow,
-            feeTotal: fee.total,
-            feeLines: fee.lines as unknown as object[],
-            status,
-            declarationAcceptedAt: now,
-            consentVersion: consent?.version ?? input.consentVersion,
-            consentTextHash: consent ? createHash('sha256').update(consent.textMarkdown).digest('hex') : null,
+          callCode: call.code,
+          applicantCode,
+          documentType: input.documentType,
+          documentNumber: input.documentNumber,
+          identityStatus,
+          ...(Object.fromEntries(Object.entries(names).map(([k, v]) => [k, v.toUpperCase()])) as typeof names),
+          sex: input.sex,
+          maritalStatus: input.maritalStatus,
+          birthUbigeo: input.birthUbigeo,
+          birthDate,
+          address: input.address.trim(),
+          residenceUbigeo: input.residenceUbigeo,
+          economicDependency: input.economicDependency,
+          phone: input.phone || null,
+          mobile: input.mobile,
+          email: input.email.trim().toLowerCase(),
+          photoKey,
+          schoolUbigeo: input.schoolUbigeo,
+          schoolName: input.schoolName.trim().toUpperCase(),
+          schoolType: input.schoolType,
+          graduationYear: input.graduationYear,
+          inFourthOrBelow: input.inFourthOrBelow,
+          preparation: input.preparation,
+          attempts: input.attempts,
+          modality: input.modality,
+          quotaCategory: category.code,
+          campus: input.campus,
+          area: option.area,
+          optionCode: option.internalCode,
+          militaryCondition: input.modality === 'ORD' ? input.militaryCondition : 'NONE',
+          familyLink: input.familyLink,
+          noVacancyRight: input.inFourthOrBelow,
+          feeTotal: fee.total,
+          feeLines: fee.lines as unknown as object[],
+          status,
+          declarationAcceptedAt: now,
+          consentVersion: consent?.version ?? input.consentVersion,
+          consentTextHash: consent ? createHash('sha256').update(consent.textMarkdown).digest('hex') : null,
         });
-        await this.d.audit.record({ actorUserId: null, action: 'inscription.created', resourceType: 'application', resourceId: row.id, after: { modality: row.modality, optionCode: row.optionCode, status }, ...meta }, tx);
-        await this.d.outbox.publish(tx, 'InscripcionRegistrada', {
-          email: row.email, firstNames: row.firstNames, applicantCode, program: option.displayName, modality: category.name,
-          total: fee.total, status: STATUS_LABEL[status], examDate,
-        }, meta.requestId);
+        await this.d.audit.record(
+          {
+            actorUserId: null,
+            action: 'inscription.created',
+            resourceType: 'application',
+            resourceId: row.id,
+            after: { modality: row.modality, optionCode: row.optionCode, status },
+            ...meta,
+          },
+          tx,
+        );
+        await this.d.outbox.publish(
+          tx,
+          'InscripcionRegistrada',
+          {
+            email: row.email,
+            firstNames: row.firstNames,
+            applicantCode,
+            program: option.displayName,
+            modality: category.name,
+            total: fee.total,
+            status: STATUS_LABEL[status],
+            examDate,
+          },
+          meta.requestId,
+        );
         return row;
       });
       await this.d.storage.put(created.photoKey, photo, 'image/jpeg');
@@ -315,7 +415,10 @@ export class InscriptionService {
       return this.summary(created, option.displayName, category.name, examDate);
     } catch (error) {
       if (error instanceof DuplicateApplicationError) {
-        throw conflict('ALREADY_REGISTERED', 'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.');
+        throw conflict(
+          'ALREADY_REGISTERED',
+          'Este documento ya tiene una inscripción en esta convocatoria. Consulta tu inscripción con tu DNI y tu código de postulante.',
+        );
       }
       throw error;
     }
@@ -329,15 +432,21 @@ export class InscriptionService {
     const rows = await this.d.repo.listByDocument(documentType, documentNumber);
     if (!rows.length) return [];
     const call = await this.d.convocatorias.getCurrentCall();
-    return Promise.all(rows.map(async (row) => {
-      const [option, categories] = await Promise.all([
-        this.d.convocatorias.getOption(row.callCode, row.optionCode),
-        this.d.convocatorias.listQuotaCategories(row.callCode),
-      ]);
-      const exam = call.stages.find((s) => s.kind === 'EXAM' && s.scope === row.modality);
-      return this.summary(row, option.displayName, categories.find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory,
-        exam ? longDate(new Date(exam.startsAt)) : 'Adjudicado por el CEPRE-UNSCH: no rinde examen');
-    }));
+    return Promise.all(
+      rows.map(async (row) => {
+        const [option, categories] = await Promise.all([
+          this.d.convocatorias.getOption(row.callCode, row.optionCode),
+          this.d.convocatorias.listQuotaCategories(row.callCode),
+        ]);
+        const exam = call.stages.find((s) => s.kind === 'EXAM' && s.scope === row.modality);
+        return this.summary(
+          row,
+          option.displayName,
+          categories.find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory,
+          exam ? longDate(new Date(exam.startsAt)) : 'Adjudicado por el CEPRE-UNSCH: no rinde examen',
+        );
+      }),
+    );
   }
 
   /**
@@ -354,14 +463,21 @@ export class InscriptionService {
       eligible: !reason,
       reason,
       fullName: `${row.firstNames} ${row.paternalSurname} ${row.maternalSurname}`.trim(),
-      fromModality: (await this.d.convocatorias.listQuotaCategories(call.code)).find((c) => c.code === row.quotaCategory)?.name ?? row.quotaCategory,
+      fromModality:
+        (await this.d.convocatorias.listQuotaCategories(call.code)).find((c) => c.code === row.quotaCategory)?.name ??
+        row.quotaCategory,
       amount: fee ? Number(fee.amount).toFixed(2) : null,
       window: stage ? { startsAt: stage.startsAt, endsAt: stage.endsAt, open: stage.status === 'IN_PROGRESS' } : null,
     };
   }
 
   /** Historia 6: crea la inscripción al Ordinario con los datos de la de Exonerados y la tasa T-5 (S/ 180.00). */
-  async reinscribe(documentNumber: string, applicantCode: string, optionCode: string, meta: RequestMeta): Promise<InscriptionSummary> {
+  async reinscribe(
+    documentNumber: string,
+    applicantCode: string,
+    optionCode: string,
+    meta: RequestMeta,
+  ): Promise<InscriptionSummary> {
     await this.d.limiter.consume(`reinscription:${meta.ipHash}`, 20, 3600);
     const { row, call } = await this.reinscriptionSource(documentNumber, applicantCode);
     const reason = await this.reinscriptionBlocker(row, call);
@@ -371,7 +487,11 @@ export class InscriptionService {
       throw businessRule('NO_VACANCIES', `${option.displayName} no ofrece vacantes ordinarias. Elige otro programa.`);
     }
     const fee = (await this.d.convocatorias.listFees(call.code)).find((f) => f.code === REINSCRIPTION_FEE);
-    if (!fee) throw businessRule('FEE_NOT_CONFIGURED', 'La tasa de reinscripción no está configurada. Consulta en la Dirección de Admisión.');
+    if (!fee)
+      throw businessRule(
+        'FEE_NOT_CONFIGURED',
+        'La tasa de reinscripción no está configurada. Consulta en la Dirección de Admisión.',
+      );
     const amount = Number(fee.amount).toFixed(2);
     const lines = [{ code: fee.code, concept: fee.concept, amount, legalNote: fee.legalNote }];
     const examStage = call.stages.find((st) => st.kind === 'EXAM' && st.scope === 'ORD');
@@ -382,35 +502,68 @@ export class InscriptionService {
       const created = await this.d.repo.transaction(async (uow) => {
         const { tx } = uow;
         const code = applicantCodeFromSequence(await uow.nextApplicantCodeValue());
-        const { id: _id, applicantCode: _code, createdAt: _c, updatedAt: _u, anonymizedAt: _a, feeLines: _f, ...personal } = row;
+        const {
+          id: _id,
+          applicantCode: _code,
+          createdAt: _c,
+          updatedAt: _u,
+          anonymizedAt: _a,
+          feeLines: _f,
+          ...personal
+        } = row;
         const app = await uow.create({
-            ...personal,
-            applicantCode: code,
-            photoKey: `inscripciones/${call.code}/${code}.jpg`,
-            modality: 'ORD',
-            quotaCategory: 'ORD',
-            area: option.area,
-            optionCode: option.internalCode,
-            militaryCondition: 'NONE',
-            familyLink: false,
-            feeTotal: amount,
-            feeLines: lines,
-            status: 'PENDIENTE_PAGO',
-            declarationAcceptedAt: this.d.clock.now(),
-            reinscriptionOf: row.applicantCode,
+          ...personal,
+          applicantCode: code,
+          photoKey: `inscripciones/${call.code}/${code}.jpg`,
+          modality: 'ORD',
+          quotaCategory: 'ORD',
+          area: option.area,
+          optionCode: option.internalCode,
+          militaryCondition: 'NONE',
+          familyLink: false,
+          feeTotal: amount,
+          feeLines: lines,
+          status: 'PENDIENTE_PAGO',
+          declarationAcceptedAt: this.d.clock.now(),
+          reinscriptionOf: row.applicantCode,
         });
-        await this.d.audit.record({ actorUserId: null, action: 'inscription.reinscribed', resourceType: 'application', resourceId: app.id, after: { from: row.applicantCode, optionCode: app.optionCode }, ...meta }, tx);
-        await this.d.outbox.publish(tx, 'InscripcionRegistrada', {
-          email: app.email, firstNames: app.firstNames, applicantCode: code, program: option.displayName, modality: 'Ordinario (reinscripción)',
-          total: amount, status: STATUS_LABEL.PENDIENTE_PAGO, examDate,
-        }, meta.requestId);
+        await this.d.audit.record(
+          {
+            actorUserId: null,
+            action: 'inscription.reinscribed',
+            resourceType: 'application',
+            resourceId: app.id,
+            after: { from: row.applicantCode, optionCode: app.optionCode },
+            ...meta,
+          },
+          tx,
+        );
+        await this.d.outbox.publish(
+          tx,
+          'InscripcionRegistrada',
+          {
+            email: app.email,
+            firstNames: app.firstNames,
+            applicantCode: code,
+            program: option.displayName,
+            modality: 'Ordinario (reinscripción)',
+            total: amount,
+            status: STATUS_LABEL.PENDIENTE_PAGO,
+            examDate,
+          },
+          meta.requestId,
+        );
         return app;
       });
       if (photo) await this.d.storage.put(created.photoKey, photo, 'image/jpeg');
       this.d.outbox.kick();
       return this.summary(created, option.displayName, 'Ordinario (reinscripción)', examDate);
     } catch (error) {
-      if (error instanceof DuplicateApplicationError) throw conflict('ALREADY_REGISTERED', 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».');
+      if (error instanceof DuplicateApplicationError)
+        throw conflict(
+          'ALREADY_REGISTERED',
+          'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».',
+        );
       throw error;
     }
   }
@@ -425,12 +578,22 @@ export class InscriptionService {
 
   /** Motivo por el que no puede reinscribirse, o null si puede. */
   private async reinscriptionBlocker(
-    row: { applicantCode: string; callCode: string; documentType: string; documentNumber: string; modality: string; quotaCategory: string; status: InscriptionStatus },
+    row: {
+      applicantCode: string;
+      callCode: string;
+      documentType: string;
+      documentNumber: string;
+      modality: string;
+      quotaCategory: string;
+      status: InscriptionStatus;
+    },
     call: Awaited<ReturnType<ConvocatoriasQueries['getCurrentCall']>>,
   ): Promise<string | null> {
     if (row.callCode !== call.code) return 'La inscripción no corresponde a la convocatoria vigente.';
-    if (row.modality !== 'EXO') return 'La reinscripción es solo para postulantes de Exonerados que no alcanzaron vacante (Art. 21).';
-    if (NO_REINSCRIPTION.has(row.quotaCategory)) return 'Los postulantes por traslado o graduados/titulados no pueden reinscribirse al Ordinario (Art. 21).';
+    if (row.modality !== 'EXO')
+      return 'La reinscripción es solo para postulantes de Exonerados que no alcanzaron vacante (Art. 21).';
+    if (NO_REINSCRIPTION.has(row.quotaCategory))
+      return 'Los postulantes por traslado o graduados/titulados no pueden reinscribirse al Ordinario (Art. 21).';
     if (row.status !== 'APTA') return 'Tu inscripción de Exonerados no llegó a estar apta para el examen.';
     if (await this.d.repo.existsForDocument(row.callCode, row.documentType, row.documentNumber, 'ORD')) {
       return 'Ya tienes una inscripción en el Ordinario. Consúltala en «Mi inscripción».';
@@ -482,8 +645,22 @@ export class InscriptionService {
     const row = await this.d.repo.findInCallByDocument(call.code, doc);
     if (!row) return;
     await this.d.repo.transaction(async ({ tx }) => {
-      await this.d.audit.record({ actorUserId: null, action: 'inscription.code_reminded', resourceType: 'application', resourceId: row.id, ...meta }, tx);
-      await this.d.outbox.publish(tx, 'CodigoPostulanteRecordado', { applicantCode: row.applicantCode, email: row.email, firstNames: row.firstNames }, meta.requestId);
+      await this.d.audit.record(
+        {
+          actorUserId: null,
+          action: 'inscription.code_reminded',
+          resourceType: 'application',
+          resourceId: row.id,
+          ...meta,
+        },
+        tx,
+      );
+      await this.d.outbox.publish(
+        tx,
+        'CodigoPostulanteRecordado',
+        { applicantCode: row.applicantCode, email: row.email, firstNames: row.firstNames },
+        meta.requestId,
+      );
     });
     this.d.outbox.kick();
   }
@@ -545,7 +722,12 @@ export class InscriptionService {
   }
 
   /** Panel (spec 008): inscripciones con búsqueda y filtros, paginadas. Muestra datos completos al personal autorizado. */
-  async adminList(filter: { q?: string | undefined; status?: string | undefined; modality?: string | undefined; page: number }) {
+  async adminList(filter: {
+    q?: string | undefined;
+    status?: string | undefined;
+    modality?: string | undefined;
+    page: number;
+  }) {
     const q = filter.q?.trim().toUpperCase();
     const where = {
       ...(filter.status ? { status: filter.status as InscriptionStatus } : {}),
@@ -558,12 +740,23 @@ export class InscriptionService {
       this.d.repo.list(where, { skip: (filter.page - 1) * pageSize, take: pageSize }),
     ]);
     return {
-      total, page: filter.page, pageSize,
+      total,
+      page: filter.page,
+      pageSize,
       items: rows.map((r) => ({
-        applicantCode: r.applicantCode, documentType: r.documentType, documentNumber: r.documentNumber,
-        fullName: `${r.paternalSurname} ${r.maternalSurname}, ${r.firstNames}`, email: r.email, mobile: r.mobile,
-        modality: r.modality, quotaCategory: r.quotaCategory, optionCode: r.optionCode, status: r.status, statusLabel: STATUS_LABEL[r.status],
-        fee: Number(r.feeTotal.toString()).toFixed(2), createdAt: r.createdAt.toISOString(),
+        applicantCode: r.applicantCode,
+        documentType: r.documentType,
+        documentNumber: r.documentNumber,
+        fullName: `${r.paternalSurname} ${r.maternalSurname}, ${r.firstNames}`,
+        email: r.email,
+        mobile: r.mobile,
+        modality: r.modality,
+        quotaCategory: r.quotaCategory,
+        optionCode: r.optionCode,
+        status: r.status,
+        statusLabel: STATUS_LABEL[r.status],
+        fee: Number(r.feeTotal.toString()).toFixed(2),
+        createdAt: r.createdAt.toISOString(),
       })),
     };
   }
@@ -572,7 +765,14 @@ export class InscriptionService {
   async observedList() {
     const callCode = await this.callCode();
     const rows = await this.d.repo.list({ callCode, status: 'OBSERVADA' }, { orderBy: 'applicantCode' });
-    return { callCode, rows: rows.map((r) => ({ applicantCode: r.applicantCode, modality: r.modality, since: r.updatedAt.toISOString() })) };
+    return {
+      callCode,
+      rows: rows.map((r) => ({
+        applicantCode: r.applicantCode,
+        modality: r.modality,
+        since: r.updatedAt.toISOString(),
+      })),
+    };
   }
 
   /** Panel: anular con motivo (y resolución si la hay), auditado. */
@@ -583,13 +783,35 @@ export class InscriptionService {
     await this.d.repo.transaction(async (uow) => {
       const { tx } = uow;
       await uow.setStatus(applicantCode, 'ANULADA');
-      await this.d.audit.record({ actorUserId: actor, action: 'inscription.annulled', resourceType: 'application', resourceId: applicantCode, before: { status: row.status }, after: { status: 'ANULADA', reason }, ...meta }, tx);
-      await this.d.outbox.publish(tx, 'InscripcionAnulada', { applicantCode, email: row.email, firstNames: row.firstNames, reason }, meta.requestId);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'inscription.annulled',
+          resourceType: 'application',
+          resourceId: applicantCode,
+          before: { status: row.status },
+          after: { status: 'ANULADA', reason },
+          ...meta,
+        },
+        tx,
+      );
+      await this.d.outbox.publish(
+        tx,
+        'InscripcionAnulada',
+        { applicantCode, email: row.email, firstNames: row.firstNames, reason },
+        meta.requestId,
+      );
     });
   }
 
   /** Spec 008, Historia 5: al inhabilitar a una persona se anulan sus inscripciones con la resolución. */
-  async annulByDocument(documentType: string, documentNumber: string, resolution: string, actor: string, meta: RequestMeta): Promise<string[]> {
+  async annulByDocument(
+    documentType: string,
+    documentNumber: string,
+    resolution: string,
+    actor: string,
+    meta: RequestMeta,
+  ): Promise<string[]> {
     const rows = await this.d.repo.listByDocument(documentType, documentNumber, { excludeAnnulled: true });
     for (const r of rows) await this.annul(r.applicantCode, `Inhabilitación: ${resolution}`, actor, meta);
     return rows.map((r) => r.applicantCode);
@@ -610,10 +832,18 @@ export class InscriptionService {
     ]);
     const category = categories.find((c) => c.code === row.quotaCategory);
     return {
-      applicantCode: row.applicantCode, callCode: row.callCode, modality: row.modality, status: row.status,
-      submodality: category?.submodality ?? null, categoryName: category?.name ?? row.quotaCategory, program: option.displayName,
-      fullName: `${row.paternalSurname} ${row.maternalSurname}, ${row.firstNames}`, firstNames: row.firstNames, email: row.email,
-      documentType: row.documentType, documentNumber: row.documentNumber,
+      applicantCode: row.applicantCode,
+      callCode: row.callCode,
+      modality: row.modality,
+      status: row.status,
+      submodality: category?.submodality ?? null,
+      categoryName: category?.name ?? row.quotaCategory,
+      program: option.displayName,
+      fullName: `${row.paternalSurname} ${row.maternalSurname}, ${row.firstNames}`,
+      firstNames: row.firstNames,
+      email: row.email,
+      documentType: row.documentType,
+      documentNumber: row.documentNumber,
     };
   }
 
@@ -633,13 +863,26 @@ export class InscriptionService {
   /** Datos de examen de una inscripción; con `documentNumber` exige que coincida (consulta pública con DNI + código). */
   async examContext(applicantCode: string, documentNumber?: string) {
     const row = await this.d.repo.findByCode(applicantCode);
-    if (!row || (documentNumber !== undefined && row.documentNumber !== documentNumber.trim().toUpperCase())) return null;
+    if (!row || (documentNumber !== undefined && row.documentNumber !== documentNumber.trim().toUpperCase()))
+      return null;
     const options = await this.d.convocatorias.searchOptions(row.callCode, {});
-    return { ...this.examPerson(row, options.data.find((o) => o.internalCode === row.optionCode)), callCode: row.callCode, status: row.status, statusLabel: STATUS_LABEL[row.status] };
+    return {
+      ...this.examPerson(
+        row,
+        options.data.find((o) => o.internalCode === row.optionCode),
+      ),
+      callCode: row.callCode,
+      status: row.status,
+      statusLabel: STATUS_LABEL[row.status],
+    };
   }
 
   /** M11: destinatarios de un comunicado segmentado por modalidad, programa y estado (RF-11.08). */
-  async segment(filter: { modality?: string | undefined; optionCode?: string | undefined; status?: string | undefined }) {
+  async segment(filter: {
+    modality?: string | undefined;
+    optionCode?: string | undefined;
+    status?: string | undefined;
+  }) {
     const call = await this.d.convocatorias.getCurrentCall();
     const rows = await this.d.repo.list({
       callCode: call.code,
@@ -654,21 +897,60 @@ export class InscriptionService {
   async pendingPayments(withinHours: number) {
     const call = await this.d.convocatorias.getCurrentCall();
     const now = this.d.clock.now().getTime();
-    const closing = call.stages.filter((s) => s.kind === 'REGULAR' && new Date(s.endsAt).getTime() > now && new Date(s.endsAt).getTime() - now <= withinHours * 3600_000);
+    const closing = call.stages.filter(
+      (s) =>
+        s.kind === 'REGULAR' &&
+        new Date(s.endsAt).getTime() > now &&
+        new Date(s.endsAt).getTime() - now <= withinHours * 3600_000,
+    );
     const out = [];
     for (const st of closing) {
       const rows = await this.d.repo.list({ callCode: call.code, status: 'PENDIENTE_PAGO', modality: st.scope });
-      out.push(...rows.map((r) => ({ applicantCode: r.applicantCode, email: r.email, firstNames: r.firstNames, amount: Number(r.feeTotal).toFixed(2), closesAt: new Date(st.endsAt), stage: st.code })));
+      out.push(
+        ...rows.map((r) => ({
+          applicantCode: r.applicantCode,
+          email: r.email,
+          firstNames: r.firstNames,
+          amount: Number(r.feeTotal).toFixed(2),
+          closesAt: new Date(st.endsAt),
+          stage: st.code,
+        })),
+      );
     }
     return out;
   }
 
-  private examPerson(r: { applicantCode: string; paternalSurname: string; maternalSurname: string; firstNames: string; documentType: string; documentNumber: string; modality: string; optionCode: string; quotaCategory: string; photoKey: string; email: string; noVacancyRight: boolean }, option?: { displayName: string; area: string }) {
+  private examPerson(
+    r: {
+      applicantCode: string;
+      paternalSurname: string;
+      maternalSurname: string;
+      firstNames: string;
+      documentType: string;
+      documentNumber: string;
+      modality: string;
+      optionCode: string;
+      quotaCategory: string;
+      photoKey: string;
+      email: string;
+      noVacancyRight: boolean;
+    },
+    option?: { displayName: string; area: string },
+  ) {
     return {
-      applicantCode: r.applicantCode, surname: `${r.paternalSurname} ${r.maternalSurname}`.trim(), firstNames: r.firstNames,
-      fullName: `${r.paternalSurname} ${r.maternalSurname}, ${r.firstNames}`, document: `${r.documentType} ${r.documentNumber}`,
-      modality: r.modality, program: option?.displayName ?? r.optionCode, area: option?.area ?? '-', photoKey: r.photoKey, email: r.email,
-      noVacancyRight: r.noVacancyRight, optionCode: r.optionCode, quotaCategory: r.quotaCategory,
+      applicantCode: r.applicantCode,
+      surname: `${r.paternalSurname} ${r.maternalSurname}`.trim(),
+      firstNames: r.firstNames,
+      fullName: `${r.paternalSurname} ${r.maternalSurname}, ${r.firstNames}`,
+      document: `${r.documentType} ${r.documentNumber}`,
+      modality: r.modality,
+      program: option?.displayName ?? r.optionCode,
+      area: option?.area ?? '-',
+      photoKey: r.photoKey,
+      email: r.email,
+      noVacancyRight: r.noVacancyRight,
+      optionCode: r.optionCode,
+      quotaCategory: r.quotaCategory,
     };
   }
 
@@ -686,40 +968,77 @@ export class InscriptionService {
       await this.d.storage.delete(r.photoKey).catch(() => undefined);
       for (const key of keys) await this.d.storage.delete(key).catch(() => undefined);
       await this.d.repo.transaction(async (uow) => {
-      const { tx } = uow;
+        const { tx } = uow;
         await uow.anonymize(r, this.d.clock.now());
-        await this.d.audit.record({ actorUserId: actor, action: 'inscription.anonymized', resourceType: 'application', resourceId: r.applicantCode, after: { years, callCode: r.callCode }, ...(meta ?? {}) }, tx);
+        await this.d.audit.record(
+          {
+            actorUserId: actor,
+            action: 'inscription.anonymized',
+            resourceType: 'application',
+            resourceId: r.applicantCode,
+            after: { years, callCode: r.callCode },
+            ...(meta ?? {}),
+          },
+          tx,
+        );
       });
     }
     return { anonymized: rows.length, before: limit.toISOString() };
   }
 
   /** Reacción al dictamen del expediente (M06): el estado de la inscripción sigue al expediente (RN-24). */
-  async applyDossierDecision(applicantCode: string, decision: 'AUTORIZADO' | 'OBSERVADO' | 'EN_REVISION' | 'RECHAZADO' | 'NO_SUBSANADO') {
-    const target = { AUTORIZADO: 'PENDIENTE_PAGO', OBSERVADO: 'OBSERVADA', EN_REVISION: 'PENDIENTE_VALIDACION', RECHAZADO: 'ANULADA', NO_SUBSANADO: 'ANULADA' }[decision] as InscriptionStatus;
+  async applyDossierDecision(
+    applicantCode: string,
+    decision: 'AUTORIZADO' | 'OBSERVADO' | 'EN_REVISION' | 'RECHAZADO' | 'NO_SUBSANADO',
+  ) {
+    const target = {
+      AUTORIZADO: 'PENDIENTE_PAGO',
+      OBSERVADO: 'OBSERVADA',
+      EN_REVISION: 'PENDIENTE_VALIDACION',
+      RECHAZADO: 'ANULADA',
+      NO_SUBSANADO: 'ANULADA',
+    }[decision] as InscriptionStatus;
     return this.d.repo.transaction(async (uow) => {
       const { tx } = uow;
       const row = await uow.findByCode(applicantCode);
-      if (!row || row.status === target || row.status === 'APTA') return row ? { email: row.email, firstNames: row.firstNames, changed: false } : null;
+      if (!row || row.status === target || row.status === 'APTA')
+        return row ? { email: row.email, firstNames: row.firstNames, changed: false } : null;
       await uow.setStatus(applicantCode, target);
-      await this.d.audit.record({
-        actorUserId: null, action: 'inscription.dossier_decision', resourceType: 'application', resourceId: applicantCode,
-        before: { status: row.status }, after: { status: target, decision },
-      }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: null,
+          action: 'inscription.dossier_decision',
+          resourceType: 'application',
+          resourceId: applicantCode,
+          before: { status: row.status },
+          after: { status: target, decision },
+        },
+        tx,
+      );
       return { email: row.email, firstNames: row.firstNames, changed: true };
     });
   }
 
   /** Reacción al evento PagoConfirmado: la inscripción pendiente de pago queda Apta (spec 005 SC-001). */
-  async markPaid(applicantCode: string, operationNumber: string): Promise<{ changed: boolean; email: string; firstNames: string } | null> {
+  async markPaid(
+    applicantCode: string,
+    operationNumber: string,
+  ): Promise<{ changed: boolean; email: string; firstNames: string } | null> {
     return this.d.repo.transaction(async (uow) => {
       const { tx } = uow;
       const changed = await uow.markPaidIfPending(applicantCode);
       if (changed) {
-        await this.d.audit.record({
-          actorUserId: null, action: 'inscription.paid', resourceType: 'application', resourceId: applicantCode,
-          before: { status: 'PENDIENTE_PAGO' }, after: { status: 'APTA', operationNumber },
-        }, tx);
+        await this.d.audit.record(
+          {
+            actorUserId: null,
+            action: 'inscription.paid',
+            resourceType: 'application',
+            resourceId: applicantCode,
+            before: { status: 'PENDIENTE_PAGO' },
+            after: { status: 'APTA', operationNumber },
+          },
+          tx,
+        );
       }
       const row = await uow.findByCode(applicantCode);
       return row ? { changed, email: row.email, firstNames: row.firstNames } : null;
@@ -730,16 +1049,33 @@ export class InscriptionService {
     const match = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
     const buf = match ? Buffer.from(match[1]!, 'base64') : null;
     const size = buf ? jpegSize(buf) : null;
-    if (!buf || !size) throw validationError('La fotografía debe ser una imagen JPG.', [{ field: 'photo', issue: 'no es JPEG' }]);
-    if (buf.length > PHOTO.maxBytes) throw validationError('La fotografía no debe superar 2 MB.', [{ field: 'photo', issue: 'muy pesada' }]);
+    if (!buf || !size)
+      throw validationError('La fotografía debe ser una imagen JPG.', [{ field: 'photo', issue: 'no es JPEG' }]);
+    if (buf.length > PHOTO.maxBytes)
+      throw validationError('La fotografía no debe superar 2 MB.', [{ field: 'photo', issue: 'muy pesada' }]);
     if (size.width !== PHOTO.width || size.height !== PHOTO.height) {
-      throw validationError('La fotografía debe medir 240 × 320 píxeles.', [{ field: 'photo', issue: `${size.width}×${size.height}` }]);
+      throw validationError('La fotografía debe medir 240 × 320 píxeles.', [
+        { field: 'photo', issue: `${size.width}×${size.height}` },
+      ]);
     }
     return buf;
   }
 
   private summary(
-    row: { applicantCode: string; paternalSurname: string; maternalSurname: string; firstNames: string; documentNumber: string; email: string; modality: string; status: InscriptionStatus; noVacancyRight: boolean; feeTotal: { toString(): string }; feeLines: unknown; createdAt: Date },
+    row: {
+      applicantCode: string;
+      paternalSurname: string;
+      maternalSurname: string;
+      firstNames: string;
+      documentNumber: string;
+      email: string;
+      modality: string;
+      status: InscriptionStatus;
+      noVacancyRight: boolean;
+      feeTotal: { toString(): string };
+      feeLines: unknown;
+      createdAt: Date;
+    },
     program: string,
     categoryName: string,
     examDate: string,
@@ -758,7 +1094,10 @@ export class InscriptionService {
       status: row.status,
       statusLabel: STATUS_LABEL[row.status],
       noVacancyRight: row.noVacancyRight,
-      fee: { total: Number(row.feeTotal.toString()).toFixed(2), lines: row.feeLines as InscriptionSummary['fee']['lines'] },
+      fee: {
+        total: Number(row.feeTotal.toString()).toFixed(2),
+        lines: row.feeLines as InscriptionSummary['fee']['lines'],
+      },
       paymentEntities: PAYMENT_ENTITIES,
       fichaAvailable: row.status === 'APTA',
       examDate,

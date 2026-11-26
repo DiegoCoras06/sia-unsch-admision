@@ -25,7 +25,9 @@ export function maskPersonal(text: string): string {
 
 /** Pide atención humana con palabras claras. */
 export function asksForHuman(text: string): boolean {
-  return /\b(persona|humano|asesor|operador|hablar con alguien|atencion|reclamo)\b/i.test(text.normalize('NFD').replace(/\p{Diacritic}/gu, ''));
+  return /\b(persona|humano|asesor|operador|hablar con alguien|atencion|reclamo)\b/i.test(
+    text.normalize('NFD').replace(/\p{Diacritic}/gu, ''),
+  );
 }
 
 export const SYSTEM_PROMPT = `Eres el Asistente virtual de Admisión de la Universidad Nacional de San Cristóbal de Huamanga (UNSCH), proceso 2027-I.

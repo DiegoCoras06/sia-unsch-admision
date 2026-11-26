@@ -11,12 +11,25 @@ export const EXAM_STATUS_LABEL = {
 export const DEFAULT_STRUCTURE = { conocimientos: 100, aptitudVocacional: 10, actitudPersonal: 10 };
 
 /** RN-31 a RN-34: calificación provisional configurable (Tabla 5 pendiente). */
-export const DEFAULT_SCORING = { puntosConocimientos: 9, puntosTest: 5, factorArea: 1, puntajeMaximo: 1000, puntajeMinimo: 450, incorrectasRestan: false };
+export const DEFAULT_SCORING = {
+  puntosConocimientos: 9,
+  puntosTest: 5,
+  factorArea: 1,
+  puntajeMaximo: 1000,
+  puntajeMinimo: 450,
+  incorrectasRestan: false,
+};
 
 /** RN-37, RN-38: lo que se lleva y lo prohibido (Art. 26). */
 export const DEFAULT_INSTRUCTIONS = {
   llevar: ['DNI original vigente', 'Ficha de inscripción impresa con foto', 'Lápiz 2B, borrador y tajador'],
-  prohibido: ['Celulares, relojes y cualquier equipo electrónico', 'Objetos metálicos y joyas', 'Lapiceros', 'Mochilas, carteras o bolsos', 'Ropa con capucha o de jean'],
+  prohibido: [
+    'Celulares, relojes y cualquier equipo electrónico',
+    'Objetos metálicos y joyas',
+    'Lapiceros',
+    'Mochilas, carteras o bolsos',
+    'Ropa con capucha o de jean',
+  ],
   notas: 'Después de la hora de cierre no se permite el ingreso. Los resultados se publican el mismo día del examen.',
 };
 
@@ -37,7 +50,11 @@ export const INCIDENT_TYPES = {
 export type IncidentType = keyof typeof INCIDENT_TYPES;
 
 /** Intervalo en que un examen ocupa sus aulas: desde que abre el ingreso hasta que termina la prueba. */
-export function occupiedWindow(e: { entryOpensAt: Date; entryClosesAt: Date; durationMinutes: number }): [number, number] {
+export function occupiedWindow(e: {
+  entryOpensAt: Date;
+  entryClosesAt: Date;
+  durationMinutes: number;
+}): [number, number] {
   return [e.entryOpensAt.getTime(), e.entryClosesAt.getTime() + e.durationMinutes * 60_000];
 }
 

@@ -53,5 +53,8 @@ export function handleSummary(data) {
     `Meta EQ-01 (p95 de 3000 ms o menos y menos de 1 % de errores): ${d['p(95)'] < 3000 && fallas < 0.01 ? 'CUMPLE' : 'NO CUMPLE'}`,
     '',
   ].join('\n');
-  return { stdout: `\n${texto}`, [`calidad/resultados/${new Date().toISOString().slice(0, 10)}-k6-rendimiento-${USUARIOS}-usuarios.txt`]: texto };
+  return {
+    stdout: `\n${texto}`,
+    [`calidad/resultados/${new Date().toISOString().slice(0, 10)}-k6-rendimiento-${USUARIOS}-usuarios.txt`]: texto,
+  };
 }

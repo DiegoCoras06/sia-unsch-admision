@@ -14,7 +14,10 @@ const file = process.env.ADMIN_FILE ?? 'apps/backend/.admin-local.txt';
 mkdirSync(out, { recursive: true });
 const step = (m) => console.log(`✔ ${m}`);
 const api = async (path, body) => {
-  const r = await fetch(`${base}/api/v1${path}`, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const r = await fetch(
+    `${base}/api/v1${path}`,
+    body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {},
+  );
   const j = await r.json();
   if (!r.ok) throw new Error(`${path}: ${r.status} ${JSON.stringify(j.error)}`);
   return j.data;
@@ -22,12 +25,16 @@ const api = async (path, body) => {
 
 function base32Decode(s) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const ch of s.replace(/=+$/, '').toUpperCase()) {
     value = (value << 5) | A.indexOf(ch);
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -39,7 +46,27 @@ function totp(secret) {
   return String((((mac[o] & 127) << 24) | (mac[o + 1] << 16) | (mac[o + 2] << 8) | mac[o + 3]) % 1e6).padStart(6, '0');
 }
 function fakeJpeg(width, height) {
-  const sof = Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  const sof = Buffer.from([
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    height >> 8,
+    height & 255,
+    width >> 8,
+    width & 255,
+    0x03,
+    1,
+    0x22,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
   return `data:image/jpeg;base64,${Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]).toString('base64')}`;
 }
 
@@ -53,17 +80,44 @@ const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
   // ── Inscripción ordinaria pagada con la pasarela simulada ──────────
   const ins = await api('/inscriptions', {
-    documentType: 'DNI', documentNumber: dni, paternalSurname: 'X', maternalSurname: 'Y', firstNames: 'Z', sex: 'M',
-    maritalStatus: 'SOLTERO', birthUbigeo: '050101', birthDate: '2007-09-14', address: 'Jr. Bellido 330, Ayacucho',
-    residenceUbigeo: '050101', economicDependency: 'PADRES', mobile: '966123456', email: `e2e.examen.${dni}@example.com`,
-    photo: fakeJpeg(240, 320), schoolUbigeo: '050101', schoolName: 'IE Nuestra Señora de Fátima', schoolType: 'ESTATAL',
-    graduationYear: 2025, inFourthOrBelow: false, preparation: 'CEPRE_UNSCH', attempts: 1, modality: 'ORD', quotaCategory: 'ORD',
-    campus: 'HUAMANGA', optionCode: 'P20', militaryCondition: 'NONE', familyLink: false, declarationAccepted: true, consentVersion: '2026-10-v1',
+    documentType: 'DNI',
+    documentNumber: dni,
+    paternalSurname: 'X',
+    maternalSurname: 'Y',
+    firstNames: 'Z',
+    sex: 'M',
+    maritalStatus: 'SOLTERO',
+    birthUbigeo: '050101',
+    birthDate: '2007-09-14',
+    address: 'Jr. Bellido 330, Ayacucho',
+    residenceUbigeo: '050101',
+    economicDependency: 'PADRES',
+    mobile: '966123456',
+    email: `e2e.examen.${dni}@example.com`,
+    photo: fakeJpeg(240, 320),
+    schoolUbigeo: '050101',
+    schoolName: 'IE Nuestra Señora de Fátima',
+    schoolType: 'ESTATAL',
+    graduationYear: 2025,
+    inFourthOrBelow: false,
+    preparation: 'CEPRE_UNSCH',
+    attempts: 1,
+    modality: 'ORD',
+    quotaCategory: 'ORD',
+    campus: 'HUAMANGA',
+    optionCode: 'P20',
+    militaryCondition: 'NONE',
+    familyLink: false,
+    declarationAccepted: true,
+    consentVersion: '2026-10-v1',
   });
   const code = ins.applicantCode;
   const session = await api('/payments/session', { documentNumber: dni, applicantCode: code });
   if (session.provider !== 'mock') throw new Error('Este E2E usa la pasarela simulada (PAYMENTS_PROVIDER=mock).');
-  await api('/payments/confirm', await api('/payments/mock/complete', { transactionId: session.transactionId, approve: true }));
+  await api(
+    '/payments/confirm',
+    await api('/payments/mock/complete', { transactionId: session.transactionId, approve: true }),
+  );
   let status = '';
   for (let i = 0; i < 20 && status !== 'APTA'; i++) {
     await new Promise((r) => setTimeout(r, 1500));
@@ -97,7 +151,8 @@ try {
   step('Publicación de aulas adelantada a hace una hora (para la prueba)');
 
   await staff.locator('.adm-tabs button', { hasText: 'Distribución' }).click();
-  if (await staff.locator('#ds-reason').count()) await staff.fill('#ds-reason', 'Prueba E2E: nuevo apto después de la publicación');
+  if (await staff.locator('#ds-reason').count())
+    await staff.fill('#ds-reason', 'Prueba E2E: nuevo apto después de la publicación');
   await staff.locator('button', { hasText: /Distribuir aptos|Volver a distribuir/ }).click();
   await staff.locator('.adm-msg', { hasText: 'Distribución generada' }).waitFor({ timeout: 60000 });
   const confirm = staff.locator('button:has-text("Confirmar y programar publicación")');
@@ -118,7 +173,10 @@ try {
   await page.locator('.room').waitFor({ timeout: 20000 });
   step(`«Buscar aula»: ${(await page.locator('.room').innerText()).replace(/\s+/g, ' ')}`);
   await page.screenshot({ path: `${out}/3-buscar-aula.png`, fullPage: true });
-  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click('button:has-text("Descargar ficha de examen")')]);
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 30000 }),
+    page.click('button:has-text("Descargar ficha de examen")'),
+  ]);
   const pdfPath = `${out}/${download.suggestedFilename()}`;
   await download.saveAs(pdfPath);
   if (readFileSync(pdfPath).subarray(0, 5).toString() !== '%PDF-') throw new Error('La ficha de examen no es un PDF');

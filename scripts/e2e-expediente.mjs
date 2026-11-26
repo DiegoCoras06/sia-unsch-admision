@@ -16,12 +16,16 @@ const step = (m) => console.log(`✔ ${m}`);
 
 function base32Decode(s) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const ch of s.replace(/=+$/, '').toUpperCase()) {
     value = (value << 5) | A.indexOf(ch);
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -33,10 +37,31 @@ function totp(secret) {
   return String((((mac[o] & 127) << 24) | (mac[o + 1] << 16) | (mac[o + 2] << 8) | mac[o + 3]) % 1e6).padStart(6, '0');
 }
 function fakeJpeg(width, height) {
-  const sof = Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  const sof = Buffer.from([
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    height >> 8,
+    height & 255,
+    width >> 8,
+    width & 255,
+    0x03,
+    1,
+    0x22,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
   return Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]);
 }
-const pdf = (title) => Buffer.from(`%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n% ${title}\ntrailer<</Root 1 0 R>>\n%%EOF\n`);
+const pdf = (title) =>
+  Buffer.from(`%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n% ${title}\ntrailer<</Root 1 0 R>>\n%%EOF\n`);
 
 const admin = readFileSync(file, 'utf8');
 const email = /Correo: (\S+)/.exec(admin)[1];
@@ -50,12 +75,36 @@ try {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      documentType: 'DNI', documentNumber: dni, paternalSurname: 'Quispe', maternalSurname: 'Huamán', firstNames: 'Rosa', sex: 'F',
-      maritalStatus: 'SOLTERO', birthUbigeo: '050101', birthDate: '2007-03-11', address: 'Jr. Lima 120, Ayacucho',
-      residenceUbigeo: '050101', economicDependency: 'PADRES', mobile: '966123456', email: `e2e.exo.${dni}@example.com`,
-      photo: `data:image/jpeg;base64,${fakeJpeg(240, 320).toString('base64')}`, schoolUbigeo: '050101', schoolName: 'IE Mariscal Cáceres', schoolType: 'ESTATAL',
-      graduationYear: 2025, inFourthOrBelow: false, preparation: 'CEPRE_UNSCH', attempts: 1, modality: 'EXO', quotaCategory: 'PS-U',
-      campus: 'HUAMANGA', optionCode: 'P01', militaryCondition: 'NONE', familyLink: false, declarationAccepted: true, consentVersion: '2026-10-v1',
+      documentType: 'DNI',
+      documentNumber: dni,
+      paternalSurname: 'Quispe',
+      maternalSurname: 'Huamán',
+      firstNames: 'Rosa',
+      sex: 'F',
+      maritalStatus: 'SOLTERO',
+      birthUbigeo: '050101',
+      birthDate: '2007-03-11',
+      address: 'Jr. Lima 120, Ayacucho',
+      residenceUbigeo: '050101',
+      economicDependency: 'PADRES',
+      mobile: '966123456',
+      email: `e2e.exo.${dni}@example.com`,
+      photo: `data:image/jpeg;base64,${fakeJpeg(240, 320).toString('base64')}`,
+      schoolUbigeo: '050101',
+      schoolName: 'IE Mariscal Cáceres',
+      schoolType: 'ESTATAL',
+      graduationYear: 2025,
+      inFourthOrBelow: false,
+      preparation: 'CEPRE_UNSCH',
+      attempts: 1,
+      modality: 'EXO',
+      quotaCategory: 'PS-U',
+      campus: 'HUAMANGA',
+      optionCode: 'P01',
+      militaryCondition: 'NONE',
+      familyLink: false,
+      declarationAccepted: true,
+      consentVersion: '2026-10-v1',
     }),
   });
   const body = await res.json();
@@ -75,18 +124,29 @@ try {
     await page.locator('app-dossier-panel .dos').waitFor({ timeout: 20000 });
   };
   await openReceipt();
-  if (await page.locator('app-online-payment button.btn--gold').count()) throw new Error('El pago no debería estar disponible antes de autorizar el expediente');
+  if (await page.locator('app-online-payment button.btn--gold').count())
+    throw new Error('El pago no debería estar disponible antes de autorizar el expediente');
   step('Expediente visible en «Mi inscripción»; el pago aún no está disponible');
 
   const inputs = page.locator('app-dossier-panel input[type=file]');
   const n = await inputs.count();
   for (let i = 0; i < n; i++) {
     const before = await page.locator('app-dossier-panel .dos__file').count();
-    await page.locator('app-dossier-panel input[type=file]').nth(i).setInputFiles({ name: `requisito-${i + 1}.pdf`, mimeType: 'application/pdf', buffer: pdf(`Requisito ${i + 1}`) });
-    await page.waitForFunction((b) => document.querySelectorAll('app-dossier-panel .dos__file').length > b, before, { timeout: 20000 });
+    await page
+      .locator('app-dossier-panel input[type=file]')
+      .nth(i)
+      .setInputFiles({
+        name: `requisito-${i + 1}.pdf`,
+        mimeType: 'application/pdf',
+        buffer: pdf(`Requisito ${i + 1}`),
+      });
+    await page.waitForFunction((b) => document.querySelectorAll('app-dossier-panel .dos__file').length > b, before, {
+      timeout: 20000,
+    });
   }
   step(`${n} documentos cargados`);
-  for (const field of await page.locator('app-dossier-panel .dos__comp input').all()) await field.fill((await field.getAttribute('type')) === 'number' ? '1' : 'Dato de prueba');
+  for (const field of await page.locator('app-dossier-panel .dos__comp input').all())
+    await field.fill((await field.getAttribute('type')) === 'number' ? '1' : 'Dato de prueba');
   await page.screenshot({ path: `${out}/1-expediente-armado.png`, fullPage: true });
   await page.click('button:has-text("Enviar expediente a revisión")');
   await page.locator('.dos__state', { hasText: 'En revisión' }).waitFor({ timeout: 20000 });
@@ -113,7 +173,12 @@ try {
     const pending = staff.locator('.dx-act button:has-text("Conforme")').first();
     const left = await staff.locator('.adm-tag', { hasText: 'Por revisar' }).count();
     await pending.click();
-    await staff.waitForFunction((l) => [...document.querySelectorAll('.adm-tag')].filter((t) => t.textContent.trim() === 'Por revisar').length < l, left, { timeout: 20000 });
+    await staff.waitForFunction(
+      (l) =>
+        [...document.querySelectorAll('.adm-tag')].filter((t) => t.textContent.trim() === 'Por revisar').length < l,
+      left,
+      { timeout: 20000 },
+    );
   }
   step('Todos los documentos marcados conformes');
   await staff.screenshot({ path: `${out}/2-revision-evaluador.png`, fullPage: true });

@@ -2,8 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 
 export type District = [code: string, name: string];
-export interface Province { id: string; name: string; districts: District[] }
-export interface Department { id: string; name: string; provinces: Province[] }
+export interface Province {
+  id: string;
+  name: string;
+  districts: District[];
+}
+export interface Department {
+  id: string;
+  name: string;
+  provinces: Province[];
+}
 
 /** Ubigeos INEI (25 departamentos, 196 provincias, 1874 distritos), cargados una vez desde /data/ubigeo.json. */
 @Injectable({ providedIn: 'root' })

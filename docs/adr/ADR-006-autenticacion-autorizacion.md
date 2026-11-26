@@ -11,6 +11,7 @@ Hay dos poblaciones: miles de postulantes (cuentas temporales, desde celular) y 
 ## Decisión
 
 **Autenticación**
+
 - Contraseñas con **Argon2id**.
 - **Token de acceso JWT** de 15 minutos, enviado en el encabezado `Authorization`, guardado solo en memoria del navegador.
 - **Refresh token opaco** de 7 días (postulantes) u 8 horas (personal) en cookie `HttpOnly; Secure; SameSite=Strict`, almacenado como hash en la base y **rotado** en cada uso (si se reutiliza uno viejo, se revoca toda la familia de sesiones).
@@ -18,26 +19,30 @@ Hay dos poblaciones: miles de postulantes (cuentas temporales, desde celular) y 
 - Límite de intentos y bloqueo temporal (spec 002).
 
 **Autorización**
+
 - **RBAC**: roles → permisos (`expedientes.dictaminar`, `pagos.conciliar`, `resultados.publicar`…).
 - **Control de propietario** en cada caso de uso: un postulante solo accede a recursos cuyo `applicantId` es el suyo; si no lo es, responde **404**, no 403, para no revelar existencia.
 - La verificación ocurre en la capa de aplicación, no solo en la ruta.
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Amazon Cognito | Servicio administrado, MFA incluido | Personalización del flujo con DNI/RENIEC más compleja; acoplamiento a AWS en local | Se reevalúa para producción real |
-| Sesiones en servidor | Revocación inmediata | Requiere almacén compartido (Redis) en Lambda | Costo y complejidad |
-| JWT de larga duración en `localStorage` | Simple | Vulnerable a XSS y no revocable | Inseguro |
+| Alternativa                             | A favor                             | En contra                                                                          | Motivo del descarte              |
+| --------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------- |
+| Amazon Cognito                          | Servicio administrado, MFA incluido | Personalización del flujo con DNI/RENIEC más compleja; acoplamiento a AWS en local | Se reevalúa para producción real |
+| Sesiones en servidor                    | Revocación inmediata                | Requiere almacén compartido (Redis) en Lambda                                      | Costo y complejidad              |
+| JWT de larga duración en `localStorage` | Simple                              | Vulnerable a XSS y no revocable                                                    | Inseguro                         |
 
 ## Consecuencias
 
 **Positivas:**
+
 - Sin estado en Lambda; revocación efectiva vía refresh tokens.
 - Protección contra IDOR verificada por pruebas.
 
 **Negativas / riesgos aceptados:**
+
 - Un token de acceso robado vale hasta 15 minutos.
 
 **Cómo verificamos que se cumple:**
+
 - Pruebas de API por cada endpoint privado: sin token → 401; otro rol → 403; otro postulante → 404.

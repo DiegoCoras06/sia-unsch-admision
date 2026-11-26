@@ -36,7 +36,10 @@ export class CulqiGateway implements PaymentGateway {
   readonly environment: 'sandbox' | 'production';
   private readonly apiUrl: string;
 
-  constructor(private readonly cfg: CulqiConfig, private readonly timeoutMs = 15_000) {
+  constructor(
+    private readonly cfg: CulqiConfig,
+    private readonly timeoutMs = 15_000,
+  ) {
     this.environment = cfg.secretKey.startsWith('sk_live') ? 'production' : 'sandbox';
     this.apiUrl = (cfg.apiUrl ?? 'https://api.culqi.com').replace(/\/$/, '');
   }
@@ -57,7 +60,11 @@ export class CulqiGateway implements PaymentGateway {
     try {
       const res = await fetch(`${this.apiUrl}/v2/charges`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${this.cfg.secretKey}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${this.cfg.secretKey}`,
+        },
         body: JSON.stringify({
           amount: r.amountCents,
           currency_code: 'PEN',
@@ -76,7 +83,9 @@ export class CulqiGateway implements PaymentGateway {
       }
     } catch (error) {
       if ((error as { status?: number }).status) throw error;
-      throw gatewayUnavailable('No pudimos comunicarnos con Culqi. Si se debitó tu pago, Tesorería lo verificará; no vuelvas a pagar todavía.');
+      throw gatewayUnavailable(
+        'No pudimos comunicarnos con Culqi. Si se debitó tu pago, Tesorería lo verificará; no vuelvas a pagar todavía.',
+      );
     } finally {
       clearTimeout(timer);
     }
@@ -96,9 +105,14 @@ export function parseCulqiCharge(status: number, b: CulqiCharge, r: ChargeReques
     transactionId: r.transactionId,
     approved,
     inconclusive,
-    code: (approved ? b.outcome?.code : b.decline_code ?? b.code ?? b.outcome?.code) ?? String(status),
-    message: (approved ? b.outcome?.user_message : b.user_message ?? b.outcome?.user_message)
-      ?? (approved ? 'Pago aprobado' : yape ? 'Culqi no aprobó el pago con Yape.' : 'Culqi no aprobó el pago con tarjeta.'),
+    code: (approved ? b.outcome?.code : (b.decline_code ?? b.code ?? b.outcome?.code)) ?? String(status),
+    message:
+      (approved ? b.outcome?.user_message : (b.user_message ?? b.outcome?.user_message)) ??
+      (approved
+        ? 'Pago aprobado'
+        : yape
+          ? 'Culqi no aprobó el pago con Yape.'
+          : 'Culqi no aprobó el pago con tarjeta.'),
     orderNumber: r.orderNumber,
     amount: typeof b.amount === 'number' ? (b.amount / 100).toFixed(2) : null,
     currency: b.currency_code ?? null,

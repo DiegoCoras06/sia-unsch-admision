@@ -19,19 +19,26 @@ export class SesEmailSender implements EmailSender {
   }
 
   async send(message: EmailMessage): Promise<void> {
-    const out = await this.ses.send(new SendEmailCommand({
-      FromEmailAddress: this.cfg.from,
-      Destination: { ToAddresses: [message.to] },
-      Content: {
-        Simple: {
-          Subject: { Data: message.subject, Charset: 'UTF-8' },
-          Body: { Html: { Data: message.html, Charset: 'UTF-8' }, Text: { Data: message.text, Charset: 'UTF-8' } },
+    const out = await this.ses.send(
+      new SendEmailCommand({
+        FromEmailAddress: this.cfg.from,
+        Destination: { ToAddresses: [message.to] },
+        Content: {
+          Simple: {
+            Subject: { Data: message.subject, Charset: 'UTF-8' },
+            Body: { Html: { Data: message.html, Charset: 'UTF-8' }, Text: { Data: message.text, Charset: 'UTF-8' } },
+          },
         },
-      },
-      ConfigurationSetName: this.cfg.configurationSet,
-      // Etiqueta para identificar el tipo de aviso en los eventos de entrega y rebote.
-      EmailTags: message.event ? [{ Name: 'evento', Value: message.event.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 256) }] : undefined,
-    }));
-    this.logger.info({ to: maskEmail(message.to), messageId: out.MessageId }, `correo enviado por SES: ${message.subject}`);
+        ConfigurationSetName: this.cfg.configurationSet,
+        // Etiqueta para identificar el tipo de aviso en los eventos de entrega y rebote.
+        EmailTags: message.event
+          ? [{ Name: 'evento', Value: message.event.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 256) }]
+          : undefined,
+      }),
+    );
+    this.logger.info(
+      { to: maskEmail(message.to), messageId: out.MessageId },
+      `correo enviado por SES: ${message.subject}`,
+    );
   }
 }

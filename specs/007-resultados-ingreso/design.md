@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Rama:** `007-resultados-ingreso` · **Fecha:** 26/10/2026 · **Spec:** [requirements.md](requirements.md) · **Módulo:** M09 Resultados
@@ -22,12 +21,12 @@ Módulo nuevo `resultados` (esquema PostgreSQL `resultados`):
 
 ### Decisiones
 
-| Tema | Decisión |
-|---|---|
+| Tema                   | Decisión                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Datos de otros módulos | Puertos: M07 entrega examen, calificación y asistencia; M03 entrega datos de aptos (programa, categoría, sin derecho a vacante); M01 entrega vacantes por categoría. |
-| Publicación diferida | El ciclo del servidor (`results.tick`) marca la hora de aviso y encola los correos «resultados disponibles» (sin puntaje, M11). |
-| Constancia de ingreso | Pago registrado por Admisión con el número de recibo de caja (no pasa por la pasarela: la orden de pago es única por inscripción). |
-| Permisos | `resultados.gestionar` (operador), `resultados.aprobar` (Comisión), `ingreso.registrar` (entrega de documentos). |
+| Publicación diferida   | El ciclo del servidor (`results.tick`) marca la hora de aviso y encola los correos «resultados disponibles» (sin puntaje, M11).                                      |
+| Constancia de ingreso  | Pago registrado por Admisión con el número de recibo de caja (no pasa por la pasarela: la orden de pago es única por inscripción).                                   |
+| Permisos               | `resultados.gestionar` (operador), `resultados.aprobar` (Comisión), `ingreso.registrar` (entrega de documentos).                                                     |
 
 ## 2. Actualizaciones de diseño (27 y 28/10/2026)
 

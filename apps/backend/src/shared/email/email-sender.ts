@@ -19,12 +19,20 @@ export interface EmailSender {
 
 /** Desarrollo local sin Docker (ADR-014): cada correo se guarda como .html en `.dev-mail/`. */
 export class FileEmailSender implements EmailSender {
-  constructor(private readonly dir: string, private readonly logger: Logger) {}
+  constructor(
+    private readonly dir: string,
+    private readonly logger: Logger,
+  ) {}
 
   async send(message: EmailMessage): Promise<void> {
     await mkdir(this.dir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const slug = message.subject.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40);
+    const slug = message.subject
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .slice(0, 40);
     const file = path.join(this.dir, `${stamp}-${slug}.html`);
     const header = `<!-- Para: ${message.to} -->\n<!-- Asunto: ${message.subject} -->\n`;
     await writeFile(file, header + message.html, 'utf8');
@@ -53,11 +61,20 @@ const SOFT = '#5b4f50';
 const FONT = "Archivo,'Segoe UI',Helvetica,Arial,sans-serif";
 
 /** Plantilla común: tablas y estilos en línea, lo que respetan Gmail y Outlook. La versión de texto lleva lo mismo. */
-export function renderEmail(title: string, paragraphs: string[], extras: EmailExtras = {}): { html: string; text: string } {
-  const body = paragraphs.map((p) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${INK}">${p}</p>`).join('');
+export function renderEmail(
+  title: string,
+  paragraphs: string[],
+  extras: EmailExtras = {},
+): { html: string; text: string } {
+  const body = paragraphs
+    .map((p) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${INK}">${p}</p>`)
+    .join('');
   const facts = extras.facts?.length
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 20px;background:#f7f2ee;border-radius:8px"><tr><td style="padding:8px 18px">${extras.facts
-        .map(([k, v]) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:8px 0;font-size:13px;color:${SOFT}">${k}</td><td align="right" style="padding:8px 0;font-size:15px;font-weight:700;color:${INK}">${v}</td></tr></table>`)
+        .map(
+          ([k, v]) =>
+            `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:8px 0;font-size:13px;color:${SOFT}">${k}</td><td align="right" style="padding:8px 0;font-size:15px;font-weight:700;color:${INK}">${v}</td></tr></table>`,
+        )
         .join('')}</td></tr></table>`
     : '';
   const action = extras.action
@@ -80,6 +97,11 @@ export function renderEmail(title: string, paragraphs: string[], extras: EmailEx
 </table></td></tr></table></body></html>`;
   const lines = paragraphs.map((p) => p.replace(/<[^>]+>/g, ''));
   const factText = extras.facts?.map(([k, v]) => `${k}: ${v.replace(/<[^>]+>/g, '')}`).join('\n');
-  const text = [title, ...lines, ...(factText ? [factText] : []), ...(extras.action ? [`${extras.action.label}: ${extras.action.url}`] : [])].join('\n\n');
+  const text = [
+    title,
+    ...lines,
+    ...(factText ? [factText] : []),
+    ...(extras.action ? [`${extras.action.label}: ${extras.action.url}`] : []),
+  ].join('\n\n');
   return { html, text };
 }

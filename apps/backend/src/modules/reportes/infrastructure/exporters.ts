@@ -2,12 +2,21 @@ import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import { BOLD, NOT_OFFICIAL, REGULAR, registerFonts } from '../../../shared/pdf/letterhead.js';
 
-export interface Column { key: string; header: string; width: number }
+export interface Column {
+  key: string;
+  header: string;
+  width: number;
+}
 
 const GUINDA = '7A1C22';
 
 /** Excel con encabezado institucional, filtros aplicados y la tabla con autofiltro (RF-12.08). */
-export async function toExcel(title: string, filters: string, columns: Column[], rows: Record<string, unknown>[]): Promise<Buffer> {
+export async function toExcel(
+  title: string,
+  filters: string,
+  columns: Column[],
+  rows: Record<string, unknown>[],
+): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'SIA-UNSCH';
   wb.created = new Date();
@@ -16,7 +25,8 @@ export async function toExcel(title: string, filters: string, columns: Column[],
   ws.getCell(1, 1).value = `Universidad Nacional de San Cristóbal de Huamanga - ${title}`;
   ws.getCell(1, 1).font = { bold: true, size: 14, color: { argb: `FF${GUINDA}` } };
   ws.mergeCells(2, 1, 2, columns.length);
-  ws.getCell(2, 1).value = `${filters}, Generado: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}, ${rows.length} filas`;
+  ws.getCell(2, 1).value =
+    `${filters}, Generado: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}, ${rows.length} filas`;
   ws.getCell(2, 1).font = { size: 10, color: { argb: 'FF5B4F50' } };
   const header = ws.getRow(4);
   columns.forEach((c, i) => {
@@ -32,9 +42,20 @@ export async function toExcel(title: string, filters: string, columns: Column[],
 }
 
 /** PDF horizontal A4 con la misma tabla, paginado y con pie de página. */
-export function toPdf(title: string, filters: string, columns: Column[], rows: Record<string, unknown>[]): Promise<Buffer> {
+export function toPdf(
+  title: string,
+  filters: string,
+  columns: Column[],
+  rows: Record<string, unknown>[],
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 36, bufferPages: true, info: { Title: title, Author: 'SIA-UNSCH' } });
+    const doc = new PDFDocument({
+      size: 'A4',
+      layout: 'landscape',
+      margin: 36,
+      bufferPages: true,
+      info: { Title: title, Author: 'SIA-UNSCH' },
+    });
     registerFonts(doc);
     const chunks: Buffer[] = [];
     doc.on('data', (c: Buffer) => chunks.push(c));
@@ -46,9 +67,18 @@ export function toPdf(title: string, filters: string, columns: Column[], rows: R
     const totalW = columns.reduce((s, c) => s + c.width, 0);
     const widths = columns.map((c) => (c.width / totalW) * usable);
     const head = () => {
-      doc.fillColor(`#${GUINDA}`).font(BOLD).fontSize(14).text(`Universidad Nacional de San Cristóbal de Huamanga - ${title}`, left, 36);
-      doc.fillColor('#5B4F50').font(REGULAR).fontSize(8)
-        .text(`${filters}, Generado: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}, ${rows.length} filas`);
+      doc
+        .fillColor(`#${GUINDA}`)
+        .font(BOLD)
+        .fontSize(14)
+        .text(`Universidad Nacional de San Cristóbal de Huamanga - ${title}`, left, 36);
+      doc
+        .fillColor('#5B4F50')
+        .font(REGULAR)
+        .fontSize(8)
+        .text(
+          `${filters}, Generado: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}, ${rows.length} filas`,
+        );
       let x = left;
       const y = doc.y + 8;
       doc.rect(left, y - 3, usable, 16).fill(`#${GUINDA}`);
@@ -68,7 +98,11 @@ export function toPdf(title: string, filters: string, columns: Column[], rows: R
         doc.font(REGULAR).fontSize(7.5).fillColor('#1D1415');
       }
       const y = doc.y;
-      if (n % 2 === 1) doc.rect(left, y - 2, usable, 13).fill('#F3EFEA').fillColor('#1D1415');
+      if (n % 2 === 1)
+        doc
+          .rect(left, y - 2, usable, 13)
+          .fill('#F3EFEA')
+          .fillColor('#1D1415');
       let x = left;
       columns.forEach((c, i) => {
         doc.text(String(r[c.key] ?? ''), x + 3, y, { width: widths[i]! - 6, lineBreak: false, ellipsis: true });
@@ -80,7 +114,14 @@ export function toPdf(title: string, filters: string, columns: Column[], rows: R
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
       doc.page.margins.bottom = 0; // el pie va debajo del margen: sin esto, PDFKit abre una hoja vacía
-      doc.fillColor('#5B4F50').fontSize(7).text(`${NOT_OFFICIAL} Página ${i + 1} de ${range.count}.`, left, doc.page.height - 28, { width: usable, align: 'right', lineBreak: false });
+      doc
+        .fillColor('#5B4F50')
+        .fontSize(7)
+        .text(`${NOT_OFFICIAL} Página ${i + 1} de ${range.count}.`, left, doc.page.height - 28, {
+          width: usable,
+          align: 'right',
+          lineBreak: false,
+        });
     }
     doc.end();
   });

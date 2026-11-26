@@ -38,7 +38,9 @@ export function createInscripcionesModule(deps: {
   const repo = new PrismaInscriptionRepository(deps.db);
   const service = new InscriptionService({ ...deps, repo });
   const survey = new UsabilitySurveyService({
-    surveys: new PrismaSurveyRepository(deps.db), inscriptions: repo, limiter: deps.limiter,
+    surveys: new PrismaSurveyRepository(deps.db),
+    inscriptions: repo,
+    limiter: deps.limiter,
     currentCallCode: async () => (await deps.convocatorias.getCurrentCall()).code,
   });
   const ficha = new FichaService({ ...deps, persistence: deps.db, secret: deps.fichaSecret });
@@ -47,21 +49,25 @@ export function createInscripcionesModule(deps: {
 
   // Correo de confirmación con el código de postulante y la orden de pago (sin datos sensibles en el asunto).
   deps.outbox.subscribe('InscripcionRegistrada', async (e) => {
-    const { html, text } = renderEmail('Tu inscripción quedó registrada', [
-      `Hola ${e.firstNames}:`,
-      'Guarda tu código de postulante: lo necesitas para pagar, descargar tu ficha y consultar tu aula y tu resultado.',
-      `Paga en línea desde «Mi inscripción» (tarjeta o Yape) o en Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante.`,
-    ], {
-      facts: [
-        ['Código de postulante', e.applicantCode],
-        ['Programa', e.program],
-        ['Modalidad', e.modality],
-        ['Monto a pagar', `S/ ${e.total}`],
-        ['Estado', e.status],
-        ['Examen', e.examDate],
+    const { html, text } = renderEmail(
+      'Tu inscripción quedó registrada',
+      [
+        `Hola ${e.firstNames}:`,
+        'Guarda tu código de postulante: lo necesitas para pagar, descargar tu ficha y consultar tu aula y tu resultado.',
+        `Paga en línea desde «Mi inscripción» (tarjeta o Yape) o en Santa María Magdalena, Banco de la Nación o Interbank indicando tu código de postulante.`,
       ],
-      action: { label: 'Ver mi inscripción', url: `${deps.frontendOrigin}/mi-inscripcion` },
-    });
+      {
+        facts: [
+          ['Código de postulante', e.applicantCode],
+          ['Programa', e.program],
+          ['Modalidad', e.modality],
+          ['Monto a pagar', `S/ ${e.total}`],
+          ['Estado', e.status],
+          ['Examen', e.examDate],
+        ],
+        action: { label: 'Ver mi inscripción', url: `${deps.frontendOrigin}/mi-inscripcion` },
+      },
+    );
     await deps.email.send({ to: e.email, subject: 'Inscripción registrada - Admisión UNSCH 2027-I', html, text });
   });
 
@@ -80,19 +86,25 @@ export function createInscripcionesModule(deps: {
   deps.outbox.subscribe('PagoConfirmado', async (e) => {
     const row = await service.markPaid(e.applicantCode, e.operationNumber);
     if (!row) return;
-    const { html, text } = renderEmail('Recibimos tu pago', [
-      `Hola ${row.firstNames}:`,
-      row.changed ? 'Tu inscripción ahora está <strong>Apta</strong>.' : 'Tu inscripción ya tenía el pago registrado.',
-      'Descarga tu ficha de inscripción con código QR, imprímela y llévala al examen con tu DNI.',
-    ], {
-      facts: [
-        ['Código de postulante', e.applicantCode],
-        ['Monto', `S/ ${e.amount}`],
-        ['Operación', e.operationNumber],
-        ['Medio de pago', e.payMethod],
+    const { html, text } = renderEmail(
+      'Recibimos tu pago',
+      [
+        `Hola ${row.firstNames}:`,
+        row.changed
+          ? 'Tu inscripción ahora está <strong>Apta</strong>.'
+          : 'Tu inscripción ya tenía el pago registrado.',
+        'Descarga tu ficha de inscripción con código QR, imprímela y llévala al examen con tu DNI.',
       ],
-      action: { label: 'Descargar mi ficha', url: `${deps.frontendOrigin}/mi-inscripcion` },
-    });
+      {
+        facts: [
+          ['Código de postulante', e.applicantCode],
+          ['Monto', `S/ ${e.amount}`],
+          ['Operación', e.operationNumber],
+          ['Medio de pago', e.payMethod],
+        ],
+        action: { label: 'Descargar mi ficha', url: `${deps.frontendOrigin}/mi-inscripcion` },
+      },
+    );
     await deps.email.send({ to: row.email, subject: 'Pago confirmado - Admisión UNSCH 2027-I', html, text });
   });
 
@@ -104,7 +116,13 @@ export function createInscripcionesModule(deps: {
       `Motivo: ${e.reason}.`,
       'Si crees que es un error, acércate a la Dirección de Admisión (Jr. Arequipa N.° 175, Ayacucho, de 4:00 p.m. a 8:00 p.m.) con tu DNI.',
     ]);
-    await deps.email.send({ to: e.email, subject: 'Inscripción anulada - Admisión UNSCH 2027-I', html, text, event: 'INSCRIPCION_ANULADA' });
+    await deps.email.send({
+      to: e.email,
+      subject: 'Inscripción anulada - Admisión UNSCH 2027-I',
+      html,
+      text,
+      event: 'INSCRIPCION_ANULADA',
+    });
   });
 
   // M06 (spec 004): el estado de la inscripción de exonerado sigue al expediente (RN-24, RF-04.09).
@@ -116,7 +134,14 @@ export function createInscripcionesModule(deps: {
   });
 
   const documents = new ApplicationDocuments({ ...deps, persistence: deps.db });
-  return { service, ficha, documents, cepre, survey, router: inscripcionesRoutes(service, ficha, documents, orden, cepre, survey) };
+  return {
+    service,
+    ficha,
+    documents,
+    cepre,
+    survey,
+    router: inscripcionesRoutes(service, ficha, documents, orden, cepre, survey),
+  };
 }
 
 export type { PaymentContext } from './application/inscription-service.js';

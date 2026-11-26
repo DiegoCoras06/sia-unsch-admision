@@ -1,4 +1,3 @@
-
 # 7. Diseño Interno de Módulos
 
 ## 7.1. Descripción general
@@ -139,32 +138,32 @@ Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO** (Ordinario y 
 
 El sistema está compuesto por 12 módulos funcionales, uno por carpeta, dentro de una única aplicación backend.
 
-| Código | Módulo | Responsabilidad principal | Carpeta |
-|---|---|---|---|
-| M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. | `convocatorias` |
-| M02 | Usuarios | Registrar usuarios y gestionar sus datos. | `usuarios` |
-| M03 | Inscripciones: Ordinaria y Exonerados | Administrar las postulaciones de todas las modalidades. | `inscripciones` |
-| M04 | Pagos | Registrar y verificar los pagos de inscripción. | `pagos` |
-| M05 | Expedientes | Administrar documentos y observaciones. | `expedientes` |
-| M06 | Exámenes, Sedes y Aulas | Programar las evaluaciones, y gestionar ambientes y asignaciones. | `examenes` |
-| M07 | Resultados | Procesar y publicar resultados de admisión. | `resultados` |
-| M08 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. | `asistente` |
-| M09 | Notificaciones | Enviar avisos y correos electrónicos. | `notificaciones` |
-| M10 | Reportes | Generar estadísticas e informes. | `reportes` |
-| M11 | Seguridad | Administrar autenticación, roles y permisos. | `seguridad` |
-| M12 | Configuración | Gestionar parámetros generales del sistema. | `configuracion` |
+| Código | Módulo                                | Responsabilidad principal                                         | Carpeta          |
+| ------ | ------------------------------------- | ----------------------------------------------------------------- | ---------------- |
+| M01    | Convocatorias                         | Gestionar periodos, cronogramas y procesos de admisión.           | `convocatorias`  |
+| M02    | Usuarios                              | Registrar usuarios y gestionar sus datos.                         | `usuarios`       |
+| M03    | Inscripciones: Ordinaria y Exonerados | Administrar las postulaciones de todas las modalidades.           | `inscripciones`  |
+| M04    | Pagos                                 | Registrar y verificar los pagos de inscripción.                   | `pagos`          |
+| M05    | Expedientes                           | Administrar documentos y observaciones.                           | `expedientes`    |
+| M06    | Exámenes, Sedes y Aulas               | Programar las evaluaciones, y gestionar ambientes y asignaciones. | `examenes`       |
+| M07    | Resultados                            | Procesar y publicar resultados de admisión.                       | `resultados`     |
+| M08    | Chatbot IA                            | Orientar a los postulantes mediante OpenRouter API.               | `asistente`      |
+| M09    | Notificaciones                        | Enviar avisos y correos electrónicos.                             | `notificaciones` |
+| M10    | Reportes                              | Generar estadísticas e informes.                                  | `reportes`       |
+| M11    | Seguridad                             | Administrar autenticación, roles y permisos.                      | `seguridad`      |
+| M12    | Configuración                         | Gestionar parámetros generales del sistema.                       | `configuracion`  |
 
 **Equivalencia con la numeración anterior.** Las specs, los ADR, los comentarios del código y los códigos RF conservan los números del catálogo original de 14 módulos:
 
-| Antes | Ahora | Antes | Ahora |
-|---|---|---|---|
-| M01 Convocatorias | M01 | M08 Sedes y Aulas | M06 |
-| M02 Usuarios | M02 | M09 Resultados | M07 |
-| M03 Inscripción Ordinaria | M03 | M10 Chatbot IA | M08 |
-| M04 Inscripción Exonerados | M03 | M11 Notificaciones | M09 |
-| M05 Pagos | M04 | M12 Reportes | M10 |
-| M06 Expedientes | M05 | M13 Seguridad | M11 |
-| M07 Exámenes | M06 | M14 Configuración | M12 |
+| Antes                      | Ahora | Antes              | Ahora |
+| -------------------------- | ----- | ------------------ | ----- |
+| M01 Convocatorias          | M01   | M08 Sedes y Aulas  | M06   |
+| M02 Usuarios               | M02   | M09 Resultados     | M07   |
+| M03 Inscripción Ordinaria  | M03   | M10 Chatbot IA     | M08   |
+| M04 Inscripción Exonerados | M03   | M11 Notificaciones | M09   |
+| M05 Pagos                  | M04   | M12 Reportes       | M10   |
+| M06 Expedientes            | M05   | M13 Seguridad      | M11   |
+| M07 Exámenes               | M06   | M14 Configuración  | M12   |
 
 Cada módulo tendrá responsabilidades específicas y se comunicará con los demás mediante interfaces definidas, evitando dependencias directas innecesarias.
 
@@ -172,20 +171,20 @@ Cada módulo tendrá responsabilidades específicas y se comunicará con los dem
 
 El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funcionalidades.
 
-| Tecnología | Función |
-|---|---|
-| Angular | Desarrollo de la interfaz web. |
-| Node.js y TypeScript | Implementación del backend modular. |
-| Amazon API Gateway | Recepción de solicitudes REST mediante HTTPS. |
-| AWS Lambda | Ejecución del backend. |
-| Amazon RDS PostgreSQL | Almacenamiento de información. |
-| Amazon S3 | Almacenamiento de documentos y fichas PDF. |
+| Tecnología                                             | Función                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| Angular                                                | Desarrollo de la interfaz web.                              |
+| Node.js y TypeScript                                   | Implementación del backend modular.                         |
+| Amazon API Gateway                                     | Recepción de solicitudes REST mediante HTTPS.               |
+| AWS Lambda                                             | Ejecución del backend.                                      |
+| Amazon RDS PostgreSQL                                  | Almacenamiento de información.                              |
+| Amazon S3                                              | Almacenamiento de documentos y fichas PDF.                  |
 | Bandeja de eventos (outbox) en PostgreSQL + Amazon SQS | Procesamiento de tareas asíncronas y eventos entre módulos. |
-| Amazon EventBridge Scheduler | Tareas programadas. |
-| RENIEC (vía apiperu.dev) | Validación de identidad. |
-| Culqi | Pago con tarjeta y con Yape (ADR-024). |
-| OpenRouter API | Integración del chatbot de inteligencia artificial. |
-| Amazon SES | Envío de correos electrónicos. |
+| Amazon EventBridge Scheduler                           | Tareas programadas.                                         |
+| RENIEC (vía apiperu.dev)                               | Validación de identidad.                                    |
+| Culqi                                                  | Pago con tarjeta y con Yape (ADR-024).                      |
+| OpenRouter API                                         | Integración del chatbot de inteligencia artificial.         |
+| Amazon SES                                             | Envío de correos electrónicos.                              |
 
 La comunicación con estos servicios se realizará mediante adaptadores implementados en la capa de infraestructura.
 
@@ -215,13 +214,12 @@ Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sist
 
 ## 7.10. Estado de implementación (25/11/2026)
 
-| Regla de diseño (7.8) | Estado |
-|---|---|
-| 1. Responsabilidades claras por módulo | ✅ 12 módulos, uno por carpeta |
-| 2. Lógica de negocio separada de la infraestructura | ✅ `domain/` y `application/` no importan Prisma ni adaptadores; los casos de uso reciben `PersistencePort` y puertos específicos por inyección |
-| 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos |
-| 4. Los casos de uso coordinan los procesos | ✅ Servicios de aplicación por módulo |
-| 5. Repositorios que implementan interfaces internas | ✅ Repositorios específicos en Convocatorias, Inscripciones y Pagos; los demás casos de uso acceden mediante el puerto común `PersistencePort`, cuya implementación concreta se inyecta en la raíz de composición |
-| 6. Sin dependencias circulares | ✅ Los módulos se comunican por su `index.ts` o por eventos |
-| 7. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API y tareas programadas |
-
+| Regla de diseño (7.8)                                  | Estado                                                                                                                                                                                                            |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Responsabilidades claras por módulo                 | ✅ 12 módulos, uno por carpeta                                                                                                                                                                                    |
+| 2. Lógica de negocio separada de la infraestructura    | ✅ `domain/` y `application/` no importan Prisma ni adaptadores; los casos de uso reciben `PersistencePort` y puertos específicos por inyección                                                                   |
+| 3. Controladores sin acceso directo a la base de datos | ✅ Ninguna ruta de `presentation/` consulta la base de datos                                                                                                                                                      |
+| 4. Los casos de uso coordinan los procesos             | ✅ Servicios de aplicación por módulo                                                                                                                                                                             |
+| 5. Repositorios que implementan interfaces internas    | ✅ Repositorios específicos en Convocatorias, Inscripciones y Pagos; los demás casos de uso acceden mediante el puerto común `PersistencePort`, cuya implementación concreta se inyecta en la raíz de composición |
+| 6. Sin dependencias circulares                         | ✅ Los módulos se comunican por su `index.ts` o por eventos                                                                                                                                                       |
+| 7. Un único backend desplegable                        | ✅ Un backend con dos puntos de entrada en Lambda: API y tareas programadas                                                                                                                                       |

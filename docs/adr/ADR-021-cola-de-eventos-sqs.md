@@ -21,23 +21,26 @@ Usaremos **Amazon SQS** como cola entre la bandeja de eventos y el worker, sin a
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Solo la outbox en PostgreSQL (estado anterior) | Simple, sin servicio extra | Sin reintentos ni DLQ administrados; la entrega compite con las peticiones | No cumple el requisito de un sistema de colas |
-| Publicar en SQS directamente, sin outbox | Menos código | Si SQS falla después de guardar el cambio, el evento se pierde (doble escritura) | Rompe la confiabilidad (EQ-09) |
-| Amazon EventBridge como bus | Enrutamiento por reglas | Más complejo para un solo consumidor | SQS basta para un worker |
-| Redis o RabbitMQ | Conocidos | Servidor que administrar y pagar | SQS es administrado y tiene uso gratuito de 1 millón de mensajes al mes |
+| Alternativa                                    | A favor                    | En contra                                                                        | Motivo del descarte                                                     |
+| ---------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Solo la outbox en PostgreSQL (estado anterior) | Simple, sin servicio extra | Sin reintentos ni DLQ administrados; la entrega compite con las peticiones       | No cumple el requisito de un sistema de colas                           |
+| Publicar en SQS directamente, sin outbox       | Menos código               | Si SQS falla después de guardar el cambio, el evento se pierde (doble escritura) | Rompe la confiabilidad (EQ-09)                                          |
+| Amazon EventBridge como bus                    | Enrutamiento por reglas    | Más complejo para un solo consumidor                                             | SQS basta para un worker                                                |
+| Redis o RabbitMQ                               | Conocidos                  | Servidor que administrar y pagar                                                 | SQS es administrado y tiene uso gratuito de 1 millón de mensajes al mes |
 
 ## Consecuencias
 
 **Positivas:**
+
 - La entrega de correos y avisos se separa de las peticiones de los postulantes y escala aparte.
 - Reintentos y cola de errores administrados por AWS, sin perder la garantía de la outbox.
 
 **Negativas / riesgos aceptados:**
+
 - Entrega «al menos una vez»: los suscriptores deben seguir siendo idempotentes (ya lo exigía ADR-008).
 - Una columna nueva (`shared.outbox.queued_at`): hay que aplicar la migración en RDS (`npm run rds:migrate`).
 
 **Cómo verificamos que se cumple:**
+
 - `tests/integration/event-queue.test.ts`: envío sin procesar, sin reenvíos duplicados, procesamiento único ante mensajes repetidos, reintento tras un fallo, reenvío de eventos atascados y recuperación si SQS no responde.
 - En AWS (Paso 11): cola estándar con DLQ, el Lambda worker suscrito con `ReportBatchItemFailures`, y alarma sobre los mensajes en la DLQ.

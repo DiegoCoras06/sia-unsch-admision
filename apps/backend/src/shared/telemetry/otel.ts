@@ -5,5 +5,7 @@
  */
 export async function startTelemetry(endpoint: string | undefined, log: (msg: string) => void): Promise<void> {
   if (!endpoint) return;
-  log(`OTLP configurado en ${endpoint}, pero el SDK de OpenTelemetry aún no está instalado (se agrega en el despliegue).`);
+  log(
+    `OTLP configurado en ${endpoint}, pero el SDK de OpenTelemetry aún no está instalado (se agrega en el despliegue).`,
+  );
 }

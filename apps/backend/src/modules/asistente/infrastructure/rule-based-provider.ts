@@ -8,7 +8,10 @@ const call = (name: string, args: Record<string, unknown> = {}): LlmToolCall => 
   function: { name, arguments: JSON.stringify(args) },
 });
 const reply = (content: string, toolCalls: LlmToolCall[] = []): LlmResponse => ({
-  content, toolCalls, usage: { tokensIn: 0, tokensOut: 0, costUsd: 0 }, model: 'reglas',
+  content,
+  toolCalls,
+  usage: { tokensIn: 0, tokensOut: 0, costUsd: 0 },
+  model: 'reglas',
 });
 
 /**
@@ -28,17 +31,29 @@ export class RuleBasedProvider implements LlmProvider {
   private route(raw: string): LlmResponse {
     const t = normalizeForSearch(raw);
     if (/^(hola|buen[oa]s|saludos|hey)\b/.test(t) && t.length < 25) {
-      return reply('¡Hola! Soy el asistente de Admisión UNSCH. Pregúntame por fechas, tasas, vacantes, requisitos o el examen, o pulsa «Consultar mi proceso» para ver tu inscripción.');
+      return reply(
+        '¡Hola! Soy el asistente de Admisión UNSCH. Pregúntame por fechas, tasas, vacantes, requisitos o el examen, o pulsa «Consultar mi proceso» para ver tu inscripción.',
+      );
     }
-    if (/\b(mi|mis)\b.*\b(inscripcion|pago|estado|aula|resultado|puntaje|documento|ficha|proceso|expediente)\b|\bcomo va\b|\bmi estado\b/.test(t)) {
+    if (
+      /\b(mi|mis)\b.*\b(inscripcion|pago|estado|aula|resultado|puntaje|documento|ficha|proceso|expediente)\b|\bcomo va\b|\bmi estado\b/.test(
+        t,
+      )
+    ) {
       return reply('', [call('estado_de_mi_proceso')]);
     }
     if (/\bvacantes?\b/.test(t)) {
-      const program = t.replace(/.*\bvacantes?\b\s*(tiene|hay|de|para|en)?\s*/, '').replace(/[¿?]/g, '').trim();
-      return program ? reply('', [call('consultar_vacantes', { programa: program })]) : reply('', [call('buscar_conocimiento', { consulta: raw })]);
+      const program = t
+        .replace(/.*\bvacantes?\b\s*(tiene|hay|de|para|en)?\s*/, '')
+        .replace(/[¿?]/g, '')
+        .trim();
+      return program
+        ? reply('', [call('consultar_vacantes', { programa: program })])
+        : reply('', [call('buscar_conocimiento', { consulta: raw })]);
     }
     if (/\b(cuanto|costo|cuesta|tasa|tasas|precio|monto)\b/.test(t)) return reply('', [call('consultar_tasas')]);
-    if (/\b(cronograma|fecha|fechas|plazo|hasta cuando|cuando (empieza|termina|cierra|vence)|cierre)\b/.test(t)) return reply('', [call('consultar_cronograma')]);
+    if (/\b(cronograma|fecha|fechas|plazo|hasta cuando|cuando (empieza|termina|cierra|vence)|cierre)\b/.test(t))
+      return reply('', [call('consultar_cronograma')]);
     if (/\brequisitos?\b/.test(t) && !/\bfoto/.test(t)) return reply('', [call('consultar_requisitos')]);
     return reply('', [call('buscar_conocimiento', { consulta: raw })]);
   }
@@ -64,7 +79,8 @@ export class RuleBasedProvider implements LlmProvider {
       }
       case 'consultar_vacantes': {
         const ps = data['programas'] as any[];
-        if (!ps?.length) return 'No encontré un programa con ese nombre. Escribe el nombre de la carrera, por ejemplo «Ingeniería de Sistemas».';
+        if (!ps?.length)
+          return 'No encontré un programa con ese nombre. Escribe el nombre de la carrera, por ejemplo «Ingeniería de Sistemas».';
         return `${ps.map((p) => `• ${p.programa}: ${p.vacantesOrdinario} vacantes en Ordinario (${p.vacantesTotales} en total)`).join('\n')}${end}`;
       }
       case 'consultar_requisitos': {
@@ -72,20 +88,29 @@ export class RuleBasedProvider implements LlmProvider {
         return `Requisitos generales:\n${g}\n\n${data['detalle']}${end}`;
       }
       case 'estado_de_mi_proceso': {
-        if (data['error'] === 'NO_IDENTIFICADO') return 'Para ver tu proceso, pulsa «Consultar mi proceso» y escribe tu DNI y tu código de postulante en ese formulario (no en el chat).';
+        if (data['error'] === 'NO_IDENTIFICADO')
+          return 'Para ver tu proceso, pulsa «Consultar mi proceso» y escribe tu DNI y tu código de postulante en ese formulario (no en el chat).';
         if (data['error']) return NO_INFO_REPLY;
         const i = data['inscripcion'];
         const p = data['pago'];
-        return [
-          `Tu inscripción en ${i.modalidad} (${i.programa}) está: ${i.estadoInscripcion}.`,
-          `Pago: ${p.estadoPago}${p.monto ? ` (S/ ${p.monto})` : ''}.`,
-          `Documentos: fotografía ${String(data['documentos'].fotografia).toLowerCase()}. ${data['documentos'].observaciones}`,
-          data['expediente'] ? `Expediente: ${data['expediente'].estado}${data['expediente'].plazoSubsanacion ? `; tienes hasta el ${data['expediente'].plazoSubsanacion} para subsanar` : ''}.` : '',
-          data['aula'].publicada ? `Aula: ${data['aula'].detalle}` : `Aula: aún no publicada. ${data['aula'].detalle}`,
-          data['resultado'].publicado && data['resultado'].condicion
-            ? `Resultado: ${data['resultado'].puntaje ?? '-'} puntos, puesto ${data['resultado'].puesto ?? '-'}, condición ${data['resultado'].condicion}.${data['resultado'].ingreso ? ` Ahora ${data['resultado'].ingreso}.` : ''}`
-            : `Resultado: ${data['resultado'].publicado ? '' : 'aún no publicado. '}${data['resultado'].detalle ?? ''}`,
-        ].filter(Boolean).join('\n') + end;
+        return (
+          [
+            `Tu inscripción en ${i.modalidad} (${i.programa}) está: ${i.estadoInscripcion}.`,
+            `Pago: ${p.estadoPago}${p.monto ? ` (S/ ${p.monto})` : ''}.`,
+            `Documentos: fotografía ${String(data['documentos'].fotografia).toLowerCase()}. ${data['documentos'].observaciones}`,
+            data['expediente']
+              ? `Expediente: ${data['expediente'].estado}${data['expediente'].plazoSubsanacion ? `; tienes hasta el ${data['expediente'].plazoSubsanacion} para subsanar` : ''}.`
+              : '',
+            data['aula'].publicada
+              ? `Aula: ${data['aula'].detalle}`
+              : `Aula: aún no publicada. ${data['aula'].detalle}`,
+            data['resultado'].publicado && data['resultado'].condicion
+              ? `Resultado: ${data['resultado'].puntaje ?? '-'} puntos, puesto ${data['resultado'].puesto ?? '-'}, condición ${data['resultado'].condicion}.${data['resultado'].ingreso ? ` Ahora ${data['resultado'].ingreso}.` : ''}`
+              : `Resultado: ${data['resultado'].publicado ? '' : 'aún no publicado. '}${data['resultado'].detalle ?? ''}`,
+          ]
+            .filter(Boolean)
+            .join('\n') + end
+        );
       }
       default:
         return NO_INFO_REPLY;

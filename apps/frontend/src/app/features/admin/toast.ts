@@ -7,7 +7,14 @@ import { Component, effect, input, output } from '@angular/core';
     @if (text()) {
       <div class="adm-toast" [class.err]="error()" [attr.role]="error() ? 'alert' : 'status'">
         <p>{{ text() }}</p>
-        <button type="button" class="adm-toast__x" aria-label="Cerrar aviso" (click)="closed.emit()">×</button>
+        <button
+          type="button"
+          class="adm-toast__x"
+          aria-label="Cerrar aviso"
+          (click)="closed.emit()"
+        >
+          ×
+        </button>
       </div>
     }
   `,

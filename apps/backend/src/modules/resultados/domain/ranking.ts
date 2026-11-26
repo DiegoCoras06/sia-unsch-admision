@@ -18,7 +18,12 @@ export interface Scoring {
   puntajeMinimo: number;
 }
 
-export interface Answers { knowledge: number; vocational: number; attitude: number; unreadable: boolean }
+export interface Answers {
+  knowledge: number;
+  vocational: number;
+  attitude: number;
+  unreadable: boolean;
+}
 
 export interface Contender {
   applicantCode: string;
@@ -87,9 +92,17 @@ export function rank(people: Contender[], vacancies: Map<string, number>, s: Sco
 }
 
 /** Vacantes por grupo que quedaron sin cubrir (para trasladar las de exonerados al ordinario, RN-05). */
-export function uncovered(results: { optionCode: string; quotaCategory: string; condition: Condition }[], vacancies: Map<string, number>): Map<string, number> {
+export function uncovered(
+  results: { optionCode: string; quotaCategory: string; condition: Condition }[],
+  vacancies: Map<string, number>,
+): Map<string, number> {
   const admitted = new Map<string, number>();
-  for (const r of results) if (r.condition === 'ADMITIDO') admitted.set(groupKey(r.optionCode, r.quotaCategory), (admitted.get(groupKey(r.optionCode, r.quotaCategory)) ?? 0) + 1);
+  for (const r of results)
+    if (r.condition === 'ADMITIDO')
+      admitted.set(
+        groupKey(r.optionCode, r.quotaCategory),
+        (admitted.get(groupKey(r.optionCode, r.quotaCategory)) ?? 0) + 1,
+      );
   const out = new Map<string, number>();
   for (const [k, v] of vacancies) out.set(k, Math.max(0, v - (admitted.get(k) ?? 0)));
   return out;

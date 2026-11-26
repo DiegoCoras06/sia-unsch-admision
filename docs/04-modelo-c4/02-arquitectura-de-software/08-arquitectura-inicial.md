@@ -1,4 +1,3 @@
-
 # 5. Diagrama de Arquitectura Inicial
 
 ## 5.1. Estilo arquitectónico
@@ -142,19 +141,19 @@ Implementará los repositorios de datos, los adaptadores externos y la comunicac
 
 ## 5.4. Tecnologías utilizadas
 
-| Tecnología | Función |
-|---|---|
-| Angular | Interfaz web |
-| Node.js y TypeScript | Backend modular |
-| AWS Lambda | Ejecución del backend |
-| Amazon API Gateway | API REST segura |
-| Amazon RDS PostgreSQL | Base de datos |
-| Amazon S3 | Almacenamiento de archivos |
-| Amazon CloudFront | Distribución web |
-| Amazon Route 53 | Dominio |
+| Tecnología                   | Función                                                          |
+| ---------------------------- | ---------------------------------------------------------------- |
+| Angular                      | Interfaz web                                                     |
+| Node.js y TypeScript         | Backend modular                                                  |
+| AWS Lambda                   | Ejecución del backend                                            |
+| Amazon API Gateway           | API REST segura                                                  |
+| Amazon RDS PostgreSQL        | Base de datos                                                    |
+| Amazon S3                    | Almacenamiento de archivos                                       |
+| Amazon CloudFront            | Distribución web                                                 |
+| Amazon Route 53              | Dominio                                                          |
 | Amazon EventBridge Scheduler | Despacho periódico de la bandeja de eventos y tareas programadas |
-| Amazon SES | Correos electrónicos |
-| AWS Certificate Manager | Certificados HTTPS |
+| Amazon SES                   | Correos electrónicos                                             |
+| AWS Certificate Manager      | Certificados HTTPS                                               |
 
 ## 5.5. Justificación arquitectónica
 
@@ -177,4 +176,3 @@ Amazon S3 podrá utilizarse tanto para almacenar documentos como para alojar los
 Las integraciones externas se implementarán mediante adaptadores.
 
 El certificado HTTPS se administrará mediante AWS Certificate Manager.
-

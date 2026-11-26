@@ -9,19 +9,19 @@
 
 ADR-007 dejó la pasarela **simulada** para la demo y anotó Izipay o Niubiz como opción real futura. El equipo ya tiene acceso al portal de desarrolladores de Izipay, que ofrece dos ambientes:
 
-| Ambiente | API | Panel de comercio |
-|---|---|---|
+| Ambiente             | API                                | Panel de comercio                 |
+| -------------------- | ---------------------------------- | --------------------------------- |
 | Desarrollo (sandbox) | `https://sandbox-api-pw.izipay.pe` | `https://sandbox-panel.izipay.pe` |
-| Producción | `https://api-pw.izipay.pe` | `https://panel.izipay.pe` |
+| Producción           | `https://api-pw.izipay.pe`         | `https://panel.izipay.pe`         |
 
-Izipay entrega cuatro credenciales en *Panel de comercio → Desarrolladores → Claves*:
+Izipay entrega cuatro credenciales en _Panel de comercio → Desarrolladores → Claves_:
 
-| Credencial | Uso | Variable |
-|---|---|---|
-| Código de comercio | Identifica al comercio en cada operación | `IZIPAY_MERCHANT_CODE` |
-| Clave de API del botón de pagos | Solo para generar el token de sesión, en el servidor | `IZIPAY_API_KEY` |
-| Clave hash | Calcular y verificar la firma de las notificaciones | `IZIPAY_HASH_KEY` |
-| Clave pública (RSA) | Conexión con la API y cifrado de datos sensibles | `IZIPAY_PUBLIC_KEY` |
+| Credencial                      | Uso                                                  | Variable               |
+| ------------------------------- | ---------------------------------------------------- | ---------------------- |
+| Código de comercio              | Identifica al comercio en cada operación             | `IZIPAY_MERCHANT_CODE` |
+| Clave de API del botón de pagos | Solo para generar el token de sesión, en el servidor | `IZIPAY_API_KEY`       |
+| Clave hash                      | Calcular y verificar la firma de las notificaciones  | `IZIPAY_HASH_KEY`      |
+| Clave pública (RSA)             | Conexión con la API y cifrado de datos sensibles     | `IZIPAY_PUBLIC_KEY`    |
 
 ## Decisión
 
@@ -34,17 +34,18 @@ Izipay entrega cuatro credenciales en *Panel de comercio → Desarrolladores →
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Mantener solo la pasarela simulada | Cero dependencias | No demuestra una integración real | El equipo ya tiene acceso a Izipay |
-| Niubiz | Muy usada en Perú | Requiere afiliación previa para sandbox | Izipay ya está disponible |
-| Mercado Pago | Buena documentación | No es el medio habitual de la universidad | Menor alineación con Tesorería |
+| Alternativa                        | A favor             | En contra                                 | Motivo del descarte                |
+| ---------------------------------- | ------------------- | ----------------------------------------- | ---------------------------------- |
+| Mantener solo la pasarela simulada | Cero dependencias   | No demuestra una integración real         | El equipo ya tiene acceso a Izipay |
+| Niubiz                             | Muy usada en Perú   | Requiere afiliación previa para sandbox   | Izipay ya está disponible          |
+| Mercado Pago                       | Buena documentación | No es el medio habitual de la universidad | Menor alineación con Tesorería     |
 
 ## Consecuencias
 
 **Positivas:** demostración de un pago real de punta a punta (sandbox), con webhook firmado y conciliación verificable.
 
 **Negativas / riesgos aceptados:**
+
 - La notificación necesita una URL pública: en local no llega (se usa la consulta de transacción o un túnel); en la demo llega a API Gateway (Paso 6).
 - Dependencia de la disponibilidad del sandbox de Izipay → `MockPaymentGateway` como respaldo para la presentación.
 - Una credencial se compartió en el chat el 25/10/2026: es de sandbox; se recomienda regenerarla en el panel antes de cualquier uso en producción.

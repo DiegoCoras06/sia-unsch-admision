@@ -57,7 +57,10 @@ paths:
                 type: object
                 properties:
                   data: { $ref: '#/components/schemas/AttemptResult' }
-        '400': { description: 'VALIDATION_ERROR (token que no es de la pasarela) o PAYMENT_MISMATCH (monto o moneda distintos)' }
+        '400':
+          {
+            description: 'VALIDATION_ERROR (token que no es de la pasarela) o PAYMENT_MISMATCH (monto o moneda distintos)',
+          }
         '404': { description: El intento no existe o es de otro postulante }
         '409': { description: 'ATTEMPT_IN_USE: el intento ya se está cobrando o ya se cobró' }
         '422': { description: 'ATTEMPT_EXPIRED o YAPE_LIMIT (Yape acepta hasta S/ 2000)' }

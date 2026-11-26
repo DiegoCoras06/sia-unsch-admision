@@ -61,7 +61,13 @@ const byPriority = <T extends { priority: number }>(a: T, b: T) => b.priority - 
  * 1. Tasa base = regla coincidente de mayor prioridad (vínculo familiar > descuento militar > general).
  * 2. Recargo si hay una etapa extemporánea en curso para la modalidad (S/ 65.00; CEPRE S/ 50.00).
  */
-export function quoteFee(criteria: FeeCriteria, rules: FeeRule[], surcharges: SurchargeRule[], stages: Stage[], now: Date): FeeQuote {
+export function quoteFee(
+  criteria: FeeCriteria,
+  rules: FeeRule[],
+  surcharges: SurchargeRule[],
+  stages: Stage[],
+  now: Date,
+): FeeQuote {
   if (criteria.modality === 'EXO' && !criteria.submodality) {
     throw businessRule('SUBMODALITY_REQUIRED', 'Elige la submodalidad de exonerados para calcular la tasa.');
   }
@@ -69,18 +75,29 @@ export function quoteFee(criteria: FeeCriteria, rules: FeeRule[], surcharges: Su
   const base = rules.filter((r) => matches(r, criteria)).sort(byPriority)[0];
   if (!base) {
     const needsSchool = rules.some(
-      (r) => r.modalityCode === criteria.modality && r.schoolType !== null && (r.submodalityCode === null || r.submodalityCode === criteria.submodality),
+      (r) =>
+        r.modalityCode === criteria.modality &&
+        r.schoolType !== null &&
+        (r.submodalityCode === null || r.submodalityCode === criteria.submodality),
     );
     if (needsSchool && !criteria.schoolType) {
-      throw businessRule('SCHOOL_TYPE_REQUIRED', 'Indica si terminaste la secundaria en un colegio estatal o particular.');
+      throw businessRule(
+        'SCHOOL_TYPE_REQUIRED',
+        'Indica si terminaste la secundaria en un colegio estatal o particular.',
+      );
     }
-    throw businessRule('NO_FEE_RULE', 'No hay una tasa definida para esa combinación. Consulta a la Dirección de Admisión.');
+    throw businessRule(
+      'NO_FEE_RULE',
+      'No hay una tasa definida para esa combinación. Consulta a la Dirección de Admisión.',
+    );
   }
 
   const lines: FeeInfo[] = [base.fee];
   const warnings: string[] = [];
 
-  const extemporaneous = stagesInProgress(stages, now).some((s) => s.kind === 'EXTEMPORANEOUS' && s.scope === criteria.modality);
+  const extemporaneous = stagesInProgress(stages, now).some(
+    (s) => s.kind === 'EXTEMPORANEOUS' && s.scope === criteria.modality,
+  );
   if (extemporaneous) {
     const surcharge = surcharges.filter((s) => s.appliesToScope === criteria.modality).sort(byPriority)[0];
     if (surcharge) {
@@ -90,7 +107,9 @@ export function quoteFee(criteria: FeeCriteria, rules: FeeRule[], surcharges: Su
   }
 
   if (base.familyLink === true) {
-    warnings.push('El beneficio por vínculo familiar con servidores de la UNSCH se usa por única vez y para primera profesión (Art. 15).');
+    warnings.push(
+      'El beneficio por vínculo familiar con servidores de la UNSCH se usa por única vez y para primera profesión (Art. 15).',
+    );
   }
   if (criteria.militaryCondition !== 'NONE' && base.militaryCondition === criteria.militaryCondition) {
     warnings.push('Deberás acreditar tu condición de personal o licenciado del servicio militar acuartelado.');

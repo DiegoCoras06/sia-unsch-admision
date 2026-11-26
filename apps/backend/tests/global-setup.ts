@@ -16,16 +16,29 @@ export const TEST_DATABASE_URL = 'postgresql://sia_test:sia_test_only@127.0.0.1:
 export default async function setup() {
   rmSync(dataDir, { recursive: true, force: true });
   const pg = new EmbeddedPostgres({
-    databaseDir: dataDir, port: 5434, user: 'sia_test', password: 'sia_test_only',
-    persistent: false, initdbFlags: ['--encoding=UTF8', '--locale=C'], onLog: () => {}, onError: () => {},
+    databaseDir: dataDir,
+    port: 5434,
+    user: 'sia_test',
+    password: 'sia_test_only',
+    persistent: false,
+    initdbFlags: ['--encoding=UTF8', '--locale=C'],
+    onLog: () => {},
+    onError: () => {},
   });
   await pg.initialise();
   await pg.start();
   await pg.createDatabase('sia_test');
 
   // ADMIN_INITIAL_FILE: la semilla de pruebas no debe pisar el archivo del primer administrador local.
-  const env = { ...process.env, DATABASE_URL: TEST_DATABASE_URL, ADMIN_INITIAL_FILE: path.join(os.tmpdir(), 'sia-admin-inicial-test.txt') };
-  for (const args of [['prisma', 'migrate', 'deploy'], ['tsx', 'prisma/seed/index.ts']]) {
+  const env = {
+    ...process.env,
+    DATABASE_URL: TEST_DATABASE_URL,
+    ADMIN_INITIAL_FILE: path.join(os.tmpdir(), 'sia-admin-inicial-test.txt'),
+  };
+  for (const args of [
+    ['prisma', 'migrate', 'deploy'],
+    ['tsx', 'prisma/seed/index.ts'],
+  ]) {
     const r = spawnSync('npx', args, { cwd: backendDir, env, shell: true, encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`Falló ${args.join(' ')}:\n${r.stdout}\n${r.stderr}`);
   }
@@ -33,5 +46,4 @@ export default async function setup() {
 
   // global-teardown.ts lo detiene al terminar.
   (globalThis as { __siaTestPg?: EmbeddedPostgres }).__siaTestPg = pg;
-
 }

@@ -1,4 +1,3 @@
-
 # 7. Diseño Interno de Módulos
 
 ## 7.1. Descripción general
@@ -71,30 +70,30 @@ Las flechas representan dependencias de código. El caso de uso utilizará un co
 
 Los módulos se organizarán en las siguientes carpetas:
 
-| Código | Módulo | Carpeta |
-|---|---|---|
-| M01 | Convocatorias | `modules/convocatorias/` |
-| M02 | Usuarios | `modules/usuarios/` |
-| M03 | Inscripciones | `modules/inscripciones/` |
-| M04 | Pagos | `modules/pagos/` |
-| M05 | Expedientes | `modules/expedientes/` |
-| M06 | Exámenes, Sedes y Aulas | `modules/examenes/` |
-| M07 | Resultados | `modules/resultados/` |
-| M08 | Chatbot IA | `modules/asistente/` |
-| M09 | Notificaciones | `modules/notificaciones/` |
-| M10 | Reportes | `modules/reportes/` |
-| M11 | Seguridad | `modules/seguridad/` |
-| M12 | Configuración | `modules/configuracion/` |
+| Código | Módulo                  | Carpeta                   |
+| ------ | ----------------------- | ------------------------- |
+| M01    | Convocatorias           | `modules/convocatorias/`  |
+| M02    | Usuarios                | `modules/usuarios/`       |
+| M03    | Inscripciones           | `modules/inscripciones/`  |
+| M04    | Pagos                   | `modules/pagos/`          |
+| M05    | Expedientes             | `modules/expedientes/`    |
+| M06    | Exámenes, Sedes y Aulas | `modules/examenes/`       |
+| M07    | Resultados              | `modules/resultados/`     |
+| M08    | Chatbot IA              | `modules/asistente/`      |
+| M09    | Notificaciones          | `modules/notificaciones/` |
+| M10    | Reportes                | `modules/reportes/`       |
+| M11    | Seguridad               | `modules/seguridad/`      |
+| M12    | Configuración           | `modules/configuracion/`  |
 
 Cada módulo utilizará la siguiente organización interna:
 
-| Ruta interna | Contenido |
-|---|---|
-| `presentation/` | Controladores REST, rutas y validación de entrada. |
-| `application/` | Casos de uso, coordinación de procesos y contratos de aplicación. |
-| `domain/` | Entidades, reglas de negocio y contratos del dominio. |
-| `infrastructure/` | Implementaciones de persistencia y adaptadores externos. |
-| `index.ts` | Interfaz pública y composición del módulo. |
+| Ruta interna      | Contenido                                                         |
+| ----------------- | ----------------------------------------------------------------- |
+| `presentation/`   | Controladores REST, rutas y validación de entrada.                |
+| `application/`    | Casos de uso, coordinación de procesos y contratos de aplicación. |
+| `domain/`         | Entidades, reglas de negocio y contratos del dominio.             |
+| `infrastructure/` | Implementaciones de persistencia y adaptadores externos.          |
+| `index.ts`        | Interfaz pública y composición del módulo.                        |
 
 Los contratos se ubicarán en la capa interna que los necesite. La carpeta `shared/` contendrá únicamente componentes técnicos comunes, evitando trasladar allí reglas que pertenezcan a un módulo específico.
 
@@ -128,20 +127,20 @@ La inscripción solo quedará habilitada cuando cumpla todos los requisitos de p
 
 ## 7.6. Módulos funcionales del sistema
 
-| Código | Módulo | Responsabilidad principal |
-|---|---|---|
-| M01 | Convocatorias | Gestionar procesos de admisión, periodos, cronogramas y condiciones de apertura y cierre. |
-| M02 | Usuarios | Gestionar datos de postulantes, cuentas opcionales y usuarios del personal. |
-| M03 | Inscripciones | Registrar y gestionar postulaciones de las modalidades Ordinaria y Exonerados, sus estados y fichas. |
-| M04 | Pagos | Generar órdenes de pago, verificar confirmaciones y facilitar la conciliación de transacciones. |
-| M05 | Expedientes | Gestionar documentos, revisión, observaciones y subsanaciones. |
-| M06 | Exámenes, Sedes y Aulas | Programar evaluaciones, administrar ambientes y distribuir postulantes respetando capacidades y horarios. |
-| M07 | Resultados | Registrar calificaciones, calcular puntajes y gestionar la validación y publicación de resultados. |
-| M08 | Chatbot IA | Brindar orientación y seguimiento autorizado mediante OpenRouter API y derivar consultas a soporte. |
-| M09 | Notificaciones | Gestionar avisos del sistema y enviar comunicaciones por correo electrónico. |
-| M10 | Reportes | Generar estadísticas e informes operativos y administrativos. |
-| M11 | Seguridad | Gestionar autenticación, roles, permisos y registro de operaciones críticas para auditoría. |
-| M12 | Configuración | Administrar modalidades, programas, parámetros e integraciones del sistema. |
+| Código | Módulo                  | Responsabilidad principal                                                                                 |
+| ------ | ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| M01    | Convocatorias           | Gestionar procesos de admisión, periodos, cronogramas y condiciones de apertura y cierre.                 |
+| M02    | Usuarios                | Gestionar datos de postulantes, cuentas opcionales y usuarios del personal.                               |
+| M03    | Inscripciones           | Registrar y gestionar postulaciones de las modalidades Ordinaria y Exonerados, sus estados y fichas.      |
+| M04    | Pagos                   | Generar órdenes de pago, verificar confirmaciones y facilitar la conciliación de transacciones.           |
+| M05    | Expedientes             | Gestionar documentos, revisión, observaciones y subsanaciones.                                            |
+| M06    | Exámenes, Sedes y Aulas | Programar evaluaciones, administrar ambientes y distribuir postulantes respetando capacidades y horarios. |
+| M07    | Resultados              | Registrar calificaciones, calcular puntajes y gestionar la validación y publicación de resultados.        |
+| M08    | Chatbot IA              | Brindar orientación y seguimiento autorizado mediante OpenRouter API y derivar consultas a soporte.       |
+| M09    | Notificaciones          | Gestionar avisos del sistema y enviar comunicaciones por correo electrónico.                              |
+| M10    | Reportes                | Generar estadísticas e informes operativos y administrativos.                                             |
+| M11    | Seguridad               | Gestionar autenticación, roles, permisos y registro de operaciones críticas para auditoría.               |
+| M12    | Configuración           | Administrar modalidades, programas, parámetros e integraciones del sistema.                               |
 
 Inscripción Ordinaria e Inscripción Exonerados se integrarán en **M03 Inscripciones**.
 
@@ -151,23 +150,23 @@ Cada módulo expondrá una interfaz pública para colaborar con los demás sin a
 
 ## 7.7. Tecnologías e integraciones
 
-| Tecnología o servicio | Función |
-|---|---|
-| Angular | Interfaz web responsiva para postulantes y personal. |
-| Node.js y TypeScript | Desarrollo de la aplicación backend modular. |
-| Amazon API Gateway | Exposición de endpoints REST mediante HTTPS. |
-| AWS Lambda | Ejecución del backend modular. |
-| Amazon RDS PostgreSQL | Persistencia de datos, restricciones y transacciones. |
-| Amazon S3 para frontend | Almacenamiento de los archivos estáticos de Angular. |
-| Amazon CloudFront | Distribución del frontend y caché HTTP de consultas públicas autorizadas. |
-| Amazon S3 privado | Almacenamiento protegido de expedientes y documentos PDF. |
-| Outbox en PostgreSQL | Registro transaccional de eventos pendientes de procesamiento. |
-| Amazon SQS | Transporte de mensajes para tareas asíncronas. |
-| RENIEC vía apiperu | Consulta de identidad, sujeta a las condiciones y autorizaciones del proveedor. |
-| Izipay micuentaweb | Procesamiento de pagos con tarjeta. |
-| Culqi | Procesamiento de pagos con Yape. |
-| OpenRouter API | Procesamiento de consultas del chatbot. |
-| Amazon SES | Envío de correos electrónicos. |
+| Tecnología o servicio   | Función                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| Angular                 | Interfaz web responsiva para postulantes y personal.                            |
+| Node.js y TypeScript    | Desarrollo de la aplicación backend modular.                                    |
+| Amazon API Gateway      | Exposición de endpoints REST mediante HTTPS.                                    |
+| AWS Lambda              | Ejecución del backend modular.                                                  |
+| Amazon RDS PostgreSQL   | Persistencia de datos, restricciones y transacciones.                           |
+| Amazon S3 para frontend | Almacenamiento de los archivos estáticos de Angular.                            |
+| Amazon CloudFront       | Distribución del frontend y caché HTTP de consultas públicas autorizadas.       |
+| Amazon S3 privado       | Almacenamiento protegido de expedientes y documentos PDF.                       |
+| Outbox en PostgreSQL    | Registro transaccional de eventos pendientes de procesamiento.                  |
+| Amazon SQS              | Transporte de mensajes para tareas asíncronas.                                  |
+| RENIEC vía apiperu      | Consulta de identidad, sujeta a las condiciones y autorizaciones del proveedor. |
+| Izipay micuentaweb      | Procesamiento de pagos con tarjeta.                                             |
+| Culqi                   | Procesamiento de pagos con Yape.                                                |
+| OpenRouter API          | Procesamiento de consultas del chatbot.                                         |
+| Amazon SES              | Envío de correos electrónicos.                                                  |
 
 Los archivos del frontend y los documentos privados tendrán permisos y mecanismos de acceso diferenciados.
 
@@ -177,10 +176,10 @@ Las consultas con información personal no se almacenarán en una caché públic
 
 La colaboración entre módulos utilizará dos mecanismos:
 
-| Mecanismo | Aplicación |
-|---|---|
-| Interfaces internas | Operaciones que requieran una respuesta inmediata de otro módulo. |
-| Eventos internos | Comunicación de hechos de negocio y ejecución de tareas complementarias. |
+| Mecanismo           | Aplicación                                                               |
+| ------------------- | ------------------------------------------------------------------------ |
+| Interfaces internas | Operaciones que requieran una respuesta inmediata de otro módulo.        |
+| Eventos internos    | Comunicación de hechos de negocio y ejecución de tareas complementarias. |
 
 Por ejemplo, Inscripciones podrá consultar las condiciones de una convocatoria mediante una interfaz pública. Cuando se confirme un pago, Pagos emitirá un evento para que los módulos interesados actualicen sus procesos.
 
@@ -205,16 +204,16 @@ Los consumidores deberán admitir entregas repetidas mediante idempotencia y rei
 
 ## 7.10. Relación con los atributos de calidad
 
-| Atributo | Decisiones de diseño relacionadas |
-|---|---|
-| Rendimiento | Consultas optimizadas, índices, caché HTTP pública y tareas asíncronas. |
-| Disponibilidad | Servicios administrados y manejo controlado de fallas. |
-| Escalabilidad | Ejecución en AWS Lambda y control de concurrencia y conexiones a PostgreSQL. |
-| Seguridad | Autenticación, autorización por roles, HTTPS y protección de credenciales. |
-| Mantenibilidad | Separación por capas, contratos internos y límites entre módulos. |
-| Integridad | Transacciones, restricciones de unicidad y validaciones de negocio. |
-| Usabilidad | Interfaz responsiva, formularios comprensibles y mensajes de validación. |
-| Interoperabilidad | Adaptadores para identidad, pagos, chatbot y correo. |
-| Confiabilidad | Outbox, reintentos controlados, verificación de pagos e idempotencia. |
+| Atributo          | Decisiones de diseño relacionadas                                            |
+| ----------------- | ---------------------------------------------------------------------------- |
+| Rendimiento       | Consultas optimizadas, índices, caché HTTP pública y tareas asíncronas.      |
+| Disponibilidad    | Servicios administrados y manejo controlado de fallas.                       |
+| Escalabilidad     | Ejecución en AWS Lambda y control de concurrencia y conexiones a PostgreSQL. |
+| Seguridad         | Autenticación, autorización por roles, HTTPS y protección de credenciales.   |
+| Mantenibilidad    | Separación por capas, contratos internos y límites entre módulos.            |
+| Integridad        | Transacciones, restricciones de unicidad y validaciones de negocio.          |
+| Usabilidad        | Interfaz responsiva, formularios comprensibles y mensajes de validación.     |
+| Interoperabilidad | Adaptadores para identidad, pagos, chatbot y correo.                         |
+| Confiabilidad     | Outbox, reintentos controlados, verificación de pagos e idempotencia.        |
 
 Este diseño establece la estructura inicial del sistema para el Sprint 1. Su cumplimiento se verificará durante los siguientes sprints mediante revisiones de código y pruebas.

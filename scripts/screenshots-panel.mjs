@@ -12,12 +12,16 @@ mkdirSync(out, { recursive: true });
 
 function base32Decode(s) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const ch of s.replace(/=+$/, '').toUpperCase()) {
     value = (value << 5) | A.indexOf(ch);
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -49,7 +53,15 @@ try {
   await page.click('button[type=submit]');
   // El servidor de desarrollo mantiene una conexión abierta: basta con que cargue el inicio del panel.
   await page.waitForSelector('.adm-side nav', { timeout: 30000 }).catch(async (e) => {
-    console.log('No entró al panel:', (await page.locator('main').innerText().catch(() => '')).slice(0, 300));
+    console.log(
+      'No entró al panel:',
+      (
+        await page
+          .locator('main')
+          .innerText()
+          .catch(() => '')
+      ).slice(0, 300),
+    );
     throw e;
   });
   for (const r of routes.length ? routes : ['']) {

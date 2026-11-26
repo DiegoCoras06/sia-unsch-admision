@@ -41,12 +41,17 @@ export class OpenRouterProvider implements LlmProvider {
         choices?: { message?: { content?: string | null; tool_calls?: LlmResponse['toolCalls'] } }[];
         usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number };
       };
-      if (!res.ok || !body.choices?.length) throw new Error(`OpenRouter ${res.status}: ${body.error?.message ?? 'sin respuesta'}`);
+      if (!res.ok || !body.choices?.length)
+        throw new Error(`OpenRouter ${res.status}: ${body.error?.message ?? 'sin respuesta'}`);
       const msg = body.choices[0]?.message ?? {};
       return {
         content: msg.content ?? null,
         toolCalls: msg.tool_calls ?? [],
-        usage: { tokensIn: body.usage?.prompt_tokens ?? 0, tokensOut: body.usage?.completion_tokens ?? 0, costUsd: body.usage?.cost ?? 0 },
+        usage: {
+          tokensIn: body.usage?.prompt_tokens ?? 0,
+          tokensOut: body.usage?.completion_tokens ?? 0,
+          costUsd: body.usage?.cost ?? 0,
+        },
         model: body.model ?? this.cfg.model,
       };
     } finally {

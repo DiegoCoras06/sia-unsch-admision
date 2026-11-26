@@ -19,12 +19,27 @@ try {
   if (!user?.staff) throw new Error(`No existe una cuenta del personal con el correo ${email}.`);
   const password = `Temp-${randomBytes(9).toString('base64url')}`;
   await db.$transaction([
-    db.user.update({ where: { id: user.id }, data: { passwordHash: await new Argon2Hasher().hash(password), failedLoginCount: 0, failedLoginSince: null, lockedUntil: null, status: 'ACTIVE', version: { increment: 1 } } }),
+    db.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await new Argon2Hasher().hash(password),
+        failedLoginCount: 0,
+        failedLoginSince: null,
+        lockedUntil: null,
+        status: 'ACTIVE',
+        version: { increment: 1 },
+      },
+    }),
     db.staffProfile.update({ where: { userId: user.id }, data: { mustChangePassword: true } }),
     db.session.deleteMany({ where: { userId: user.id } }),
   ]);
-  writeFileSync(file, `Cuenta del personal: ${user.email}\nCorreo: ${user.email}\nContraseña temporal: ${password}\n(Al ingresar se pide una contraseña nueva. El código TOTP es el mismo de tu app autenticadora.)\nBorra este archivo después de ingresar.\n`);
-  console.log(`✔ Contraseña temporal de ${user.email} guardada en ${file}. Intentos fallidos en cero; el TOTP no cambió.`);
+  writeFileSync(
+    file,
+    `Cuenta del personal: ${user.email}\nCorreo: ${user.email}\nContraseña temporal: ${password}\n(Al ingresar se pide una contraseña nueva. El código TOTP es el mismo de tu app autenticadora.)\nBorra este archivo después de ingresar.\n`,
+  );
+  console.log(
+    `✔ Contraseña temporal de ${user.email} guardada en ${file}. Intentos fallidos en cero; el TOTP no cambió.`,
+  );
 } finally {
   await db.$disconnect();
 }

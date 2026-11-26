@@ -23,7 +23,12 @@ const imports = (file: string) => [...readFileSync(file, 'utf-8').matchAll(/from
 const files = readdirSync(MODULES).flatMap((mod) =>
   filesIn(join(MODULES, mod)).map((file) => {
     const rel = posix(relative(join(MODULES, mod), file));
-    return { file: posix(relative(SRC, file)), mod, layer: rel.includes('/') ? rel.split('/')[0]! : 'index', abs: file };
+    return {
+      file: posix(relative(SRC, file)),
+      mod,
+      layer: rel.includes('/') ? rel.split('/')[0]! : 'index',
+      abs: file,
+    };
   }),
 );
 
@@ -72,7 +77,11 @@ describe('límites entre los 12 módulos', () => {
   it('la capa de aplicación no conoce HTTP (Express)', () => {
     const violations = files
       .filter((f) => f.layer === 'application')
-      .flatMap(({ file, abs }) => imports(abs).filter((imp) => imp === 'express').map((imp) => `${file} -> ${imp}`));
+      .flatMap(({ file, abs }) =>
+        imports(abs)
+          .filter((imp) => imp === 'express')
+          .map((imp) => `${file} -> ${imp}`),
+      );
     expect(violations).toEqual([]);
   });
 });

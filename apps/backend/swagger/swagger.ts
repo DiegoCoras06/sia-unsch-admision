@@ -20,8 +20,12 @@ export function montarSwagger(app: Express): void {
   app.get('/api/openapi.json', (_req, res) => {
     res.json(openapi);
   });
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapi, {
-    customSiteTitle: 'SIA-UNSCH: documentación de la API',
-    swaggerOptions: { docExpansion: 'none', filter: true, persistAuthorization: true, tagsSorter: 'alpha' },
-  }));
+  app.use(
+    '/api/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(openapi, {
+      customSiteTitle: 'SIA-UNSCH: documentación de la API',
+      swaggerOptions: { docExpansion: 'none', filter: true, persistAuthorization: true, tagsSorter: 'alpha' },
+    }),
+  );
 }

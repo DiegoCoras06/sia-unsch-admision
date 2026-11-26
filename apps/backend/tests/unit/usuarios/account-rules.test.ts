@@ -1,6 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 import {
-  applicantCodeFromSequence, isMinor, isValidApplicantCode, luhnCheckDigit, passwordIssues, registerLoginFailure,
+  applicantCodeFromSequence,
+  isMinor,
+  isValidApplicantCode,
+  luhnCheckDigit,
+  passwordIssues,
+  registerLoginFailure,
 } from '../../../src/modules/usuarios/domain/account-rules.js';
 import { maskEmail } from '../../../src/shared/telemetry/logger.js';
 
@@ -30,8 +35,12 @@ describe('Política de contraseñas (FR-005 de 002)', () => {
     expect(passwordIssues(password).length).toBeGreaterThan(0);
   });
   it('rechaza contener el DNI o el usuario del correo', () => {
-    expect(passwordIssues('Clave99900001x', { documentNumber: '99900001' })).toContain('No puede contener tu número de documento.');
-    expect(passwordIssues('mariaprueba2026!', { email: 'mariaprueba@example.com' })).toContain('No puede contener tu correo.');
+    expect(passwordIssues('Clave99900001x', { documentNumber: '99900001' })).toContain(
+      'No puede contener tu número de documento.',
+    );
+    expect(passwordIssues('mariaprueba2026!', { email: 'mariaprueba@example.com' })).toContain(
+      'No puede contener tu correo.',
+    );
   });
 });
 

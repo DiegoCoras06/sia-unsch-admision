@@ -7,7 +7,13 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { S3FileStorage } from '../src/shared/storage/s3-file-storage.js';
 
-const TYPES: Record<string, string> = { '.pdf': 'application/pdf', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+const TYPES: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
 const root = path.resolve('.dev-storage');
 const bucket = process.env['S3_BUCKET'];
 if (!bucket) throw new Error('Falta S3_BUCKET en el archivo .env.');

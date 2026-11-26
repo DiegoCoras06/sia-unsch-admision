@@ -44,7 +44,9 @@ export function createExpedientesModule(deps: {
   });
   deps.outbox.subscribe('ExpedienteDictaminado', async (e) => {
     const lines: Record<typeof e.decision, string[]> = {
-      AUTORIZADO: ['Tu expediente fue <strong>autorizado</strong>. Ya puedes pagar el derecho de inscripción e imprimir tu ficha.'],
+      AUTORIZADO: [
+        'Tu expediente fue <strong>autorizado</strong>. Ya puedes pagar el derecho de inscripción e imprimir tu ficha.',
+      ],
       OBSERVADO: [
         'Tu expediente tiene <strong>observaciones</strong>. Reemplaza solo estos documentos:',
         ...e.observed.map((o) => `• ${o}`),
@@ -53,7 +55,11 @@ export function createExpedientesModule(deps: {
       RECHAZADO: [`Tu expediente fue <strong>rechazado</strong>. Motivo: ${e.note ?? ''}`],
       NO_SUBSANADO: ['Venció el plazo para subsanar tu expediente y tu inscripción como exonerado quedó anulada.'],
     };
-    const { html, text } = renderEmail('Dictamen de tu expediente', [`Hola ${e.firstNames}:`, ...lines[e.decision], `Detalles en ${link}.`]);
+    const { html, text } = renderEmail('Dictamen de tu expediente', [
+      `Hola ${e.firstNames}:`,
+      ...lines[e.decision],
+      `Detalles en ${link}.`,
+    ]);
     await deps.email.send({ to: e.email, subject: 'Dictamen de tu expediente - Admisión UNSCH 2027-I', html, text });
   });
 

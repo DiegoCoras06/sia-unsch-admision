@@ -12,13 +12,21 @@ export class ApiPeruIdentityProvider implements IdentityProvider {
   readonly simulated = false;
   readonly name = 'RENIEC' as const;
 
-  constructor(private readonly token: string, private readonly url = 'https://api.apiperu.dev/dni', private readonly timeoutMs = 10_000) {}
+  constructor(
+    private readonly token: string,
+    private readonly url = 'https://api.apiperu.dev/dni',
+    private readonly timeoutMs = 10_000,
+  ) {}
 
   async lookupDni(dni: string): Promise<IdentityLookupResult> {
     try {
       const res = await fetch(this.url, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ dni }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });
@@ -28,7 +36,13 @@ export class ApiPeruIdentityProvider implements IdentityProvider {
       const d = body.data ?? {};
       const text = (k: string) => (typeof d[k] === 'string' ? (d[k] as string).trim() : '');
       if (body.success === false || !text('nombres') || !text('apellido_paterno')) return { kind: 'NOT_MATCHED' };
-      return { kind: 'MATCHED', firstNames: text('nombres'), paternalSurname: text('apellido_paterno'), maternalSurname: text('apellido_materno'), birthDate: '' };
+      return {
+        kind: 'MATCHED',
+        firstNames: text('nombres'),
+        paternalSurname: text('apellido_paterno'),
+        maternalSurname: text('apellido_materno'),
+        birthDate: '',
+      };
     } catch {
       return { kind: 'UNAVAILABLE' };
     }

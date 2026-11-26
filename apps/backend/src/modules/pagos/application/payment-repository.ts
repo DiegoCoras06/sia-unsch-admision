@@ -66,7 +66,14 @@ export interface PaymentRepository {
   getAttempt(id: string): Promise<AttemptWithOrder>;
   listAttempts(orderId: string): Promise<AttemptRecord[]>;
   countAttempts(orderId: string): Promise<number>;
-  createAttempt(data: { orderId: string; provider: string; transactionId: string; orderNumber: string; amount: string; expiresAt: Date }): Promise<AttemptRecord>;
+  createAttempt(data: {
+    orderId: string;
+    provider: string;
+    transactionId: string;
+    orderNumber: string;
+    amount: string;
+    expiresAt: Date;
+  }): Promise<AttemptRecord>;
   /** Reserva el intento para cobrarlo una sola vez; false si ya está en cobro o resuelto. */
   claimForCharge(attemptId: string): Promise<boolean>;
   noteNoResponse(attemptId: string, message: string): Promise<void>;

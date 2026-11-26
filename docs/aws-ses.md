@@ -11,7 +11,7 @@ En **Amazon SES → Identidades → Crear identidad**:
 1. Tipo: **Dirección de correo electrónico**, por ejemplo tu correo institucional.
 2. AWS envía un correo a esa dirección: abre el enlace para verificarla.
 
-> **Modo sandbox:** una cuenta nueva de SES solo entrega a direcciones **verificadas** y hasta 200 correos al día. Para la demo, verifica también los correos de los postulantes de prueba (mismo paso 1). Para escribir a cualquier dirección, pide **acceso a producción** en *SES → Panel de la cuenta*.
+> **Modo sandbox:** una cuenta nueva de SES solo entrega a direcciones **verificadas** y hasta 200 correos al día. Para la demo, verifica también los correos de los postulantes de prueba (mismo paso 1). Para escribir a cualquier dirección, pide **acceso a producción** en _SES → Panel de la cuenta_.
 
 ## 2. Permiso para el usuario IAM de desarrollo
 
@@ -22,7 +22,12 @@ Al usuario `sia-unsch-s3-local` (ver [aws-s3.md](aws-s3.md)) agrégale otra pol�
   "Version": "2012-10-17",
   "Statement": [
     { "Sid": "EnviarCorreo", "Effect": "Allow", "Action": ["ses:SendEmail"], "Resource": "*" },
-    { "Sid": "ComprobarCuenta", "Effect": "Allow", "Action": ["ses:GetAccount", "ses:GetEmailIdentity"], "Resource": "*" }
+    {
+      "Sid": "ComprobarCuenta",
+      "Effect": "Allow",
+      "Action": ["ses:GetAccount", "ses:GetEmailIdentity"],
+      "Resource": "*"
+    }
   ]
 }
 ```
@@ -53,4 +58,4 @@ El envío pasa por la cola de M11: si SES rechaza (por ejemplo, destinatario no 
 
 ## Pendiente: rebotes y quejas
 
-El estado **REBOTADA** (RF-11.09) necesita un *conjunto de configuración* de SES que publique los eventos `Bounce` y `Complaint` en un tema SNS suscrito a la API por HTTPS. Requiere una URL pública, así que se configura junto con el despliegue (Paso 11). El emisor ya envía `SES_CONFIGURATION_SET` y la etiqueta `evento` cuando están definidos.
+El estado **REBOTADA** (RF-11.09) necesita un _conjunto de configuración_ de SES que publique los eventos `Bounce` y `Complaint` en un tema SNS suscrito a la API por HTTPS. Requiere una URL pública, así que se configura junto con el despliegue (Paso 11). El emisor ya envía `SES_CONFIGURATION_SET` y la etiqueta `evento` cuando están definidos.

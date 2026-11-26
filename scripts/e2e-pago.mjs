@@ -13,7 +13,27 @@ mkdirSync(out, { recursive: true });
 const step = (m) => console.log(`✔ ${m}`);
 
 function fakeJpeg(width, height) {
-  const sof = Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  const sof = Buffer.from([
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    height >> 8,
+    height & 255,
+    width >> 8,
+    width & 255,
+    0x03,
+    1,
+    0x22,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
   return `data:image/jpeg;base64,${Buffer.concat([Buffer.from([0xff, 0xd8]), sof, Buffer.from([0xff, 0xd9])]).toString('base64')}`;
 }
 
@@ -23,12 +43,36 @@ try {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      documentType: 'DNI', documentNumber: dni, paternalSurname: 'X', maternalSurname: 'Y', firstNames: 'Z', sex: 'F',
-      maritalStatus: 'SOLTERO', birthUbigeo: '050101', birthDate: '2008-05-20', address: 'Jr. 28 de Julio 150, Ayacucho',
-      residenceUbigeo: '050101', economicDependency: 'PADRES', mobile: '966123456', email: `e2e.pago.${dni}@example.com`,
-      photo: fakeJpeg(240, 320), schoolUbigeo: '050101', schoolName: 'IE Luis Carranza', schoolType: 'ESTATAL',
-      graduationYear: 2025, inFourthOrBelow: false, preparation: 'CEPRE_UNSCH', attempts: 1, modality: 'ORD', quotaCategory: 'ORD',
-      campus: 'HUAMANGA', optionCode: 'P34', militaryCondition: 'NONE', familyLink: false, declarationAccepted: true, consentVersion: '2026-10-v1',
+      documentType: 'DNI',
+      documentNumber: dni,
+      paternalSurname: 'X',
+      maternalSurname: 'Y',
+      firstNames: 'Z',
+      sex: 'F',
+      maritalStatus: 'SOLTERO',
+      birthUbigeo: '050101',
+      birthDate: '2008-05-20',
+      address: 'Jr. 28 de Julio 150, Ayacucho',
+      residenceUbigeo: '050101',
+      economicDependency: 'PADRES',
+      mobile: '966123456',
+      email: `e2e.pago.${dni}@example.com`,
+      photo: fakeJpeg(240, 320),
+      schoolUbigeo: '050101',
+      schoolName: 'IE Luis Carranza',
+      schoolType: 'ESTATAL',
+      graduationYear: 2025,
+      inFourthOrBelow: false,
+      preparation: 'CEPRE_UNSCH',
+      attempts: 1,
+      modality: 'ORD',
+      quotaCategory: 'ORD',
+      campus: 'HUAMANGA',
+      optionCode: 'P34',
+      militaryCondition: 'NONE',
+      familyLink: false,
+      declarationAccepted: true,
+      consentVersion: '2026-10-v1',
     }),
   });
   const body = await res.json();
@@ -78,11 +122,20 @@ try {
   for (const m of pdf.toString('latin1').matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
     try {
       const txt = inflateSync(Buffer.from(m[1], 'latin1')).toString('latin1');
-      const hit = /verificar\/(\d{8}\.[A-Za-z0-9_-]{16})/.exec(txt.replace(/[^\x20-\x7e]/g, '')) ?? /verificar\/(\d{8}\.[A-Za-z0-9_-]{16})/.exec(hexText(txt));
-      if (hit) { verifyUrl = `${base}/verificar/${hit[1]}`; break; }
-    } catch { /* flujo no comprimido */ }
+      const hit =
+        /verificar\/(\d{8}\.[A-Za-z0-9_-]{16})/.exec(txt.replace(/[^\x20-\x7e]/g, '')) ??
+        /verificar\/(\d{8}\.[A-Za-z0-9_-]{16})/.exec(hexText(txt));
+      if (hit) {
+        verifyUrl = `${base}/verificar/${hit[1]}`;
+        break;
+      }
+    } catch {
+      /* flujo no comprimido */
+    }
   }
-  step(`Ficha descargada: ${download.suggestedFilename()}${verifyUrl ? '' : ' (enlace del QR no legible en el texto; se omite la verificación)'}`);
+  step(
+    `Ficha descargada: ${download.suggestedFilename()}${verifyUrl ? '' : ' (enlace del QR no legible en el texto; se omite la verificación)'}`,
+  );
   if (verifyUrl) {
     await page.goto(verifyUrl, { waitUntil: 'load' });
     await page.locator('.badge', { hasText: 'Ficha válida' }).waitFor({ timeout: 20000 });
@@ -95,7 +148,9 @@ try {
 
   // Segundo intento sobre la orden pagada: la API lo impide.
   const again = await fetch(`${base}/api/v1/payments/session`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documentNumber: dni, applicantCode: code }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ documentNumber: dni, applicantCode: code }),
   });
   if (again.status !== 409) throw new Error(`Se esperaba 409 al volver a pagar y llegó ${again.status}`);
   step('Una orden pagada no se puede volver a pagar (409)');

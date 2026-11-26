@@ -11,8 +11,7 @@ export interface SessionState {
 }
 
 export type RefreshDecision =
-  | { ok: true }
-  | { ok: false; code: 'SESSION_EXPIRED' | 'SESSION_IDLE' | 'SESSION_REVOKED'; reuseDetected: boolean };
+  { ok: true } | { ok: false; code: 'SESSION_EXPIRED' | 'SESSION_IDLE' | 'SESSION_REVOKED'; reuseDetected: boolean };
 
 /**
  * Decide si un refresh token puede rotarse.
@@ -32,10 +31,27 @@ export function evaluateRefresh(session: SessionState, now: Date): RefreshDecisi
 /** «Chrome en Windows». `null` si no se reconoce. No usa la versión ni la IP: cambian sin que cambie el dispositivo. */
 export function deviceLabel(userAgent: string | null): string | null {
   if (!userAgent) return null;
-  const browser = /Edg\//.test(userAgent) ? 'Edge' : /OPR\//.test(userAgent) ? 'Opera' : /Firefox\//.test(userAgent) ? 'Firefox'
-    : /Chrome\//.test(userAgent) ? 'Chrome' : /Safari\//.test(userAgent) ? 'Safari' : null;
-  const system = /Android/.test(userAgent) ? 'Android' : /iPhone|iPad/.test(userAgent) ? 'iPhone' : /Windows/.test(userAgent) ? 'Windows'
-    : /Mac OS X/.test(userAgent) ? 'Mac' : /Linux/.test(userAgent) ? 'Linux' : null;
+  const browser = /Edg\//.test(userAgent)
+    ? 'Edge'
+    : /OPR\//.test(userAgent)
+      ? 'Opera'
+      : /Firefox\//.test(userAgent)
+        ? 'Firefox'
+        : /Chrome\//.test(userAgent)
+          ? 'Chrome'
+          : /Safari\//.test(userAgent)
+            ? 'Safari'
+            : null;
+  const system = /Android/.test(userAgent)
+    ? 'Android'
+    : /iPhone|iPad/.test(userAgent)
+      ? 'iPhone'
+      : /Windows/.test(userAgent)
+        ? 'Windows'
+        : /Mac OS X/.test(userAgent)
+          ? 'Mac'
+          : /Linux/.test(userAgent)
+            ? 'Linux'
+            : null;
   return browser && system ? `${browser} en ${system}` : null;
 }
-

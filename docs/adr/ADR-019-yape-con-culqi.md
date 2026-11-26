@@ -16,9 +16,9 @@ En Culqi, Yape funciona en dos pasos ([documentación](https://docs.culqi.com/es
 
 Límites: solo soles y máximo S/ 2000 por pago con Yape. En pruebas, Culqi acepta el celular 900 000 001 con cualquier código de 6 dígitos.
 
-| Credencial | Dónde se obtiene | Variable | ¿Secreta? |
-|---|---|---|---|
-| Llave pública | CulqiPanel → Desarrollo → API Keys | `CULQI_PUBLIC_KEY` | No (va al navegador) |
+| Credencial    | Dónde se obtiene                   | Variable           | ¿Secreta?               |
+| ------------- | ---------------------------------- | ------------------ | ----------------------- |
+| Llave pública | CulqiPanel → Desarrollo → API Keys | `CULQI_PUBLIC_KEY` | No (va al navegador)    |
 | Llave secreta | CulqiPanel → Desarrollo → API Keys | `CULQI_SECRET_KEY` | Sí (solo en `.env.rds`) |
 
 ## Decisión

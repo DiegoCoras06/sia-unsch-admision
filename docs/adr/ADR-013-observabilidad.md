@@ -31,13 +31,13 @@ RNF-12 exige monitoreo, alertas y capacidad de diagnóstico. El equipo decidió 
 
 ### 4. Alertas y disponibilidad
 
-| Alerta | Condición | Canal |
-|---|---|---|
-| Errores del servidor | Más del 2 % de respuestas 5xx en 5 minutos | Correo del equipo |
-| Latencia | p95 > 3 s durante 10 minutos (RNF-05) | Correo |
-| Outbox atascada | Más de 100 eventos pendientes o el más antiguo con más de 10 minutos | Correo |
-| Integración caída | Más de 5 fallas seguidas de un proveedor | Correo |
-| Disponibilidad | La comprobación sintética de `/api/v1/health` y de la página de inicio falla 2 veces seguidas | Correo |
+| Alerta               | Condición                                                                                     | Canal             |
+| -------------------- | --------------------------------------------------------------------------------------------- | ----------------- |
+| Errores del servidor | Más del 2 % de respuestas 5xx en 5 minutos                                                    | Correo del equipo |
+| Latencia             | p95 > 3 s durante 10 minutos (RNF-05)                                                         | Correo            |
+| Outbox atascada      | Más de 100 eventos pendientes o el más antiguo con más de 10 minutos                          | Correo            |
+| Integración caída    | Más de 5 fallas seguidas de un proveedor                                                      | Correo            |
+| Disponibilidad       | La comprobación sintética de `/api/v1/health` y de la página de inicio falla 2 veces seguidas | Correo            |
 
 La comprobación sintética la hace **Grafana Synthetic Monitoring** desde fuera de AWS cada 5 minutos.
 
@@ -52,23 +52,25 @@ Sin Docker (ADR-014): la exportación OTLP está **desactivada por defecto** y l
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Amazon CloudWatch | Integrado, sin configuración | — | Excluido por decisión del equipo |
-| Sentry | Excelente para errores y rendimiento | Registros y métricas limitados; sería una herramienta más | Puede añadirse después solo para errores del frontend |
-| Datadog / New Relic | Muy completos | Costo alto después del periodo de prueba | Presupuesto |
-| Grafana + Loki + Tempo propios en EC2 | Control total, datos dentro de AWS | Costo fijo de la instancia y mantenimiento | Más caro y laborioso que el plan gratuito administrado |
-| Solo registros en PostgreSQL | Sin servicios externos | Sobrecarga la base en picos; no hay alertas ni trazas | No cumple RNF-12 |
+| Alternativa                           | A favor                              | En contra                                                 | Motivo del descarte                                    |
+| ------------------------------------- | ------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------ |
+| Amazon CloudWatch                     | Integrado, sin configuración         | —                                                         | Excluido por decisión del equipo                       |
+| Sentry                                | Excelente para errores y rendimiento | Registros y métricas limitados; sería una herramienta más | Puede añadirse después solo para errores del frontend  |
+| Datadog / New Relic                   | Muy completos                        | Costo alto después del periodo de prueba                  | Presupuesto                                            |
+| Grafana + Loki + Tempo propios en EC2 | Control total, datos dentro de AWS   | Costo fijo de la instancia y mantenimiento                | Más caro y laborioso que el plan gratuito administrado |
+| Solo registros en PostgreSQL          | Sin servicios externos               | Sobrecarga la base en picos; no hay alertas ni trazas     | No cumple RNF-12                                       |
 
 ## Consecuencias
 
 **Positivas:**
+
 - Se cumple la decisión de no usar CloudWatch.
 - OpenTelemetry es un estándar: se puede cambiar de proveedor modificando solo el destino de exportación.
 - Trazas de punta a punta, que facilitan el diagnóstico de los flujos de pago.
 - El mismo entorno de observabilidad en local y en AWS.
 
 **Negativas / riesgos aceptados:**
+
 - **Si falla la extensión o Grafana Cloud no está disponible, se pierde telemetría**, porque no hay respaldo en CloudWatch. Mitigación: la auditoría de negocio y la outbox siguen en PostgreSQL.
 - **Errores muy tempranos de Lambda** (por ejemplo, fallas al iniciar o tiempo de espera agotado antes de exportar) pueden no quedar registrados. Mitigación: la comprobación sintética y la alerta de 5xx los detectan desde fuera.
 - La telemetría se almacena fuera del Perú y de AWS. Por eso la redacción de datos personales es obligatoria y se prueba.
@@ -76,6 +78,7 @@ Sin Docker (ADR-014): la exportación OTLP está **desactivada por defecto** y l
 - Dependencia de un proveedor externo adicional, con su clave de envío.
 
 **Cómo verificamos que se cumple:**
+
 - Prueba automática: un registro que contiene un DNI o un correo sale redactado.
 - `cdk synth` revisado: ninguna política de Lambda incluye permisos `logs:*`.
 - Ensayo previo a la presentación: se provoca un error 500 y se confirma que llega la alerta por correo.

@@ -1,17 +1,40 @@
 import { describe, expect, it } from '@jest/globals';
-import { quoteFee, type FeeCriteria, type FeeInfo, type FeeRule, type SurchargeRule } from '../../../src/modules/convocatorias/domain/fee-calculator.js';
+import {
+  quoteFee,
+  type FeeCriteria,
+  type FeeInfo,
+  type FeeRule,
+  type SurchargeRule,
+} from '../../../src/modules/convocatorias/domain/fee-calculator.js';
 import { Money } from '../../../src/modules/convocatorias/domain/money.js';
 import type { Stage } from '../../../src/modules/convocatorias/domain/stage.js';
 import * as seed from '../../../prisma/seed/call-2027-I.js';
 
 // Se usan los MISMOS datos de la semilla: la prueba valida la calculadora y la transcripción de la Tabla N.° 3.
-const fees = new Map<string, FeeInfo>(seed.fees.map((f) => [f.code, { code: f.code, concept: f.concept, amount: Money.of(f.amount), legalNote: f.legal }]));
+const fees = new Map<string, FeeInfo>(
+  seed.fees.map((f) => [f.code, { code: f.code, concept: f.concept, amount: Money.of(f.amount), legalNote: f.legal }]),
+);
 const rules: FeeRule[] = seed.feeRules.map((r) => ({
-  fee: fees.get(r.fee)!, modalityCode: r.modality, submodalityCode: r.sub ?? null, schoolType: r.school ?? null,
-  militaryCondition: r.military ?? null, familyLink: r.family ?? null, priority: r.priority,
+  fee: fees.get(r.fee)!,
+  modalityCode: r.modality,
+  submodalityCode: r.sub ?? null,
+  schoolType: r.school ?? null,
+  militaryCondition: r.military ?? null,
+  familyLink: r.family ?? null,
+  priority: r.priority,
 }));
-const surcharges: SurchargeRule[] = seed.surchargeRules.map((s) => ({ fee: fees.get(s.fee)!, appliesToScope: s.scope, priority: s.priority }));
-const stages: Stage[] = seed.stages.map((s, i) => ({ ...s, startsAt: new Date(s.startsAt), endsAt: new Date(s.endsAt), highlight: s.highlight ?? false, sortOrder: i + 1 }));
+const surcharges: SurchargeRule[] = seed.surchargeRules.map((s) => ({
+  fee: fees.get(s.fee)!,
+  appliesToScope: s.scope,
+  priority: s.priority,
+}));
+const stages: Stage[] = seed.stages.map((s, i) => ({
+  ...s,
+  startsAt: new Date(s.startsAt),
+  endsAt: new Date(s.endsAt),
+  highlight: s.highlight ?? false,
+  sortOrder: i + 1,
+}));
 
 const REGULAR = new Date('2026-10-25T10:00:00-05:00');
 const ORD_EXTEMP = new Date('2026-11-08T10:00:00-05:00');
@@ -31,7 +54,11 @@ describe('Simulador de tasas - Tabla N.° 3 completa (SC-002 de 001)', () => {
     ['1.3 Licenciado estatal', { schoolType: 'ESTATAL', militaryCondition: 'DISCHARGED' }, '187.50'],
     ['1.3 Licenciado particular', { schoolType: 'PARTICULAR', militaryCondition: 'DISCHARGED' }, '225.00'],
     ['2.1 Primer/segundo puesto estatal', { modality: 'EXO', submodality: 'EXO-PSP', schoolType: 'ESTATAL' }, '250.00'],
-    ['2.1 Primer/segundo puesto particular', { modality: 'EXO', submodality: 'EXO-PSP', schoolType: 'PARTICULAR' }, '300.00'],
+    [
+      '2.1 Primer/segundo puesto particular',
+      { modality: 'EXO', submodality: 'EXO-PSP', schoolType: 'PARTICULAR' },
+      '300.00',
+    ],
     ['2.1 COAR estatal', { modality: 'EXO', submodality: 'EXO-COAR', schoolType: 'ESTATAL' }, '250.00'],
     ['2.2 Adjudicados CEPRE', { modality: 'CEPRE' }, '335.00', CEPRE_REGULAR],
     ['2.3 Deportistas', { modality: 'EXO', submodality: 'EXO-DEP' }, '300.00'],
@@ -50,13 +77,20 @@ describe('Simulador de tasas - Tabla N.° 3 completa (SC-002 de 001)', () => {
   ];
 
   // Cada fila lleva su fecha (Jest toma un parámetro de más como `done`, por eso no puede quedar vacío).
-  const rows = cases.map(([name, criteria, expected, at]): [string, Partial<FeeCriteria>, string, Date] => [name, criteria, expected, at ?? REGULAR]);
+  const rows = cases.map(([name, criteria, expected, at]): [string, Partial<FeeCriteria>, string, Date] => [
+    name,
+    criteria,
+    expected,
+    at ?? REGULAR,
+  ]);
   it.each(rows)('%s → S/ %s', (_name, criteria, expected, at) => {
     expect(quote(criteria, at).total.toString()).toBe(expected);
   });
 
   it('H3-E2: el licenciado muestra la nota legal del 25 % de descuento', () => {
-    expect(quote({ schoolType: 'PARTICULAR', militaryCondition: 'DISCHARGED' }).lines[0]!.legalNote).toBe('25 % de descuento - Art. 61, Ley 29248');
+    expect(quote({ schoolType: 'PARTICULAR', militaryCondition: 'DISCHARGED' }).lines[0]!.legalNote).toBe(
+      '25 % de descuento - Art. 61, Ley 29248',
+    );
   });
 
   it('H3-E5: el vínculo familiar advierte que es por única vez', () => {
@@ -68,7 +102,9 @@ describe('Simulador de tasas - Tabla N.° 3 completa (SC-002 de 001)', () => {
   });
 
   it('exonerados sin submodalidad → 422 SUBMODALITY_REQUIRED', () => {
-    expect(() => quote({ modality: 'EXO' })).toThrow(expect.objectContaining({ code: 'SUBMODALITY_REQUIRED', status: 422 }));
+    expect(() => quote({ modality: 'EXO' })).toThrow(
+      expect.objectContaining({ code: 'SUBMODALITY_REQUIRED', status: 422 }),
+    );
   });
 
   it('ordinario sin tipo de colegio → 422 SCHOOL_TYPE_REQUIRED', () => {

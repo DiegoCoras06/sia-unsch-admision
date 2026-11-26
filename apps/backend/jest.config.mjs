@@ -9,7 +9,10 @@ export default {
   testMatch: ['**/*.test.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.ts$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript' }, target: 'es2022' }, module: { type: 'es6' } }],
+    '^.+\\.ts$': [
+      '@swc/jest',
+      { jsc: { parser: { syntax: 'typescript' }, target: 'es2022' }, module: { type: 'es6' } },
+    ],
   },
   // El código importa sus archivos .ts con la extensión .js (regla de los módulos ES de Node).
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },

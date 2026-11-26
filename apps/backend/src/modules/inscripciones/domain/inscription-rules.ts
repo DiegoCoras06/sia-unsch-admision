@@ -1,8 +1,25 @@
 /** Reglas y catálogos de la inscripción pública (spec 003, aclaraciones del 25/10/2026; ADR-015). */
 
-export const MARITAL_STATUS = { SOLTERO: 'Soltero(a)', CASADO: 'Casado(a)', CONVIVIENTE: 'Conviviente', DIVORCIADO: 'Divorciado(a)', VIUDO: 'Viudo(a)' } as const;
-export const ECONOMIC_DEPENDENCY = { PADRES: 'De mis padres', PROPIA: 'Propia (trabajo)', OTROS_FAMILIARES: 'De otros familiares', OTROS: 'Otra' } as const;
-export const PREPARATION = { ACADEMIA: 'Academia preuniversitaria', CEPRE_UNSCH: 'CEPRE-UNSCH', COLEGIO: 'Solo el colegio', AUTODIDACTA: 'Por mi cuenta', OTRA: 'Otra' } as const;
+export const MARITAL_STATUS = {
+  SOLTERO: 'Soltero(a)',
+  CASADO: 'Casado(a)',
+  CONVIVIENTE: 'Conviviente',
+  DIVORCIADO: 'Divorciado(a)',
+  VIUDO: 'Viudo(a)',
+} as const;
+export const ECONOMIC_DEPENDENCY = {
+  PADRES: 'De mis padres',
+  PROPIA: 'Propia (trabajo)',
+  OTROS_FAMILIARES: 'De otros familiares',
+  OTROS: 'Otra',
+} as const;
+export const PREPARATION = {
+  ACADEMIA: 'Academia preuniversitaria',
+  CEPRE_UNSCH: 'CEPRE-UNSCH',
+  COLEGIO: 'Solo el colegio',
+  AUTODIDACTA: 'Por mi cuenta',
+  OTRA: 'Otra',
+} as const;
 export const CAMPUSES = { HUAMANGA: 'Huamanga - Ciudad Universitaria (Ayacucho)' } as const;
 export const MODALITIES = { ORD: 'Ordinario', EXO: 'Exonerados', CEPRE: 'Adjudicados CEPRE-UNSCH' } as const;
 

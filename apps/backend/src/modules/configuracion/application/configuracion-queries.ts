@@ -18,7 +18,12 @@ export class ConfiguracionQueries {
     private readonly cache = new MemoryCache(0),
   ) {}
 
-  async listAnnouncements(filter: { callCode?: string | undefined; type?: AnnouncementDto['type'] | undefined; section?: string | undefined; page: number }) {
+  async listAnnouncements(filter: {
+    callCode?: string | undefined;
+    type?: AnnouncementDto['type'] | undefined;
+    section?: string | undefined;
+    page: number;
+  }) {
     const where = {
       publishedAt: { lte: this.clock.now() },
       ...(filter.callCode ? { callCode: filter.callCode } : {}),
@@ -26,12 +31,24 @@ export class ConfiguracionQueries {
       ...(filter.section ? { affectsSection: filter.section } : {}),
     };
     const key = `announcements:${filter.callCode ?? ''}:${filter.type ?? ''}:${filter.section ?? ''}:${filter.page}`;
-    const [rows, total] = await this.cache.get(key, () => Promise.all([
-      this.persistence.announcement.findMany({ where, orderBy: { publishedAt: 'desc' }, skip: (filter.page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-      this.persistence.announcement.count({ where }),
-    ]));
+    const [rows, total] = await this.cache.get(key, () =>
+      Promise.all([
+        this.persistence.announcement.findMany({
+          where,
+          orderBy: { publishedAt: 'desc' },
+          skip: (filter.page - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
+        }),
+        this.persistence.announcement.count({ where }),
+      ]),
+    );
     const data: AnnouncementDto[] = rows.map((a) => ({
-      id: a.id, type: a.type, title: a.title, bodyMarkdown: a.bodyMd, affectsSection: a.affectsSection, publishedAt: toLimaIso(a.publishedAt),
+      id: a.id,
+      type: a.type,
+      title: a.title,
+      bodyMarkdown: a.bodyMd,
+      affectsSection: a.affectsSection,
+      publishedAt: toLimaIso(a.publishedAt),
     }));
     const meta: PageMeta = { page: filter.page, pageSize: PAGE_SIZE, total };
     return { data, meta };
@@ -41,12 +58,14 @@ export class ConfiguracionQueries {
   async home(): Promise<HomeContentDto> {
     // Solo se guardan los datos leídos; qué accesos están abiertos se calcula siempre con la hora actual.
     const [[slides, authorities, blocks, flags], call] = await Promise.all([
-      this.cache.get('home', () => Promise.all([
-        this.persistence.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
-        this.persistence.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
-        this.persistence.contentBlock.findMany(),
-        this.persistence.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
-      ])),
+      this.cache.get('home', () =>
+        Promise.all([
+          this.persistence.heroSlide.findMany({ where: { active: true }, orderBy: { sortOrder: 'asc' } }),
+          this.persistence.authorityMessage.findMany({ orderBy: { sortOrder: 'asc' } }),
+          this.persistence.contentBlock.findMany(),
+          this.persistence.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }),
+        ]),
+      ),
       this.convocatorias.getCurrentCall().catch(() => null),
     ]);
     const now = this.clock.now();
@@ -54,7 +73,9 @@ export class ConfiguracionQueries {
 
     const quickAccess = flags.map((flag) => {
       const linked = stages.filter((s) => flag.linkedStageCodes.includes(s.code));
-      const open = linked.some((s) => stageStatus({ startsAt: new Date(s.startsAt), endsAt: new Date(s.endsAt) }, now) === 'IN_PROGRESS');
+      const open = linked.some(
+        (s) => stageStatus({ startsAt: new Date(s.startsAt), endsAt: new Date(s.endsAt) }, now) === 'IN_PROGRESS',
+      );
       const upcoming = linked
         .filter((s) => new Date(s.startsAt).getTime() > now.getTime())
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
@@ -69,8 +90,19 @@ export class ConfiguracionQueries {
     });
 
     return {
-      heroSlides: slides.map((s) => ({ title: s.title, subtitle: s.subtitle, imageUrl: s.imageUrl, ctaLabel: s.ctaLabel, ctaRoute: s.ctaRoute })),
-      authorities: authorities.map((a) => ({ name: a.name, position: a.position, message: a.message, photoUrl: a.photoUrl })),
+      heroSlides: slides.map((s) => ({
+        title: s.title,
+        subtitle: s.subtitle,
+        imageUrl: s.imageUrl,
+        ctaLabel: s.ctaLabel,
+        ctaRoute: s.ctaRoute,
+      })),
+      authorities: authorities.map((a) => ({
+        name: a.name,
+        position: a.position,
+        message: a.message,
+        photoUrl: a.photoUrl,
+      })),
       blocks: Object.fromEntries(blocks.map((b) => [b.key, b.bodyMd])),
       quickAccess,
     };

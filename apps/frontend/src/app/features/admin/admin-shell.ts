@@ -7,40 +7,151 @@ type NavItem = { path: string; label: string; permission: string; icon: string; 
 
 /** Menú agrupado por tarea: el personal busca «qué tengo que hacer», no una lista de 19 pantallas. */
 const NAV: { group: string | null; items: NavItem[] }[] = [
-  { group: null, items: [{ path: '/admin', label: 'Inicio', permission: 'panel.ver', icon: 'inicio', exact: true }] },
-  { group: 'Postulantes y pagos', items: [
-    { path: '/admin/inscripciones', label: 'Inscripciones', permission: 'inscripciones.ver', icon: 'inscripcion' },
-    { path: '/admin/expedientes', label: 'Expedientes', permission: 'expedientes.evaluar', icon: 'expedientes' },
-    { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver', icon: 'pagar' },
-    { path: '/admin/tesoreria', label: 'Tesorería', permission: 'pagos.conciliar', icon: 'tasas' },
-    { path: '/admin/inhabilitados', label: 'Inhabilitados', permission: 'inhabilitados.gestionar', icon: 'inhabilitados' },
-  ] },
-  { group: 'Examen y resultados', items: [
-    { path: '/admin/examenes', label: 'Exámenes y aulas', permission: 'examenes.gestionar', icon: 'examenes' },
-    { path: '/admin/asistencia', label: 'Asistencia', permission: 'asistencia.registrar', icon: 'asistencia' },
-    { path: '/admin/resultados', label: 'Resultados', permission: 'resultados.gestionar', icon: 'puntaje' },
-    { path: '/admin/ingresantes', label: 'Ingresantes', permission: 'ingreso.registrar', icon: 'programas' },
-  ] },
-  { group: 'Atención', items: [
-    { path: '/admin/casos', label: 'Casos de atención', permission: 'casos.gestionar', icon: 'casos' },
-    { path: '/admin/notificaciones', label: 'Notificaciones', permission: 'notificaciones.gestionar', icon: 'notificaciones' },
-    { path: '/admin/asistente', label: 'Asistente virtual', permission: 'asistente.gestionar', icon: 'asistente' },
-  ] },
-  { group: 'Concurso y portal', items: [
-    { path: '/admin/convocatoria', label: 'Convocatoria', permission: 'convocatoria.gestionar', icon: 'cronograma' },
-    { path: '/admin/catalogo', label: 'Catálogo del concurso', permission: 'convocatoria.gestionar', icon: 'reglamento' },
-    { path: '/admin/contenido', label: 'Contenido del portal', permission: 'contenido.gestionar', icon: 'contenido' },
-  ] },
-  { group: 'Sistema', items: [
-    { path: '/admin/usuarios', label: 'Usuarios y roles', permission: 'usuarios.gestionar', icon: 'vacantes' },
-    { path: '/admin/auditoria', label: 'Auditoría', permission: 'auditoria.ver', icon: 'auditoria' },
-    { path: '/admin/configuracion', label: 'Configuración', permission: 'configuracion.gestionar', icon: 'configuracion' },
-  ] },
+  {
+    group: null,
+    items: [
+      { path: '/admin', label: 'Inicio', permission: 'panel.ver', icon: 'inicio', exact: true },
+    ],
+  },
+  {
+    group: 'Postulantes y pagos',
+    items: [
+      {
+        path: '/admin/inscripciones',
+        label: 'Inscripciones',
+        permission: 'inscripciones.ver',
+        icon: 'inscripcion',
+      },
+      {
+        path: '/admin/expedientes',
+        label: 'Expedientes',
+        permission: 'expedientes.evaluar',
+        icon: 'expedientes',
+      },
+      { path: '/admin/pagos', label: 'Pagos', permission: 'pagos.ver', icon: 'pagar' },
+      {
+        path: '/admin/tesoreria',
+        label: 'Tesorería',
+        permission: 'pagos.conciliar',
+        icon: 'tasas',
+      },
+      {
+        path: '/admin/inhabilitados',
+        label: 'Inhabilitados',
+        permission: 'inhabilitados.gestionar',
+        icon: 'inhabilitados',
+      },
+    ],
+  },
+  {
+    group: 'Examen y resultados',
+    items: [
+      {
+        path: '/admin/examenes',
+        label: 'Exámenes y aulas',
+        permission: 'examenes.gestionar',
+        icon: 'examenes',
+      },
+      {
+        path: '/admin/asistencia',
+        label: 'Asistencia',
+        permission: 'asistencia.registrar',
+        icon: 'asistencia',
+      },
+      {
+        path: '/admin/resultados',
+        label: 'Resultados',
+        permission: 'resultados.gestionar',
+        icon: 'puntaje',
+      },
+      {
+        path: '/admin/ingresantes',
+        label: 'Ingresantes',
+        permission: 'ingreso.registrar',
+        icon: 'programas',
+      },
+    ],
+  },
+  {
+    group: 'Atención',
+    items: [
+      {
+        path: '/admin/casos',
+        label: 'Casos de atención',
+        permission: 'casos.gestionar',
+        icon: 'casos',
+      },
+      {
+        path: '/admin/notificaciones',
+        label: 'Notificaciones',
+        permission: 'notificaciones.gestionar',
+        icon: 'notificaciones',
+      },
+      {
+        path: '/admin/asistente',
+        label: 'Asistente virtual',
+        permission: 'asistente.gestionar',
+        icon: 'asistente',
+      },
+    ],
+  },
+  {
+    group: 'Concurso y portal',
+    items: [
+      {
+        path: '/admin/convocatoria',
+        label: 'Convocatoria',
+        permission: 'convocatoria.gestionar',
+        icon: 'cronograma',
+      },
+      {
+        path: '/admin/catalogo',
+        label: 'Catálogo del concurso',
+        permission: 'convocatoria.gestionar',
+        icon: 'reglamento',
+      },
+      {
+        path: '/admin/contenido',
+        label: 'Contenido del portal',
+        permission: 'contenido.gestionar',
+        icon: 'contenido',
+      },
+    ],
+  },
+  {
+    group: 'Sistema',
+    items: [
+      {
+        path: '/admin/usuarios',
+        label: 'Usuarios y roles',
+        permission: 'usuarios.gestionar',
+        icon: 'vacantes',
+      },
+      {
+        path: '/admin/auditoria',
+        label: 'Auditoría',
+        permission: 'auditoria.ver',
+        icon: 'auditoria',
+      },
+      {
+        path: '/admin/configuracion',
+        label: 'Configuración',
+        permission: 'configuracion.gestionar',
+        icon: 'configuracion',
+      },
+    ],
+  },
 ];
 
 const ROLE_NAMES: Record<string, string> = {
-  ADMIN: 'Administrador general', ADMISION: 'Oficina de Admisión', TESORERIA: 'Tesorería', EVALUADOR: 'Evaluador documental',
-  COORDINADOR_EXAMEN: 'Coordinador de examen', OPERADOR_RESULTADOS: 'Operador de resultados', SOPORTE: 'Soporte', AUDITOR: 'Auditor',
+  ADMIN: 'Administrador general',
+  ADMISION: 'Oficina de Admisión',
+  TESORERIA: 'Tesorería',
+  EVALUADOR: 'Evaluador documental',
+  COORDINADOR_EXAMEN: 'Coordinador de examen',
+  OPERADOR_RESULTADOS: 'Operador de resultados',
+  SOPORTE: 'Soporte',
+  AUDITOR: 'Auditor',
 };
 
 /** Marco del panel: barra lateral según permisos y la sección elegida. Sus estilos alcanzan a todas las páginas del panel. */
@@ -53,15 +164,33 @@ const ROLE_NAMES: Record<string, string> = {
     <div class="adm">
       <aside class="adm-side" [class.is-open]="menu()">
         <a routerLink="/admin" class="adm-brand">
-          <img src="img/escudo-unsch-oficial-120.webp" srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x" alt="" width="34" height="46">
+          <img
+            src="img/escudo-unsch-oficial-120.webp"
+            srcset="img/escudo-unsch-oficial-120.webp 1x, img/escudo-unsch-oficial-240.webp 2x"
+            alt=""
+            width="34"
+            height="46"
+          />
           <span><strong>Panel de Admisión</strong><small>UNSCH, proceso 2027-I</small></span>
         </a>
         <nav aria-label="Secciones del panel">
           @for (g of nav(); track $index) {
-            @if (g.group) { <p class="adm-group" [id]="'adm-g' + $index">{{ g.group }}</p> }
+            @if (g.group) {
+              <p class="adm-group" [id]="'adm-g' + $index">{{ g.group }}</p>
+            }
             <ul [attr.aria-labelledby]="g.group ? 'adm-g' + $index : null">
               @for (n of g.items; track n.path) {
-                <li><a [routerLink]="n.path" [attr.data-icon]="n.icon" routerLinkActive="is-active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: !!n.exact }" (click)="menu.set(false)">{{ n.label }}</a></li>
+                <li>
+                  <a
+                    [routerLink]="n.path"
+                    [attr.data-icon]="n.icon"
+                    routerLinkActive="is-active"
+                    ariaCurrentWhenActive="page"
+                    [routerLinkActiveOptions]="{ exact: !!n.exact }"
+                    (click)="menu.set(false)"
+                    >{{ n.label }}</a
+                  >
+                </li>
               }
             </ul>
           }
@@ -70,13 +199,17 @@ const ROLE_NAMES: Record<string, string> = {
           <div class="adm-user__who">
             <span class="adm-avatar" aria-hidden="true">{{ initials() }}</span>
             <div>
-              <p><strong>{{ session.me()?.fullName }}</strong></p>
+              <p>
+                <strong>{{ session.me()?.fullName }}</strong>
+              </p>
               <p class="adm-muted">{{ roles() }}</p>
             </div>
           </div>
           <div class="adm-row">
             <a routerLink="/" class="adm-link">Ver portal</a>
-            <a routerLink="/admin/seguridad" class="adm-link" (click)="menu.set(false)">Mi seguridad</a>
+            <a routerLink="/admin/seguridad" class="adm-link" (click)="menu.set(false)"
+              >Mi seguridad</a
+            >
             <button type="button" class="adm-link" (click)="logout()">Cerrar sesión</button>
           </div>
         </div>
@@ -89,7 +222,14 @@ const ROLE_NAMES: Record<string, string> = {
             <button type="button" class="adm-link" (click)="retry()">Reintentar</button>
           </p>
         }
-        <button type="button" class="adm-burger" (click)="menu.update((v) => !v)" [attr.aria-expanded]="menu()">Menú del panel</button>
+        <button
+          type="button"
+          class="adm-burger"
+          (click)="menu.update((v) => !v)"
+          [attr.aria-expanded]="menu()"
+        >
+          Menú del panel
+        </button>
         <router-outlet />
       </div>
     </div>
@@ -101,12 +241,22 @@ export class AdminShell {
   private readonly router = inject(Router);
   protected readonly menu = signal(false);
   protected readonly nav = computed(() =>
-    NAV.map((g) => ({ ...g, items: g.items.filter((n) => this.session.can(n.permission)) })).filter((g) => g.items.length),
+    NAV.map((g) => ({ ...g, items: g.items.filter((n) => this.session.can(n.permission)) })).filter(
+      (g) => g.items.length,
+    ),
   );
-  protected readonly roles = computed(() => (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(', '));
+  protected readonly roles = computed(() =>
+    (this.session.me()?.roles ?? []).map((r) => ROLE_NAMES[r] ?? r).join(', '),
+  );
   /** Iniciales del nombre para el círculo del usuario. */
   protected readonly initials = computed(() =>
-    (this.session.me()?.fullName ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join(''));
+    (this.session.me()?.fullName ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]!.toUpperCase())
+      .join(''),
+  );
 
   /** La sesión se restaura con la cookie, así que recargar vuelve a pedir todo lo de la pantalla. */
   protected retry() {

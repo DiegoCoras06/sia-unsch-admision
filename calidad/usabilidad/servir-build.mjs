@@ -33,9 +33,10 @@ createServer((req, res) => {
 
   const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
   const candidate = normalize(join(root, pathname));
-  const safeFile = candidate.startsWith(root) && existsSync(candidate) && statSync(candidate).isFile()
-    ? candidate
-    : join(root, 'index.html');
+  const safeFile =
+    candidate.startsWith(root) && existsSync(candidate) && statSync(candidate).isFile()
+      ? candidate
+      : join(root, 'index.html');
   res.setHeader('Content-Type', types[extname(safeFile)] ?? 'application/octet-stream');
   res.setHeader('Cache-Control', 'no-store');
   createReadStream(safeFile).pipe(res);

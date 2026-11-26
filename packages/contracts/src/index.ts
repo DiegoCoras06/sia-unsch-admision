@@ -401,9 +401,23 @@ export interface PaymentStatusDto {
     amount: string;
     status: 'PENDIENTE' | 'PAGADA';
     paidAt: string | null;
-    receipt: { operationNumber: string | null; authorizationCode: string | null; payMethod: string | null; cardMasked: string | null; transactionId: string } | null;
+    receipt: {
+      operationNumber: string | null;
+      authorizationCode: string | null;
+      payMethod: string | null;
+      cardMasked: string | null;
+      transactionId: string;
+    } | null;
   };
-  attempts: { transactionId: string; orderNumber: string; status: PaymentAttemptStatus; label: string; message: string | null; payMethod: string | null; createdAt: string }[];
+  attempts: {
+    transactionId: string;
+    orderNumber: string;
+    status: PaymentAttemptStatus;
+    label: string;
+    message: string | null;
+    payMethod: string | null;
+    createdAt: string;
+  }[];
   /** Tope de Yape por pago. */
   yapeMaxAmount: string;
 }
@@ -462,8 +476,14 @@ export interface DossierDto {
   evaluationCriteria?: string | null;
   complementary: Record<string, string>;
   requirements: {
-    code: string; name: string; description: string; article: string; mandatory: boolean; acceptedFormats: string[];
-    current: DossierDocumentDto | null; history?: DossierDocumentDto[];
+    code: string;
+    name: string;
+    description: string;
+    article: string;
+    mandatory: boolean;
+    acceptedFormats: string[];
+    current: DossierDocumentDto | null;
+    history?: DossierDocumentDto[];
   }[];
   events: { action: string; note: string | null; at: string; byStaff: boolean }[];
   evaluators?: { id: string; name: string }[];

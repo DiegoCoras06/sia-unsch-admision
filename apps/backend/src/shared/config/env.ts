@@ -25,8 +25,16 @@ const schema = z
     /** Pasarela de pagos (ADR-024): 'culqi' cobra tarjeta y Yape; 'mock' la simula en desarrollo y pruebas. */
     PAYMENTS_PROVIDER: z.enum(['mock', 'culqi']).default('mock'),
     // Culqi (ADR-024): CulqiPanel > Desarrollo > API Keys.
-    CULQI_PUBLIC_KEY: z.string().regex(/^pk_(test|live)_/, 'CULQI_PUBLIC_KEY empieza con pk_test_ o pk_live_').optional().or(z.literal('').transform(() => undefined)),
-    CULQI_SECRET_KEY: z.string().regex(/^sk_(test|live)_/, 'CULQI_SECRET_KEY empieza con sk_test_ o sk_live_').optional().or(z.literal('').transform(() => undefined)),
+    CULQI_PUBLIC_KEY: z
+      .string()
+      .regex(/^pk_(test|live)_/, 'CULQI_PUBLIC_KEY empieza con pk_test_ o pk_live_')
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+    CULQI_SECRET_KEY: z
+      .string()
+      .regex(/^sk_(test|live)_/, 'CULQI_SECRET_KEY empieza con sk_test_ o sk_live_')
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
     CULQI_API_URL: z.url().optional(),
     /** URL pública de la API para la notificación IPN (https; en local no se envía). */
     PUBLIC_API_URL: z.url().optional(),
@@ -43,17 +51,22 @@ const schema = z
     SES_REGION: z.string().default('us-east-2'),
     SES_CONFIGURATION_SET: z.string().optional(),
     /** ADR-021: cola de eventos en Amazon SQS. Vacía o sin definir: la bandeja de eventos se procesa en el mismo proceso. */
-    SQS_QUEUE_URL: z.url().optional().or(z.literal('').transform(() => undefined)),
+    SQS_QUEUE_URL: z
+      .url()
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
     APP_FIXED_NOW: z.iso.datetime({ offset: true }).optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
   })
   .refine((e) => e.FILE_STORAGE !== 's3' || e.S3_BUCKET, {
-    message: 'FILE_STORAGE=s3 requiere S3_BUCKET (y credenciales de AWS: el rol de la Lambda o AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY en local)',
+    message:
+      'FILE_STORAGE=s3 requiere S3_BUCKET (y credenciales de AWS: el rol de la Lambda o AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY en local)',
     path: ['FILE_STORAGE'],
   })
   .refine((e) => e.EMAIL_PROVIDER !== 'ses' || !/\.local>?\s*$/.test(e.EMAIL_FROM), {
-    message: 'EMAIL_PROVIDER=ses requiere EMAIL_FROM con una dirección verificada en SES, p. ej. "Admisión UNSCH <tu-correo@dominio>" (y credenciales de AWS con permiso ses:SendEmail)',
+    message:
+      'EMAIL_PROVIDER=ses requiere EMAIL_FROM con una dirección verificada en SES, p. ej. "Admisión UNSCH <tu-correo@dominio>" (y credenciales de AWS con permiso ses:SendEmail)',
     path: ['EMAIL_FROM'],
   })
   .refine((e) => e.IDENTITY_PROVIDER !== 'apiperu' || e.APIPERU_TOKEN, {
@@ -61,7 +74,8 @@ const schema = z
     path: ['IDENTITY_PROVIDER'],
   })
   .refine((e) => e.PAYMENTS_PROVIDER !== 'culqi' || (e.CULQI_PUBLIC_KEY && e.CULQI_SECRET_KEY), {
-    message: 'PAYMENTS_PROVIDER=culqi requiere CULQI_PUBLIC_KEY y CULQI_SECRET_KEY (CulqiPanel > Desarrollo > API Keys)',
+    message:
+      'PAYMENTS_PROVIDER=culqi requiere CULQI_PUBLIC_KEY y CULQI_SECRET_KEY (CulqiPanel > Desarrollo > API Keys)',
     path: ['PAYMENTS_PROVIDER'],
   })
   .refine((e) => !(e.APP_ENV === 'demo' && e.APP_FIXED_NOW), {

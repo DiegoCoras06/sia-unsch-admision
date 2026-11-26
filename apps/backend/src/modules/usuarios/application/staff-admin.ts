@@ -17,11 +17,25 @@ export function temporaryPassword(): string {
 
 /** Usuarios internos (spec 008, Historia 3; RF-13.01 a RF-13.03, RF-13.08). */
 export class StaffAdmin {
-  constructor(private readonly d: { persistence: PersistencePort; audit: AuditLog; hasher: PasswordHasher; sessions: SessionService }) {}
+  constructor(
+    private readonly d: {
+      persistence: PersistencePort;
+      audit: AuditLog;
+      hasher: PasswordHasher;
+      sessions: SessionService;
+    },
+  ) {}
 
   async list() {
-    const users = await this.d.persistence.user.findMany({ where: { type: 'STAFF' }, include: { staff: true }, orderBy: { createdAt: 'asc' } });
-    const roles = await this.d.persistence.userRole.findMany({ where: { userId: { in: users.map((u) => u.id) } }, include: { role: true } });
+    const users = await this.d.persistence.user.findMany({
+      where: { type: 'STAFF' },
+      include: { staff: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const roles = await this.d.persistence.userRole.findMany({
+      where: { userId: { in: users.map((u) => u.id) } },
+      include: { role: true },
+    });
     return users.map((u) => ({
       id: u.id,
       email: u.email,
@@ -38,17 +52,39 @@ export class StaffAdmin {
     return STAFF_ROLES.map((r) => ({ code: r.code, name: r.name, permissions: r.permissions }));
   }
 
-  async create(input: { email: string; fullName: string; documentNumber?: string | undefined; roles: string[] }, actor: string, meta: RequestMeta) {
+  async create(
+    input: { email: string; fullName: string; documentNumber?: string | undefined; roles: string[] },
+    actor: string,
+    meta: RequestMeta,
+  ) {
     this.checkRoles(input.roles);
     const email = normalizeEmail(input.email);
-    if (await this.d.persistence.user.findUnique({ where: { email } })) throw conflict('EMAIL_IN_USE', 'Ya existe una cuenta con ese correo.');
+    if (await this.d.persistence.user.findUnique({ where: { email } }))
+      throw conflict('EMAIL_IN_USE', 'Ya existe una cuenta con ese correo.');
     const password = temporaryPassword();
     const passwordHash = await this.d.hasher.hash(password);
     const user = await this.d.persistence.$transaction(async (tx) => {
       const u = await tx.user.create({ data: { email, passwordHash, type: 'STAFF', status: 'ACTIVE' } });
-      await tx.staffProfile.create({ data: { userId: u.id, fullName: input.fullName.trim(), documentNumber: input.documentNumber ?? null, createdBy: actor } });
+      await tx.staffProfile.create({
+        data: {
+          userId: u.id,
+          fullName: input.fullName.trim(),
+          documentNumber: input.documentNumber ?? null,
+          createdBy: actor,
+        },
+      });
       await this.setRolesTx(tx, u.id, input.roles);
-      await this.d.audit.record({ actorUserId: actor, action: 'staff.created', resourceType: 'user', resourceId: u.id, after: { email, roles: input.roles }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'staff.created',
+          resourceType: 'user',
+          resourceId: u.id,
+          after: { email, roles: input.roles },
+          ...meta,
+        },
+        tx,
+      );
       return u;
     });
     return { id: user.id, email, temporaryPassword: password };
@@ -61,7 +97,18 @@ export class StaffAdmin {
     await this.d.persistence.$transaction(async (tx) => {
       await this.setRolesTx(tx, userId, roles);
       await this.d.sessions.revokeAll(userId, 'ROLES_CHANGED', tx);
-      await this.d.audit.record({ actorUserId: actor, action: 'staff.roles_changed', resourceType: 'user', resourceId: userId, before: { roles: before }, after: { roles }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'staff.roles_changed',
+          resourceType: 'user',
+          resourceId: userId,
+          before: { roles: before },
+          after: { roles },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
@@ -72,7 +119,18 @@ export class StaffAdmin {
     await this.d.persistence.$transaction(async (tx) => {
       await tx.user.update({ where: { id: userId }, data: { status } });
       if (status !== 'ACTIVE') await this.d.sessions.revokeAll(userId, status, tx);
-      await this.d.audit.record({ actorUserId: actor, action: 'staff.status_changed', resourceType: 'user', resourceId: userId, before: { status: user.status }, after: { status }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'staff.status_changed',
+          resourceType: 'user',
+          resourceId: userId,
+          before: { status: user.status },
+          after: { status },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
@@ -80,10 +138,16 @@ export class StaffAdmin {
   async resetMfa(userId: string, actor: string, meta: RequestMeta) {
     await this.staffUser(userId);
     await this.d.persistence.$transaction(async (tx) => {
-      await tx.staffProfile.update({ where: { userId }, data: { mfaSecretEnc: null, mfaEnabledAt: null, mfaLastStep: null } });
+      await tx.staffProfile.update({
+        where: { userId },
+        data: { mfaSecretEnc: null, mfaEnabledAt: null, mfaLastStep: null },
+      });
       await tx.staffRecoveryCode.deleteMany({ where: { userId } });
       await this.d.sessions.revokeAll(userId, 'MFA_RESET', tx);
-      await this.d.audit.record({ actorUserId: actor, action: 'staff.mfa_reset', resourceType: 'user', resourceId: userId, ...meta }, tx);
+      await this.d.audit.record(
+        { actorUserId: actor, action: 'staff.mfa_reset', resourceType: 'user', resourceId: userId, ...meta },
+        tx,
+      );
     });
   }
 
@@ -92,10 +156,16 @@ export class StaffAdmin {
     const password = temporaryPassword();
     const passwordHash = await this.d.hasher.hash(password);
     await this.d.persistence.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: userId }, data: { passwordHash, failedLoginCount: 0, lockedUntil: null, version: { increment: 1 } } });
+      await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash, failedLoginCount: 0, lockedUntil: null, version: { increment: 1 } },
+      });
       await tx.staffProfile.update({ where: { userId }, data: { mustChangePassword: true } });
       await this.d.sessions.revokeAll(userId, 'PASSWORD_RESET', tx);
-      await this.d.audit.record({ actorUserId: actor, action: 'staff.password_reset', resourceType: 'user', resourceId: userId, ...meta }, tx);
+      await this.d.audit.record(
+        { actorUserId: actor, action: 'staff.password_reset', resourceType: 'user', resourceId: userId, ...meta },
+        tx,
+      );
     });
     return { temporaryPassword: password };
   }
@@ -103,7 +173,8 @@ export class StaffAdmin {
   private checkRoles(roles: string[]) {
     if (!roles.length) throw validationError('Asigna al menos un rol.', [{ field: 'roles', issue: 'vacío' }]);
     const bad = roles.filter((r) => !ROLE_CODES.has(r));
-    if (bad.length) throw validationError(`Rol desconocido: ${bad.join(', ')}`, [{ field: 'roles', issue: 'desconocido' }]);
+    if (bad.length)
+      throw validationError(`Rol desconocido: ${bad.join(', ')}`, [{ field: 'roles', issue: 'desconocido' }]);
   }
 
   private async staffUser(userId: string) {
@@ -113,20 +184,33 @@ export class StaffAdmin {
   }
 
   private async rolesOf(userId: string) {
-    return (await this.d.persistence.userRole.findMany({ where: { userId }, include: { role: true } })).map((r) => r.role.code);
+    return (await this.d.persistence.userRole.findMany({ where: { userId }, include: { role: true } })).map(
+      (r) => r.role.code,
+    );
   }
 
   /** El último administrador activo no puede perder el rol ni suspenderse (spec 008, casos límite). */
   private async ensureAnotherAdmin(userId: string) {
-    const adminIds = (await this.d.persistence.userRole.findMany({ where: { role: { code: 'ADMIN' }, userId: { not: userId } } })).map((r) => r.userId);
-    const activeAdmins = await this.d.persistence.user.count({ where: { id: { in: adminIds }, status: 'ACTIVE', type: 'STAFF' } });
+    const adminIds = (
+      await this.d.persistence.userRole.findMany({ where: { role: { code: 'ADMIN' }, userId: { not: userId } } })
+    ).map((r) => r.userId);
+    const activeAdmins = await this.d.persistence.user.count({
+      where: { id: { in: adminIds }, status: 'ACTIVE', type: 'STAFF' },
+    });
     if (!activeAdmins) throw businessRule('LAST_ADMIN', 'Debe quedar al menos un administrador general activo.');
   }
 
-  private async setRolesTx(tx: Parameters<Parameters<PersistencePort['$transaction']>[0]>[0], userId: string, roles: string[]) {
+  private async setRolesTx(
+    tx: Parameters<Parameters<PersistencePort['$transaction']>[0]>[0],
+    userId: string,
+    roles: string[],
+  ) {
     await tx.userRole.deleteMany({ where: { userId } });
     const rows = await tx.role.findMany({ where: { code: { in: roles } } });
-    if (rows.length !== roles.length) throw validationError('Algún rol no existe en la base; ejecuta la semilla.', [{ field: 'roles', issue: 'sin sembrar' }]);
+    if (rows.length !== roles.length)
+      throw validationError('Algún rol no existe en la base; ejecuta la semilla.', [
+        { field: 'roles', issue: 'sin sembrar' },
+      ]);
     await tx.userRole.createMany({ data: rows.map((r) => ({ userId, roleId: r.id })) });
   }
 }

@@ -33,7 +33,9 @@ describe('AdminSession: lecturas eficientes del panel', () => {
     http.expectOne('/api/v1/admin/dashboard').flush({ data: { total: 12 } });
     await expect(first).resolves.toEqual({ total: 12 });
 
-    await expect(session.getCached<{ total: number }>('/admin/dashboard', {}, 15_000)).resolves.toEqual({ total: 12 });
+    await expect(
+      session.getCached<{ total: number }>('/admin/dashboard', {}, 15_000),
+    ).resolves.toEqual({ total: 12 });
     http.expectNone('/api/v1/admin/dashboard');
   });
 

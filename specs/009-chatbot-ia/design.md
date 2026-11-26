@@ -3,7 +3,6 @@
 > **SDD (Spec-Driven Development) · artefacto 2 de 3: diseño** (cómo se construye).
 > Anterior: [requirements.md](requirements.md) · Siguiente: [tasks.md](tasks.md). Arquitectura general: [docs/arquitectura.md](../../docs/arquitectura.md) y [ADR](../../docs/adr/README.md).
 
-
 ## 1. Plan técnico
 
 **Spec:** [requirements.md](requirements.md) · **Decisión:** [ADR-017](../../docs/adr/ADR-017-asistente-ia-herramientas.md) · **Tareas:** [tasks.md](./tasks.md)
@@ -25,14 +24,14 @@ presentation/   routes.ts
 
 **Herramientas** (leen datos reales por las API públicas de M01, M03, M05, M14):
 
-| Herramienta | Fuente | Requiere pase |
-|---|---|---|
-| `buscar_conocimiento(consulta)` | Base de conocimientos (tabla `knowledge_entries`, con fuente) | No |
-| `consultar_cronograma()` | Etapas de la convocatoria vigente | No |
-| `consultar_tasas()` | Tasas y reglas (Tabla N.° 3) | No |
-| `consultar_vacantes(programa)` | Cuadro de vacantes | No |
-| `consultar_requisitos(submodalidad?)` | Requisitos por submodalidad | No |
-| `estado_de_mi_proceso()` | Inscripción, pago, documentos, aula y resultado | **Sí** |
+| Herramienta                           | Fuente                                                        | Requiere pase |
+| ------------------------------------- | ------------------------------------------------------------- | ------------- |
+| `buscar_conocimiento(consulta)`       | Base de conocimientos (tabla `knowledge_entries`, con fuente) | No            |
+| `consultar_cronograma()`              | Etapas de la convocatoria vigente                             | No            |
+| `consultar_tasas()`                   | Tasas y reglas (Tabla N.° 3)                                  | No            |
+| `consultar_vacantes(programa)`        | Cuadro de vacantes                                            | No            |
+| `consultar_requisitos(submodalidad?)` | Requisitos por submodalidad                                   | No            |
+| `estado_de_mi_proceso()`              | Inscripción, pago, documentos, aula y resultado               | **Sí**        |
 
 **Datos (`asistente`):** `knowledge_entries` (tema, pregunta, respuesta, fuente, activa), `conversations` (canal, identificada sí/no, derivada, número de caso), `messages` (rol, texto enmascarado, herramientas usadas, tokens), `usage_daily` (fecha, consultas, tokens, costo, errores, derivaciones).
 

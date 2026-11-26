@@ -11,7 +11,7 @@ La spec 002 obligaba al postulante a crear una cuenta (correo verificado y contr
 
 ## Decisión
 
-1. **Inscripción pública** en `/inscripcion`, sin cuenta: secciones *Información básica*, *Información académica* e *Información de postulante* (como el formulario oficial), más las mejoras propias: tasa calculada en vivo, vacantes del programa elegido, validación de la foto y declaración jurada.
+1. **Inscripción pública** en `/inscripcion`, sin cuenta: secciones _Información básica_, _Información académica_ e _Información de postulante_ (como el formulario oficial), más las mejoras propias: tasa calculada en vivo, vacantes del programa elegido, validación de la foto y declaración jurada.
 2. **El DNI autocompleta** apellidos y nombres mediante el puerto `IdentityProvider` (ADR-007), sin pedir dígito verificador (igual que el portal oficial) y con límite de consultas por IP. Adaptadores: simulado (DNI sintéticos) y HTTP configurable con token propio para un proveedor de consulta RENIEC.
 3. **Seguimiento sin cuenta:** `/mi-inscripcion` con DNI + código de postulante (8 dígitos con Luhn) muestra el estado, la orden de pago y los siguientes pasos. El código se envía también por correo.
 4. **Las cuentas con contraseña (módulos M02/M13 de la spec 002) se conservan para el personal de la Dirección de Admisión** (spec 008). Las pantallas públicas de registro e ingreso de postulantes se retiran del menú.
@@ -19,16 +19,17 @@ La spec 002 obligaba al postulante a crear una cuenta (correo verificado y contr
 
 ## Alternativas consideradas
 
-| Alternativa | A favor | En contra | Motivo del descarte |
-|---|---|---|---|
-| Mantener la cuenta obligatoria (spec 002) | Panel personal, sesión, recuperación | Fricción; difiere del flujo oficial | Decisión del equipo |
-| Cuenta opcional además del formulario | Lo mejor de ambos | Dos caminos que mantener y explicar | Se puede agregar después |
+| Alternativa                               | A favor                              | En contra                           | Motivo del descarte      |
+| ----------------------------------------- | ------------------------------------ | ----------------------------------- | ------------------------ |
+| Mantener la cuenta obligatoria (spec 002) | Panel personal, sesión, recuperación | Fricción; difiere del flujo oficial | Decisión del equipo      |
+| Cuenta opcional además del formulario     | Lo mejor de ambos                    | Dos caminos que mantener y explicar | Se puede agregar después |
 
 ## Consecuencias
 
 **Positivas:** inscripción en un solo formulario; menos datos personales guardados (sin contraseñas de postulantes).
 
 **Negativas / riesgos aceptados:**
+
 - Consultar un DNI devuelve nombres sin autenticación (igual que el portal oficial) → límite de 20 consultas por hora por IP y registro de auditoría.
 - Quien conozca DNI + código puede ver el estado de una inscripción → el código no es secuencial visible al público (Luhn sobre secuencia interna) y la consulta no muestra datos sensibles completos (documento y correo enmascarados).
 
@@ -36,7 +37,7 @@ La spec 002 obligaba al postulante a crear una cuenta (correo verificado y contr
 
 ## Enmienda 25/10/2026 — Cuenta opcional del postulante
 
-**Motivo:** el catálogo oficial de 14 módulos ([trazabilidad](../trazabilidad-requisitos.md)) exige que el sistema *permita* crear cuenta, iniciar sesión, recuperar contraseña y verificar el correo (RF-02.01, RF-02.04 a RF-02.07), guardar borradores (RF-03.06), ver el historial de pagos (RF-05.10) y que el chatbot pida autenticación antes de mostrar datos personales (RF-10.04, RF-10.14).
+**Motivo:** el catálogo oficial de 14 módulos ([trazabilidad](../trazabilidad-requisitos.md)) exige que el sistema _permita_ crear cuenta, iniciar sesión, recuperar contraseña y verificar el correo (RF-02.01, RF-02.04 a RF-02.07), guardar borradores (RF-03.06), ver el historial de pagos (RF-05.10) y que el chatbot pida autenticación antes de mostrar datos personales (RF-10.04, RF-10.14).
 
 **Decisión:** se adopta la alternativa «cuenta opcional» descartada arriba, sin cambiar lo esencial de este ADR:
 

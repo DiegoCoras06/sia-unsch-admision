@@ -19,7 +19,7 @@
 - [x] T111 [P] Objetos de valor `DocumentId`, `Email`, `Phone`, `Password`, `ApplicantCode` — `modules/usuarios/domain/`
 - [x] T112 [P] `Argon2Hasher`, `JoseTokenService` (HS256, 15 min) — `infrastructure/`
 - [x] T113 Sesiones con rotación y detección de reutilización — `modules/seguridad/domain|application/`
-- [x] T114 Middlewares `authenticate`, `authorize` — `modules/seguridad/presentation/`. *Nota:* en 002 todos los recursos privados son "del usuario actual" (`/me`), así que la propiedad se garantiza usando siempre `req.principal.userId`; `requireOwner` como middleware genérico se implementará en 003, donde aparecen recursos con ID (inscripciones).
+- [x] T114 Middlewares `authenticate`, `authorize` — `modules/seguridad/presentation/`. _Nota:_ en 002 todos los recursos privados son "del usuario actual" (`/me`), así que la propiedad se garantiza usando siempre `req.principal.userId`; `requireOwner` como middleware genérico se implementará en 003, donde aparecen recursos con ID (inscripciones).
 
 ## Fase 3 — Historia 1: crear cuenta con DNI (P1) 🎯
 

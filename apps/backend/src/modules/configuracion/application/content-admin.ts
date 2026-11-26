@@ -7,7 +7,10 @@ import { notFound, validationError } from '../../../shared/http/errors.js';
 /** Parámetros operativos con su valor por defecto (RF-13.10, RF-14.10). */
 export const DEFAULT_PARAMETERS: Record<string, { value: string; label: string }> = {
   'retencion.conversaciones_dias': { value: '90', label: 'Días que se conservan las conversaciones del asistente' },
-  'retencion.inscripciones_anios': { value: '5', label: 'Años que se conservan las inscripciones tras cerrar la convocatoria' },
+  'retencion.inscripciones_anios': {
+    value: '5',
+    label: 'Años que se conservan las inscripciones tras cerrar la convocatoria',
+  },
   'retencion.auditoria': { value: 'Permanente', label: 'Conservación de la auditoría (no se borra, RNF-10)' },
   'respaldo.retencion_dias': { value: '7', label: 'Días de copias automáticas diarias de Amazon RDS' },
   'respaldo.ultimo_manual': { value: '-', label: 'Última instantánea manual registrada' },
@@ -25,28 +28,61 @@ export class ContentAdmin {
   // ── Comunicados ────────────────────────────────────────────────────────
   async announcements() {
     const rows = await this.d.persistence.announcement.findMany({ orderBy: { publishedAt: 'desc' } });
-    return rows.map((a) => ({ id: a.id, callCode: a.callCode, type: a.type, title: a.title, bodyMd: a.bodyMd, affectsSection: a.affectsSection, publishedAt: a.publishedAt.toISOString() }));
+    return rows.map((a) => ({
+      id: a.id,
+      callCode: a.callCode,
+      type: a.type,
+      title: a.title,
+      bodyMd: a.bodyMd,
+      affectsSection: a.affectsSection,
+      publishedAt: a.publishedAt.toISOString(),
+    }));
   }
 
   async saveAnnouncement(
-    input: { id?: string | undefined; callCode?: string | undefined; type: 'COMUNICADO' | 'FE_ERRATAS' | 'RESULTADO'; title: string; bodyMd: string; affectsSection?: string | undefined; publishedAt?: string | undefined },
-    actor: string, meta: RequestMeta,
+    input: {
+      id?: string | undefined;
+      callCode?: string | undefined;
+      type: 'COMUNICADO' | 'FE_ERRATAS' | 'RESULTADO';
+      title: string;
+      bodyMd: string;
+      affectsSection?: string | undefined;
+      publishedAt?: string | undefined;
+    },
+    actor: string,
+    meta: RequestMeta,
   ) {
     if (input.type === 'FE_ERRATAS' && !input.affectsSection) {
-      throw validationError('Una fe de erratas debe indicar la sección que corrige.', [{ field: 'affectsSection', issue: 'obligatorio' }]);
+      throw validationError('Una fe de erratas debe indicar la sección que corrige.', [
+        { field: 'affectsSection', issue: 'obligatorio' },
+      ]);
     }
     const data = {
-      callCode: input.callCode ?? null, type: input.type, title: input.title.trim(), bodyMd: input.bodyMd.trim(),
-      affectsSection: input.affectsSection ?? null, publishedAt: input.publishedAt ? new Date(input.publishedAt) : this.d.clock.now(),
+      callCode: input.callCode ?? null,
+      type: input.type,
+      title: input.title.trim(),
+      bodyMd: input.bodyMd.trim(),
+      affectsSection: input.affectsSection ?? null,
+      publishedAt: input.publishedAt ? new Date(input.publishedAt) : this.d.clock.now(),
     };
     return this.d.persistence.$transaction(async (tx) => {
       const before = input.id ? await tx.announcement.findUnique({ where: { id: input.id } }) : null;
       if (input.id && !before) throw notFound('Comunicado no encontrado.');
-      const row = input.id ? await tx.announcement.update({ where: { id: input.id }, data }) : await tx.announcement.create({ data });
-      await this.d.audit.record({
-        actorUserId: actor, action: input.id ? 'announcement.updated' : 'announcement.published', resourceType: 'announcement', resourceId: row.id,
-        before: before ? { title: before.title } : null, after: { title: row.title, type: row.type }, ...meta,
-      }, tx);
+      const row = input.id
+        ? await tx.announcement.update({ where: { id: input.id }, data })
+        : await tx.announcement.create({ data });
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: input.id ? 'announcement.updated' : 'announcement.published',
+          resourceType: 'announcement',
+          resourceId: row.id,
+          before: before ? { title: before.title } : null,
+          after: { title: row.title, type: row.type },
+          ...meta,
+        },
+        tx,
+      );
       return { id: row.id };
     });
   }
@@ -56,7 +92,17 @@ export class ContentAdmin {
     if (!row) throw notFound('Comunicado no encontrado.');
     await this.d.persistence.$transaction(async (tx) => {
       await tx.announcement.delete({ where: { id } });
-      await this.d.audit.record({ actorUserId: actor, action: 'announcement.removed', resourceType: 'announcement', resourceId: id, before: { title: row.title, bodyMd: row.bodyMd }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'announcement.removed',
+          resourceType: 'announcement',
+          resourceId: id,
+          before: { title: row.title, bodyMd: row.bodyMd },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
@@ -71,14 +117,29 @@ export class ContentAdmin {
     if (!before) throw notFound('Bloque no encontrado.');
     await this.d.persistence.$transaction(async (tx) => {
       await tx.contentBlock.update({ where: { key }, data: { bodyMd } });
-      await this.d.audit.record({ actorUserId: actor, action: 'content.updated', resourceType: 'content_block', resourceId: key, before: { bodyMd: before.bodyMd }, after: { bodyMd }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'content.updated',
+          resourceType: 'content_block',
+          resourceId: key,
+          before: { bodyMd: before.bodyMd },
+          after: { bodyMd },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
   // ── Funciones por etapa (RF-14.08) ─────────────────────────────────────
   async flags() {
-    return (await this.d.persistence.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } }))
-      .map((f) => ({ key: f.key, label: f.label, enabled: f.enabled, linkedStageCodes: f.linkedStageCodes }));
+    return (await this.d.persistence.featureFlag.findMany({ orderBy: { sortOrder: 'asc' } })).map((f) => ({
+      key: f.key,
+      label: f.label,
+      enabled: f.enabled,
+      linkedStageCodes: f.linkedStageCodes,
+    }));
   }
 
   async setFlag(key: string, enabled: boolean, actor: string, meta: RequestMeta) {
@@ -86,7 +147,18 @@ export class ContentAdmin {
     if (!f) throw notFound('Función no encontrada.');
     await this.d.persistence.$transaction(async (tx) => {
       await tx.featureFlag.update({ where: { key }, data: { enabled } });
-      await this.d.audit.record({ actorUserId: actor, action: 'feature.toggled', resourceType: 'feature_flag', resourceId: key, before: { enabled: f.enabled }, after: { enabled }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'feature.toggled',
+          resourceType: 'feature_flag',
+          resourceId: key,
+          before: { enabled: f.enabled },
+          after: { enabled },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
@@ -94,32 +166,66 @@ export class ContentAdmin {
   async parameters() {
     const rows = new Map((await this.d.persistence.systemParameter.findMany()).map((r) => [r.key, r]));
     return Object.entries(DEFAULT_PARAMETERS).map(([key, def]) => ({
-      key, label: def.label, value: rows.get(key)?.value ?? def.value, updatedAt: rows.get(key)?.updatedAt.toISOString() ?? null,
+      key,
+      label: def.label,
+      value: rows.get(key)?.value ?? def.value,
+      updatedAt: rows.get(key)?.updatedAt.toISOString() ?? null,
     }));
   }
 
   async parameter(key: string): Promise<string> {
-    return (await this.d.persistence.systemParameter.findUnique({ where: { key } }))?.value ?? DEFAULT_PARAMETERS[key]?.value ?? '';
+    return (
+      (await this.d.persistence.systemParameter.findUnique({ where: { key } }))?.value ??
+      DEFAULT_PARAMETERS[key]?.value ??
+      ''
+    );
   }
 
   async setParameter(key: string, value: string, actor: string, meta: RequestMeta) {
     const def = DEFAULT_PARAMETERS[key];
-    if (!def || key === 'retencion.auditoria') throw validationError('Parámetro no editable.', [{ field: 'key', issue: 'no editable' }]);
+    if (!def || key === 'retencion.auditoria')
+      throw validationError('Parámetro no editable.', [{ field: 'key', issue: 'no editable' }]);
     if (key.endsWith('_dias') || key.endsWith('_anios')) {
       const n = Number(value);
-      if (!Number.isInteger(n) || n < 1 || n > 3650) throw validationError('Escribe un número entero positivo.', [{ field: 'value', issue: 'número' }]);
+      if (!Number.isInteger(n) || n < 1 || n > 3650)
+        throw validationError('Escribe un número entero positivo.', [{ field: 'value', issue: 'número' }]);
     }
     const before = await this.parameter(key);
     await this.d.persistence.$transaction(async (tx) => {
-      await tx.systemParameter.upsert({ where: { key }, create: { key, value, label: def.label, updatedBy: actor }, update: { value, updatedBy: actor } });
-      await this.d.audit.record({ actorUserId: actor, action: 'parameter.updated', resourceType: 'system_parameter', resourceId: key, before: { value: before }, after: { value }, ...meta }, tx);
+      await tx.systemParameter.upsert({
+        where: { key },
+        create: { key, value, label: def.label, updatedBy: actor },
+        update: { value, updatedBy: actor },
+      });
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'parameter.updated',
+          resourceType: 'system_parameter',
+          resourceId: key,
+          before: { value: before },
+          after: { value },
+          ...meta,
+        },
+        tx,
+      );
     });
   }
 
   // ── Fallas de integración (RF-14.09) ───────────────────────────────────
   async failures() {
-    const rows = await this.d.persistence.outboxEvent.findMany({ where: { processedAt: null, lastError: { not: null } }, orderBy: { occurredAt: 'desc' }, take: 50 });
-    return rows.map((e) => ({ id: e.id, eventType: e.eventType, occurredAt: e.occurredAt.toISOString(), attempts: e.attempts, lastError: e.lastError }));
+    const rows = await this.d.persistence.outboxEvent.findMany({
+      where: { processedAt: null, lastError: { not: null } },
+      orderBy: { occurredAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((e) => ({
+      id: e.id,
+      eventType: e.eventType,
+      occurredAt: e.occurredAt.toISOString(),
+      attempts: e.attempts,
+      lastError: e.lastError,
+    }));
   }
 
   /** Reintento controlado: vuelve a dejar el evento con intentos disponibles y despacha. */
@@ -128,7 +234,17 @@ export class ContentAdmin {
     if (!e || e.processedAt) throw notFound('Evento no encontrado o ya procesado.');
     await this.d.persistence.$transaction(async (tx) => {
       await tx.outboxEvent.update({ where: { id }, data: { attempts: 0 } });
-      await this.d.audit.record({ actorUserId: actor, action: 'integration.retry', resourceType: 'outbox_event', resourceId: id, after: { eventType: e.eventType }, ...meta }, tx);
+      await this.d.audit.record(
+        {
+          actorUserId: actor,
+          action: 'integration.retry',
+          resourceType: 'outbox_event',
+          resourceId: id,
+          after: { eventType: e.eventType },
+          ...meta,
+        },
+        tx,
+      );
     });
     this.d.outbox.kick();
   }

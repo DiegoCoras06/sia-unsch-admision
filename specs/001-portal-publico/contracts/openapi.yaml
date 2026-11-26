@@ -82,7 +82,7 @@ paths:
     get:
       tags: [Programas y vacantes]
       summary: Áreas académicas con número de opciones
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Áreas
@@ -104,7 +104,7 @@ paths:
     get:
       tags: [Programas y vacantes]
       summary: Categorías de vacante (modalidad / submodalidad / variante)
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Categorías
@@ -122,7 +122,7 @@ paths:
       tags: [Programas y vacantes]
       summary: Modalidades y submodalidades (incluye ORD y CEPRE) para simulador y requisitos
       description: Agregado durante la implementación (T042/T050) para alimentar los selectores del simulador y de requisitos.
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Submodalidades
@@ -206,7 +206,7 @@ paths:
     get:
       tags: [Tasas]
       summary: Tabla de tasas vigente (Tabla N.° 3)
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Tasas
@@ -231,7 +231,11 @@ paths:
         - { name: modality, in: query, required: true, schema: { type: string, enum: [ORD, EXO, CEPRE] } }
         - { name: submodality, in: query, schema: { type: string, example: EXO-GRA } }
         - { name: schoolType, in: query, schema: { type: string, enum: [ESTATAL, PARTICULAR] } }
-        - { name: militaryCondition, in: query, schema: { type: string, enum: [NONE, ACTIVE, DISCHARGED], default: NONE } }
+        - {
+            name: militaryCondition,
+            in: query,
+            schema: { type: string, enum: [NONE, ACTIVE, DISCHARGED], default: NONE },
+          }
         - { name: familyLink, in: query, schema: { type: boolean, default: false } }
         - { name: at, in: query, schema: { type: string, format: date-time } }
       responses:
@@ -248,8 +252,20 @@ paths:
                   total: '315.00'
                   currency: PEN
                   lines:
-                    - { code: T-1.1E, concept: Ordinario — colegio estatal, amount: '250.00', legalNote: Tabla N.° 3, ítem 1.1 }
-                    - { code: T-4, concept: Recargo por inscripción extemporánea, amount: '65.00', legalNote: Tabla N.° 3, ítem 4 }
+                    - {
+                        code: T-1.1E,
+                        concept: Ordinario — colegio estatal,
+                        amount: '250.00',
+                        legalNote: Tabla N.° 3,
+                        ítem 1.1,
+                      }
+                    - {
+                        code: T-4,
+                        concept: Recargo por inscripción extemporánea,
+                        amount: '65.00',
+                        legalNote: Tabla N.° 3,
+                        ítem 4,
+                      }
                   warnings: []
         '400': { $ref: '#/components/responses/ValidationError' }
         '422':
@@ -301,7 +317,7 @@ paths:
     get:
       tags: [Contenido]
       summary: Documentos oficiales descargables (PDF)
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Documentos
@@ -315,7 +331,11 @@ paths:
                     items:
                       type: object
                       properties:
-                        type: { type: string, enum: [REGLAMENTO, CRONOGRAMA, TASAS, VACANTES, REQUISITOS, TEMARIO, PROGRAMAS, OTRO] }
+                        type:
+                          {
+                            type: string,
+                            enum: [REGLAMENTO, CRONOGRAMA, TASAS, VACANTES, REQUISITOS, TEMARIO, PROGRAMAS, OTRO],
+                          }
                         title: { type: string }
                         url: { type: string, format: uri-reference }
                         publishedAt: { type: string, format: date-time }
@@ -326,7 +346,7 @@ paths:
       tags: [Contenido]
       summary: Inscritos por modalidad (agregado, sin datos personales)
       description: FR-011. Hasta la spec 003, `source = pending` (research R-09).
-      parameters: [ { $ref: '#/components/parameters/CallCode' } ]
+      parameters: [{ $ref: '#/components/parameters/CallCode' }]
       responses:
         '200':
           description: Estadísticas
@@ -355,7 +375,12 @@ paths:
       parameters:
         - { name: callCode, in: query, schema: { type: string } }
         - { name: type, in: query, schema: { type: string, enum: [COMUNICADO, FE_ERRATAS, RESULTADO] } }
-        - { name: section, in: query, description: Solo los que afectan una sección, schema: { type: string, example: TASAS } }
+        - {
+            name: section,
+            in: query,
+            description: Solo los que afectan una sección,
+            schema: { type: string, example: TASAS },
+          }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
       responses:
         '200':
@@ -396,7 +421,11 @@ paths:
                         items:
                           type: object
                           properties:
-                            key: { type: string, enum: [INSCRIPCION, REINSCRIPCION, BUSCAR_AULA, VER_PUNTAJE, IMPRIMIR_DOCUMENTOS] }
+                            key:
+                              {
+                                type: string,
+                                enum: [INSCRIPCION, REINSCRIPCION, BUSCAR_AULA, VER_PUNTAJE, IMPRIMIR_DOCUMENTOS],
+                              }
                             enabled: { type: boolean }
                             reason: { type: string, example: Disponible del 16 al 17/11/2026 }
 

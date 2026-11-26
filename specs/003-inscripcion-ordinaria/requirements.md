@@ -121,22 +121,22 @@ Como exonerado no admitido, quiero reinscribirme al examen ordinario con mi DNI,
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE habilitar la inscripción ordinaria solo durante las etapas regular y extemporánea del cronograma. *(RF-01.07)*
-- **FR-002**: El sistema DEBE presentar un asistente de 6 pasos con datos personales, de contacto, académicos (colegio, gestión, región, año de egreso, grado actual), programa y foto. *(RF-03.01, RF-03.02, RF-03.03)*
-- **FR-003**: El sistema DEBE guardar automáticamente el borrador en cada paso: sin cuenta, en el dispositivo; con la cuenta opcional, en el servidor (enmienda de ADR-015). *(RF-03.06)*
-- **FR-004**: El sistema DEBE validar la fotografía: JPG, 240 × 320 px, máximo 2 MB, con lista de verificación del Art. 17.3. *(RN-22, RF-03.05)*
-- **FR-005**: El sistema DEBE calcular el monto según la regla de tasas, incluyendo descuentos militares, vínculo familiar y recargo extemporáneo. *(RF-03.07, RF-05.01)*
-- **FR-006**: El sistema DEBE exigir aceptación de declaración jurada antes de confirmar y bloquear luego cambios de programa y modalidad. *(RN-06, RN-20)*
-- **FR-007**: El sistema DEBE impedir más de una inscripción activa por postulante y convocatoria. *(RF-02.03, RN-06)*
-- **FR-008**: El sistema DEBE generar una orden de pago única por inscripción. *(RF-05.02)*
-- **FR-009**: El sistema DEBE cambiar la inscripción a **Apta** solo cuando el pago esté confirmado por el servidor y no haya observaciones pendientes. *(RF-03.08)*
-- **FR-010**: El sistema DEBE generar la ficha de inscripción en PDF con QR verificable públicamente. *(RF-03.09, MEJ-11)*
-- **FR-011**: El sistema DEBE mostrar al postulante la línea de tiempo de su proceso y la siguiente acción. *(RF-03.10, MEJ-02)*
-- **FR-012**: El sistema DEBE permitir descargar la ficha con DNI + código de postulante sin sesión. *(compatibilidad portal actual)*
-- **FR-013**: El sistema DEBE permitir la reinscripción de exonerados no admitidos, excepto traslados y graduados, solo en su etapa, con tasa S/ 180.00. *(RN-16)*
-- **FR-014**: El sistema DEBE registrar la condición "rinde sin derecho a vacante" para estudiantes de 4.º de secundaria o menos. *(RN-13)*
-- **FR-015**: El sistema DEBE permitir solicitar la anulación de la inscripción con advertencia de no devolución. *(Art. 17.5, RN-08)*
-- **FR-016**: El sistema DEBE validar los requisitos de inscripción de la convocatoria antes de confirmar: DNI vigente, no inhabilitado, no ser personal del proceso, no ser graduado de universidad pública (RN-11) y, si ingresó antes a la UNSCH, adjuntar la resolución de renuncia (RN-10). *(RF-03.04, RN-09)*
+- **FR-001**: El sistema DEBE habilitar la inscripción ordinaria solo durante las etapas regular y extemporánea del cronograma. _(RF-01.07)_
+- **FR-002**: El sistema DEBE presentar un asistente de 6 pasos con datos personales, de contacto, académicos (colegio, gestión, región, año de egreso, grado actual), programa y foto. _(RF-03.01, RF-03.02, RF-03.03)_
+- **FR-003**: El sistema DEBE guardar automáticamente el borrador en cada paso: sin cuenta, en el dispositivo; con la cuenta opcional, en el servidor (enmienda de ADR-015). _(RF-03.06)_
+- **FR-004**: El sistema DEBE validar la fotografía: JPG, 240 × 320 px, máximo 2 MB, con lista de verificación del Art. 17.3. _(RN-22, RF-03.05)_
+- **FR-005**: El sistema DEBE calcular el monto según la regla de tasas, incluyendo descuentos militares, vínculo familiar y recargo extemporáneo. _(RF-03.07, RF-05.01)_
+- **FR-006**: El sistema DEBE exigir aceptación de declaración jurada antes de confirmar y bloquear luego cambios de programa y modalidad. _(RN-06, RN-20)_
+- **FR-007**: El sistema DEBE impedir más de una inscripción activa por postulante y convocatoria. _(RF-02.03, RN-06)_
+- **FR-008**: El sistema DEBE generar una orden de pago única por inscripción. _(RF-05.02)_
+- **FR-009**: El sistema DEBE cambiar la inscripción a **Apta** solo cuando el pago esté confirmado por el servidor y no haya observaciones pendientes. _(RF-03.08)_
+- **FR-010**: El sistema DEBE generar la ficha de inscripción en PDF con QR verificable públicamente. _(RF-03.09, MEJ-11)_
+- **FR-011**: El sistema DEBE mostrar al postulante la línea de tiempo de su proceso y la siguiente acción. _(RF-03.10, MEJ-02)_
+- **FR-012**: El sistema DEBE permitir descargar la ficha con DNI + código de postulante sin sesión. _(compatibilidad portal actual)_
+- **FR-013**: El sistema DEBE permitir la reinscripción de exonerados no admitidos, excepto traslados y graduados, solo en su etapa, con tasa S/ 180.00. _(RN-16)_
+- **FR-014**: El sistema DEBE registrar la condición "rinde sin derecho a vacante" para estudiantes de 4.º de secundaria o menos. _(RN-13)_
+- **FR-015**: El sistema DEBE permitir solicitar la anulación de la inscripción con advertencia de no devolución. _(Art. 17.5, RN-08)_
+- **FR-016**: El sistema DEBE validar los requisitos de inscripción de la convocatoria antes de confirmar: DNI vigente, no inhabilitado, no ser personal del proceso, no ser graduado de universidad pública (RN-11) y, si ingresó antes a la UNSCH, adjuntar la resolución de renuncia (RN-10). _(RF-03.04, RN-09)_
 
 ### Entidades clave
 
@@ -167,21 +167,21 @@ Como exonerado no admitido, quiero reinscribirme al examen ordinario con mi DNI,
 
 14 de 14 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-01.07 | ✅ | La inscripción se abre y cierra según la etapa (STAGE_CLOSED) |
-| RF-02.03 | ✅ | Una inscripción por DNI y convocatoria; registro de inhabilitados |
-| RF-03.01 | ✅ | Formulario con modalidad Ordinario |
-| RF-03.02 | ✅ | Formulario oficial: información básica, académica y de postulante |
-| RF-03.03 | ✅ | Selección de programa con vacantes en vivo |
-| RF-03.04 | ✅ | Valida etapa, inhabilitados, vacantes, ubigeo, fechas y 4.º grado en el servidor |
-| RF-03.05 | ✅ | Foto 240 × 320 y documentos adicionales (DNI, estudios, servicio militar, vínculo UNSCH) en «Imprimir documentos»; visibles en el panel |
-| RF-03.06 | ✅ | Borrador automático en el dispositivo (sin foto); «Continuar donde me quedé» |
-| RF-03.07 | ✅ | Tasa calculada en el servidor según la Tabla 3 |
-| RF-03.08 | ✅ | La inscripción queda Apta solo con el pago confirmado por el servidor |
-| RF-03.09 | ✅ | Ficha PDF con foto, código y QR firmado; verificación pública sin DNI completo |
-| RF-03.10 | ✅ | Estado de la inscripción y descarga de la ficha en «Imprimir documentos» y «Mi cuenta» |
-| RF-05.01 | ✅ | Simulador y cálculo de tasa en el servidor |
-| RF-05.02 | ✅ | Orden única por inscripción, con número de pedido por intento |
+| RF       | Estado | Detalle                                                                                                                                 |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-01.07 | ✅     | La inscripción se abre y cierra según la etapa (STAGE_CLOSED)                                                                           |
+| RF-02.03 | ✅     | Una inscripción por DNI y convocatoria; registro de inhabilitados                                                                       |
+| RF-03.01 | ✅     | Formulario con modalidad Ordinario                                                                                                      |
+| RF-03.02 | ✅     | Formulario oficial: información básica, académica y de postulante                                                                       |
+| RF-03.03 | ✅     | Selección de programa con vacantes en vivo                                                                                              |
+| RF-03.04 | ✅     | Valida etapa, inhabilitados, vacantes, ubigeo, fechas y 4.º grado en el servidor                                                        |
+| RF-03.05 | ✅     | Foto 240 × 320 y documentos adicionales (DNI, estudios, servicio militar, vínculo UNSCH) en «Imprimir documentos»; visibles en el panel |
+| RF-03.06 | ✅     | Borrador automático en el dispositivo (sin foto); «Continuar donde me quedé»                                                            |
+| RF-03.07 | ✅     | Tasa calculada en el servidor según la Tabla 3                                                                                          |
+| RF-03.08 | ✅     | La inscripción queda Apta solo con el pago confirmado por el servidor                                                                   |
+| RF-03.09 | ✅     | Ficha PDF con foto, código y QR firmado; verificación pública sin DNI completo                                                          |
+| RF-03.10 | ✅     | Estado de la inscripción y descarga de la ficha en «Imprimir documentos» y «Mi cuenta»                                                  |
+| RF-05.01 | ✅     | Simulador y cálculo de tasa en el servidor                                                                                              |
+| RF-05.02 | ✅     | Orden única por inscripción, con número de pedido por intento                                                                           |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

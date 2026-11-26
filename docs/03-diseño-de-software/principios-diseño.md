@@ -88,76 +88,76 @@ flowchart TB
 
 ### Aplicación de los cinco principios SOLID
 
-| Principio | Dónde se aplica (capa) | Cómo se cumple en el sistema UNSCH | Archivos |
-|---|---|---|---|
-| **S - Responsabilidad Única (SRP)** | Todas las capas | Cada clase tiene una responsabilidad específica: el controlador recibe solicitudes HTTP, el caso de uso coordina la inscripción, la entidad aplica las reglas de negocio y el repositorio guarda la información en PostgreSQL. | `inscripcion.controller.ts`, `registrar-inscripcion.use-case.ts`, `inscripcion.ts`, `postgres-inscripcion.repository.ts` |
-| **O - Abierto/Cerrado (OCP)** | Aplicación e Infraestructura | Para incorporar otra implementación de persistencia o validación de elegibilidad, se crea un nuevo adaptador sin modificar el caso de uso, siempre que se mantenga el contrato establecido. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts` |
-| **L - Sustitución de Liskov (LSP)** | Dominio e Infraestructura | Las implementaciones de `InscripcionRepository` y `ElegibilidadPort` deben respetar sus contratos, permitiendo sustituirlas por implementaciones de prueba o alternativas sin alterar el comportamiento esperado. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts` |
-| **I - Segregación de Interfaces (ISP)** | Dominio | Cada interfaz contiene únicamente las operaciones necesarias: `InscripcionRepository` permite guardar y consultar inscripciones, mientras que `ElegibilidadPort` verifica las condiciones de inscripción. | `inscripcion-repository.ts`, `elegibilidad-port.ts` |
-| **D - Inversión de Dependencias (DIP)** | Aplicación e Infraestructura | El caso de uso depende de interfaces y no conoce directamente PostgreSQL ni los módulos externos. Las implementaciones concretas se conectan mediante inyección de dependencias. | `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts` |
+| Principio                               | Dónde se aplica (capa)       | Cómo se cumple en el sistema UNSCH                                                                                                                                                                                             | Archivos                                                                                                                 |
+| --------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **S - Responsabilidad Única (SRP)**     | Todas las capas              | Cada clase tiene una responsabilidad específica: el controlador recibe solicitudes HTTP, el caso de uso coordina la inscripción, la entidad aplica las reglas de negocio y el repositorio guarda la información en PostgreSQL. | `inscripcion.controller.ts`, `registrar-inscripcion.use-case.ts`, `inscripcion.ts`, `postgres-inscripcion.repository.ts` |
+| **O - Abierto/Cerrado (OCP)**           | Aplicación e Infraestructura | Para incorporar otra implementación de persistencia o validación de elegibilidad, se crea un nuevo adaptador sin modificar el caso de uso, siempre que se mantenga el contrato establecido.                                    | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts`     |
+| **L - Sustitución de Liskov (LSP)**     | Dominio e Infraestructura    | Las implementaciones de `InscripcionRepository` y `ElegibilidadPort` deben respetar sus contratos, permitiendo sustituirlas por implementaciones de prueba o alternativas sin alterar el comportamiento esperado.              | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts`     |
+| **I - Segregación de Interfaces (ISP)** | Dominio                      | Cada interfaz contiene únicamente las operaciones necesarias: `InscripcionRepository` permite guardar y consultar inscripciones, mientras que `ElegibilidadPort` verifica las condiciones de inscripción.                      | `inscripcion-repository.ts`, `elegibilidad-port.ts`                                                                      |
+| **D - Inversión de Dependencias (DIP)** | Aplicación e Infraestructura | El caso de uso depende de interfaces y no conoce directamente PostgreSQL ni los módulos externos. Las implementaciones concretas se conectan mediante inyección de dependencias.                                               | `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts`                                                   |
 
 ### 3.1. Estado en el código (25/11/2026)
 
 Las clases del diagrama (`InscripcionController`, `RegistrarInscripcionUseCase`, `InscripcionRepository`, `ElegibilidadPort`, `PostgresInscripcionRepository`, `InscripcionOrdinariaModule`) **no existen con esos nombres**. En el código, el módulo de inscripciones agrupa sus casos de uso en `InscriptionService` y la referencia más completa de SOLID es el módulo **Pagos**. Rutas relativas a `apps/backend/src/`.
 
-| Principio | Cómo se cumple hoy | Archivos | Estado |
-|---|---|---|---|
-| **S** | Rutas solo validan con Zod y responden; los servicios coordinan; las reglas están en `domain/`; cada pasarela tiene su propio adaptador. Los servicios de aplicación son grandes (agrupan varios casos de uso). | `modules/pagos/presentation/routes.ts`, `modules/pagos/application/payment-service.ts`, `modules/pagos/domain/payment-rules.ts` | 🟡 |
-| **O** | Para agregar Yape con Culqi se creó un adaptador nuevo (`CulqiYapeGateway`) sin modificar las reglas de pago con tarjeta. | `modules/pagos/infrastructure/culqi-gateway.ts` | ✅ |
-| **L** | `CulqiGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real. | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts` | ✅ |
-| **I** | `PaymentService` no depende de todo el módulo de inscripciones, sino de una interfaz con un solo método: `inscriptions: { paymentContext(...) }`. | `modules/pagos/application/payment-service.ts` | ✅ |
-| **D** | Los servicios reciben puertos (`PersistencePort`, `PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. Prisma queda detrás de la frontera de compatibilidad y se inyecta únicamente desde la raíz de composición. | `shared/application/persistence-port.ts`, `modules/*/index.ts` | ✅ |
+| Principio | Cómo se cumple hoy                                                                                                                                                                                                                                | Archivos                                                                                                                        | Estado |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **S**     | Rutas solo validan con Zod y responden; los servicios coordinan; las reglas están en `domain/`; cada pasarela tiene su propio adaptador. Los servicios de aplicación son grandes (agrupan varios casos de uso).                                   | `modules/pagos/presentation/routes.ts`, `modules/pagos/application/payment-service.ts`, `modules/pagos/domain/payment-rules.ts` | 🟡     |
+| **O**     | Para agregar Yape con Culqi se creó un adaptador nuevo (`CulqiYapeGateway`) sin modificar las reglas de pago con tarjeta.                                                                                                                         | `modules/pagos/infrastructure/culqi-gateway.ts`                                                                                 | ✅     |
+| **L**     | `CulqiGateway` y `MockPaymentGateway` cumplen el mismo contrato `PaymentGateway`; las pruebas usan la simulada y producción la real.                                                                                                              | `modules/pagos/domain/ports.ts`, `tests/integration/payments.test.ts`                                                           | ✅     |
+| **I**     | `PaymentService` no depende de todo el módulo de inscripciones, sino de una interfaz con un solo método: `inscriptions: { paymentContext(...) }`.                                                                                                 | `modules/pagos/application/payment-service.ts`                                                                                  | ✅     |
+| **D**     | Los servicios reciben puertos (`PersistencePort`, `PaymentGateway`, `IdentityProvider`, `EmailSender`, `FileStorage`) por constructor. Prisma queda detrás de la frontera de compatibilidad y se inyecta únicamente desde la raíz de composición. | `shared/application/persistence-port.ts`, `modules/*/index.ts`                                                                  | ✅     |
 
 Inscripciones y Pagos conservan además repositorios específicos y unidad de trabajo. La prueba de arquitectura impide que cualquier archivo de `application/` vuelva a importar Prisma, código generado, `infrastructure/` o `presentation/`.
 
 ## 4. Cómo funciona cada principio
 
-| Principio | Explicación |
-|---|---|
-| **Responsabilidad Única (S)** | Cada clase realiza una tarea específica y tiene una razón principal para cambiar. |
-| **Abierto/Cerrado (O)** | Se pueden incorporar nuevas implementaciones mediante extensiones sin modificar innecesariamente el código existente. |
-| **Sustitución de Liskov (L)** | Una implementación puede reemplazar a otra si mantiene las condiciones y comportamientos definidos por su interfaz. |
-| **Segregación de Interfaces (I)** | Los componentes dependen únicamente de las operaciones que realmente necesitan. |
-| **Inversión de Dependencias (D)** | Los casos de uso dependen de abstracciones, mientras que los detalles tecnológicos implementan dichas abstracciones. |
+| Principio                         | Explicación                                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Responsabilidad Única (S)**     | Cada clase realiza una tarea específica y tiene una razón principal para cambiar.                                     |
+| **Abierto/Cerrado (O)**           | Se pueden incorporar nuevas implementaciones mediante extensiones sin modificar innecesariamente el código existente. |
+| **Sustitución de Liskov (L)**     | Una implementación puede reemplazar a otra si mantiene las condiciones y comportamientos definidos por su interfaz.   |
+| **Segregación de Interfaces (I)** | Los componentes dependen únicamente de las operaciones que realmente necesitan.                                       |
+| **Inversión de Dependencias (D)** | Los casos de uso dependen de abstracciones, mientras que los detalles tecnológicos implementan dichas abstracciones.  |
 
 ## 5. Qué pasaría sin SOLID en el sistema UNSCH
 
-| Situación real | Sin SOLID | Con SOLID |
-|---|---|---|
-| Se modifica la integración con RENIEC. | Se deben modificar directamente los casos de uso que validan identidades. | Se modifica o reemplaza `reniec.adapter.ts`. |
-| Se cambia la pasarela de pagos. | El módulo Pagos depende directamente del proveedor anterior. | Se crea un nuevo adaptador que implementa `PaymentPort`. |
-| Se cambia la implementación de persistencia. | Las reglas de negocio contienen consultas SQL y deben modificarse. | Se modifica la implementación del repositorio manteniendo su interfaz. |
-| Se necesita probar una inscripción. | Se requiere conectar PostgreSQL y utilizar servicios externos reales. | Se utilizan repositorios y adaptadores simulados. |
-| Cambian las reglas de inscripción ordinaria. | Las validaciones están distribuidas entre controladores y consultas SQL. | Las reglas se mantienen en el dominio y se coordinan desde los casos de uso. |
-| Se modifica el proveedor de inteligencia artificial. | El módulo Chatbot depende directamente de OpenRouter API. | Se reemplaza el adaptador que implementa `AiPort`. |
-| Se agrega una nueva modalidad de admisión. | Se modifican múltiples componentes sin una estructura definida. | Se incorporan reglas y componentes específicos respetando los contratos existentes. |
+| Situación real                                       | Sin SOLID                                                                 | Con SOLID                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Se modifica la integración con RENIEC.               | Se deben modificar directamente los casos de uso que validan identidades. | Se modifica o reemplaza `reniec.adapter.ts`.                                        |
+| Se cambia la pasarela de pagos.                      | El módulo Pagos depende directamente del proveedor anterior.              | Se crea un nuevo adaptador que implementa `PaymentPort`.                            |
+| Se cambia la implementación de persistencia.         | Las reglas de negocio contienen consultas SQL y deben modificarse.        | Se modifica la implementación del repositorio manteniendo su interfaz.              |
+| Se necesita probar una inscripción.                  | Se requiere conectar PostgreSQL y utilizar servicios externos reales.     | Se utilizan repositorios y adaptadores simulados.                                   |
+| Cambian las reglas de inscripción ordinaria.         | Las validaciones están distribuidas entre controladores y consultas SQL.  | Las reglas se mantienen en el dominio y se coordinan desde los casos de uso.        |
+| Se modifica el proveedor de inteligencia artificial. | El módulo Chatbot depende directamente de OpenRouter API.                 | Se reemplaza el adaptador que implementa `AiPort`.                                  |
+| Se agrega una nueva modalidad de admisión.           | Se modifican múltiples componentes sin una estructura definida.           | Se incorporan reglas y componentes específicos respetando los contratos existentes. |
 
 ## 6. Relación con Clean Architecture y los patrones de diseño
 
-| Principio | Cómo se aplica en el proyecto |
-|---|---|
-| **Responsabilidad Única** | Separación de responsabilidades entre Presentación, Aplicación, Dominio e Infraestructura. |
-| **Abierto/Cerrado** | Patrón Adaptador para RENIEC, pasarela de pagos y OpenRouter API. |
-| **Sustitución de Liskov** | Implementaciones intercambiables de repositorios y adaptadores que respetan los contratos. |
-| **Segregación de Interfaces** | Interfaces específicas como `InscripcionRepository`, `ElegibilidadPort`, `PaymentPort` y `AiPort`. |
+| Principio                     | Cómo se aplica en el proyecto                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Responsabilidad Única**     | Separación de responsabilidades entre Presentación, Aplicación, Dominio e Infraestructura.                 |
+| **Abierto/Cerrado**           | Patrón Adaptador para RENIEC, pasarela de pagos y OpenRouter API.                                          |
+| **Sustitución de Liskov**     | Implementaciones intercambiables de repositorios y adaptadores que respetan los contratos.                 |
+| **Segregación de Interfaces** | Interfaces específicas como `InscripcionRepository`, `ElegibilidadPort`, `PaymentPort` y `AiPort`.         |
 | **Inversión de Dependencias** | Patrón Repositorio, interfaces del dominio e inyección de dependencias mediante las raíces de composición. |
 
 ## 7. Aplicación de SOLID en los módulos del sistema
 
-| Módulo | Aplicación principal de SOLID |
-|---|---|
-| M01 - Convocatorias | Separar la gestión de convocatorias de su persistencia. |
-| M02 - Usuarios | Desacoplar la validación de identidad del servicio RENIEC. |
-| M03 - Inscripciones | Separar reglas de inscripción, casos de uso y persistencia, con reglas por modalidad (Ordinaria y Exonerados). |
-| M04 - Pagos | Utilizar interfaces y adaptadores para las pasarelas de pago. |
-| M05 - Expedientes | Separar la evaluación documental del almacenamiento de archivos. |
-| M06 - Exámenes, Sedes y Aulas | Encapsular las reglas de programación, asignación y capacidad de aulas. |
-| M07 - Resultados | Mantener independientes el cálculo, validación y publicación de resultados. |
-| M08 - Chatbot IA | Desacoplar los casos de uso del proveedor OpenRouter API. |
-| M09 - Notificaciones | Permitir sustituir el proveedor de correo mediante adaptadores. |
-| M10 - Reportes | Separar la generación de reportes de las consultas y formatos de exportación. |
-| M11 - Seguridad | Separar autenticación, autorización y gestión de roles. |
-| M12 - Configuración | Centralizar la configuración mediante interfaces controladas. |
+| Módulo                        | Aplicación principal de SOLID                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| M01 - Convocatorias           | Separar la gestión de convocatorias de su persistencia.                                                        |
+| M02 - Usuarios                | Desacoplar la validación de identidad del servicio RENIEC.                                                     |
+| M03 - Inscripciones           | Separar reglas de inscripción, casos de uso y persistencia, con reglas por modalidad (Ordinaria y Exonerados). |
+| M04 - Pagos                   | Utilizar interfaces y adaptadores para las pasarelas de pago.                                                  |
+| M05 - Expedientes             | Separar la evaluación documental del almacenamiento de archivos.                                               |
+| M06 - Exámenes, Sedes y Aulas | Encapsular las reglas de programación, asignación y capacidad de aulas.                                        |
+| M07 - Resultados              | Mantener independientes el cálculo, validación y publicación de resultados.                                    |
+| M08 - Chatbot IA              | Desacoplar los casos de uso del proveedor OpenRouter API.                                                      |
+| M09 - Notificaciones          | Permitir sustituir el proveedor de correo mediante adaptadores.                                                |
+| M10 - Reportes                | Separar la generación de reportes de las consultas y formatos de exportación.                                  |
+| M11 - Seguridad               | Separar autenticación, autorización y gestión de roles.                                                        |
+| M12 - Configuración           | Centralizar la configuración mediante interfaces controladas.                                                  |
 
 ## 8. Beneficios de aplicar SOLID
 
@@ -171,32 +171,32 @@ Inscripciones y Pagos conservan además repositorios específicos y unidad de tr
 
 ## 9. Relación con las decisiones arquitectónicas
 
-| Principio SOLID | Decisión arquitectónica relacionada |
-|---|---|
-| Responsabilidad Única | ADR-001 - Monolito Modular por Capas |
-| Responsabilidad Única | ADR-002 - Clean Architecture |
-| Abierto/Cerrado | ADR-007 - Integración mediante interfaces y adaptadores |
-| Sustitución de Liskov | ADR-007 - Integración mediante interfaces y adaptadores |
-| Segregación de Interfaces | ADR-002 - Clean Architecture |
-| Inversión de Dependencias | ADR-002 - Clean Architecture |
-| Inversión de Dependencias | ADR-004 - Persistencia mediante PostgreSQL |
-| Inversión de Dependencias | ADR-011 - Chatbot inteligente mediante OpenRouter API |
+| Principio SOLID           | Decisión arquitectónica relacionada                     |
+| ------------------------- | ------------------------------------------------------- |
+| Responsabilidad Única     | ADR-001 - Monolito Modular por Capas                    |
+| Responsabilidad Única     | ADR-002 - Clean Architecture                            |
+| Abierto/Cerrado           | ADR-007 - Integración mediante interfaces y adaptadores |
+| Sustitución de Liskov     | ADR-007 - Integración mediante interfaces y adaptadores |
+| Segregación de Interfaces | ADR-002 - Clean Architecture                            |
+| Inversión de Dependencias | ADR-002 - Clean Architecture                            |
+| Inversión de Dependencias | ADR-004 - Persistencia mediante PostgreSQL              |
+| Inversión de Dependencias | ADR-011 - Chatbot inteligente mediante OpenRouter API   |
 
 ## 10. Resumen
 
-| Aspecto | Descripción |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| Principios | SRP, OCP, LSP, ISP y DIP |
-| Módulo de referencia | Inscripciones |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
-| Comunicación | API REST mediante HTTPS |
-| Persistencia | Amazon RDS PostgreSQL |
-| Integraciones | RENIEC, pasarela de pagos y OpenRouter API |
-| Patrones relacionados | Adaptador, Repositorio e Inyección de Dependencias |
+| Aspecto               | Descripción                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| Proyecto              | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
+| Arquitectura          | Monolito Modular por Capas                                  |
+| Enfoque               | Clean Architecture                                          |
+| Principios            | SRP, OCP, LSP, ISP y DIP                                    |
+| Módulo de referencia  | Inscripciones                                               |
+| Backend               | Node.js + TypeScript + Express                              |
+| Despliegue            | AWS Lambda                                                  |
+| Comunicación          | API REST mediante HTTPS                                     |
+| Persistencia          | Amazon RDS PostgreSQL                                       |
+| Integraciones         | RENIEC, pasarela de pagos y OpenRouter API                  |
+| Patrones relacionados | Adaptador, Repositorio e Inyección de Dependencias          |
 
 ## 11. Conclusión
 

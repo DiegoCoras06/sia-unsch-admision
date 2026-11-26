@@ -29,14 +29,25 @@ export type TemplateKey = keyof typeof DEFAULT_TEMPLATES;
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Reemplaza {{variables}} (escapadas) y arma el correo con el diseño institucional. */
-export function fill(subject: string, body: string, vars: Record<string, string>): { subject: string; html: string; text: string } {
-  const put = (s: string, html: boolean) => s.replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
-    const v = vars[k] ?? '';
-    return html ? (k === 'enlace' ? `<a href="${escape(v)}">${escape(v)}</a>` : escape(v)) : v;
-  });
+export function fill(
+  subject: string,
+  body: string,
+  vars: Record<string, string>,
+): { subject: string; html: string; text: string } {
+  const put = (s: string, html: boolean) =>
+    s.replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
+      const v = vars[k] ?? '';
+      return html ? (k === 'enlace' ? `<a href="${escape(v)}">${escape(v)}</a>` : escape(v)) : v;
+    });
   const title = put(subject, false);
-  const paragraphs = body.split(/\n+/).map((p) => p.trim()).filter(Boolean);
-  const { html } = renderEmail(escape(title), paragraphs.map((p) => put(escape(p), true)));
+  const paragraphs = body
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const { html } = renderEmail(
+    escape(title),
+    paragraphs.map((p) => put(escape(p), true)),
+  );
   const text = `${title}\n\n${paragraphs.map((p) => put(p, false)).join('\n\n')}`;
   return { subject: title, html, text };
 }

@@ -19,7 +19,11 @@ try {
   ok('Lectura del archivo de prueba.');
   await s3.delete(key);
   ok('Borrado del archivo de prueba.');
-  const form = await s3.presignUpload(`subidas/prueba/00000000/${crypto.randomUUID()}`, 'application/pdf', 5 * 1024 * 1024);
+  const form = await s3.presignUpload(
+    `subidas/prueba/00000000/${crypto.randomUUID()}`,
+    'application/pdf',
+    5 * 1024 * 1024,
+  );
   ok(`Formulario prefirmado de subida listo (${new URL(form.url).host}).`);
 } catch (error) {
   const e = error as { name?: string; message?: string };

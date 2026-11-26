@@ -6,8 +6,16 @@ import { notFound, validationError } from '../../../shared/http/errors.js';
 import type { RateLimiter } from '../../../shared/rate-limit/rate-limiter.js';
 import { DEFAULT_TEMPLATES, fill, type TemplateKey } from '../domain/templates.js';
 
-export interface Recipient { applicantCode: string; email: string; firstNames: string }
-export interface Segment { modality?: string | undefined; optionCode?: string | undefined; status?: string | undefined }
+export interface Recipient {
+  applicantCode: string;
+  email: string;
+  firstNames: string;
+}
+export interface Segment {
+  modality?: string | undefined;
+  optionCode?: string | undefined;
+  status?: string | undefined;
+}
 
 /** Lo que M11 necesita de otros módulos para sus avisos automáticos. */
 export interface NoticeSources {
@@ -20,27 +28,46 @@ export interface NoticeSources {
   /** M07/M08: exámenes con aulas recién publicadas y exámenes de mañana. */
   roomNotices(): Promise<{ examId: string; exam: string; people: Recipient[] }[]>;
   markRoomsNotified(examId: string): Promise<void>;
-  examsSoon(withinHours: number): Promise<{ examId: string; exam: string; opens: Date; closes: Date; bring: string[]; people: Recipient[] }[]>;
+  examsSoon(
+    withinHours: number,
+  ): Promise<{ examId: string; exam: string; opens: Date; closes: Date; bring: string[]; people: Recipient[] }[]>;
 }
 
 const MAX_ATTEMPTS = 3;
-const hour = (d: Date) => d.toLocaleTimeString('es-PE', { timeZone: 'America/Lima', hour: 'numeric', minute: '2-digit' });
-const day = (d: Date) => d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', weekday: 'long', day: 'numeric', month: 'long' });
+const hour = (d: Date) =>
+  d.toLocaleTimeString('es-PE', { timeZone: 'America/Lima', hour: 'numeric', minute: '2-digit' });
+const day = (d: Date) =>
+  d.toLocaleDateString('es-PE', { timeZone: 'America/Lima', weekday: 'long', day: 'numeric', month: 'long' });
 
 /**
  * Envío que deja constancia de cada correo de cualquier módulo (RF-11.09). Si falla, queda FALLIDA y el error
  * sube al llamador (la outbox reintenta el suscriptor).
  */
 export class RecordingEmailSender implements EmailSender {
-  constructor(private readonly persistence: PersistencePort, private readonly inner: EmailSender, private readonly clock: Clock) {}
+  constructor(
+    private readonly persistence: PersistencePort,
+    private readonly inner: EmailSender,
+    private readonly clock: Clock,
+  ) {}
 
   async send(m: EmailMessage): Promise<void> {
-    const base = { email: m.to.toLowerCase(), event: m.event ?? 'SISTEMA', subject: m.subject.slice(0, 200), html: m.html, text: m.text, attempts: 1 };
+    const base = {
+      email: m.to.toLowerCase(),
+      event: m.event ?? 'SISTEMA',
+      subject: m.subject.slice(0, 200),
+      html: m.html,
+      text: m.text,
+      attempts: 1,
+    };
     try {
       await this.inner.send(m);
-      await this.persistence.notification.create({ data: { ...base, status: 'ENVIADA', sentAt: this.clock.now() } }).catch(() => undefined);
+      await this.persistence.notification
+        .create({ data: { ...base, status: 'ENVIADA', sentAt: this.clock.now() } })
+        .catch(() => undefined);
     } catch (e) {
-      await this.persistence.notification.create({ data: { ...base, status: 'FALLIDA', lastError: String((e as Error)?.message ?? e).slice(0, 500) } }).catch(() => undefined);
+      await this.persistence.notification
+        .create({ data: { ...base, status: 'FALLIDA', lastError: String((e as Error)?.message ?? e).slice(0, 500) } })
+        .catch(() => undefined);
       throw e;
     }
   }
@@ -65,8 +92,11 @@ export class NotificationService {
   async templates() {
     const saved = new Map((await this.d.persistence.notificationTemplate.findMany()).map((t) => [t.key, t]));
     return (Object.keys(DEFAULT_TEMPLATES) as TemplateKey[]).map((key) => ({
-      key, name: DEFAULT_TEMPLATES[key].name, subject: saved.get(key)?.subject ?? DEFAULT_TEMPLATES[key].subject,
-      body: saved.get(key)?.body ?? DEFAULT_TEMPLATES[key].body, customized: saved.has(key),
+      key,
+      name: DEFAULT_TEMPLATES[key].name,
+      subject: saved.get(key)?.subject ?? DEFAULT_TEMPLATES[key].subject,
+      body: saved.get(key)?.body ?? DEFAULT_TEMPLATES[key].body,
+      customized: saved.has(key),
     }));
   }
 
@@ -74,9 +104,18 @@ export class NotificationService {
     if (!(key in DEFAULT_TEMPLATES)) throw notFound('Plantilla no encontrada.');
     const k = key as TemplateKey;
     await this.d.persistence.notificationTemplate.upsert({
-      where: { key: k }, create: { key: k, name: DEFAULT_TEMPLATES[k].name, subject: input.subject, body: input.body }, update: { subject: input.subject, body: input.body },
+      where: { key: k },
+      create: { key: k, name: DEFAULT_TEMPLATES[k].name, subject: input.subject, body: input.body },
+      update: { subject: input.subject, body: input.body },
     });
-    await this.d.audit.record({ actorUserId: actorId, action: 'notification.template_updated', resourceType: 'notification_template', resourceId: k, after: { subject: input.subject }, ...meta });
+    await this.d.audit.record({
+      actorUserId: actorId,
+      action: 'notification.template_updated',
+      resourceType: 'notification_template',
+      resourceId: k,
+      after: { subject: input.subject },
+      ...meta,
+    });
     return this.templates();
   }
 
@@ -87,10 +126,30 @@ export class NotificationService {
 
   // ── Cola ───────────────────────────────────────────────────────────
   /** Encola sin duplicar: la clave de deduplicación garantiza un solo aviso por hecho (SC-002). */
-  async enqueue(items: { email: string; event: string; subject: string; html: string; text: string; dedupeKey?: string; campaignId?: string; mandatory?: boolean }[]) {
+  async enqueue(
+    items: {
+      email: string;
+      event: string;
+      subject: string;
+      html: string;
+      text: string;
+      dedupeKey?: string;
+      campaignId?: string;
+      mandatory?: boolean;
+    }[],
+  ) {
     if (!items.length) return 0;
     const r = await this.d.persistence.notification.createMany({
-      data: items.map((i) => ({ email: i.email.toLowerCase(), event: i.event, subject: i.subject.slice(0, 200), html: i.html, text: i.text, dedupeKey: i.dedupeKey ?? null, campaignId: i.campaignId ?? null, mandatory: i.mandatory ?? true })),
+      data: items.map((i) => ({
+        email: i.email.toLowerCase(),
+        event: i.event,
+        subject: i.subject.slice(0, 200),
+        html: i.html,
+        text: i.text,
+        dedupeKey: i.dedupeKey ?? null,
+        campaignId: i.campaignId ?? null,
+        mandatory: i.mandatory ?? true,
+      })),
       skipDuplicates: true,
     });
     return r.count;
@@ -98,18 +157,32 @@ export class NotificationService {
 
   /** Envía en lotes; cada notificación se reclama antes de enviar para no duplicar, con hasta 3 intentos. */
   async dispatch(limit = 50) {
-    const pending = await this.d.persistence.notification.findMany({ where: { status: 'PENDIENTE', attempts: { lt: MAX_ATTEMPTS } }, orderBy: { createdAt: 'asc' }, take: limit });
+    const pending = await this.d.persistence.notification.findMany({
+      where: { status: 'PENDIENTE', attempts: { lt: MAX_ATTEMPTS } },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
     let sent = 0;
     for (const n of pending) {
-      const claimed = await this.d.persistence.notification.updateMany({ where: { id: n.id, status: 'PENDIENTE', attempts: n.attempts }, data: { attempts: { increment: 1 } } });
+      const claimed = await this.d.persistence.notification.updateMany({
+        where: { id: n.id, status: 'PENDIENTE', attempts: n.attempts },
+        data: { attempts: { increment: 1 } },
+      });
       if (!claimed.count) continue;
       try {
         await this.d.transport.send({ to: n.email, subject: n.subject, html: n.html, text: n.text, event: n.event });
-        await this.d.persistence.notification.update({ where: { id: n.id }, data: { status: 'ENVIADA', sentAt: this.d.clock.now(), lastError: null } });
+        await this.d.persistence.notification.update({
+          where: { id: n.id },
+          data: { status: 'ENVIADA', sentAt: this.d.clock.now(), lastError: null },
+        });
         sent++;
       } catch (e) {
         await this.d.persistence.notification.update({
-          where: { id: n.id }, data: { lastError: String((e as Error)?.message ?? e).slice(0, 500), ...(n.attempts + 1 >= MAX_ATTEMPTS ? { status: 'FALLIDA' } : {}) },
+          where: { id: n.id },
+          data: {
+            lastError: String((e as Error)?.message ?? e).slice(0, 500),
+            ...(n.attempts + 1 >= MAX_ATTEMPTS ? { status: 'FALLIDA' } : {}),
+          },
         });
       }
     }
@@ -129,8 +202,20 @@ export class NotificationService {
     const off = await this.optedOut(people.map((p) => p.email));
     const items = [];
     for (const p of people.filter((x) => !off.has(x.email.toLowerCase()))) {
-      const m = await this.render('RECORDATORIO_PAGO', { nombre: p.firstNames, codigo: p.applicantCode, monto: p.amount, fecha: `${day(p.closesAt)} a las ${hour(p.closesAt)}`, enlace: `${this.d.frontendOrigin}/mi-inscripcion` });
-      items.push({ email: p.email, event: 'RECORDATORIO_PAGO', ...m, dedupeKey: `pago:${p.applicantCode}:${p.stage}`, mandatory: false });
+      const m = await this.render('RECORDATORIO_PAGO', {
+        nombre: p.firstNames,
+        codigo: p.applicantCode,
+        monto: p.amount,
+        fecha: `${day(p.closesAt)} a las ${hour(p.closesAt)}`,
+        enlace: `${this.d.frontendOrigin}/mi-inscripcion`,
+      });
+      items.push({
+        email: p.email,
+        event: 'RECORDATORIO_PAGO',
+        ...m,
+        dedupeKey: `pago:${p.applicantCode}:${p.stage}`,
+        mandatory: false,
+      });
     }
     return this.enqueue(items);
   }
@@ -141,7 +226,12 @@ export class NotificationService {
     for (const e of await this.d.sources.roomNotices()) {
       const items = [];
       for (const p of e.people) {
-        const m = await this.render('AULA_PUBLICADA', { nombre: p.firstNames, codigo: p.applicantCode, examen: e.exam, enlace: `${this.d.frontendOrigin}/buscar-aula` });
+        const m = await this.render('AULA_PUBLICADA', {
+          nombre: p.firstNames,
+          codigo: p.applicantCode,
+          examen: e.exam,
+          enlace: `${this.d.frontendOrigin}/buscar-aula`,
+        });
         items.push({ email: p.email, event: 'AULA_PUBLICADA', ...m, dedupeKey: `aula:${e.examId}:${p.applicantCode}` });
       }
       total += await this.enqueue(items);
@@ -158,9 +248,21 @@ export class NotificationService {
       const items = [];
       for (const p of e.people.filter((x) => !off.has(x.email.toLowerCase()))) {
         const m = await this.render('RECORDATORIO_EXAMEN', {
-          nombre: p.firstNames, codigo: p.applicantCode, examen: e.exam, apertura: hour(e.opens), cierre: hour(e.closes), llevar: e.bring.join(', '), enlace: `${this.d.frontendOrigin}/buscar-aula`,
+          nombre: p.firstNames,
+          codigo: p.applicantCode,
+          examen: e.exam,
+          apertura: hour(e.opens),
+          cierre: hour(e.closes),
+          llevar: e.bring.join(', '),
+          enlace: `${this.d.frontendOrigin}/buscar-aula`,
         });
-        items.push({ email: p.email, event: 'RECORDATORIO_EXAMEN', ...m, dedupeKey: `examen:${e.examId}:${p.applicantCode}`, mandatory: false });
+        items.push({
+          email: p.email,
+          event: 'RECORDATORIO_EXAMEN',
+          ...m,
+          dedupeKey: `examen:${e.examId}:${p.applicantCode}`,
+          mandatory: false,
+        });
       }
       total += await this.enqueue(items);
     }
@@ -168,7 +270,9 @@ export class NotificationService {
   }
 
   private async optedOut(emails: string[]) {
-    const rows = await this.d.persistence.notificationPreference.findMany({ where: { email: { in: emails.map((e) => e.toLowerCase()) }, reminders: false } });
+    const rows = await this.d.persistence.notificationPreference.findMany({
+      where: { email: { in: emails.map((e) => e.toLowerCase()) }, reminders: false },
+    });
     return new Set(rows.map((r) => r.email));
   }
 
@@ -179,50 +283,115 @@ export class NotificationService {
 
   async campaign(input: { subject: string; body: string; segment: Segment }, actorId: string, meta: RequestMeta) {
     const people = await this.d.sources.segment(input.segment);
-    if (!people.length) throw validationError('Ningún postulante cumple ese filtro.', [{ field: 'segment', issue: 'vacío' }]);
-    const c = await this.d.persistence.campaign.create({ data: { subject: input.subject, body: input.body, segment: input.segment as object, recipients: people.length, createdBy: actorId } });
+    if (!people.length)
+      throw validationError('Ningún postulante cumple ese filtro.', [{ field: 'segment', issue: 'vacío' }]);
+    const c = await this.d.persistence.campaign.create({
+      data: {
+        subject: input.subject,
+        body: input.body,
+        segment: input.segment as object,
+        recipients: people.length,
+        createdBy: actorId,
+      },
+    });
     const items = people.map((p) => ({
-      email: p.email, event: 'COMUNICADO', ...fill(input.subject, input.body, { nombre: p.firstNames, codigo: p.applicantCode, enlace: this.d.frontendOrigin }),
-      dedupeKey: `campana:${c.id}:${p.applicantCode}`, campaignId: c.id,
+      email: p.email,
+      event: 'COMUNICADO',
+      ...fill(input.subject, input.body, {
+        nombre: p.firstNames,
+        codigo: p.applicantCode,
+        enlace: this.d.frontendOrigin,
+      }),
+      dedupeKey: `campana:${c.id}:${p.applicantCode}`,
+      campaignId: c.id,
     }));
     await this.enqueue(items);
-    await this.d.audit.record({ actorUserId: actorId, action: 'notification.campaign', resourceType: 'campaign', resourceId: c.id, after: { recipients: people.length, segment: input.segment }, ...meta });
+    await this.d.audit.record({
+      actorUserId: actorId,
+      action: 'notification.campaign',
+      resourceType: 'campaign',
+      resourceId: c.id,
+      after: { recipients: people.length, segment: input.segment },
+      ...meta,
+    });
     return this.campaigns();
   }
 
   async campaigns() {
     const list = await this.d.persistence.campaign.findMany({ orderBy: { createdAt: 'desc' }, take: 30 });
-    const counts = await this.d.persistence.notification.groupBy({ by: ['campaignId', 'status'], where: { campaignId: { in: list.map((c) => c.id) } }, _count: { _all: true } });
+    const counts = await this.d.persistence.notification.groupBy({
+      by: ['campaignId', 'status'],
+      where: { campaignId: { in: list.map((c) => c.id) } },
+      _count: { _all: true },
+    });
     const n = (id: string, s: string) => counts.find((x) => x.campaignId === id && x.status === s)?._count._all ?? 0;
     return list.map((c) => ({
-      id: c.id, subject: c.subject, segment: c.segment, recipients: c.recipients, createdAt: c.createdAt.toISOString(),
-      sent: n(c.id, 'ENVIADA'), pending: n(c.id, 'PENDIENTE'), failed: n(c.id, 'FALLIDA'), bounced: n(c.id, 'REBOTADA'),
+      id: c.id,
+      subject: c.subject,
+      segment: c.segment,
+      recipients: c.recipients,
+      createdAt: c.createdAt.toISOString(),
+      sent: n(c.id, 'ENVIADA'),
+      pending: n(c.id, 'PENDIENTE'),
+      failed: n(c.id, 'FALLIDA'),
+      bounced: n(c.id, 'REBOTADA'),
     }));
   }
 
   // ── Panel: registro de envíos (RF-11.09) ───────────────────────────
   async log(f: { status?: string | undefined; event?: string | undefined; email?: string | undefined; page: number }) {
     const where = {
-      ...(f.status ? { status: f.status as 'ENVIADA' } : {}), ...(f.event ? { event: f.event } : {}), ...(f.email ? { email: { contains: f.email.toLowerCase() } } : {}),
+      ...(f.status ? { status: f.status as 'ENVIADA' } : {}),
+      ...(f.event ? { event: f.event } : {}),
+      ...(f.email ? { email: { contains: f.email.toLowerCase() } } : {}),
     };
     const pageSize = 25;
     const [total, rows, byStatus, byEvent] = await Promise.all([
       this.d.persistence.notification.count({ where }),
-      this.d.persistence.notification.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (f.page - 1) * pageSize, take: pageSize, select: { id: true, email: true, event: true, subject: true, status: true, attempts: true, lastError: true, sentAt: true, createdAt: true } }),
+      this.d.persistence.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (f.page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true,
+          email: true,
+          event: true,
+          subject: true,
+          status: true,
+          attempts: true,
+          lastError: true,
+          sentAt: true,
+          createdAt: true,
+        },
+      }),
       this.d.persistence.notification.groupBy({ by: ['status'], _count: { _all: true } }),
       this.d.persistence.notification.groupBy({ by: ['event'], _count: { _all: true } }),
     ]);
     return {
-      total, page: f.page, pageSize,
-      byStatus: byStatus.map((s) => ({ key: s.status, count: s._count._all })), byEvent: byEvent.map((e) => ({ key: e.event, count: e._count._all })),
+      total,
+      page: f.page,
+      pageSize,
+      byStatus: byStatus.map((s) => ({ key: s.status, count: s._count._all })),
+      byEvent: byEvent.map((e) => ({ key: e.event, count: e._count._all })),
       items: rows.map((r) => ({ ...r, sentAt: r.sentAt?.toISOString() ?? null, createdAt: r.createdAt.toISOString() })),
     };
   }
 
   /** Reintento manual de las fallidas (vuelven a la cola con intentos en cero). */
   async retryFailed(actorId: string, meta: RequestMeta) {
-    const r = await this.d.persistence.notification.updateMany({ where: { status: 'FALLIDA' }, data: { status: 'PENDIENTE', attempts: 0 } });
-    await this.d.audit.record({ actorUserId: actorId, action: 'notification.retry', resourceType: 'notification', resourceId: 'FALLIDA', after: { count: r.count }, ...meta });
+    const r = await this.d.persistence.notification.updateMany({
+      where: { status: 'FALLIDA' },
+      data: { status: 'PENDIENTE', attempts: 0 },
+    });
+    await this.d.audit.record({
+      actorUserId: actorId,
+      action: 'notification.retry',
+      resourceType: 'notification',
+      resourceId: 'FALLIDA',
+      after: { count: r.count },
+      ...meta,
+    });
     return { requeued: r.count };
   }
 
@@ -237,25 +406,43 @@ export class NotificationService {
   async inbox(documentNumber: string, applicantCode: string, meta: RequestMeta) {
     const p = await this.who(documentNumber, applicantCode, meta);
     const [rows, pref] = await Promise.all([
-      this.d.persistence.notification.findMany({ where: { email: p.email.toLowerCase(), status: { in: ['ENVIADA', 'PENDIENTE'] } }, orderBy: { createdAt: 'desc' }, take: 50 }),
+      this.d.persistence.notification.findMany({
+        where: { email: p.email.toLowerCase(), status: { in: ['ENVIADA', 'PENDIENTE'] } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
       this.d.persistence.notificationPreference.findUnique({ where: { email: p.email.toLowerCase() } }),
     ]);
     return {
       reminders: pref?.reminders ?? true,
       unread: rows.filter((r) => !r.readAt).length,
-      items: rows.map((r) => ({ id: r.id, subject: r.subject, text: r.text, event: r.event, read: Boolean(r.readAt), at: r.createdAt.toISOString() })),
+      items: rows.map((r) => ({
+        id: r.id,
+        subject: r.subject,
+        text: r.text,
+        event: r.event,
+        read: Boolean(r.readAt),
+        at: r.createdAt.toISOString(),
+      })),
     };
   }
 
   async markRead(documentNumber: string, applicantCode: string, ids: string[], meta: RequestMeta) {
     const p = await this.who(documentNumber, applicantCode, meta);
-    await this.d.persistence.notification.updateMany({ where: { id: { in: ids }, email: p.email.toLowerCase(), readAt: null }, data: { readAt: this.d.clock.now() } });
+    await this.d.persistence.notification.updateMany({
+      where: { id: { in: ids }, email: p.email.toLowerCase(), readAt: null },
+      data: { readAt: this.d.clock.now() },
+    });
     return this.inbox(documentNumber, applicantCode, meta);
   }
 
   async setReminders(documentNumber: string, applicantCode: string, reminders: boolean, meta: RequestMeta) {
     const p = await this.who(documentNumber, applicantCode, meta);
-    await this.d.persistence.notificationPreference.upsert({ where: { email: p.email.toLowerCase() }, create: { email: p.email.toLowerCase(), reminders }, update: { reminders } });
+    await this.d.persistence.notificationPreference.upsert({
+      where: { email: p.email.toLowerCase() },
+      create: { email: p.email.toLowerCase(), reminders },
+      update: { reminders },
+    });
     return this.inbox(documentNumber, applicantCode, meta);
   }
 }

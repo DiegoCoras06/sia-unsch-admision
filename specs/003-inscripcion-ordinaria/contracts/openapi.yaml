@@ -56,7 +56,36 @@ paths:
           application/json:
             schema:
               type: object
-              required: [documentType, documentNumber, paternalSurname, maternalSurname, firstNames, sex, maritalStatus, birthUbigeo, birthDate, address, residenceUbigeo, economicDependency, mobile, email, photo, schoolUbigeo, schoolName, schoolType, graduationYear, inFourthOrBelow, preparation, attempts, modality, quotaCategory, campus, optionCode, declarationAccepted]
+              required:
+                [
+                  documentType,
+                  documentNumber,
+                  paternalSurname,
+                  maternalSurname,
+                  firstNames,
+                  sex,
+                  maritalStatus,
+                  birthUbigeo,
+                  birthDate,
+                  address,
+                  residenceUbigeo,
+                  economicDependency,
+                  mobile,
+                  email,
+                  photo,
+                  schoolUbigeo,
+                  schoolName,
+                  schoolType,
+                  graduationYear,
+                  inFourthOrBelow,
+                  preparation,
+                  attempts,
+                  modality,
+                  quotaCategory,
+                  campus,
+                  optionCode,
+                  declarationAccepted,
+                ]
               properties:
                 documentType: { type: string, enum: [DNI, CE] }
                 documentNumber: { type: string }

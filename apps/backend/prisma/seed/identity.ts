@@ -20,9 +20,7 @@ export const consentDocument = {
 
 export const permissions = ['me.read', 'me.update', 'applications.own'] as const;
 
-export const roles = [
-  { code: 'APPLICANT', name: 'Postulante', permissions: [...permissions] },
-];
+export const roles = [{ code: 'APPLICANT', name: 'Postulante', permissions: [...permissions] }];
 
 /** Padrón de prueba: el DNI sintético 99900045 está inhabilitado (escenario H1-E4 de 002). */
 export const disqualifiedPersons = [

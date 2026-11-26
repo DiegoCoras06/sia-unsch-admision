@@ -28,7 +28,10 @@ describe('MemoryCache (AC01, caché de contenidos públicos)', () => {
 
   it('no guarda errores: la siguiente petición vuelve a consultar', async () => {
     const cache = new MemoryCache(60_000);
-    const load = jest.fn<() => Promise<string>>().mockRejectedValueOnce(new Error('base caída')).mockResolvedValueOnce('ok');
+    const load = jest
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('base caída'))
+      .mockResolvedValueOnce('ok');
     await expect(cache.get('k', load)).rejects.toThrow('base caída');
     expect(await cache.get('k', load)).toBe('ok');
   });

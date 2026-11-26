@@ -17,10 +17,10 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** una convocatoria nueva "2027-II", **cuando** copio la configuración de "2027-I", **entonces** se duplican etapas, tasas, submodalidades, requisitos y programas, y solo ajusto fechas y montos. *(RF-01.01, RF-01.02)*
-2. **Dado** el cuadro de vacantes, **cuando** lo importo desde Excel, **entonces** el sistema valida que las filas suman su total y muestra diferencias antes de guardar. *(RF-01.05)*
+1. **Dado** una convocatoria nueva "2027-II", **cuando** copio la configuración de "2027-I", **entonces** se duplican etapas, tasas, submodalidades, requisitos y programas, y solo ajusto fechas y montos. _(RF-01.01, RF-01.02)_
+2. **Dado** el cuadro de vacantes, **cuando** lo importo desde Excel, **entonces** el sistema valida que las filas suman su total y muestra diferencias antes de guardar. _(RF-01.05)_
 3. **Dado** una convocatoria publicada, **cuando** intento modificar vacantes, **entonces** el sistema exige una resolución y motivo (RN-03) y lo registra en auditoría.
-4. **Dado** fechas del cronograma, **cuando** las guardo, **entonces** el sistema valida que no haya etapas con fin antes del inicio y advierte superposiciones. *(RF-01.03)*
+4. **Dado** fechas del cronograma, **cuando** las guardo, **entonces** el sistema valida que no haya etapas con fin antes del inicio y advierte superposiciones. _(RF-01.03)_
 
 ---
 
@@ -28,9 +28,9 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** el panel de inicio, **cuando** lo abro, **entonces** veo cuentas creadas, inscripciones por estado, inscritos por modalidad y programa, recaudación, expedientes por estado y ocupación de aulas. *(RF-12.01 a RF-12.05, MEJ-15)*
-2. **Dado** cualquier indicador, **cuando** filtro por convocatoria, modalidad, programa o rango de fechas, **entonces** todos los gráficos se actualizan. *(RF-12.09)*
-3. **Dado** un reporte, **cuando** lo exporto, **entonces** obtengo PDF o Excel con los filtros aplicados. *(RF-12.08)*
+1. **Dado** el panel de inicio, **cuando** lo abro, **entonces** veo cuentas creadas, inscripciones por estado, inscritos por modalidad y programa, recaudación, expedientes por estado y ocupación de aulas. _(RF-12.01 a RF-12.05, MEJ-15)_
+2. **Dado** cualquier indicador, **cuando** filtro por convocatoria, modalidad, programa o rango de fechas, **entonces** todos los gráficos se actualizan. _(RF-12.09)_
+3. **Dado** un reporte, **cuando** lo exporto, **entonces** obtengo PDF o Excel con los filtros aplicados. _(RF-12.08)_
 4. **Dado** mi rol (p. ej. Tesorería), **cuando** abro el panel, **entonces** solo veo los indicadores que me corresponden.
 
 ---
@@ -39,10 +39,10 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** que soy administrador general, **cuando** creo un usuario interno, **entonces** le asigno uno o más roles: Oficina de Admisión, Evaluador documental, Tesorería, Coordinador de examen, Operador de resultados, Soporte, Auditor. *(RF-13.01, RF-13.02)*
-2. **Dado** un usuario interno nuevo, **cuando** inicia sesión por primera vez, **entonces** debe cambiar su contraseña y activar el segundo factor de autenticación. *(RF-13.06)*
-3. **Dado** que un evaluador intenta abrir la conciliación de pagos, **cuando** accede a la dirección directamente, **entonces** recibe "Sin permiso" y el intento queda registrado. *(RF-13.07)*
-4. **Dado** una cuenta comprometida, **cuando** el administrador la suspende, **entonces** todas sus sesiones se cierran de inmediato. *(RF-13.03, RF-13.08)*
+1. **Dado** que soy administrador general, **cuando** creo un usuario interno, **entonces** le asigno uno o más roles: Oficina de Admisión, Evaluador documental, Tesorería, Coordinador de examen, Operador de resultados, Soporte, Auditor. _(RF-13.01, RF-13.02)_
+2. **Dado** un usuario interno nuevo, **cuando** inicia sesión por primera vez, **entonces** debe cambiar su contraseña y activar el segundo factor de autenticación. _(RF-13.06)_
+3. **Dado** que un evaluador intenta abrir la conciliación de pagos, **cuando** accede a la dirección directamente, **entonces** recibe "Sin permiso" y el intento queda registrado. _(RF-13.07)_
+4. **Dado** una cuenta comprometida, **cuando** el administrador la suspende, **entonces** todas sus sesiones se cierran de inmediato. _(RF-13.03, RF-13.08)_
 
 ---
 
@@ -50,7 +50,7 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** que soy auditor, **cuando** busco por postulante, usuario, módulo o fecha, **entonces** veo quién hizo qué, cuándo, desde dónde y el valor anterior y nuevo. *(RF-13.04, RF-13.05)*
+1. **Dado** que soy auditor, **cuando** busco por postulante, usuario, módulo o fecha, **entonces** veo quién hizo qué, cuándo, desde dónde y el valor anterior y nuevo. _(RF-13.04, RF-13.05)_
 2. **Dado** cualquier usuario, incluido el administrador, **cuando** intenta modificar o borrar un registro de auditoría, **entonces** no existe opción para hacerlo (RNF-10).
 
 ---
@@ -68,8 +68,8 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** el editor de contenido, **cuando** publico un comunicado o fe de erratas, **entonces** aparece en el portal y puedo enviarlo a un segmento (modalidad, programa, estado). *(RF-01.08, RF-11.08)*
-2. **Dado** los mensajes de autoridades, carrusel y textos institucionales, **cuando** los edito, **entonces** se actualiza el portal sin intervención técnica (MEJ-17). *(RF-14.01)*
+1. **Dado** el editor de contenido, **cuando** publico un comunicado o fe de erratas, **entonces** aparece en el portal y puedo enviarlo a un segmento (modalidad, programa, estado). _(RF-01.08, RF-11.08)_
+2. **Dado** los mensajes de autoridades, carrusel y textos institucionales, **cuando** los edito, **entonces** se actualiza el portal sin intervención técnica (MEJ-17). _(RF-14.01)_
 
 ---
 
@@ -86,10 +86,10 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 **Escenarios de aceptación:**
 
-1. **Dado** los interruptores de funciones, **cuando** desactivo "Reinscripción", **entonces** el botón desaparece del portal aunque la fecha esté vigente. *(RF-14.08)*
-2. **Dado** la sección de integraciones, **cuando** cambio el proveedor de identidad de "simulado" a "real", **entonces** las credenciales se piden y se guardan cifradas; nunca se muestran completas después. *(RF-14.04 a RF-14.07)*
-3. **Dado** una falla de integración, **cuando** la consulto, **entonces** veo el error, reintentos y puedo reintentar manualmente. *(RF-14.09)*
-4. **Dado** el panel de respaldos, **cuando** lo abro, **entonces** veo la fecha del último respaldo y de la última prueba de restauración. *(RF-14.10, RNF-06)*
+1. **Dado** los interruptores de funciones, **cuando** desactivo "Reinscripción", **entonces** el botón desaparece del portal aunque la fecha esté vigente. _(RF-14.08)_
+2. **Dado** la sección de integraciones, **cuando** cambio el proveedor de identidad de "simulado" a "real", **entonces** las credenciales se piden y se guardan cifradas; nunca se muestran completas después. _(RF-14.04 a RF-14.07)_
+3. **Dado** una falla de integración, **cuando** la consulto, **entonces** veo el error, reintentos y puedo reintentar manualmente. _(RF-14.09)_
+4. **Dado** el panel de respaldos, **cuando** lo abro, **entonces** veo la fecha del último respaldo y de la última prueba de restauración. _(RF-14.10, RNF-06)_
 
 ### Casos límite
 
@@ -101,21 +101,21 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 ### Requisitos funcionales
 
-- **FR-001**: El sistema DEBE permitir crear, copiar y editar convocatorias con cronograma, modalidades, submodalidades, programas, vacantes, tasas y requisitos. *(RF-01.01 a RF-01.05, RF-14.02, RF-14.03)*
-- **FR-002**: El sistema DEBE importar el cuadro de vacantes desde Excel validando totales. *(RF-01.05)*
-- **FR-003**: El sistema DEBE bloquear cambios a vacantes publicadas salvo con resolución registrada. *(RN-03)*
-- **FR-004**: El sistema DEBE mostrar un panel con indicadores filtrables y exportables a PDF y Excel. *(RF-12.01 a RF-12.10)*
-- **FR-005**: El sistema DEBE gestionar usuarios internos, roles y permisos, con activar, suspender y desactivar. *(RF-13.01 a RF-13.03)*
-- **FR-006**: El sistema DEBE exigir segundo factor para todo usuario interno. *(RF-13.06)*
-- **FR-007**: El sistema DEBE verificar permisos en el servidor para cada operación. *(RF-13.07)*
-- **FR-008**: El sistema DEBE registrar auditoría inmutable de operaciones críticas y permitir su consulta. *(RF-13.04, RF-13.05)*
-- **FR-009**: El sistema DEBE gestionar el registro de inhabilitados. *(RN-09)*
-- **FR-010**: El sistema DEBE permitir publicar comunicados segmentados y editar contenido institucional. *(RF-01.08, RF-14.01)*
-- **FR-011**: El sistema DEBE gestionar denuncias y consultas con número de caso y estados. *(MEJ-14)*
-- **FR-012**: El sistema DEBE permitir activar o desactivar funciones por etapa. *(RF-14.08)*
-- **FR-013**: El sistema DEBE gestionar parámetros de integraciones con secretos cifrados y registro de fallas con reintento. *(RF-14.04 a RF-14.07, RF-14.09)*
-- **FR-014**: El sistema DEBE gestionar políticas de retención y eliminación de datos personales. *(RF-13.10)*
-- **FR-015**: El sistema DEBE mostrar y configurar los respaldos (copias automáticas de RDS con retención de 7 días, instantánea manual antes de publicar resultados) y documentar el procedimiento de restauración con su objetivo de recuperación. *(RF-14.10)*
+- **FR-001**: El sistema DEBE permitir crear, copiar y editar convocatorias con cronograma, modalidades, submodalidades, programas, vacantes, tasas y requisitos. _(RF-01.01 a RF-01.05, RF-14.02, RF-14.03)_
+- **FR-002**: El sistema DEBE importar el cuadro de vacantes desde Excel validando totales. _(RF-01.05)_
+- **FR-003**: El sistema DEBE bloquear cambios a vacantes publicadas salvo con resolución registrada. _(RN-03)_
+- **FR-004**: El sistema DEBE mostrar un panel con indicadores filtrables y exportables a PDF y Excel. _(RF-12.01 a RF-12.10)_
+- **FR-005**: El sistema DEBE gestionar usuarios internos, roles y permisos, con activar, suspender y desactivar. _(RF-13.01 a RF-13.03)_
+- **FR-006**: El sistema DEBE exigir segundo factor para todo usuario interno. _(RF-13.06)_
+- **FR-007**: El sistema DEBE verificar permisos en el servidor para cada operación. _(RF-13.07)_
+- **FR-008**: El sistema DEBE registrar auditoría inmutable de operaciones críticas y permitir su consulta. _(RF-13.04, RF-13.05)_
+- **FR-009**: El sistema DEBE gestionar el registro de inhabilitados. _(RN-09)_
+- **FR-010**: El sistema DEBE permitir publicar comunicados segmentados y editar contenido institucional. _(RF-01.08, RF-14.01)_
+- **FR-011**: El sistema DEBE gestionar denuncias y consultas con número de caso y estados. _(MEJ-14)_
+- **FR-012**: El sistema DEBE permitir activar o desactivar funciones por etapa. _(RF-14.08)_
+- **FR-013**: El sistema DEBE gestionar parámetros de integraciones con secretos cifrados y registro de fallas con reintento. _(RF-14.04 a RF-14.07, RF-14.09)_
+- **FR-014**: El sistema DEBE gestionar políticas de retención y eliminación de datos personales. _(RF-13.10)_
+- **FR-015**: El sistema DEBE mostrar y configurar los respaldos (copias automáticas de RDS con retención de 7 días, instantánea manual antes de publicar resultados) y documentar el procedimiento de restauración con su objetivo de recuperación. _(RF-14.10)_
 
 ### Entidades clave
 
@@ -144,35 +144,35 @@ Como personal de la Oficina de Admisión, quiero crear la convocatoria con su cr
 
 25 de 28 requisitos del catálogo citados en esta funcionalidad están implementados y probados. Fuente: [matriz de trazabilidad](../../docs/trazabilidad-requisitos.md).
 
-| RF | Estado | Detalle |
-|---|---|---|
-| RF-01.01 | ✅ | Crear (copiando una convocatoria), modificar y administrar desde el panel |
-| RF-01.02 | ✅ | Modalidades, submodalidades y tipos de vacante editables en «Catálogo del concurso», con auditoría |
-| RF-01.03 | ✅ | Fechas de cada etapa editables, validadas y auditadas |
-| RF-01.05 | ✅ | Vacantes editables por programa y categoría, con resolución si está publicada |
-| RF-01.08 | ✅ | Comunicados y fe de erratas publicados desde el panel |
-| RF-11.08 | ✅ | Comunicados por modalidad, programa y estado con enviados, en cola y fallidos |
-| RF-12.01 | ✅ | Panel con inscritos, aptos, recaudación y pendientes |
-| RF-12.05 | ✅ | Ocupación por aula en la distribución y por examen en el panel de indicadores |
-| RF-12.08 | ✅ | Exportación a Excel y PDF con los filtros aplicados |
-| RF-12.09 | ✅ | Filtros por modalidad, programa y fechas |
-| RF-12.10 | ✅ | Consultas, respuestas con IA, derivaciones, tokens y costo del asistente |
-| RF-13.01 | ✅ | Crear y administrar usuarios internos |
-| RF-13.02 | ✅ | 8 roles con permisos verificados en el servidor |
-| RF-13.03 | ✅ | Activar, suspender y desactivar con cierre de sesiones |
-| RF-13.04 | ✅ | Auditoría solo-inserción protegida con trigger |
-| RF-13.05 | ✅ | Consulta de auditoría por usuario, acción, recurso y fechas |
-| RF-13.06 | ✅ | Segundo factor TOTP obligatorio para el personal |
-| RF-13.07 | ✅ | Permiso por ruta; cada acceso denegado queda auditado |
-| RF-13.08 | ✅ | Suspender, cambiar roles o restablecer cierra todas las sesiones |
-| RF-13.10 | ✅ | Plazos de retención editables; depuración diaria de conversaciones y anonimización de inscripciones de convocatorias anteriores (con sus archivos) |
-| RF-14.01 | ✅ | Textos, comunicados e imágenes de la portada editables en el panel (con descripción y vuelta a la original) |
-| RF-14.02 | ✅ | Tasas editables por convocatoria, con confirmación si es 0 |
-| RF-14.03 | ✅ | Documentos exigidos de la convocatoria editables (nombre, contenido, artículo y formatos) |
-| RF-14.04 | 🟡 | Parámetros de RENIEC visibles y enmascarados en el panel; se configuran en el servidor |
-| RF-14.07 | 🟡 | Proveedor de correo visible en el panel; se configura en el servidor |
-| RF-14.08 | ✅ | Funciones activadas según la etapa del proceso |
-| RF-14.09 | ✅ | Fallas de integración listadas con reintento controlado |
-| RF-14.10 | 🟡 | Política de respaldo y procedimiento de restauración en el panel; las copias reales dependen del despliegue en AWS |
+| RF       | Estado | Detalle                                                                                                                                            |
+| -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-01.01 | ✅     | Crear (copiando una convocatoria), modificar y administrar desde el panel                                                                          |
+| RF-01.02 | ✅     | Modalidades, submodalidades y tipos de vacante editables en «Catálogo del concurso», con auditoría                                                 |
+| RF-01.03 | ✅     | Fechas de cada etapa editables, validadas y auditadas                                                                                              |
+| RF-01.05 | ✅     | Vacantes editables por programa y categoría, con resolución si está publicada                                                                      |
+| RF-01.08 | ✅     | Comunicados y fe de erratas publicados desde el panel                                                                                              |
+| RF-11.08 | ✅     | Comunicados por modalidad, programa y estado con enviados, en cola y fallidos                                                                      |
+| RF-12.01 | ✅     | Panel con inscritos, aptos, recaudación y pendientes                                                                                               |
+| RF-12.05 | ✅     | Ocupación por aula en la distribución y por examen en el panel de indicadores                                                                      |
+| RF-12.08 | ✅     | Exportación a Excel y PDF con los filtros aplicados                                                                                                |
+| RF-12.09 | ✅     | Filtros por modalidad, programa y fechas                                                                                                           |
+| RF-12.10 | ✅     | Consultas, respuestas con IA, derivaciones, tokens y costo del asistente                                                                           |
+| RF-13.01 | ✅     | Crear y administrar usuarios internos                                                                                                              |
+| RF-13.02 | ✅     | 8 roles con permisos verificados en el servidor                                                                                                    |
+| RF-13.03 | ✅     | Activar, suspender y desactivar con cierre de sesiones                                                                                             |
+| RF-13.04 | ✅     | Auditoría solo-inserción protegida con trigger                                                                                                     |
+| RF-13.05 | ✅     | Consulta de auditoría por usuario, acción, recurso y fechas                                                                                        |
+| RF-13.06 | ✅     | Segundo factor TOTP obligatorio para el personal                                                                                                   |
+| RF-13.07 | ✅     | Permiso por ruta; cada acceso denegado queda auditado                                                                                              |
+| RF-13.08 | ✅     | Suspender, cambiar roles o restablecer cierra todas las sesiones                                                                                   |
+| RF-13.10 | ✅     | Plazos de retención editables; depuración diaria de conversaciones y anonimización de inscripciones de convocatorias anteriores (con sus archivos) |
+| RF-14.01 | ✅     | Textos, comunicados e imágenes de la portada editables en el panel (con descripción y vuelta a la original)                                        |
+| RF-14.02 | ✅     | Tasas editables por convocatoria, con confirmación si es 0                                                                                         |
+| RF-14.03 | ✅     | Documentos exigidos de la convocatoria editables (nombre, contenido, artículo y formatos)                                                          |
+| RF-14.04 | 🟡     | Parámetros de RENIEC visibles y enmascarados en el panel; se configuran en el servidor                                                             |
+| RF-14.07 | 🟡     | Proveedor de correo visible en el panel; se configura en el servidor                                                                               |
+| RF-14.08 | ✅     | Funciones activadas según la etapa del proceso                                                                                                     |
+| RF-14.09 | ✅     | Fallas de integración listadas con reintento controlado                                                                                            |
+| RF-14.10 | 🟡     | Política de respaldo y procedimiento de restauración en el panel; las copias reales dependen del despliegue en AWS                                 |
 
 ✅ implementado y probado · 🟡 parcial (lo que falta depende de un servicio externo o está anotado) · ⏳ pendiente

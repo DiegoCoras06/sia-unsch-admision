@@ -2,7 +2,11 @@ import { nextCounterValue } from '../../../shared/db/counters.js';
 import type { Db, Tx } from '../../../shared/db/prisma.js';
 import {
   DuplicateApplicationError,
-  type ApplicationFilter, type ApplicationRecord, type InscriptionRepository, type InscriptionUnitOfWork, type NewApplication,
+  type ApplicationFilter,
+  type ApplicationRecord,
+  type InscriptionRepository,
+  type InscriptionUnitOfWork,
+  type NewApplication,
 } from '../application/inscription-repository.js';
 import type { InscriptionStatus } from '../domain/inscription-rules.js';
 
@@ -17,7 +21,14 @@ function where(f: ApplicationFilter) {
     ...(f.modalities ? { modality: { in: f.modalities } } : {}),
     ...(f.optionCode ? { optionCode: f.optionCode } : {}),
     ...(f.text
-      ? { OR: [{ applicantCode: { contains: f.text } }, { documentNumber: { contains: f.text } }, { paternalSurname: { contains: f.text } }, { firstNames: { contains: f.text } }] }
+      ? {
+          OR: [
+            { applicantCode: { contains: f.text } },
+            { documentNumber: { contains: f.text } },
+            { paternalSurname: { contains: f.text } },
+            { firstNames: { contains: f.text } },
+          ],
+        }
       : {}),
   };
 }
@@ -50,7 +61,10 @@ class PrismaInscriptionUnitOfWork implements InscriptionUnitOfWork {
   }
 
   async markPaidIfPending(applicantCode: string) {
-    const r = await this.tx.application.updateMany({ where: { applicantCode, status: 'PENDIENTE_PAGO' }, data: { status: 'APTA' } });
+    const r = await this.tx.application.updateMany({
+      where: { applicantCode, status: 'PENDIENTE_PAGO' },
+      data: { status: 'APTA' },
+    });
     return r.count === 1;
   }
 
@@ -59,9 +73,18 @@ class PrismaInscriptionUnitOfWork implements InscriptionUnitOfWork {
     await this.tx.application.update({
       where: { id: a.id },
       data: {
-        documentNumber: `X${a.applicantCode}`, paternalSurname: 'ANONIMIZADO', maternalSurname: '', firstNames: 'ANONIMIZADO',
-        address: '', phone: null, mobile: '000000000', email: `${a.applicantCode}@anonimizado.invalid`, photoKey: '',
-        birthDate: new Date('1900-01-01'), schoolName: '', anonymizedAt: now,
+        documentNumber: `X${a.applicantCode}`,
+        paternalSurname: 'ANONIMIZADO',
+        maternalSurname: '',
+        firstNames: 'ANONIMIZADO',
+        address: '',
+        phone: null,
+        mobile: '000000000',
+        email: `${a.applicantCode}@anonimizado.invalid`,
+        photoKey: '',
+        birthDate: new Date('1900-01-01'),
+        schoolName: '',
+        anonymizedAt: now,
       },
     });
   }
@@ -76,7 +99,10 @@ export class PrismaInscriptionRepository implements InscriptionRepository {
   }
 
   async existsForDocument(callCode: string, documentType: string, documentNumber: string, modality?: string) {
-    const row = await this.db.application.findFirst({ where: { callCode, documentType, documentNumber, ...(modality ? { modality } : {}) }, select: { id: true } });
+    const row = await this.db.application.findFirst({
+      where: { callCode, documentType, documentNumber, ...(modality ? { modality } : {}) },
+      select: { id: true },
+    });
     return Boolean(row);
   }
 
@@ -86,15 +112,24 @@ export class PrismaInscriptionRepository implements InscriptionRepository {
 
   listByDocument(documentType: string, documentNumber: string, opts: { excludeAnnulled?: boolean } = {}) {
     return this.db.application.findMany({
-      where: { documentType, documentNumber: documentNumber.toUpperCase(), ...(opts.excludeAnnulled ? { status: { not: 'ANULADA' as const } } : {}) },
+      where: {
+        documentType,
+        documentNumber: documentNumber.toUpperCase(),
+        ...(opts.excludeAnnulled ? { status: { not: 'ANULADA' as const } } : {}),
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  list(filter: ApplicationFilter, opts: { orderBy?: 'createdAt' | 'applicantCode'; skip?: number; take?: number } = {}) {
-    const orderBy = opts.orderBy === 'applicantCode' ? { applicantCode: 'asc' as const } : { createdAt: 'desc' as const };
+  list(
+    filter: ApplicationFilter,
+    opts: { orderBy?: 'createdAt' | 'applicantCode'; skip?: number; take?: number } = {},
+  ) {
+    const orderBy =
+      opts.orderBy === 'applicantCode' ? { applicantCode: 'asc' as const } : { createdAt: 'desc' as const };
     return this.db.application.findMany({
-      where: where(filter), orderBy,
+      where: where(filter),
+      orderBy,
       ...(opts.skip !== undefined ? { skip: opts.skip } : {}),
       ...(opts.take !== undefined ? { take: opts.take } : {}),
     });
@@ -105,15 +140,23 @@ export class PrismaInscriptionRepository implements InscriptionRepository {
   }
 
   listExpired(currentCallCode: string, before: Date, take: number) {
-    return this.db.application.findMany({ where: { callCode: { not: currentCallCode }, createdAt: { lt: before }, anonymizedAt: null }, take });
+    return this.db.application.findMany({
+      where: { callCode: { not: currentCallCode }, createdAt: { lt: before }, anonymizedAt: null },
+      take,
+    });
   }
 
   async documentKeys(applicantCode: string) {
-    return (await this.db.applicationDocument.findMany({ where: { applicantCode }, select: { fileKey: true } })).map((d) => d.fileKey);
+    return (await this.db.applicationDocument.findMany({ where: { applicantCode }, select: { fileKey: true } })).map(
+      (d) => d.fileKey,
+    );
   }
 
   findCepreAwardee(callCode: string, documentNumber: string) {
-    return this.db.cepreAwardee.findUnique({ where: { callCode_documentNumber: { callCode, documentNumber } }, select: { optionCode: true, cycle: true } });
+    return this.db.cepreAwardee.findUnique({
+      where: { callCode_documentNumber: { callCode, documentNumber } },
+      select: { optionCode: true, cycle: true },
+    });
   }
 
   async latestPublishedCondition(applicantCode: string) {

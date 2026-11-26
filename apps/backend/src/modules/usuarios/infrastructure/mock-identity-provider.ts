@@ -10,11 +10,15 @@ export class MockIdentityProvider implements IdentityProvider {
   readonly name = 'MOCK' as const;
   private readonly byDni = new Map(syntheticIdentities.map((i) => [i.dni, i]));
 
-  constructor(private readonly timeoutMs = 10_000, private readonly today: () => Date = () => new Date()) {}
+  constructor(
+    private readonly timeoutMs = 10_000,
+    private readonly today: () => Date = () => new Date(),
+  ) {}
 
   async lookupDni(dni: string, checkDigit?: string): Promise<IdentityLookupResult> {
     const identity = this.byDni.get(dni);
-    if (!identity || (checkDigit !== undefined && identity.checkDigit !== checkDigit.toUpperCase())) return { kind: 'NOT_MATCHED' };
+    if (!identity || (checkDigit !== undefined && identity.checkDigit !== checkDigit.toUpperCase()))
+      return { kind: 'NOT_MATCHED' };
     if (identity.scenario === 'PROVIDER_TIMEOUT') {
       // Simula un proveedor que no responde dentro del tiempo de espera (RNF-08).
       await new Promise((resolve) => setTimeout(resolve, Math.min(this.timeoutMs, 10_000)));
