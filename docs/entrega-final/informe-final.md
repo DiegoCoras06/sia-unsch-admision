@@ -113,8 +113,9 @@ deben guardar claves AWS permanentes en GitHub.
 ## 10. Despliegue, dominio, DNS y CDN
 
 ADR-009 propone S3 + CloudFront, API Gateway + Lambda, Lambda worker, SQS y RDS. ADR-020 define la caché de CloudFront.
-Antes de la entrega definitiva se deben anexar URL HTTPS, registros DNS, distribución CDN, health check desplegado, k6
-contra AWS y una ejecución del pipeline CD.
+La pila web CDK ya prepara S3 privado, OAC, CloudFront, `/api/*`, HTTPS y caché selectiva, con pruebas y síntesis local;
+no se ha desplegado. Antes de la entrega definitiva se deben anexar URL HTTPS, registros DNS, distribución CDN, health
+check desplegado, k6 contra AWS y una ejecución del pipeline CD. El detalle está en `docs/aws-cloudfront.md`.
 
 ## 11. Conclusiones
 

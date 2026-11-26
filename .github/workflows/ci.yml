@@ -76,6 +76,12 @@ jobs:
         run: npm run build -w @sia/contracts
       - name: Compilar Angular
         run: npm run build -w @sia/frontend
+      - name: Revisar tipos de la infraestructura CDK
+        run: npm run typecheck -w @sia/infra
+      - name: Probar la plantilla CloudFront
+        run: npm run test -w @sia/infra
+      - name: Sintetizar CloudFormation sin desplegar
+        run: npm run synth -w @sia/infra
 
   e2e:
     name: E2E (PostgreSQL + API + Angular)

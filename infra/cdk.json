@@ -1,0 +1,7 @@
+{
+  "app": "npx tsx bin/sia-unsch.ts",
+  "context": {
+    "environment": "demo",
+    "region": "us-east-2"
+  }
+}

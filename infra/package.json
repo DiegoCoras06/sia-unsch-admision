@@ -1,0 +1,22 @@
+{
+  "name": "@sia/infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test test/web-stack.test.ts",
+    "synth": "cdk synth --quiet",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.278.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "aws-cdk": "2.1149.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}

@@ -60,3 +60,11 @@ El sistema se presentará **desplegado en AWS**. La carga es estacional y, fuera
 
 - `cdk diff` revisado antes de cada despliegue.
 - Lista de verificación de seguridad: RDS sin acceso público, buckets con bloqueo público, secretos fuera del repositorio.
+
+## Estado de implementación (26/11/2026)
+
+La pila `WebStack` quedó preparada en `infra/` con S3 privado, OAC, distribución CloudFront, origen `/api/*` hacia API
+Gateway, políticas separadas para rutas públicas y privadas, HTTPS, cabeceras de seguridad y publicación del build
+Angular. La plantilla se valida con pruebas automatizadas y `cdk synth` en CI. No se desplegó ningún recurso; las pilas
+`Network`, `Data` y `Api`, el certificado, DNS y el despliegue continúan reservados para Sprint 3. Detalle operativo en
+`docs/aws-cloudfront.md`.

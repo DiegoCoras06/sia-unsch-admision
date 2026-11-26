@@ -11,7 +11,7 @@
 |   7 | Interfaz y UX                     |         ✅         | responsive, axe, Lighthouse y rediseños | SUS con usuarios reales, recomendable    |
 |   8 | Escalabilidad frontend/backend    |      ✅ local      | lazy loading, caché y k6 2000 VU        | Repetir desplegado                       |
 |   9 | Escalabilidad de base de datos    |      ✅ local      | prueba de concurrencia del 26/11        | Medir RDS restaurado en Sprint 3         |
-|  10 | Dominio, DNS y CDN                |         ❌         | ADR-009 y ADR-020                       | Desplegar CloudFront, HTTPS y DNS        |
+|  10 | Dominio, DNS y CDN                |         🟡         | CDK, S3 privado, OAC y CloudFront       | Desplegar, asociar dominio y validar DNS |
 |  11 | Caché                             |         ✅         | memoria, HTTP, invalidación y k6        | Activar CloudFront al desplegar          |
 |  12 | CI/CD                             |         🟡         | CI completo y compilación Lambda        | Ejecutar CD con OIDC de AWS              |
 |  13 | Carga k6                          |      ✅ local      | 1 597 216 peticiones; p95 589 ms        | Repetir contra AWS                       |
@@ -22,8 +22,8 @@
 ## Estado global
 
 - Completos o demostrables localmente: **13**.
-- Parcial: **1** — CD.
-- Pendientes de despliegue: **2** — DNS/CDN y validación final en AWS.
+- Parciales: **2** — CDN/DNS con IaC sin desplegar y CD sin ejecutar.
+- Pendiente transversal: despliegue y validación final en AWS durante Sprint 3.
 
 No se debe marcar un servicio AWS como terminado sin URL, captura, health check y ejecución del pipeline. Esta matriz se
 actualiza inmediatamente después del despliegue.

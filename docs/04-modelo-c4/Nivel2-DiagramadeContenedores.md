@@ -209,12 +209,12 @@ flowchart TB
 
 | Contenedor                             | Estado                                                                                                                                   |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Aplicación Web (Angular)               | ✅ Implementada; se publica en S3 + CloudFront en el Paso 11                                                                             |
+| Aplicación Web (Angular)               | ✅ Implementada; publicación S3 + CloudFront preparada en CDK y pendiente de despliegue en Sprint 3                                      |
 | Backend API REST                       | ✅ Implementado (`server.ts` en local, `lambda-api.ts` para Lambda)                                                                      |
 | Worker de tareas                       | ✅ Código listo (`lambda-worker.ts`); en local las tareas corren en el mismo proceso                                                     |
 | Cola de Mensajes (Amazon SQS)          | ✅ Código y pruebas listos (ADR-021); ⏳ la cola se crea en el Paso 11. Sin `SQS_QUEUE_URL`, los eventos se procesan en el mismo proceso |
 | Base de datos                          | ✅ Amazon RDS PostgreSQL en uso                                                                                                          |
 | Almacenamiento de archivos             | ✅ Amazon S3 en uso                                                                                                                      |
-| API Gateway, CloudFront, Route 53, ACM | ⏳ Paso 11                                                                                                                               |
+| API Gateway, CloudFront, Route 53, ACM | 🟡 CloudFront, S3 y OAC preparados en IaC; API Gateway, certificado, DNS y despliegue quedan para Sprint 3                               |
 
 Esta versión reemplaza Redis de la propuesta inicial; el motivo está en `01-analisis-del-sistema/07-decisiones-arquitectonicas.md`.
