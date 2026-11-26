@@ -111,7 +111,7 @@ carpetas de solo lectura pasaron completas con Newman el 20/11/2026: 22 peticion
 | 1 y 10 usuarios, antes y después de la caché del catálogo | `calidad/resultados/2026-11-15-k6-rendimiento-*.txt`                   |
 | 50 a 2000 usuarios, antes de la caché de contenidos       | `calidad/resultados/2026-11-20-k6-carga-2000-sin-cache-contenidos.txt` |
 | 50 a 2000 usuarios, con la caché de contenidos            | `calidad/resultados/2026-11-20-k6-carga-2000.txt`                      |
-| 50 a 2000 usuarios, TTL 0 y single-flight                 | `calidad/resultados/2026-11-26-k6-sin-cache-single-flight-2000.txt`    |
+| 50 a 2000 usuarios, TTL 0 y single-flight                 | `calidad/resultados/2026-11-26-k6-carga-2000-sin-cache-contenidos.txt` |
 
 Resultado con la caché de contenidos (1 597 216 peticiones, solo lectura, API en la computadora y base en RDS):
 

@@ -185,7 +185,8 @@ lectura posterior siempre vuelve a PostgreSQL, por lo que no existe caché de co
 
 La prueba produjo 886 476 peticiones con p95 total de 1525 ms y 0 % de errores. En la etapa de 2000 VU el p95 fue
 1682 ms y el máximo global 2035 ms. Todas las etapas cumplieron la meta de p95 menor a 3 s y errores menores a 1 %. El
-reporte y la comparación con la versión anterior están en `calidad/resultados/2026-11-26-k6-sin-cache.md`.
+resultado bruto está en `calidad/resultados/2026-11-26-k6-carga-2000-sin-cache-contenidos.txt`; el reporte y la
+comparación con la versión anterior están en `calidad/resultados/2026-11-26-k6-sin-cache.md`.
 
 ## 6. Recomendaciones para el pico real de inscripción (10 000 a 15 000 personas)
 
