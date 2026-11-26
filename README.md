@@ -279,6 +279,9 @@ Visitante consulta convocatoria, vacantes y tasa (001) → se inscribe sin cuent
 
 ## 5. Documentación de referencia
 
+- [Informe final](docs/entrega-final/informe-final.md)
+- [Matriz de los 16 criterios](docs/entrega-final/matriz-criterios.md)
+- [Presentación y defensa técnica](docs/entrega-final/presentacion-y-defensa.md)
 - [Constitución](.specify/memory/constitution.md)
 - [Arquitectura (C4 y despliegue AWS)](docs/arquitectura.md)
 - [Decisiones de arquitectura (ADR)](docs/adr/README.md)
