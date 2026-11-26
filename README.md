@@ -6,7 +6,7 @@ Proyecto académico del curso de **Arquitectura de Software** (UNSCH): rediseño
 
 ---
 
-## Cómo ejecutarlo (Windows, sin Docker)
+## Cómo ejecutarlo
 
 Requisitos: **Node.js 22 o superior**.
 
