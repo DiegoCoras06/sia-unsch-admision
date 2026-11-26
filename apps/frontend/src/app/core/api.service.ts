@@ -60,6 +60,7 @@ export type FichaVerification =
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
+  private readonly idempotency = () => ({ 'Idempotency-Key': crypto.randomUUID() });
 
   private get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Observable<T> {
     let p = new HttpParams();
@@ -107,7 +108,7 @@ export class ApiService {
     this.http.post<ApiResponse<{ message: string }>>(`${API}/inscriptions/code-reminder`, { documentNumber }).pipe(map((r) => r.data));
   inscriptionOptions = () => this.get<InscriptionOptionsDto>('/inscriptions/options');
   register = (body: InscriptionRequestDto) =>
-    this.http.post<ApiResponse<InscriptionSummaryDto>>(`${API}/inscriptions`, body).pipe(map((r) => r.data));
+    this.http.post<ApiResponse<InscriptionSummaryDto>>(`${API}/inscriptions`, body, { headers: this.idempotency() }).pipe(map((r) => r.data));
   inscriptionStatus = (documentNumber: string, applicantCode: string) =>
     this.get<InscriptionSummaryDto>('/inscriptions/status', { documentNumber, applicantCode });
 
@@ -169,10 +170,10 @@ export class ApiService {
 
   // ── 005 Pagos en línea con Culqi: tarjeta y Yape (ADR-024) ─────────
   paymentSession = (documentNumber: string, applicantCode: string) =>
-    this.http.post<ApiResponse<PaymentSessionDto>>(`${API}/payments/session`, { documentNumber, applicantCode }).pipe(map((r) => r.data));
+    this.http.post<ApiResponse<PaymentSessionDto>>(`${API}/payments/session`, { documentNumber, applicantCode }, { headers: this.idempotency() }).pipe(map((r) => r.data));
   /** Cobra el token que entregó Culqi Checkout (o el de la pasarela simulada). */
   paymentCharge = (documentNumber: string, applicantCode: string, transactionId: string, token: string) =>
-    this.http.post<ApiResponse<PaymentAttemptResultDto>>(`${API}/payments/charge`, { documentNumber, applicantCode, transactionId, token }).pipe(map((r) => r.data));
+    this.http.post<ApiResponse<PaymentAttemptResultDto>>(`${API}/payments/charge`, { documentNumber, applicantCode, transactionId, token }, { headers: this.idempotency() }).pipe(map((r) => r.data));
   paymentStatus = (documentNumber: string, applicantCode: string) =>
     this.get<PaymentStatusDto>('/payments/status', { documentNumber, applicantCode });
   // ── 009 Asistente virtual (ADR-017) ──────────────────────────────

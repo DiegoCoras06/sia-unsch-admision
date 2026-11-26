@@ -46,7 +46,7 @@ const PANEL: [RegExp, string][] = [
   [/^\/admin\/(calls|catalog)/, 'Convocatorias'],
   [/^\/admin\/(inscriptions|cepre-awardees)/, 'Inscripciones'],
   [/^\/admin\/payments/, 'Pagos'],
-  [/^\/admin\/(announcements|content-blocks|site-assets|features)/, 'Configuración'],
+  [/^\/admin\/(announcements|content-blocks|site-assets|features|reliability)/, 'Configuración'],
   [/^\/admin\/(knowledge|assistant)/, 'Asistente'],
   [/^\/admin\/(dashboard|reports|usability)/, 'Reportes'],
   [/^\/admin\/(audit|cases|system|disqualified|failures|security|integrations)/, 'Seguridad'],
@@ -97,7 +97,7 @@ for (const file of files) {
   const matches = [...text.matchAll(ROUTE)];
   matches.forEach((m, i) => {
     const [, method, route, rest] = m as unknown as [string, string, string, string];
-    if (rel === 'app.ts' && route !== '/health') return;
+    if (rel === 'app.ts' && !route.startsWith('/health')) return;
     const start = m.index!;
     const block = text.slice(start, i + 1 < matches.length ? matches[i + 1]!.index : undefined);
     // Comentario inmediatamente anterior a la ruta (// … o /** … */).
@@ -110,7 +110,7 @@ for (const file of files) {
       else break;
     }
     const oas = route.replace(/:([A-Za-z]+)/g, '{$1}').replace(/\.(\{type\}|\{format\})$/, '.$1');
-    const tag = moduleTag && !route.startsWith('/admin') ? moduleTag : PANEL.find(([re]) => re.test(route))?.[1] ?? moduleTag ?? (route === '/health' ? 'Sistema' : 'Seguridad');
+    const tag = moduleTag && !route.startsWith('/admin') ? moduleTag : PANEL.find(([re]) => re.test(route))?.[1] ?? moduleTag ?? (route.startsWith('/health') ? 'Sistema' : 'Seguridad');
     if (fromSpec.has(`${method} ${oas}`)) {
       paths[oas]![method]!.tags = [tag]; // un grupo por módulo en Swagger
       return;
@@ -149,6 +149,20 @@ for (const file of files) {
   });
 }
 
+// Las operaciones críticas pueden repetirse de forma segura tras un corte de red.
+for (const route of ['/inscriptions', '/payments/session', '/payments/charge']) {
+  const operation = paths[route]?.post;
+  if (!operation) continue;
+  const parameters = Array.isArray(operation.parameters) ? operation.parameters : [];
+  operation.parameters = [...parameters, { $ref: '#/components/parameters/IdempotencyKey' }];
+  operation.description = [
+    operation.description,
+    'Admite `Idempotency-Key`: al repetir la misma solicitud devuelve la respuesta almacenada y evita efectos duplicados.',
+  ].filter(Boolean).join('\n\n');
+  const responses = operation.responses as Json | undefined;
+  if (responses) responses['409'] ??= { $ref: '#/components/responses/ErrorGeneral' };
+}
+
 (components.schemas as Json).Envelope ??= {
   type: 'object', description: 'Sobre de las respuestas correctas.', properties: { data: { description: 'Resultado de la operación' }, meta: { type: 'object' } },
 };
@@ -158,6 +172,13 @@ for (const file of files) {
 (components.responses as Json).ErrorGeneral ??= {
   description: 'Error con código y mensaje en español (400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 conflicto, 429 demasiados intentos, 503 base de datos no disponible).',
   content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } },
+};
+(components.parameters as Json).IdempotencyKey ??= {
+  name: 'Idempotency-Key',
+  in: 'header',
+  required: false,
+  description: 'Clave única de 8 a 100 caracteres. Debe conservarse al reintentar exactamente la misma operación durante 24 horas.',
+  schema: { type: 'string', minLength: 8, maxLength: 100, pattern: '^[A-Za-z0-9._:-]+$' },
 };
 (components.securitySchemes as Json).bearerAuth ??= { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' };
 

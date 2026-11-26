@@ -4,6 +4,7 @@ import type { Logger } from 'pino';
 import type { ApiErrorBody } from '@sia/contracts';
 import { AppError } from './errors.js';
 import { DB_RETRY_AFTER_SECONDS, isDatabaseUnreachable } from '../db/unreachable.js';
+import type { ReliabilityMetrics } from '../reliability/metrics.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -17,7 +18,7 @@ declare global {
   }
 }
 
-export function requestContext(logger: Logger, hmacSecret: string): RequestHandler {
+export function requestContext(logger: Logger, hmacSecret: string, metrics?: ReliabilityMetrics): RequestHandler {
   return (req, res, next) => {
     req.requestId = randomUUID().replace(/-/g, '').slice(0, 16);
     req.ipHash = createHmac('sha256', hmacSecret).update(req.ip ?? 'desconocida').digest('hex');
@@ -25,8 +26,10 @@ export function requestContext(logger: Logger, hmacSecret: string): RequestHandl
     res.setHeader('X-Request-Id', req.requestId);
     const started = performance.now();
     res.on('finish', () => {
+      const ms = performance.now() - started;
+      metrics?.recordHttp(req.method, res.statusCode, ms);
       req.log.info(
-        { method: req.method, path: req.originalUrl.split('?')[0], status: res.statusCode, ms: Math.round(performance.now() - started) },
+        { method: req.method, path: req.originalUrl.split('?')[0], status: res.statusCode, ms: Math.round(ms) },
         'solicitud',
       );
     });

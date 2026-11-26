@@ -131,7 +131,7 @@ flowchart TB
 - **Adaptador:** cambiar de pasarela (de Izipay a Culqi, ADR-024) no obligó a modificar las reglas de pago: solo cambió el adaptador.
 - **Fábrica:** el mismo código corre con proveedores simulados en las pruebas y reales con `.env.rds`.
 - **Repositorio/Persistence Port:** mantiene el acceso a PostgreSQL separado del dominio y de los casos de uso en los 12 módulos.
-- **Inyección de dependencias:** las 300 pruebas usan repositorios, relojes, correos y pasarelas simulados sin conexiones reales.
+- **Inyección de dependencias:** las 305 pruebas usan repositorios, relojes, correos y pasarelas simulados sin conexiones reales.
 - **Fachada:** ningún módulo importa capas internas de otro.
 - **Observador:** el pago y el cambio de estado de la inscripción quedan desacoplados y sin pérdida de eventos.
 

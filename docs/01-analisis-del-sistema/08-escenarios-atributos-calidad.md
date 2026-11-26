@@ -119,7 +119,7 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 | **Respuesta esperada** | El sistema conserva el estado de la operación, informa el problema y ejecuta reintentos controlados cuando corresponda; ante una pérdida de datos, el equipo técnico restaura la información con los procedimientos establecidos. |
 | **Medida** | No deben perderse operaciones confirmadas ni generarse transacciones duplicadas en los escenarios de falla probados. **Propuesta para validar:** recuperación del servicio en un máximo de 4 horas (RTO) y pérdida de datos no superior a 15 minutos (RPO). |
 | **Verificación** | Simular interrupciones, respuestas tardías y errores de servicios externos; ejecutar un simulacro de restauración y medir los tiempos y puntos de recuperación. |
-| **Estado** | 🟡 Parcial. Fallas externas cumplidas: bandeja de eventos (outbox) en PostgreSQL con reintentos, correos con hasta 3 intentos sin duplicar y consulta del estado del pago a la pasarela si no llega respuesta. Si la base de datos no responde, la API contesta 503 con un mensaje claro y `Retry-After`, y las tareas en segundo plano esperan sin llenar el registro (prueba `tests/unit/shared/db-unreachable.test.ts`). La política de respaldo y el procedimiento están en «Configuración» del panel. Pendiente: confirmar en la consola de AWS la retención de copias automáticas de RDS y medir una restauración en una instancia temporal. |
+| **Estado** | ✅ Cumplido en local. El outbox usa reintentos exponenciales y envía a una DLQ persistente los eventos agotados; el administrador puede reintentarlos con auditoría. Correo, identidad, pagos y OpenRouter tienen circuit breaker. Inscripciones y pagos aceptan `Idempotency-Key`, repiten la misma respuesta sin duplicar y rechazan una clave reutilizada con datos distintos. Hay health checks separados de vida, preparación y dependencias, además de métricas agregadas de HTTP, proveedores, circuitos, idempotencia y outbox. Si PostgreSQL no responde, la API contesta 503 con `Retry-After`. Las 305 pruebas, incluidas `circuit-breaker.test.ts` y `reliability.test.ts`, están aprobadas. Para el Sprint 3 queda únicamente validar en AWS la retención y medir RTO/RPO restaurando RDS en una instancia temporal. |
 
 ## EQ-10. Auditabilidad: seguimiento de operaciones
 
@@ -153,8 +153,8 @@ Los escenarios de calidad permiten establecer y verificar cómo debe responder e
 
 | Estado | Escenarios |
 |---|---|
-| ✅ Cumplido con evidencia | EQ-04, EQ-05, EQ-06, EQ-08, EQ-10 |
-| 🟡 Parcial | EQ-07, EQ-09 |
+| ✅ Cumplido con evidencia local | EQ-04, EQ-05, EQ-06, EQ-08, EQ-09, EQ-10 |
+| 🟡 Parcial | EQ-07 |
 | ⏳ Depende del despliegue en AWS (Paso 11) | EQ-02, EQ-03 |
 | 🟡 Cumple con 2000 usuarios en local (cachés de catálogo y contenidos); falta repetirlo desplegado | EQ-01 |
 

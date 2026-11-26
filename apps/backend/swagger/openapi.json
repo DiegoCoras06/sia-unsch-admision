@@ -4634,6 +4634,89 @@
         }
       }
     },
+    "/admin/reliability": {
+      "get": {
+        "tags": [
+          "Configuración"
+        ],
+        "summary": "GET /admin/reliability",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permiso": "configuracion.gestionar",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
+    "/admin/reliability/dead-letters/{id}/retry": {
+      "post": {
+        "tags": [
+          "Configuración"
+        ],
+        "summary": "POST /admin/reliability/dead-letters/:id/retry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-permiso": "configuracion.gestionar",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          },
+          "401": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          },
+          "403": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
     "/admin/reports/asistencia.{type}": {
       "get": {
         "tags": [
@@ -6907,7 +6990,7 @@
                           },
                           "url": {
                             "type": "string",
-                            "format": "uri"
+                            "format": "uri-reference"
                           },
                           "publishedAt": {
                             "type": "string",
@@ -7946,6 +8029,98 @@
         "description": "Contrato detallado: `specs/001-portal-publico/contracts/openapi.yaml`."
       }
     },
+    "/health/dependencies": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "GET /health/dependencies",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "GET /health/live",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
+    "/health/metrics": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "GET /health/metrics",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "GET /health/ready",
+        "responses": {
+          "200": {
+            "description": "Correcto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ErrorGeneral"
+          }
+        }
+      }
+    },
     "/identity/lookup": {
       "post": {
         "summary": "Autocompletar apellidos y nombres a partir del DNI",
@@ -8259,9 +8434,14 @@
             "description": "`STAGE_CLOSED`, `REGISTRATION_NOT_ALLOWED`, `NO_VACANCIES`, `INVALID_UBIGEO`"
           }
         },
-        "description": "Contrato detallado: `specs/003-inscripcion-ordinaria/contracts/openapi.yaml`.",
+        "description": "Contrato detallado: `specs/003-inscripcion-ordinaria/contracts/openapi.yaml`.\n\nAdmite `Idempotency-Key`: al repetir la misma solicitud devuelve la respuesta almacenada y evita efectos duplicados.",
         "tags": [
           "Inscripciones"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
         ]
       }
     },
@@ -9166,7 +9346,7 @@
     "/payments/charge": {
       "post": {
         "summary": "Cobra el token que entregó Culqi Checkout (tarjeta tkn_… o Yape ype_…)",
-        "description": "El servidor crea el cargo en Culqi con su llave secreta; la respuesta del cargo, servidor a servidor, es el resultado del pago. Monto y moneda se comparan con la orden y un intento se cobra una sola vez.\n\nContrato detallado: `specs/005-pagos/contracts/openapi.yaml`.",
+        "description": "El servidor crea el cargo en Culqi con su llave secreta; la respuesta del cargo, servidor a servidor, es el resultado del pago. Monto y moneda se comparan con la orden y un intento se cobra una sola vez.\n\nContrato detallado: `specs/005-pagos/contracts/openapi.yaml`.\n\nAdmite `Idempotency-Key`: al repetir la misma solicitud devuelve la respuesta almacenada y evita efectos duplicados.",
         "requestBody": {
           "required": true,
           "content": {
@@ -9231,6 +9411,11 @@
         },
         "tags": [
           "Pagos"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
         ]
       }
     },
@@ -9276,9 +9461,14 @@
             "description": "Demasiados intentos"
           }
         },
-        "description": "Contrato detallado: `specs/005-pagos/contracts/openapi.yaml`.",
+        "description": "Contrato detallado: `specs/005-pagos/contracts/openapi.yaml`.\n\nAdmite `Idempotency-Key`: al repetir la misma solicitud devuelve la respuesta almacenada y evita efectos duplicados.",
         "tags": [
           "Pagos"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
         ]
       }
     },
@@ -10640,6 +10830,18 @@
         "description": "Protección CSRF para rutas que usan la cookie",
         "schema": {
           "const": "web"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Clave única de 8 a 100 caracteres. Debe conservarse al reintentar exactamente la misma operación durante 24 horas.",
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "pattern": "^[A-Za-z0-9._:-]+$"
         }
       }
     },

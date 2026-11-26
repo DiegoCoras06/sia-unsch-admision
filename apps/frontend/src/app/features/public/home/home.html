@@ -37,12 +37,12 @@
   <figure class="hero__media">
     <div class="hero__frame">
       <img [src]="img.src('portada.fachada', 'img/campus-fachada-1280.webp')" [attr.srcset]="img.srcset('portada.fachada', 'img/campus-fachada-640.webp 640w, img/campus-fachada-1280.webp 1280w, img/campus-fachada-1920.webp 1920w, img/campus-fachada-2560.webp 2560w')" sizes="(max-width: 960px) 100vw, 42vw" [alt]="img.alt('portada.fachada', 'Fachada del edificio de la UNSCH con el escudo y el año 1677')" width="1280" height="720" fetchpriority="high">
+      <span class="hero__seal"><span>Fundada en</span><strong>1677</strong></span>
     </div>
-    <span class="hero__seal">Desde 1677</span>
-    <div class="hero__badge">
+    <figcaption class="hero__badge">
       <img src="img/escudo-unsch-oficial-120.webp" alt="" width="34" height="45">
       <div><strong>Ciudad Universitaria</strong><span>Ayacucho, Perú</span></div>
-    </div>
+    </figcaption>
   </figure>
 </section>
 

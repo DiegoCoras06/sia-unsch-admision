@@ -17,6 +17,9 @@ import { SesEmailSender } from './shared/email/ses-email-sender.js';
 import { Outbox } from './shared/events/outbox.js';
 import { SqsEventQueue, type EventQueue } from './shared/events/event-queue.js';
 import { errorHandler, handle, notFoundHandler, requestContext } from './shared/http/middleware.js';
+import { idempotency } from './shared/reliability/idempotency.js';
+import { CircuitBreakerRegistry, CircuitOpenError } from './shared/reliability/circuit-breaker.js';
+import { ReliabilityMetrics } from './shared/reliability/metrics.js';
 import { RateLimiter } from './shared/rate-limit/rate-limiter.js';
 import { createLogger } from './shared/telemetry/logger.js';
 import { createConfiguracionModule } from './modules/configuracion/index.js';
@@ -60,6 +63,8 @@ export interface Application {
   limiter: RateLimiter;
   clock: Clock;
   logger: Logger;
+  metrics: ReliabilityMetrics;
+  circuits: CircuitBreakerRegistry;
   /** Para tareas programadas (retención del asistente) y pruebas. */
   assistant: { purgeExpired(): Promise<number> };
   /** Ciclos periódicos de M11 (avisos y cola de correo) y M09 (publicación y ingreso). */
@@ -76,11 +81,14 @@ export interface Application {
 export function createApplication(env: Env, overrides: AppOverrides = {}): Application {
   const logger = overrides.logger ?? createLogger(env.LOG_LEVEL, env.APP_ENV === 'dev');
   const clock = overrides.clock ?? (env.APP_FIXED_NOW ? shiftedClock(new Date(env.APP_FIXED_NOW)) : systemClock);
+  const metrics = new ReliabilityMetrics();
+  const circuits = new CircuitBreakerRegistry(clock, metrics);
   const db = overrides.db ?? createPrismaClient(env.DATABASE_URL, env.dbMaxConnections, env.DB_SSL_CA ? path.resolve(backendDir, env.DB_SSL_CA) : undefined);
-  const transport = overrides.email
+  const rawTransport = overrides.email
     ?? (env.EMAIL_PROVIDER === 'ses'
       ? new SesEmailSender({ from: env.EMAIL_FROM, region: env.SES_REGION, configurationSet: env.SES_CONFIGURATION_SET }, logger)
       : new FileEmailSender(path.join(backendDir, '.dev-mail'), logger));
+  const transport: EmailSender = { send: (message) => circuits.execute('email', () => rawTransport.send(message)) };
   logger.info({ provider: env.EMAIL_PROVIDER, region: env.EMAIL_PROVIDER === 'ses' ? env.SES_REGION : undefined }, 'Correo saliente');
   // M11: cada correo que envía cualquier módulo queda registrado con su estado (RF-11.09).
   const email = new RecordingEmailSender(db, transport, clock);
@@ -108,10 +116,22 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     audit,
     storage,
   });
-  const identity = createIdentityProvider(
+  const rawIdentity = createIdentityProvider(
     { provider: env.IDENTITY_PROVIDER, url: env.APIPERU_URL, token: env.APIPERU_TOKEN },
     () => clock.now(),
   );
+  const identity = {
+    simulated: rawIdentity.simulated,
+    name: rawIdentity.name,
+    async lookupDni(dni: string, checkDigit?: string) {
+      try {
+        return await circuits.execute('identity', () => rawIdentity.lookupDni(dni, checkDigit), (result) => result.kind === 'UNAVAILABLE');
+      } catch (error) {
+        if (error instanceof CircuitOpenError) return { kind: 'UNAVAILABLE' as const };
+        throw error;
+      }
+    },
+  };
   const inscripciones = createInscripcionesModule({
     db, clock, outbox, audit, limiter, storage, identity, email,
     convocatorias: convocatorias.queries,
@@ -121,10 +141,17 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     // M02 se crea más abajo; la política vigente se consulta en cada inscripción.
     currentConsent: () => usuarios.auth.currentConsent(),
   });
-  const paymentGateway = overrides.paymentGateway ?? createPaymentGateway({
+  const rawPaymentGateway = overrides.paymentGateway ?? createPaymentGateway({
     provider: env.PAYMENTS_PROVIDER,
     culqi: { publicKey: env.CULQI_PUBLIC_KEY, secretKey: env.CULQI_SECRET_KEY, apiUrl: env.CULQI_API_URL },
   });
+  const paymentGateway: PaymentGateway = {
+    provider: rawPaymentGateway.provider,
+    environment: rawPaymentGateway.environment,
+    publicKey: rawPaymentGateway.publicKey,
+    acceptsToken: (token) => rawPaymentGateway.acceptsToken(token),
+    charge: (request) => circuits.execute('payments', () => rawPaymentGateway.charge(request)),
+  };
   logger.info({ provider: paymentGateway.provider, environment: paymentGateway.environment }, 'Pasarela de pagos');
   const pagos = createPagosModule({
     db, clock, outbox, audit, limiter, logger,
@@ -145,6 +172,10 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     },
     openRouter: { apiKey: env.OPENROUTER_API_KEY, model: env.OPENROUTER_MODEL, referer: env.FRONTEND_ORIGIN },
     ...(overrides.assistantAi !== undefined ? { aiOverride: overrides.assistantAi } : {}),
+    aiDecorator: (provider) => ({
+      mode: provider.mode,
+      complete: (request) => circuits.execute('openrouter', () => provider.complete(request)),
+    }),
     passSecret: `assistant-pass:${env.HMAC_SECRET}`,
     dailyBudgetUsd: env.CHAT_DAILY_BUDGET_USD,
     // Parámetro editable en el panel (RF-13.10); CHAT_RETENTION_DAYS queda como respaldo.
@@ -250,12 +281,41 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     return smallJson(req, res, next);
   });
   app.use(cookieParser());
-  app.use(requestContext(logger, env.HMAC_SECRET));
+  app.use(requestContext(logger, env.HMAC_SECRET, metrics));
+  app.use(idempotency(db, clock, metrics));
 
   const api = Router();
+  const databaseStatus = () => db.$queryRaw`SELECT 1`.then(() => 'ok' as const).catch(() => 'degraded' as const);
+  api.get('/health/live', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: { status: 'alive', uptimeSeconds: Math.round(process.uptime()), time: clock.now().toISOString() } });
+  });
+  api.get('/health/ready', handle(async (_req, res) => {
+    const database = await databaseStatus();
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(database === 'ok' ? 200 : 503).json({ data: { status: database === 'ok' ? 'ready' : 'unavailable', database, time: clock.now().toISOString() } });
+  }));
+  api.get('/health/dependencies', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: {
+      circuits: circuits.snapshot(),
+      configured: {
+        identity: env.IDENTITY_PROVIDER === 'apiperu', payments: env.PAYMENTS_PROVIDER === 'culqi',
+        email: env.EMAIL_PROVIDER === 'ses', storage: env.FILE_STORAGE === 's3', openrouter: Boolean(env.OPENROUTER_API_KEY),
+      },
+      time: clock.now().toISOString(),
+    } });
+  });
+  api.get('/health/metrics', handle(async (_req, res) => {
+    const outboxStats = await outbox.stats().catch(() => null);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: { ...metrics.snapshot(), circuits: circuits.snapshot(), outbox: outboxStats } });
+  }));
+  // Compatibilidad con monitores ya configurados: equivale a readiness.
   api.get('/health', handle(async (_req, res) => {
-    const database = await db.$queryRaw`SELECT 1`.then(() => 'ok' as const).catch(() => 'degraded' as const);
-    res.status(database === 'ok' ? 200 : 503).json({ data: { status: 'ok', database, time: clock.now().toISOString() } });
+    const database = await databaseStatus();
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(database === 'ok' ? 200 : 503).json({ data: { status: database === 'ok' ? 'ok' : 'degraded', database, time: clock.now().toISOString() } });
   }));
   api.use(convocatorias.router);
   api.use(configuracion.router);
@@ -287,6 +347,15 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
     knowledge: asistente.knowledge,
     assistant: asistente.service,
     integrations: () => integrationStatus(env),
+    reliability: {
+      status: async () => ({ metrics: metrics.snapshot(), circuits: circuits.snapshot(), outbox: await outbox.stats() }),
+      deadLetters: (limit) => outbox.deadLetters(limit),
+      retryDead: async (id, actorId, requestMeta) => {
+        const retried = await outbox.retryDead(id);
+        if (retried) await audit.record({ actorUserId: actorId, action: 'outbox.retry', resourceType: 'outbox_event', resourceId: id, ...requestMeta });
+        return retried;
+      },
+    },
   }));
 
   // Documentación OpenAPI con Swagger UI en /api/docs (carpeta swagger/).
@@ -302,7 +371,7 @@ export function createApplication(env: Env, overrides: AppOverrides = {}): Appli
       return (await inscripciones.service.anonymizeExpired(years, null)).anonymized;
     },
   };
-  return { app, db, outbox, limiter, clock, logger, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: async () => { await convocatorias.warmUp(); await configuracion.warmUp(); } };
+  return { app, db, outbox, limiter, clock, logger, metrics, circuits, assistant: asistente.service, notifications: notificaciones.service, results: resultados.service, retention, usability: inscripciones.survey, warmCatalog: async () => { await convocatorias.warmUp(); await configuracion.warmUp(); } };
 }
 
 /** Estado de las integraciones para el panel (RF-14.04 a RF-14.07): nunca muestra secretos completos. */

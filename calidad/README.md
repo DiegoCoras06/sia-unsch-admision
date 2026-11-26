@@ -50,7 +50,7 @@ Tarda unos 3 a 5 minutos. Si algo falla, el reporte dice qué prueba y en qué a
 | **AC06 Integridad** | Sin inscripciones ni pagos duplicados; montos y rankings correctos | `verificar.mjs` (pruebas de inscripción, pagos, tesorería, tasas y resultados) | Reporte del día |
 | **AC07 Usabilidad** | WCAG 2.2 AA sin fallas; puntaje SUS de 68 o más | `node calidad/usabilidad/verificar-portal.mjs`, **Lighthouse** y la **encuesta SUS** del panel | Reportes de axe/responsive y Lighthouse; puntaje SUS del panel |
 | **AC08 Interoperabilidad** | RENIEC (APIPerú), Culqi, SES y S3 responden como se espera | `verificar.mjs` (adaptadores) y, con servicios reales, los comandos de la sección 4 | Reporte del día y salida de los comandos |
-| **AC09 Confiabilidad** | Si la base cae, la API responde 503; los eventos se reintentan sin duplicar; se puede restaurar un respaldo | `verificar.mjs` (pruebas de caída y reintentos) y la restauración en AWS (sección 4) | Reporte del día y tiempo de restauración |
+| **AC09 Confiabilidad** | Circuit breakers; DLQ; idempotencia; salud separada; métricas; 503 si la base cae; restauración de respaldo | `verificar.mjs` (fallos, reintentos, DLQ, idempotencia y health checks) y restauración en AWS (sección 4) | Reporte local y tiempo de restauración |
 | **AC10 Auditabilidad** | Cada operación crítica queda con responsable y fecha | `verificar.mjs` (pruebas de auditoría) y la pantalla **Auditoría** del panel | Reporte del día y captura del panel |
 
 ## 3. Pruebas de carga con k6 (AC01 y AC03)
@@ -103,6 +103,11 @@ Estas no las corre `verificar.mjs` porque llaman a servicios reales o tienen cos
 | AC09 | Restauración | Restaurar a un momento dado en una **instancia temporal**, medir el tiempo, comprobar los datos y borrarla (tiene costo mientras existe) |
 | AC07 | Prueba con usuarios | 5 a 10 compañeros se inscriben y responden la encuesta SUS; el panel calcula el puntaje |
 | AC07 | Lector de pantalla | Recorrer la inscripción con NVDA (gratuito) o el Narrador de Windows |
+
+Los componentes de confiabilidad que no requieren despliegue ya se validan en local. Los endpoints son
+`/api/v1/health/live`, `/api/v1/health/ready`, `/api/v1/health/dependencies` y `/api/v1/health/metrics`. El panel
+administrativo expone el estado y permite reintentar eventos de la DLQ con auditoría. No se publican contraseñas,
+tokens ni cadenas de conexión en estas respuestas.
 
 ## 5. Registrar la evidencia
 

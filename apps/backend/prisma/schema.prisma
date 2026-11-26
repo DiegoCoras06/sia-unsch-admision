@@ -1132,9 +1132,34 @@ model OutboxEvent {
   queuedAt      DateTime? @map("queued_at") @db.Timestamptz(3)
   /// Reserva de quien lo procesa: evita que otro lo atienda a la vez. Vence si el proceso muere.
   claimedAt     DateTime? @map("claimed_at") @db.Timestamptz(3)
+  /// Siguiente instante en que el evento puede reintentarse (retroceso exponencial).
+  nextAttemptAt DateTime? @map("next_attempt_at") @db.Timestamptz(3)
+  /// Al agotar los intentos el evento entra en la DLQ y requiere revisión o reintento manual.
+  deadLetteredAt DateTime? @map("dead_lettered_at") @db.Timestamptz(3)
 
   @@index([processedAt, occurredAt])
+  @@index([deadLetteredAt, occurredAt])
   @@map("outbox")
+  @@schema("shared")
+}
+
+/// Respuestas de operaciones críticas protegidas por Idempotency-Key (sin conservar el cuerpo de la solicitud).
+model IdempotencyRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  scope       String   @db.VarChar(160)
+  key         String   @db.VarChar(100)
+  requestHash String   @map("request_hash") @db.Char(64)
+  state       String   @db.VarChar(12)
+  statusCode  Int?     @map("status_code")
+  response    Json?
+  lockedAt    DateTime @map("locked_at") @db.Timestamptz(3)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([scope, key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
   @@schema("shared")
 }
 

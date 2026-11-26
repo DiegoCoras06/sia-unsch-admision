@@ -42,6 +42,7 @@ type Handler<T extends EventType> = (payload: DomainEvents[T], meta: { eventId: 
 /** Un evento enviado a la cola y no procesado en este tiempo se vuelve a enviar (mensaje perdido o con errores). */
 const REQUEUE_AFTER_MS = 5 * 60_000;
 const MAX_ATTEMPTS = 5;
+const RETRY_BASE_MS = 5_000;
 /** Si quien reservó un evento muere sin terminar, otro lo retoma pasado este tiempo. */
 const CLAIM_MS = 2 * 60_000;
 
@@ -86,7 +87,12 @@ export class Outbox {
   private async dispatchNow(batchSize: number): Promise<number> {
     if (this.queue) return this.relay(batchSize);
     const pending = await this.db.outboxEvent.findMany({
-      where: { processedAt: null, attempts: { lt: MAX_ATTEMPTS } },
+      where: {
+        processedAt: null,
+        deadLetteredAt: null,
+        attempts: { lt: MAX_ATTEMPTS },
+        OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: this.clock.now() } }],
+      },
       orderBy: { occurredAt: 'asc' },
       take: batchSize,
       select: { id: true },
@@ -101,9 +107,10 @@ export class Outbox {
    */
   async processEvent(eventId: string): Promise<boolean> {
     const event = await this.db.outboxEvent.findUnique({ where: { id: eventId } });
-    if (!event || event.processedAt || event.attempts >= MAX_ATTEMPTS) return true;
+    if (!event || event.processedAt || event.deadLetteredAt || event.attempts >= MAX_ATTEMPTS) return true;
     // Reserva el evento: el contador solo no basta, porque otro procesador leería el ya incrementado y lo tomaría también.
     const now = this.clock.now();
+    if (event.nextAttemptAt && event.nextAttemptAt > now) return false;
     const claimed = await this.db.outboxEvent.updateMany({
       where: {
         id: event.id, processedAt: null, attempts: event.attempts,
@@ -120,14 +127,24 @@ export class Outbox {
       const redact = SECRET_BEARING_EVENTS.has(event.eventType as EventType);
       await this.db.outboxEvent.update({
         where: { id: event.id },
-        data: { processedAt: this.clock.now(), lastError: null, ...(redact ? { payload: { redacted: true } } : {}) },
+        data: { processedAt: this.clock.now(), lastError: null, nextAttemptAt: null, ...(redact ? { payload: { redacted: true } } : {}) },
       });
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn({ eventId: event.id, eventType: event.eventType, err: message }, 'falló un suscriptor de la outbox');
-      await this.db.outboxEvent.update({ where: { id: event.id }, data: { lastError: message.slice(0, 500), claimedAt: null } });
-      return false;
+      const attempts = event.attempts + 1;
+      const dead = attempts >= MAX_ATTEMPTS;
+      const delay = Math.min(5 * 60_000, RETRY_BASE_MS * 2 ** Math.max(0, attempts - 1));
+      await this.db.outboxEvent.update({
+        where: { id: event.id },
+        data: {
+          lastError: message.slice(0, 500), claimedAt: null, queuedAt: null,
+          nextAttemptAt: dead ? null : new Date(this.clock.now().getTime() + delay),
+          deadLetteredAt: dead ? this.clock.now() : null,
+        },
+      });
+      return dead;
     }
   }
 
@@ -142,7 +159,8 @@ export class Outbox {
       UPDATE "shared"."outbox" SET "queued_at" = ${now}
       WHERE "id" IN (
         SELECT "id" FROM "shared"."outbox"
-        WHERE "processed_at" IS NULL AND "attempts" < ${MAX_ATTEMPTS}
+        WHERE "processed_at" IS NULL AND "dead_lettered_at" IS NULL AND "attempts" < ${MAX_ATTEMPTS}
+          AND ("next_attempt_at" IS NULL OR "next_attempt_at" <= ${now})
           AND ("queued_at" IS NULL OR "queued_at" < ${stale})
         ORDER BY "occurred_at" LIMIT ${batchSize}
         FOR UPDATE SKIP LOCKED
@@ -165,5 +183,37 @@ export class Outbox {
     setImmediate(() => {
       this.dispatch().catch((error: unknown) => this.logger.error({ err: error }, 'error al despachar la outbox'));
     });
+  }
+
+  async stats(): Promise<{ pending: number; dead: number; oldestPendingAt: string | null }> {
+    const now = this.clock.now();
+    const [pending, dead, oldest] = await Promise.all([
+      this.db.outboxEvent.count({ where: { processedAt: null, deadLetteredAt: null } }),
+      this.db.outboxEvent.count({ where: { deadLetteredAt: { not: null } } }),
+      this.db.outboxEvent.findFirst({
+        where: { processedAt: null, deadLetteredAt: null, OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }] },
+        orderBy: { occurredAt: 'asc' },
+        select: { occurredAt: true },
+      }),
+    ]);
+    return { pending, dead, oldestPendingAt: oldest?.occurredAt.toISOString() ?? null };
+  }
+
+  async deadLetters(limit = 50) {
+    return this.db.outboxEvent.findMany({
+      where: { deadLetteredAt: { not: null } },
+      orderBy: { deadLetteredAt: 'desc' },
+      take: Math.min(100, Math.max(1, limit)),
+      select: { id: true, eventType: true, occurredAt: true, deadLetteredAt: true, attempts: true, lastError: true, correlationId: true },
+    });
+  }
+
+  async retryDead(eventId: string): Promise<boolean> {
+    const reset = await this.db.outboxEvent.updateMany({
+      where: { id: eventId, deadLetteredAt: { not: null }, processedAt: null },
+      data: { attempts: 0, lastError: null, deadLetteredAt: null, nextAttemptAt: null, claimedAt: null, queuedAt: null },
+    });
+    if (reset.count) this.kick();
+    return reset.count === 1;
   }
 }

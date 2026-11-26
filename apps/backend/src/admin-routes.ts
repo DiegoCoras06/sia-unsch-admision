@@ -11,6 +11,7 @@ import { z } from 'zod';
 import type { RequestMeta } from './shared/audit/audit.js';
 import { handle } from './shared/http/middleware.js';
 import { parse } from './shared/http/validate.js';
+import { notFound } from './shared/http/errors.js';
 import type { AssistantService, KnowledgeAdmin } from './modules/asistente/index.js';
 import type { ContentAdmin, SiteAssets } from './modules/configuracion/index.js';
 import type { CallAdmin, CatalogAdmin } from './modules/convocatorias/index.js';
@@ -41,6 +42,11 @@ export interface AdminDeps {
   knowledge: KnowledgeAdmin;
   assistant: AssistantService;
   integrations: () => Record<string, { label: string; value: string; ok: boolean }>;
+  reliability: {
+    status(): Promise<unknown>;
+    deadLetters(limit?: number): Promise<unknown>;
+    retryDead(id: string, actorId: string, meta: RequestMeta): Promise<boolean>;
+  };
 }
 
 const meta = (req: Request): RequestMeta => ({ requestId: req.requestId, ipHash: req.ipHash, userAgent: req.get('user-agent') ?? null });
@@ -323,6 +329,15 @@ export function adminRoutes(d: AdminDeps): Router {
   r.get('/admin/system', g('configuracion.gestionar'), handle(async (_req, res) => {
     const [parameters, failures] = await Promise.all([d.content.parameters(), d.content.failures()]);
     res.json({ data: { integrations: d.integrations(), parameters, failures } });
+  }));
+  r.get('/admin/reliability', g('configuracion.gestionar'), handle(async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ data: { status: await d.reliability.status(), deadLetters: await d.reliability.deadLetters() } });
+  }));
+  r.post('/admin/reliability/dead-letters/:id/retry', g('configuracion.gestionar'), handle(async (req, res) => {
+    const { id } = parse(z.object({ id: z.uuid() }), req.params);
+    if (!(await d.reliability.retryDead(id, actor(req), meta(req)))) throw notFound('El evento no existe o no está en la cola de fallos.');
+    res.status(202).json({ data: { retried: true } });
   }));
   r.put('/admin/parameters/:key', g('configuracion.gestionar'), handle(async (req, res) => {
     const { key } = parse(z.object({ key: z.string().max(60) }), req.params);

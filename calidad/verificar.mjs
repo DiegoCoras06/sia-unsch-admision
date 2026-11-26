@@ -20,7 +20,7 @@ const ATRIBUTOS = [
   { id: 'AC06', nombre: 'Integridad', escenario: 'EQ-06', pruebas: ['integration/inscriptions', 'integration/payments', 'integration/treasury', 'integration/account-inscriptions', 'unit/convocatorias/fee-calculator', 'unit/resultados/', 'unit/examenes/'] },
   { id: 'AC07', nombre: 'Usabilidad', escenario: 'EQ-07', pruebas: ['integration/usability-survey', 'unit/inscripciones/sus'] },
   { id: 'AC08', nombre: 'Interoperabilidad', escenario: 'EQ-08', pruebas: ['integration/pago-culqi', 'unit/pagos/', 'unit/usuarios/apiperu', 'unit/email/', 'unit/storage/'] },
-  { id: 'AC09', nombre: 'Confiabilidad', escenario: 'EQ-09', pruebas: ['unit/shared/db-unreachable', 'integration/event-queue', 'integration/notifications'] },
+  { id: 'AC09', nombre: 'Confiabilidad', escenario: 'EQ-09', pruebas: ['unit/shared/db-unreachable', 'unit/shared/circuit-breaker', 'integration/event-queue', 'integration/notifications', 'integration/reliability'] },
   { id: 'AC10', nombre: 'Auditabilidad', escenario: 'EQ-10', pruebas: ['integration/admin', 'integration/results', 'integration/notifications', 'integration/staff-recovery'] },
 ];
 

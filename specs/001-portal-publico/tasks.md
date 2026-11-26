@@ -119,3 +119,12 @@ Fase 1 → Fase 2 → Fases 3, 4, 5 (paralelas) → 6, 7, 8 → final. La 002 de
 - [x] T112 Imagen y metadatos para compartir enlaces, y página 404 con los trámites más buscados
 - [x] T113 Transiciones entre páginas, filas de carga, sello del escudo sobre guinda e impresión cuidada
 - [x] T114 Botones con estados e indicador de proceso, respuesta al puntero en enlaces y tarjetas, degradado de la portada e iconos de acción
+
+## Confiabilidad local del Sprint 2 (25/11/2026)
+
+- [x] T115 Circuit breaker para correo, identidad, pagos y OpenRouter, con estados cerrado, abierto y semiabierto
+- [x] T116 Dead-letter queue persistente para eventos outbox agotados y reintento manual auditado desde administración
+- [x] T117 Health checks separados de vida, preparación y dependencias, sin exponer secretos
+- [x] T118 Idempotency-Key persistente para inscripción y pagos, con repetición segura y detección de conflictos
+- [x] T119 Métricas de confiabilidad para HTTP, proveedores externos, circuitos, idempotencia y outbox
+- [x] T120 Pruebas Jest de aperturas de circuito, fallos externos, DLQ, health checks e idempotencia

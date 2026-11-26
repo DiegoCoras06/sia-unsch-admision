@@ -51,7 +51,8 @@
     "esbuild@0.28.2": true,
     "@parcel/watcher": false,
     "lmdb": false,
-    "msgpackr-extract": false
+    "msgpackr-extract": false,
+    "@swc/core@1.16.21": true
   },
   "overrides": {
     "uuid": "^11.1.1",
