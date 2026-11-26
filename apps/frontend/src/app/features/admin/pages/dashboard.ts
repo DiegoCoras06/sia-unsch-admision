@@ -99,6 +99,7 @@ interface Usability {
   selector: 'app-admin-dashboard',
   imports: [FormsModule, RouterLink, DailyChart],
   host: { class: 'adm-dashboard' },
+  styleUrl: './dashboard.scss',
   template: `
     <header class="adm-head adm-dashboard__hero" data-cycle="2027-I">
       <div class="adm-dashboard__welcome">
@@ -196,7 +197,7 @@ interface Usability {
       </button>
     </form>
     @if (noRecovery()) {
-      <p class="adm-msg warn">
+      <p class="adm-msg warn adm-dashboard__warning">
         Aún no tienes códigos de respaldo: si pierdes el celular, no podrás entrar.
         <a routerLink="/admin/seguridad">Generarlos ahora</a>
       </p>
