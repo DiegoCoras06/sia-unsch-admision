@@ -1,6 +1,6 @@
 # Pruebas automáticas del backend
 
-281 pruebas en 35 archivos, con **Jest** 30 (TypeScript traducido con SWC; configuración en `jest.config.mjs`).
+308 pruebas en 40 archivos, con **Jest** 30 (TypeScript traducido con SWC; configuración en `jest.config.mjs`).
 Cada archivo importa lo que usa desde `@jest/globals` (`describe`, `it`, `expect`, `jest.fn`).
 
 ## Cómo correrlas
@@ -40,6 +40,7 @@ tests/
     ├── inscriptions.test.ts       Inscripción ordinaria
     ├── ficha.test.ts              Ficha de inscripción en PDF
     ├── payments.test.ts           Pagos e idempotencia
+    ├── database-scalability.test.ts Pool, lecturas y escrituras concurrentes, restricciones únicas
     ├── pago-culqi.test.ts         Pago con Culqi (tarjeta y Yape)
     ├── treasury.test.ts           Tesorería y conciliación
     ├── admin.test.ts              Panel, roles y permisos (403)

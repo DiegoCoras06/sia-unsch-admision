@@ -13,7 +13,7 @@ comprobarla**. Repositorio: https://github.com/DiegoCoras06/sia-unsch-admision
 | 4   | Endpoints REST documentados con OpenAPI y Swagger         | ✅     | `/api/docs`, `apps/backend/swagger/openapi.json` (211 operaciones)                                          |
 | 5   | Comportamiento de la base de datos y caché                | ✅     | `docs/03-diseño-de-software/base-de-datos-y-cache.md`                                                       |
 | 6   | SOLID y patrones de diseño                                | ✅     | `docs/03-diseño-de-software/principios-diseño.md` y `patrones-diseño.md`                                    |
-| 7   | Pruebas automáticas, cobertura e integración continua     | ✅     | 305 pruebas, 93.04 % de líneas, `.github/workflows/ci.yml`                                                  |
+| 7   | Pruebas automáticas, cobertura e integración continua     | ✅     | 308 pruebas, 91,01 % de líneas, E2E y `.github/workflows/ci.yml`                                            |
 | 8   | Pruebas de calidad con Postman y k6 hasta 2000 usuarios   | ✅     | `calidad/postman/`, `calidad/k6/`, `calidad/resultados/`                                                    |
 
 ## 1 y 2. Estilo arquitectónico y Clean Architecture
@@ -68,19 +68,19 @@ sus resultados antes y después.
 
 ## 7. Pruebas automáticas, cobertura e integración continua
 
-- **305 pruebas** del backend (unitarias y de integración) con **Jest 30**, como pide el enunciado. TypeScript se
+- **308 pruebas** del backend (unitarias y de integración) con **Jest 30**, como pide el enunciado. TypeScript se
   traduce con SWC (`@swc/jest`) y Jest carga el código como módulos ES; la configuración está en
   `apps/backend/jest.config.mjs`. Hasta el 20/11/2026 se usó Vitest; las pruebas se migraron sin cambiar lo que
   comprueban.
 - **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición
-  con Jest (25/11/2026, 305 pruebas en 39 archivos, todas aprobadas):
+  con Jest (26/11/2026, 308 pruebas en 40 archivos, todas aprobadas):
 
   | Métrica    | Cubierto         | Porcentaje |
   | ---------- | ---------------- | ---------- |
-  | Líneas     | 12 227 de 13 141 | 93,04 %    |
-  | Sentencias | 12 227 de 13 141 | 93,04 %    |
-  | Funciones  | 758 de 841       | 90,13 %    |
-  | Ramas      | 2906 de 3742     | 77,65 %    |
+  | Líneas     | 18 760 de 20 613 | 91,01 %    |
+  | Sentencias | 18 760 de 20 613 | 91,01 %    |
+  | Funciones  | 760 de 841       | 90,36 %    |
+  | Ramas      | 2878 de 3713     | 77,51 %    |
 
   Jest cuenta las líneas de otra forma que Vitest (con Vitest la misma suite daba 88,28 % de líneas y 67,95 % de
   ramas); el código cubierto es el mismo.
@@ -89,7 +89,8 @@ sus resultados antes y después.
   `apps/backend/tests/README.md`.
 - **Integración continua:** `.github/workflows/ci.yml` corre en cada envío a GitHub la revisión de tipos, las pruebas
   con cobertura (resumen en la página de la ejecución y reporte descargable `cobertura-backend`) y la compilación del
-  portal. Estado: aprobado desde el commit `0c307e2` (20/11/2026). La compilación del portal fallaba desde el
+  portal. También ejecuta el flujo E2E aislado y conserva sus capturas y reporte como `evidencia-e2e`. Estado: aprobado
+  desde el commit `0c307e2` (20/11/2026). La compilación del portal fallaba desde el
   rediseño porque los estilos de la portada y del panel superaban el límite de 16 kB por componente; se subió a 32 kB.
   Resultados en https://github.com/DiegoCoras06/sia-unsch-admision/actions
 
@@ -131,8 +132,8 @@ caché de contenidos solo cumplía hasta 50 usuarios; la comparación y su anál
 
 `node calidad/verificar.mjs` corre npm audit, todas las pruebas agrupadas por atributo de calidad (AC04 a AC10) y la
 revisión de tipos, y escribe el reporte del día en `calidad/resultados/`. Último reporte:
-`calidad/resultados/2026-11-25.md` (305 pruebas aprobadas, 0 vulnerabilidades, tipos sin errores; AC01 y AC03 con el
-resultado de k6).
+`calidad/resultados/2026-11-26-escalabilidad-base-datos.md` (308 pruebas aprobadas; concurrencia de lectura, escritura y
+protección contra duplicados), junto con el resultado de k6 para AC01 y AC03.
 
 ### Confiabilidad validada antes del despliegue
 

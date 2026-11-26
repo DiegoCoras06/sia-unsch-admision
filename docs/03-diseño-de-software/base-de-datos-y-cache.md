@@ -165,6 +165,17 @@ proceso; la base casi no participa, porque las lecturas públicas salen de la me
 del portal; las escrituras (inscripción y pago) siguen limitadas por la base y se miden aparte, sobre una copia
 restaurada de RDS, para no llenar la base real con datos de prueba.
 
+### 5.3 Concurrencia de PostgreSQL y escrituras (26/11/2026)
+
+`apps/backend/tests/integration/database-scalability.test.ts` valida la base temporal con el mismo esquema, migraciones
+y restricciones de producción. El resultado fue: 100 lecturas concurrentes en 1410 ms; 12 inscripciones simultáneas en
+628 ms, todas con código único; y una carrera de 8 solicitudes para el mismo documento con una sola fila creada y 7
+conflictos controlados. No hubo errores 500 ni duplicados. La evidencia reproducible está en
+`calidad/resultados/2026-11-26-escalabilidad-base-datos.md`.
+
+Esta prueba cubre el comportamiento transaccional y el pool local. La medición de capacidad máxima, IOPS y conexiones
+de la instancia RDS se realizará en Sprint 3 sobre una copia restaurada y desde la misma región de AWS.
+
 ## 6. Recomendaciones para el pico real de inscripción (10 000 a 15 000 personas)
 
 1. **CloudFront** delante de la API para las rutas públicas: la mayoría de las lecturas ni llegarían a la API.
