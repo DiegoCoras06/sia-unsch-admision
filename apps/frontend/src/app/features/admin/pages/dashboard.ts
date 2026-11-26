@@ -98,11 +98,12 @@ interface Usability {
 @Component({
   selector: 'app-admin-dashboard',
   imports: [FormsModule, RouterLink, DailyChart],
+  host: { class: 'adm-dashboard' },
   template: `
-    <header class="adm-head">
-      <div>
+    <header class="adm-head adm-dashboard__hero" data-cycle="2027-I">
+      <div class="adm-dashboard__welcome">
         <h1>Hola, {{ firstName() }}</h1>
-        <p>Concurso de Admisión 2027-I: lo que espera tu atención y cómo avanza el proceso.</p>
+        <p>Revisa lo prioritario y acompaña el avance del Concurso de Admisión 2027-I.</p>
       </div>
       @if (reports().length) {
         <details
@@ -130,13 +131,24 @@ interface Usability {
 
     @if (d() && todo().length) {
       <section class="adm-todo" aria-labelledby="adm-todo-t">
-        <h2 id="adm-todo-t">Pendientes de hoy</h2>
+        <header class="adm-todo__head">
+          <div>
+            <h2 id="adm-todo-t">Prioridades de hoy</h2>
+            <p>Empieza por las gestiones que requieren una decisión.</p>
+          </div>
+          <span class="adm-todo__summary" [class.is-clear]="!pendingAreas()">
+            {{ pendingAreas() ? pendingAreas() + ' por atender' : 'Todo al día' }}
+          </span>
+        </header>
         <ul role="list">
           @for (t of todo(); track t.link) {
-            <li [class.is-clear]="!t.count">
+            <li [class.is-clear]="!t.count" [class.is-priority]="$first && t.count">
               <a [routerLink]="t.link">
-                <strong>{{ t.count || 'Al día' }}</strong>
-                <span>{{ t.label }}</span>
+                <strong>{{ t.count || '✓' }}</strong>
+                <span class="adm-todo__label">{{ t.label }}</span>
+                <span class="adm-todo__action">{{
+                  t.count ? 'Revisar ahora' : 'Sin pendientes'
+                }}</span>
               </a>
             </li>
           }
@@ -144,7 +156,15 @@ interface Usability {
       </section>
     }
 
-    <form class="adm-panel adm-filters" (ngSubmit)="load()" aria-label="Filtros de los indicadores">
+    <form
+      class="adm-panel adm-filters adm-dashboard__filters"
+      (ngSubmit)="load()"
+      aria-label="Filtros de los indicadores"
+    >
+      <div class="adm-filters__intro">
+        <strong>Vista de datos</strong>
+        <span>Acota los indicadores del panel</span>
+      </div>
       <div class="field">
         <label for="f-mod">Modalidad</label>
         <select id="f-mod" class="select" name="mod" [(ngModel)]="f.modality">
@@ -191,35 +211,45 @@ interface Usability {
     }
 
     @if (d(); as d) {
-      <h2 class="adm-sub">Resumen del proceso</h2>
-      <section class="adm-kpis" aria-label="Resumen del proceso">
-        @if (d.inscripciones; as i) {
-          <div class="adm-kpi">
-            <strong>{{ i.total }}</strong><span>Inscripciones</span>
+      <section class="adm-summary" aria-labelledby="adm-summary-title">
+        <header class="adm-summary__head">
+          <div>
+            <h2 id="adm-summary-title">Resumen del proceso</h2>
+            <p>Indicadores consolidados de la convocatoria actual.</p>
           </div>
-          <div class="adm-kpi">
-            <strong>{{ i.habilitadas }}</strong><span>Aptas para el examen</span>
-          </div>
-        }
-        @if (d.pagos; as p) {
-          <div class="adm-kpi">
-            <strong>S/ {{ p.recaudado }}</strong
-            ><span>Recaudado en línea</span>
-          </div>
-          <div class="adm-kpi">
-            <strong>{{ p.ordenesPendientes }}</strong><span>Órdenes pendientes</span>
-          </div>
-        }
-        @if (d.asistente; as a) {
-          <div class="adm-kpi">
-            <strong>{{ a.consultas }}</strong><span>Consultas al asistente (14 días)</span>
-          </div>
-        }
+          @if (d.inscripciones; as i) {
+            <span class="adm-summary__status">{{ i.habilitadas }} postulantes aptos</span>
+          }
+        </header>
+        <div class="adm-kpis">
+          @if (d.inscripciones; as i) {
+            <div class="adm-kpi adm-kpi--primary">
+              <strong>{{ i.total }}</strong><span>Inscripciones</span>
+            </div>
+            <div class="adm-kpi">
+              <strong>{{ i.habilitadas }}</strong><span>Aptas para el examen</span>
+            </div>
+          }
+          @if (d.pagos; as p) {
+            <div class="adm-kpi adm-kpi--revenue">
+              <strong>S/ {{ p.recaudado }}</strong
+              ><span>Recaudado en línea</span>
+            </div>
+            <div class="adm-kpi" [class.has-alert]="p.ordenesPendientes">
+              <strong>{{ p.ordenesPendientes }}</strong><span>Órdenes pendientes</span>
+            </div>
+          }
+          @if (d.asistente; as a) {
+            <div class="adm-kpi">
+              <strong>{{ a.consultas }}</strong><span>Consultas al asistente (14 días)</span>
+            </div>
+          }
+        </div>
       </section>
 
-      <div class="adm-grid">
+      <div class="adm-grid adm-dashboard__grid">
         @if (d.inscripciones; as i) {
-          <section class="adm-panel adm-panel--wide">
+          <section class="adm-panel adm-dashboard__chart">
             <h2>Inscripciones por día</h2>
             <app-daily-chart [data]="i.porDia" />
           </section>
@@ -526,6 +556,9 @@ export class DashboardPage implements OnInit {
       });
     return items.sort((a, b) => Number(!a.count) - Number(!b.count));
   });
+  protected readonly pendingAreas = computed(
+    () => this.todo().filter((item) => item.count > 0).length,
+  );
 
   protected firstName = () => (this.session.me()?.fullName ?? '').split(' ')[0];
 
