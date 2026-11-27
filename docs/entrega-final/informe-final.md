@@ -28,8 +28,8 @@ los límites mediante Clean Architecture y pruebas automáticas. El portal públ
 API REST documentada con OpenAPI. PostgreSQL separa los módulos en esquemas y aplica restricciones únicas, transacciones,
 índices y una bandeja de eventos transaccional.
 
-La calidad se verificó con 308 pruebas Jest, pruebas E2E por navegador, accesibilidad automática, Lighthouse, Postman y
-k6 hasta 2000 usuarios concurrentes. La última suite completa aprobó 308 de 308 pruebas y alcanzó 91,01 % de cobertura
+La calidad se verificó con 342 pruebas Jest, pruebas E2E por navegador, accesibilidad automática, Lighthouse, Postman y
+k6 hasta 2000 usuarios concurrentes. La última suite completa aprobó 342 de 342 pruebas y alcanzó 92,24 % de cobertura
 de líneas. La carga local obtuvo p95 de 589 ms y 0 % de errores con 2000 usuarios.
 
 ## 2. Problema y requerimientos
@@ -83,8 +83,8 @@ dashboard. Las rutas públicas incluyen `Cache-Control` para CDN; los datos pers
 
 | Tipo                    | Herramienta                            | Resultado                                                    |
 | ----------------------- | -------------------------------------- | ------------------------------------------------------------ |
-| Unitarias e integración | Jest + Supertest + PostgreSQL temporal | 308/308 aprobadas                                            |
-| Cobertura               | V8/Jest                                | 91,01 % líneas; 90,36 % funciones; 77,51 % ramas             |
+| Unitarias e integración | Jest + Supertest + PostgreSQL temporal | 342/342 aprobadas                                            |
+| Cobertura               | V8/Jest                                | 92,24 % líneas; 91,49 % funciones; 79,10 % ramas             |
 | E2E                     | Playwright + Edge                      | Inscripción completa aprobada y automatizada en CI           |
 | Contrato REST           | Jest + OpenAPI                         | Todas las rutas documentadas                                 |
 | Carga                   | k6                                     | 2000 VU, p95 589 ms, 0 % errores                             |

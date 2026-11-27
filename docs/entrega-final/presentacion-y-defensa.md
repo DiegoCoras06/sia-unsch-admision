@@ -11,7 +11,7 @@
 |   5:00–6:00 | Datos          | Esquemas, restricciones, transacciones, outbox e índices.         |
 |   6:00–7:00 | Escalabilidad  | lazy loading, caché, pool y CDN.                                  |
 |   7:00–8:00 | Confiabilidad  | circuit breaker, DLQ, health checks e idempotencia.               |
-|   8:00–9:30 | Pruebas        | 308 Jest, E2E, Postman, axe, Lighthouse y cobertura.              |
+|   8:00–9:30 | Pruebas        | 342 Jest, E2E, Postman, axe, Lighthouse y cobertura.              |
 |  9:30–10:30 | k6             | 2000 VU, p95 589 ms y 0 % errores.                                |
 | 10:30–13:30 | Demo           | inscripción → consulta → panel → Swagger → Actions.               |
 | 13:30–14:30 | Despliegue     | AWS, DNS/CDN y evidencia final.                                   |
@@ -96,6 +96,6 @@ GitHub después de aprobar CI, sin claves AWS permanentes.
 
 - cada integrante explica una decisión y una evidencia;
 - la demo dura menos de cuatro minutos;
-- se memorizan 308, 91,01 %, 2000 VU, 589 ms y 0 %;
+- se memorizan 342, 92,24 %, 2000 VU, 589 ms y 0 %;
 - se diferencia claramente qué está desplegado y qué no;
 - se responde desde evidencia, sin afirmar resultados no medidos.

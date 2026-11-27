@@ -13,7 +13,7 @@ comprobarla**. Repositorio: https://github.com/DiegoCoras06/sia-unsch-admision
 | 4   | Endpoints REST documentados con OpenAPI y Swagger         | ✅     | `/api/docs`, `apps/backend/swagger/openapi.json` (211 operaciones)                                          |
 | 5   | Comportamiento de la base de datos y caché                | ✅     | `docs/03-diseño-de-software/base-de-datos-y-cache.md`                                                       |
 | 6   | SOLID y patrones de diseño                                | ✅     | `docs/03-diseño-de-software/principios-diseño.md` y `patrones-diseño.md`                                    |
-| 7   | Pruebas automáticas, cobertura e integración continua     | ✅     | 308 pruebas, 91,01 % de líneas, E2E y `.github/workflows/ci.yml`                                            |
+| 7   | Pruebas automáticas, cobertura e integración continua     | ✅     | 342 pruebas, 92,24 % de líneas, E2E y `.github/workflows/ci.yml`                                            |
 | 8   | Pruebas de calidad con Postman y k6 hasta 2000 usuarios   | ✅     | `calidad/postman/`, `calidad/k6/`, `calidad/resultados/`                                                    |
 
 ## 1 y 2. Estilo arquitectónico y Clean Architecture
@@ -68,19 +68,19 @@ sus resultados antes y después.
 
 ## 7. Pruebas automáticas, cobertura e integración continua
 
-- **308 pruebas** del backend (unitarias y de integración) con **Jest 30**, como pide el enunciado. TypeScript se
+- **342 pruebas** del backend (unitarias y de integración) con **Jest 30**, como pide el enunciado. TypeScript se
   traduce con SWC (`@swc/jest`) y Jest carga el código como módulos ES; la configuración está en
   `apps/backend/jest.config.mjs`. Hasta el 20/11/2026 se usó Vitest; las pruebas se migraron sin cambiar lo que
   comprueban.
 - **Cobertura:** `npm run test:coverage -w @sia/backend` genera `apps/backend/coverage/index.html`. Última medición
-  con Jest (26/11/2026, 308 pruebas en 40 archivos, todas aprobadas):
+  con Jest (27/11/2026, 342 pruebas en 46 suites, todas aprobadas):
 
   | Métrica    | Cubierto         | Porcentaje |
   | ---------- | ---------------- | ---------- |
-  | Líneas     | 18 760 de 20 613 | 91,01 %    |
-  | Sentencias | 18 760 de 20 613 | 91,01 %    |
-  | Funciones  | 760 de 841       | 90,36 %    |
-  | Ramas      | 2878 de 3713     | 77,51 %    |
+  | Líneas     | 19 196 de 20 809 | 92,24 %    |
+  | Sentencias | 19 196 de 20 809 | 92,24 %    |
+  | Funciones  | 775 de 847       | 91,49 %    |
+  | Ramas      | 3078 de 3891     | 79,10 %    |
 
   Jest cuenta las líneas de otra forma que Vitest (con Vitest la misma suite daba 88,28 % de líneas y 67,95 % de
   ramas); el código cubierto es el mismo.
