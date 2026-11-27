@@ -388,6 +388,84 @@ describe('Reportes, inhabilitados, contenido, asistente y casos', () => {
     expect(r.reply).toContain('Paga en línea con Culqi');
   });
 
+  it('lista y actualiza entradas de conocimiento, y rechaza actualizar una inexistente', async () => {
+    const created = (
+      await t.request
+        .post('/api/v1/admin/knowledge')
+        .set(as(admin))
+        .send({
+          topic: 'Beneficios',
+          question: ' ¿Cómo consulto una exoneración? ',
+          answer: ' Consulta el reglamento. ',
+          source: ' Dirección de Admisión ',
+          active: true,
+        })
+        .expect(201)
+    ).body.data as { id: string };
+
+    const listed = (await t.request.get('/api/v1/admin/knowledge').set(as(admin)).expect(200)).body.data as {
+      id: string;
+      topic: string;
+      question: string;
+      answer: string;
+      source: string;
+      active: boolean;
+      updatedAt: string;
+    }[];
+    expect(listed).toContainEqual(
+      expect.objectContaining({
+        id: created.id,
+        topic: 'beneficios',
+        question: '¿Cómo consulto una exoneración?',
+        answer: 'Consulta el reglamento.',
+        source: 'Dirección de Admisión',
+        active: true,
+        updatedAt: expect.any(String),
+      }),
+    );
+
+    await t.request
+      .post('/api/v1/admin/knowledge')
+      .set(as(admin))
+      .send({
+        id: created.id,
+        topic: 'Beneficios',
+        question: '¿Qué hago si tengo una consulta de exoneración?',
+        answer: 'Revisa el reglamento vigente.',
+        source: 'Dirección de Admisión',
+        active: false,
+        extraKeywords: 'consulta especial',
+      })
+      .expect(200);
+    const updated = (await t.request.get('/api/v1/admin/knowledge').set(as(admin)).expect(200)).body.data as {
+      id: string;
+      question: string;
+      answer: string;
+      active: boolean;
+    }[];
+    expect(updated).toContainEqual(
+      expect.objectContaining({
+        id: created.id,
+        question: '¿Qué hago si tengo una consulta de exoneración?',
+        answer: 'Revisa el reglamento vigente.',
+        active: false,
+      }),
+    );
+
+    await t.request
+      .post('/api/v1/admin/knowledge')
+      .set(as(admin))
+      .send({
+        id: '00000000-0000-4000-8000-000000000001',
+        topic: 'Beneficios',
+        question: 'Entrada inexistente',
+        answer: 'No aplica.',
+        source: 'Dirección de Admisión',
+        active: true,
+      })
+      .expect(404);
+  });
+
   it('un caso cambia de estado y el ciudadano lo ve con su número (Historia 7)', async () => {
     const caseNumber = (
       await t.request

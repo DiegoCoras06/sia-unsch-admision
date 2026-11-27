@@ -117,4 +117,14 @@ describe('Money', () => {
     expect(Money.of('187.50').add(Money.of('65.00')).toString()).toBe('252.50');
     expect(Money.of('0.10').add(Money.of('0.20')).toString()).toBe('0.30');
   });
+
+  it('acepta soles numéricos, formatea céntimos y representa el cero', () => {
+    expect(Money.of(250).toString()).toBe('250.00');
+    expect(Money.of('12.5').toString()).toBe('12.50');
+    expect(Money.zero().toString()).toBe('0.00');
+  });
+
+  it.each(['-1.00', '1.234', 'S/ 20'])('rechaza un monto con formato inválido: %s', (value) => {
+    expect(() => Money.of(value)).toThrow('Monto inválido');
+  });
 });
