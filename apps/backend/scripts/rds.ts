@@ -70,6 +70,29 @@ async function check(): Promise<void> {
   }
 }
 
+/** Comprueba sin modificar RDS que la migración requerida por el relay SQS está aplicada. */
+async function status(): Promise<void> {
+  const c = client(database);
+  try {
+    await c.connect();
+    const result = await c.query<{ migration_applied: boolean; relay_column_present: boolean }>(`
+      SELECT
+        EXISTS (
+          SELECT 1 FROM "_prisma_migrations"
+          WHERE migration_name = '20261126210000_outbox_sqs_delivery_confirmed'
+            AND finished_at IS NOT NULL
+        ) AS migration_applied,
+        EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'shared' AND table_name = 'outbox' AND column_name = 'relay_claimed_at'
+        ) AS relay_column_present`);
+    console.log(JSON.stringify(result.rows[0] ?? { migration_applied: false, relay_column_present: false }, null, 2));
+    if (!result.rows[0]?.migration_applied || !result.rows[0]?.relay_column_present) process.exitCode = 1;
+  } finally {
+    await c.end().catch(() => {});
+  }
+}
+
 async function setup(): Promise<void> {
   await check();
   if (process.exitCode) return;
@@ -114,4 +137,4 @@ async function migrate(): Promise<void> {
 }
 
 const cmd = process.argv[2] ?? 'check';
-await (cmd === 'setup' ? setup() : cmd === 'migrate' ? migrate() : check());
+await (cmd === 'setup' ? setup() : cmd === 'migrate' ? migrate() : cmd === 'status' ? status() : check());

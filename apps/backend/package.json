@@ -18,6 +18,7 @@
     "test:coverage": "node --experimental-vm-modules --no-warnings=ExperimentalWarning ../../node_modules/jest/bin/jest.js --coverage",
     "openapi": "tsx swagger/generar.ts",
     "rds:check": "tsx scripts/rds.ts check",
+    "rds:status": "tsx scripts/rds.ts status",
     "rds:setup": "tsx scripts/rds.ts setup",
     "dev:rds": "tsx watch --env-file=.env.rds src/server.ts",
     "dev:rds:no-cache": "tsx --env-file=.env.rds scripts/server-no-cache.ts",

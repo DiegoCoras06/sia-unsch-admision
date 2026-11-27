@@ -29,14 +29,31 @@ npm run build -w @sia/backend
 npm run test -w @sia/infra
 npm run synth -w @sia/infra
 npm run sqs:check
+npm run rds:status
 ```
 
 `sqs:check` es solo lectura. No publica, recibe ni elimina mensajes.
 
+Para una validación completa, el perfil debe poder ejecutar `sqs:GetQueueAttributes` tanto en la cola principal como en la DLQ. El perfil de desarrollo no necesita permisos de consumo permanentes; la recepción y eliminación pertenecen al rol del Worker.
+
+### Permisos pendientes del perfil local
+
+La validación del 26/11/2026 confirmó `SendMessage` y lectura de la cola principal. Falta conceder temporalmente:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": ["sqs:GetQueueAttributes"],
+  "Resource": "arn:aws:sqs:us-east-2:601068118284:sia-unsch-events-dlq"
+}
+```
+
+Para eliminar el probe documentado se requieren temporalmente `sqs:ReceiveMessage` y `sqs:DeleteMessage` sobre la cola principal. Después de limpiarlo, esos permisos deben retirarse del perfil productor; no se debe usar `PurgeQueue`.
+
 ## Sprint 3
 
 1. Crear los SecureString requeridos bajo `/sia-unsch/demo` usando una sesión administrativa temporal; no copiar valores al repositorio.
-2. Ejecutar la migración pendiente de la outbox sobre RDS.
+2. Verificar con `npm run rds:status` la migración de la outbox, aplicada el 26/11/2026.
 3. Sintetizar y revisar `SiaUnsch-demo-Worker`.
 4. Adjuntar la política de publicación al rol de la API.
 5. Desplegar exclusivamente con autorización expresa.

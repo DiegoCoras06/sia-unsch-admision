@@ -30,13 +30,25 @@ Son pruebas locales automatizadas con dobles controlados. No equivalen a una eje
 
 `npm run sqs:check` consulta ambas colas sin enviar, recibir ni borrar mensajes. Comprueba visibilidad de 180 segundos, `maxReceiveCount=5`, destino DLQ y SSE-SQS.
 
-Intento del 26/11/2026: **no ejecutado contra AWS** porque la cadena de credenciales no encontró un perfil o rol. No se presenta como prueba aprobada y no se modificó ningún recurso.
+Validación real del 26/11/2026 con el perfil `sia-unsch`:
+
+- identidad autenticada en la cuenta esperada;
+- cola principal accesible y cifrada con SSE-SQS;
+- visibilidad real de **180 segundos**;
+- redrive configurado hacia `sia-unsch-events-dlq` con **5 recepciones**;
+- publicación sintética sin datos personales: **aceptada por SQS**;
+- migración de Outbox aplicada en RDS con SSL verificado y columna `relay_claimed_at`: **confirmada**;
+- DLQ: no verificable porque el usuario IAM actual no tiene `sqs:GetQueueAttributes` sobre ella;
+- Lambda event source mapping: no verificable porque el usuario no tiene `lambda:ListEventSourceMappings`;
+- limpieza del probe: pendiente, porque el usuario no tiene `sqs:ReceiveMessage` ni `sqs:DeleteMessage`. La cola conserva un mensaje con el `eventId` sintético `00000000-0000-4000-8000-000000000001`.
+
+No se crearon colas, funciones ni otros recursos AWS.
 
 ## Pendiente para Sprint 3
 
-1. Ejecutar `npm run sqs:check` con credenciales temporales de solo lectura.
-2. Crear SecureString bajo `/sia-unsch/demo`: `DATABASE_URL`, `JWT_SECRET`, `IDENTITY_TOKEN_SECRET` y `HMAC_SECRET`.
-3. Aplicar la migración `20261126210000_outbox_sqs_delivery_confirmed` mediante el flujo controlado de RDS.
+1. Conceder `sqs:GetQueueAttributes` sobre la DLQ al perfil de validación y repetir `npm run sqs:check`.
+2. Eliminar únicamente el mensaje sintético documentado usando un rol autorizado o la consola; no purgar la cola.
+3. Crear SecureString bajo `/sia-unsch/demo`: `DATABASE_URL`, `JWT_SECRET`, `IDENTITY_TOKEN_SECRET` y `HMAC_SECRET`.
 4. Desplegar el worker y su event source mapping; no crear las colas nuevamente.
 5. Probar éxito y duplicado con evento sintético `@example.com` y `EMAIL_PROVIDER=console`.
 6. Forzar un fallo sintético, observar cinco recepciones y comprobar la DLQ real; limpiar únicamente esos datos de prueba.
@@ -46,6 +58,7 @@ Intento del 26/11/2026: **no ejecutado contra AWS** porque la cadena de credenci
 
 ```powershell
 npm run sqs:check
+npm run rds:status
 npm run typecheck -w @sia/backend
 npm run test -w @sia/backend -- --runInBand tests/unit/event-queue.test.ts tests/unit/sqs-batch.test.ts tests/unit/aws-parameters.test.ts
 npm run test -w @sia/backend -- --runInBand tests/integration/event-queue.test.ts tests/integration/reliability.test.ts
