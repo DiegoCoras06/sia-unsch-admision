@@ -1,6 +1,6 @@
 # Integración continua: en cada push y pull request se compilan los contratos, el backend y el frontend,
 # y se corren las pruebas del backend con PostgreSQL embebido (sin RDS ni claves).
-# El despliegue continuo (CD) a AWS se agrega en el Paso 11.
+# El despliegue continuo (CD) a AWS se realizará recién en el Sprint 3.
 name: CI
 
 on:
@@ -76,6 +76,8 @@ jobs:
         run: npm run build -w @sia/contracts
       - name: Compilar Angular
         run: npm run build -w @sia/frontend
+      - name: Compilar Worker Lambda del backend
+        run: npm run build -w @sia/backend
       - name: Revisar tipos de la infraestructura CDK
         run: npm run typecheck -w @sia/infra
       - name: Probar la plantilla CloudFront
@@ -85,7 +87,9 @@ jobs:
 
   e2e:
     name: E2E (PostgreSQL + API + Angular)
-    runs-on: windows-latest
+    # PostgreSQL 16 embebido está validado en Server 2022. Fijar la imagen evita
+    # que windows-latest migre a Server 2025 y rompa initdb antes de abrir Edge.
+    runs-on: windows-2022
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
@@ -108,3 +112,4 @@ jobs:
           name: evidencia-e2e
           path: .e2e-artifacts/
           retention-days: 30
+          include-hidden-files: true
