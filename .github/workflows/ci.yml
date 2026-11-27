@@ -87,10 +87,25 @@ jobs:
 
   e2e:
     name: E2E (PostgreSQL + API + Angular)
-    # PostgreSQL 16 embebido está validado en Server 2022. Fijar la imagen evita
-    # que windows-latest migre a Server 2025 y rompa initdb antes de abrir Edge.
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sia_e2e
+          POSTGRES_PASSWORD: sia_e2e_only
+          POSTGRES_DB: sia_e2e
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U sia_e2e -d sia_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      E2E_DATABASE_URL: postgresql://sia_e2e:sia_e2e_only@127.0.0.1:5435/sia_e2e
+      E2E_BROWSER_CHANNEL: chrome
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

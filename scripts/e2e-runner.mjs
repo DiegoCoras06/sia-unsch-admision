@@ -1,6 +1,6 @@
 /**
  * Suite E2E reproducible para local y CI.
- * Usa PostgreSQL embebido aislado (puerto 5435), API (3100) y Angular (4300).
+ * Usa PostgreSQL aislado (embebido local o servicio efímero en CI), API (3100) y Angular (4300).
  * Nunca utiliza DATABASE_URL del entorno ni la base RDS.
  */
 import { spawn, spawnSync } from 'node:child_process';
@@ -11,7 +11,8 @@ const root = path.resolve(import.meta.dirname, '..');
 const backend = path.join(root, 'apps', 'backend');
 const artifacts = path.join(root, '.e2e-artifacts');
 const adminFile = path.join(artifacts, 'admin-e2e.txt');
-const databaseUrl = 'postgresql://sia_e2e:sia_e2e_only@127.0.0.1:5435/sia_e2e';
+const managedDatabaseUrl = process.env.E2E_DATABASE_URL?.trim();
+const databaseUrl = managedDatabaseUrl || 'postgresql://sia_e2e:sia_e2e_only@127.0.0.1:5435/sia_e2e';
 const apiUrl = 'http://127.0.0.1:3100';
 const webUrl = 'http://127.0.0.1:4300';
 const bin = (name) => path.join(root, 'node_modules', '.bin', `${name}${process.platform === 'win32' ? '.cmd' : ''}`);
@@ -128,10 +129,16 @@ function writeReport(status, output, error) {
 let e2eOutput = '';
 let failure;
 try {
-  console.log('Preparando PostgreSQL E2E aislado…');
-  run(bin('tsx'), ['scripts/db.ts', 'reset'], { cwd: backend });
-  start('PostgreSQL', bin('tsx'), ['scripts/db.ts', 'start'], backend);
-  await waitFor(`${apiUrl}/api/v1/health/live`, 'API', 2_000).catch(() => {});
+  if (managedDatabaseUrl) {
+    console.log('Preparando PostgreSQL E2E efímero administrado por CI…');
+    run(bin('prisma'), ['migrate', 'deploy'], { cwd: backend });
+    run(bin('tsx'), ['prisma/seed/index.ts'], { cwd: backend });
+  } else {
+    console.log('Preparando PostgreSQL E2E embebido…');
+    run(bin('tsx'), ['scripts/db.ts', 'reset'], { cwd: backend });
+    start('PostgreSQL', bin('tsx'), ['scripts/db.ts', 'start'], backend);
+    await waitFor(`${apiUrl}/api/v1/health/live`, 'API', 2_000).catch(() => {});
+  }
 
   start('API', bin('tsx'), ['src/server.ts'], backend);
   await waitFor(`${apiUrl}/api/v1/health/ready`, 'API');
