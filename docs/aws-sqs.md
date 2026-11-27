@@ -36,19 +36,11 @@ npm run rds:status
 
 Para una validación completa, el perfil debe poder ejecutar `sqs:GetQueueAttributes` tanto en la cola principal como en la DLQ. El perfil de desarrollo no necesita permisos de consumo permanentes; la recepción y eliminación pertenecen al rol del Worker.
 
-### Permisos pendientes del perfil local
+### Permisos verificados del perfil local
 
-La validación del 26/11/2026 confirmó `SendMessage` y lectura de la cola principal. Falta conceder temporalmente:
+La validación del 26/11/2026 confirmó `SendMessage`, lectura de ambas colas y limpieza controlada del probe. Ambas colas quedaron vacías. El permiso de consumo pertenece normalmente al Worker, por lo que conviene retirar del perfil productor `sqs:ReceiveMessage` y `sqs:DeleteMessage` después de esta prueba.
 
-```json
-{
-  "Effect": "Allow",
-  "Action": ["sqs:GetQueueAttributes"],
-  "Resource": "arn:aws:sqs:us-east-2:601068118284:sia-unsch-events-dlq"
-}
-```
-
-Para eliminar el probe documentado se requieren temporalmente `sqs:ReceiveMessage` y `sqs:DeleteMessage` sobre la cola principal. Después de limpiarlo, esos permisos deben retirarse del perfil productor; no se debe usar `PurgeQueue`.
+`lambda:ListEventSourceMappings` continúa sin autorizarse; es opcional en Sprint 2 y solo sirve para inspeccionar si ya existe un consumidor Lambda. No se debe conceder `PurgeQueue`.
 
 ## Sprint 3
 
